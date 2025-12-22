@@ -5,8 +5,14 @@ from app.backend.database import get_db
 from app.backend.models import User 
 from app.backend.schemas import UserSchema, LoginSchema 
 from . import schemas , models
+from fastapi import FastAPI
+import app.backend.models as models
+from app.backend.database import engine
 
-app = FastAPI(title="Institution Backend")
+# This creates the tables in your Render PostgreSQL database on startup
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
