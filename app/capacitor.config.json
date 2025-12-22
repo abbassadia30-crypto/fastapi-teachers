@@ -1,0 +1,12 @@
+{
+  "appId": "com.example.starlight",
+  "appName": "Starlight",
+  "webDir": "frontend",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": [
+      "10.0.2.2:8000"
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Starlight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+</head>
+<body>
+    <h1>Starlight System</h1>
+    <button id="fetchBtn">Load Teachers</button>
+    <div id="display"></div>
+
+    <script>
+        document.getElementById('fetchBtn').addEventListener('click', async () => {
+            const display = document.getElementById('display');
+            display.innerText = "Connecting...";
+            try {
+                const response = await fetch('http://192.168.100.66:8000/get_teachers');
+                const data = await response.json();
+                display.innerText = JSON.stringify(data);
+            } catch (err) {
+                display.innerText = "Connection Error: " + err.message;
+            }
+        });
+    </script>
+</body>
+</html>
