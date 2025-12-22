@@ -1,0 +1,28 @@
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
+
+class LoginSchema(BaseModel):
+    email: str
+    password: str
+
+class UserSchema(BaseModel):
+    id: Optional[int] = None
+    name: str = Field(..., min_length=2)
+    email: EmailStr
+    password: str
+
+    class Config:
+        from_attributes = True
+
+class StudentCreate(BaseModel):
+    unique_id: Optional[str] = None
+    student_name: str
+    father_name: str
+    father_cnic: str  # <--- Make sure this is here!
+    phone: str
+    grade: str
+
+class StudentResponse(StudentCreate):
+    id: int
+    class Config:
+        from_attributes = True

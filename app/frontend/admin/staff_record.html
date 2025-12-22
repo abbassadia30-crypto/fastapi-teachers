@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Records</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f4f6f8; margin: 0; }
+        header { background: #0288d1; color: white; padding: 20px; text-align: center; }
+        .container { max-width: 500px; margin: 20px auto; padding: 15px; }
+        .search { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; }
+        .card { background: white; padding: 20px; margin-bottom: 15px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-left: 5px solid #0288d1; }
+        .card h3 { margin: 0 0 10px 0; color: #01579b; }
+        .card p { margin: 4px 0; font-size: 14px; color: #555; }
+        .actions { display: flex; gap: 10px; margin-top: 15px; }
+        button { padding: 10px; border-radius: 6px; border: none; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; flex: 1; }
+        .btn-del { background: #e53935; color: white; }
+        .btn-back { background: #546e7a; color: white; width: 100%; margin-top: 10px; padding: 14px; }
+    </style>
+</head>
+<body>
+    <header><h1>📋 Staff Records</h1></header>
+    <div class="container">
+        <input class="search" id="search" placeholder="Search staff..." oninput="filterStaff()">
+        <div id="staffList"></div>
+        <button type="button" class="btn-back" onclick="history.back()">Back</button>
+    </div>
+
+    <script>
+        const API = "http://10.0.2.2:8000";
+        let allStaff = [];
+
+        async function loadStaff() {
+            try {
+                const res = await fetch(`${API}/staff/`);
+                allStaff = await res.json();
+                render(allStaff);
+            } catch (err) { console.error(err); }
+        }
+
+        function render(data) {
+            const list = document.getElementById('staffList');
+            list.innerHTML = data.map(s => `
+                <div class="card">
+                    <h3>${s.name}</h3>
+                    <p><strong>Role:</strong> ${s.position}</p>
+                    <p><strong>Contact:</strong> ${s.contact}</p>
+                    <div class="actions">
+                        <button type="button" class="btn-del" onclick="deleteStaff(${s.id})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterStaff() {
+            const q = document.getElementById('search').value.toLowerCase();
+            render(allStaff.filter(s => s.name.toLowerCase().includes(q)));
+        }
+
+        async function deleteStaff(id) {
+            if(confirm("Delete this staff member?")) {
+                await fetch(`${API}/staff/${id}`, { method: "DELETE" });
+                loadStaff();
+            }
+        }
+        window.onload = loadStaff;
+    </script>
+</body>
+</html>
