@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* Institution Custom Styles */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -33,6 +34,7 @@
             z-index: 1000;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+
         /* Red and Green Sign Boxes */
         .bg-red { background: #ef5350; border: 1px solid #d32f2f; }
         .bg-green { background: #66bb6a; border: 1px solid #388e3c; }
@@ -132,9 +134,15 @@
     </div>
 
 <script>
-    // Ensure this matches your Uvicorn host
-    // Update this line at the top of your <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+
+    // 1. Security Check: Redirect if not logged in
+    const adminEmail = localStorage.getItem("adminEmail");
+    if (!adminEmail) {
+        alert("Please login first to access the institution portal.");
+        window.location.href = "login.html";
+    }
+
     function checkGrade(val) {
         const otherGroup = document.getElementById('other-grade-group');
         otherGroup.style.display = (val === 'Other') ? 'block' : 'none';
@@ -149,7 +157,6 @@
     }
 
     async function submitAdmission() {
-        // Fetching values
         const studentName = document.getElementById('student_name').value.trim();
         const fatherName = document.getElementById('father_name').value.trim();
         const fatherCnic = document.getElementById('father_cnic').value.trim();
@@ -161,7 +168,6 @@
             grade = document.getElementById('other_grade_name').value.trim();
         }
 
-        // Basic Validation
         if (!studentName || !fatherName || !fatherCnic || !phone || !grade) {
             showBar("Please fill all required fields", "error");
             return;
@@ -177,7 +183,8 @@
         };
 
         try {
-            const response = await fetch(`${API_BASE}/students`, {
+            // Updated URL to include the admin_email as a query parameter
+            const response = await fetch(`${API_BASE}/students?admin_email=${adminEmail}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(admissionData)
@@ -187,9 +194,9 @@
 
             if (response.ok) {
                 showBar("Student Registered Successfully!", "success");
-                setTimeout(() => window.location.href = "dashboard.html", 2000);
+                // Clear form
+                document.querySelectorAll('input').forEach(i => i.value = '');
             } else {
-                // This will show your custom backend errors (CNIC mismatch/Duplicate ID)
                 showBar(result.detail || "Registration Failed", "error");
             }
         } catch (error) {

@@ -16,13 +16,15 @@ class UserSchema(BaseModel):
 
 class StudentCreate(BaseModel):
     unique_id: Optional[str] = None
-    student_name: str
+    student_name: str = Field(..., min_length=2)
     father_name: str
-    father_cnic: str  # <--- Make sure this is here!
+    father_cnic: str 
     phone: str
     grade: str
 
 class StudentResponse(StudentCreate):
     id: int
+    created_by: Optional[str] = None  # Added to track which admin owns the student record
+    
     class Config:
         from_attributes = True

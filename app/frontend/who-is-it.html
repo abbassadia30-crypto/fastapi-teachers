@@ -6,24 +6,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: #141414; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; overflow: hidden; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background: #141414; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            color: white; 
+            overflow: hidden; 
+        }
         h1 { font-weight: 400; font-size: 28px; margin-bottom: 40px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
         .profile-container { display: flex; gap: 25px; flex-wrap: wrap; justify-content: center; }
         .profile-card { text-align: center; cursor: pointer; transition: 0.3s transform ease; width: 110px; }
         .profile-card:active { transform: scale(0.9); }
-        .icon-box { width: 100px; height: 100px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 50px; margin-bottom: 12px; transition: 0.3s; }
+        .icon-box { 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 8px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 50px; 
+            margin-bottom: 12px; 
+            transition: 0.3s; 
+        }
         .profile-card:hover .icon-box { outline: 3px solid white; }
         .name { color: #808080; font-size: 14px; transition: 0.3s; }
         .profile-card:hover .name { color: white; }
         
-        /* Netflix-style profile colors */
+        /* Institution Role Colors */
         .student { background: #e50914; }
         .teacher { background: #2b5de4; }
         .admin { background: #e87d0d; }
+
+        /* Notification Bar for Institution settings */
+        #notification-bar {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            transition: 0.4s ease;
+            z-index: 1000;
+        }
+        .bg-green { background: #66bb6a; border: 1px solid #388e3c; }
     </style>
 </head>
 <body>
 
+    <div id="notification-bar"></div>
     <h1>Select Role</h1>
 
     <div class="profile-container">
@@ -42,9 +81,35 @@
     </div>
 
     <script>
+        function showBar(msg) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = 'bg-green';
+            bar.style.top = "20px";
+            setTimeout(() => bar.style.top = "-100px", 2000);
+        }
+
         function setRole(role) {
+            // Save the chosen role
             localStorage.setItem('user_role', role);
-            window.location.href = role + "/dashboard.html";
+            
+            // Mark that setup is complete so login won't show this again
+            localStorage.setItem('setup_complete', 'true');
+
+            showBar("Role set to " + role);
+
+            // Redirect to the dashboard
+            setTimeout(() => {
+                window.location.href = "dashboard.html"; 
+            }, 1000);
+        }
+
+        // Logic to allow switching from settings
+        // If the URL has ?change_role=true, we stay here. 
+        // Otherwise, if setup is done, we skip to dashboard.
+        const urlParams = new URLSearchParams(window.location.search);
+        if (localStorage.getItem('setup_complete') === 'true' && !urlParams.has('change_role')) {
+            window.location.href = "dashboard.html";
         }
     </script>
 </body>

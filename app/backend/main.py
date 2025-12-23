@@ -5,12 +5,12 @@ from app.backend.database import engine, get_db
 from app.backend import models, schemas
 from typing import List
 
-# 1. Initialize Tables
+# 1. Initialize Tables for the Institution
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
-# 2. Add Middleware (Required for your frontend to talk to the cloud)
+# 2. Middleware setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -19,31 +19,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. Add a Root Route (To stop the 404 on the home page)
 @app.get("/")
 def read_root():
     return {"message": "Institution API is Online"}
 
-# 4. Your Student Endpoint
-@app.post("/students", response_model=schemas.StudentResponse)
-async def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    new_student = models.Student(**student.model_dump())
-    db.add(new_student)
-    db.commit()
-    db.refresh(new_student)
-    return new_student
-
-# 5. Your Login Endpoint
 @app.post("/login")
 async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user or user.password != data.password:
         raise HTTPException(status_code=401, detail="Invalid Credentials")
-    return {"status": "success"}
+    return {"status": "success", "email": user.email} # Returning email to store in frontend
 
-# Add this route so your Card Directory can fetch data
+@app.post("/students", response_model=schemas.StudentResponse)
+async def create_student(student: schemas.StudentCreate, admin_email: str, db: Session = Depends(get_db)):
+    # Check if student unique_id already exists
+    if student.unique_id:
+        existing = db.query(models.Student).filter(models.Student.unique_id == student.unique_id).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="This Unique ID is already assigned.")
+
+    # Create new student linked to the admin
+    new_student = models.Student(**student.model_dump(), created_by=admin_email)
+    db.add(new_student)
+    db.commit()
+    db.refresh(new_student)
+    return new_student
+
 @app.get("/students", response_model=List[schemas.StudentResponse])
-def get_all_students(db: Session = Depends(get_db)):
-    # This fetches every student record from the institution database
-    students = db.query(models.Student).all()
-    return students
+def get_my_students(admin_email: str, db: Session = Depends(get_db)):
+    # Filter: Admins only see students they created
+    return db.query(models.Student).filter(models.Student.created_by == admin_email).all()

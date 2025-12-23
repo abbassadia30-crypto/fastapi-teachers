@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Institution Login</title>
+    <title>Create Institution Account</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* Institution Custom Styles */
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; }
         
         #notification-bar { 
@@ -35,20 +34,23 @@
             border-radius: 30px; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
             width: 85%; 
-            max-width: 350px; 
+            max-width: 380px; 
             text-align: center; 
         }
 
-        .input-group { margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { font-size: 12px; font-weight: 600; color: #666; margin-left: 5px; }
+        
         input { 
             width: 100%; 
-            padding: 15px; 
+            padding: 14px; 
             border-radius: 12px; 
             border: 1px solid #eee; 
             background: #f9f9f9; 
             box-sizing: border-box; 
             outline: none; 
             font-family: 'Poppins', sans-serif;
+            margin-top: 5px;
         }
 
         .btn { 
@@ -61,8 +63,13 @@
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.3s;
+            margin-top: 10px;
         }
         .btn:hover { background: #0277bd; }
+        
+        .footer-text { font-size: 12px; margin-top: 20px; color: #777; }
+        .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
+        #AF{color: #888; font-size: 13px; margin-bottom: 25px;}
     </style>
 </head>
 <body>
@@ -70,20 +77,31 @@
     <div id="notification-bar"></div>
 
     <div class="card">
-        <h2>Institution Login</h2>
-        <div class="input-group"><input type="email" id="email" placeholder="Email"></div>
-        <div class="input-group"><input type="password" id="password" placeholder="Password"></div>
-        <button class="btn" onclick="handleLogin()">Login</button>
-        <p style="font-size:12px; margin-top:15px;">New? <a href="signup.html">Create Account</a></p>
+        <h2>Join Institution</h2>
+        <p id="AF">Create your admin profile</p>
+        
+        <div class="input-group">
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="John Doe">
+        </div>
+
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="email" placeholder="admin@institution.com">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••">
+        </div>
+
+        <button class="btn" onclick="handleSignup()">Create Account</button>
+        
+        <p class="footer-text">Already have an account? <a href="login.html">Login</a></p>
     </div>
 
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
-
-        // If already logged in, skip to dashboard
-        if (localStorage.getItem('adminEmail')) {
-            window.location.href = "dashboard.html";
-        }
 
         function showBar(msg, type) {
             const bar = document.getElementById('notification-bar');
@@ -93,36 +111,43 @@
             setTimeout(() => bar.style.top = "-100px", 3000);
         }
 
-        async function handleLogin() {
+        async function handleSignup() {
+            const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            if (!email || !password) {
-                showBar("Enter email and password", "error");
+            if (!name || !email || !password) {
+                showBar("All fields are required", "error");
                 return;
             }
-            
+
+            const signupData = { name, email, password };
+
             try {
-                const response = await fetch(`${API_BASE}/login`, {
+                // Ensure your backend has a /users or /signup endpoint
+                const response = await fetch(`${API_BASE}/users`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({email, password})
+                    body: JSON.stringify(signupData)
                 });
 
                 const result = await response.json();
 
-                if(response.ok) {
-                    // CRITICAL: Save as adminEmail to match Dashboard/Admission logic
+                if (response.ok) {
+                    showBar("Account Created! Redirecting...", "success");
+                    
+                    // Set identity so "Who is it?" knows who just signed up
                     localStorage.setItem('adminEmail', email);
                     
-                    showBar("Welcome Back!", "success");
-                    // Navigating to dashboard after success
-                    setTimeout(() => window.location.href = "dashboard.html", 1000);
+                    // Send to Role Selection (Who is it?)
+                    setTimeout(() => {
+                        window.location.href = "who-is-it.html";
+                    }, 1500);
                 } else {
-                    showBar(result.detail || "Invalid Credentials", "error");
+                    showBar(result.detail || "Signup Failed", "error");
                 }
-            } catch(e) {
-                showBar("Server Offline - Check Connection", "error");
+            } catch (error) {
+                showBar("Connection Error", "error");
             }
         }
     </script>

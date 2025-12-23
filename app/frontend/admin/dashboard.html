@@ -60,9 +60,7 @@
             transition: transform 0.3s ease;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
+        .card:hover { transform: translateY(-5px); }
 
         .card h2 {
             color: #0277bd;
@@ -84,23 +82,22 @@
             transition: background 0.3s;
         }
 
-        .btn:hover {
-            background: #0288d1;
-        }
+        .btn:hover { background: #0288d1; }
 
         .btn-logout {
             background: #f06292;
             margin-top: 20px;
         }
 
-        .btn-logout:hover {
-            background: #e91e63;
-        }
+        .btn-logout:hover { background: #e91e63; }
 
-        .stats-info {
-            font-size: 13px;
-            color: #777;
-            margin-bottom: 10px;
+        .admin-info {
+            background: rgba(255,255,255,0.2);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -111,7 +108,7 @@
 
     <header>
         <h1>🏛️ Institution Admin Panel</h1>
-        <p>Welcome Administrator</p>
+        <div id="admin-display" class="admin-info">Loading session...</div>
     </header>
 
     <div class="container">
@@ -141,9 +138,19 @@
     </div>
 
     <script>
-        // API Base configuration
-        // Update this line at the top of your <script>
-          const API_BASE = "https://fastapi-teachers.onrender.com";;
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+
+        // Check for active session immediately
+        const adminEmail = localStorage.getItem("adminEmail");
+        
+        function checkSession() {
+            if (!adminEmail) {
+                // If no email in storage, redirect to login
+                window.location.href = "login.html";
+            } else {
+                document.getElementById('admin-display').innerText = `Logged in as: ${adminEmail}`;
+            }
+        }
 
         function showBar(msg, type) {
             const bar = document.getElementById('notification-bar');
@@ -154,32 +161,19 @@
         }
 
         function navTo(page) {
-            // Future: Check permissions before navigation
             window.location.href = page;
         }
 
         function logout() {
-            localStorage.clear(); // Clears all institution session data
+            localStorage.clear(); // Clears adminEmail and all institution data
             showBar("Logging out...", "success");
             setTimeout(() => {
-                window.location.href = "index.html";
+                window.location.href = "login.html"; // Redirect to your login page
             }, 1000);
         }
 
-        // Backend Integration: Fetch user stats on load
-        async function loadStats() {
-            try {
-                // Example calls to your future backends
-                // const res = await fetch(`${API_BASE}/admin/stats`);
-                // const data = await res.json();
-                document.getElementById('teacher-count').innerText = "24";
-                document.getElementById('student-count').innerText = "450";
-            } catch (e) {
-                console.log("Offline mode: Using static stats");
-            }
-        }
-
-        window.onload = loadStats;
+        // Run session check on load
+        window.onload = checkSession;
     </script>
 </body>
 </html>
