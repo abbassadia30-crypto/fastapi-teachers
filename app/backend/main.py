@@ -1,21 +1,20 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from app.backend.database import engine, get_db
+from app.backend.database import get_db, engine
 from app.backend import models, schemas
 from typing import List
+import random
+from passlib.context import CryptContext
+
+# Security: Password hashing setup
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 app = FastAPI()
 
-# 1. HARD RESET LOGIC - This fixes the 'column name does not exist' error
-@app.on_event("startup")
-def force_sync():
-    from app.backend.database import engine
-    from app.backend import models
-    # models.Base.metadata.drop_all(bind=engine)  <-- DELETE OR COMMENT THIS OUT
-    models.Base.metadata.create_all(bind=engine) # Keep this one to ensure tables exist
-    print("!!! DATABASE IS NOW IN PERMANENT STORAGE MODE !!!")
-    
+# Database Sync
+models.Base.metadata.create_all(bind=engine)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -24,38 +23,67 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/users", response_model=schemas.UserSchema)
-def create_user(user: schemas.UserSchema, db: Session = Depends(get_db)):
+# --- Helper Functions ---
+def hash_password(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+# --- Routes ---
+
+@app.post("/users", status_code=status.HTTP_201_CREATED)
+async def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
-        raise HTTPException(status_code=400, detail="Institution email already exists.")
-    new_user = models.User(**user.model_dump())
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    otp = str(random.randint(100000, 999999))
+    
+    # Real Developer Tip: Hash the password before saving!
+    new_user = models.User(
+        name=user.name,
+        email=user.email,
+        password=hash_password(user.password), 
+        is_verified=False,
+        otp_code=otp
+    )
+    
     db.add(new_user)
     db.commit()
-    db.refresh(new_user)
-    return new_user
+    print(f"DEBUG: OTP for {user.email} is {otp}") # View this in Render Logs
+    return {"message": "Verification code sent to email"}
+
+@app.post("/verify")
+async def verify_email(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    
+    if not user or user.otp_code != data.otp:
+        raise HTTPException(status_code=400, detail="Invalid or expired code")
+    
+    user.is_verified = True
+    user.otp_code = None  # Clear the code after use
+    db.commit()
+    return {"message": "Account verified successfully"}
 
 @app.post("/login")
 async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
-    if not user or user.password != data.password:
+    
+    # Check if user exists, password is correct, and account is verified
+    if not user or not verify_password(data.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid Credentials")
     
-    # FIX: Return the 'name' so the dashboard can display it!
+    if not user.is_verified:
+        raise HTTPException(status_code=403, detail="Please verify your email first")
+    
     return {
         "status": "success", 
         "email": user.email, 
-        "name": user.name 
+        "name": user.name,
+        "token": "fake-jwt-token-for-now" # We will implement real JWT next
     }
 
-@app.post("/students", response_model=schemas.StudentResponse)
-async def create_student(student: schemas.StudentCreate, admin_email: str, db: Session = Depends(get_db)):
-    new_student = models.Student(**student.model_dump(), created_by=admin_email)
-    db.add(new_student)
-    db.commit()
-    db.refresh(new_student)
-    return new_student
-
-@app.get("/students", response_model=List[schemas.StudentResponse])
-def get_my_students(admin_email: str, db: Session = Depends(get_db)):
-    return db.query(models.Student).filter(models.Student.created_by == admin_email).all()
+#git add -A
+#git commit -m "Full sync: $(date)"
+#git push origin main

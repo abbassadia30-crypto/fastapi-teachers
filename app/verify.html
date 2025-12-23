@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Account | Institution Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        h2 { color: #333; margin-bottom: 0.5rem; }
+        p { color: #666; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 1.2rem; text-align: center; letter-spacing: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #27ae60; }
+        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 15px 30px; border-radius: 8px; color: white; font-weight: bold; transition: top 0.5s ease-in-out; z-index: 1000; }
+        .bg-red { background-color: #e74c3c; }
+        .bg-green { background-color: #2ecc71; }
+        .resend-link { margin-top: 1rem; display: block; color: #3498db; text-decoration: none; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div id="notification-bar"></div>
+
+    <div class="card">
+        <h2>Verify Institution Admin</h2>
+        <p>Enter the 6-digit code sent to:<br><b id="display-email"></b></p>
+        
+        <input type="text" id="otp" placeholder="000000" maxlength="6">
+        
+        <button onclick="handleVerify()">Verify & Complete</button>
+        
+        <a href="#" class="resend-link" onclick="resendOTP()">Didn't get a code? Resend</a>
+    </div>
+
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+        const userEmail = localStorage.getItem("pending_email");
+
+        // Set email display on load
+        if (!userEmail) {
+            window.location.href = "signup.html";
+        } else {
+            document.getElementById('display-email').innerText = userEmail;
+        }
+
+        function showBar(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+            bar.style.top = "20px";
+            setTimeout(() => bar.style.top = "-100px", 3000);
+        }
+
+        async function handleVerify() {
+            const otp = document.getElementById('otp').value.trim();
+
+            if (otp.length !== 6) {
+                showBar("Please enter a 6-digit code", "error");
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/verify`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: userEmail, otp: otp })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showBar("Verification Successful!", "success");
+                    setTimeout(() => {
+                        window.location.href = "login.html";
+                    }, 2000);
+                } else {
+                    showBar(result.detail || "Invalid Code", "error");
+                }
+            } catch (err) {
+                showBar("Connection Error", "error");
+            }
+        }
+        
+        function resendOTP() {
+            showBar("New code requested...", "success");
+            // Add resend logic once backend is ready
+        }
+    </script>
+</body>
+</html>

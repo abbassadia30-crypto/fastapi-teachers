@@ -1,22 +1,23 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 
-class LoginSchema(BaseModel):
-    email: str
-    password: str
+# Added for the Verify.html page logic
+class VerifyOTP(BaseModel):
+    email: EmailStr
+    otp: str
 
-class UserSchema(BaseModel):
-    id: Optional[int] = None
-    name: str = Field(..., min_length=2)
+class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
-    class Config:
-        from_attributes = True
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=2)
+    email: EmailStr
+    password: str = Field(..., min_length=6)
 
 class StudentCreate(BaseModel):
     unique_id: Optional[str] = None
-    student_name: str = Field(..., min_length=2)
+    student_name: str
     father_name: str
     father_cnic: Optional[str] = None
     phone: str
@@ -25,12 +26,7 @@ class StudentCreate(BaseModel):
 
 class StudentResponse(StudentCreate):
     id: int
-    created_by: Optional[str] = None  # Added to track which admin owns the student record
+    created_by: str
     
     class Config:
         from_attributes = True
-
-class LoginResponse(BaseModel):
-    status: str
-    email: str
-    name: str  # This allows the backend to send the name to the frontend

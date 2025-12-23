@@ -97,59 +97,61 @@
 
         <button class="btn" onclick="handleSignup()">Create Account</button>
         
-        <p class="footer-text">Already have an account? <a href="login.html">Login</a></p>
+        <p class="footer-text">Already have an account? <a href="index.html">Login</a></p>
     </div>
 
-    <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
-        function showBar(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-            bar.style.top = "20px";
-            setTimeout(() => bar.style.top = "-100px", 3000);
+    function showBar(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        bar.style.top = "20px";
+        setTimeout(() => bar.style.top = "-100px", 3000);
+    }
+
+    async function handleSignup() {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value;
+
+        if (!name || !email || !password) {
+            showBar("All fields are required", "error");
+            return;
         }
 
-        async function handleSignup() {
-            const name = document.getElementById('name').value.trim();
-            const email = document.getElementById('email').value.trim();
-            const password = document.getElementById('password').value;
+        const signupData = { name, email, password };
 
-            if (!name || !email || !password) {
-                showBar("All fields are required", "error");
-                return;
+        try {
+            const response = await fetch(`${API_BASE}/users`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(signupData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // 1. Save data for the next page
+                localStorage.setItem("pending_email", email);
+
+                // 2. Show the message first
+                showBar("Account Created! Redirecting to verification...", "success");
+
+                // 3. Wait 2 seconds before redirecting
+                setTimeout(() => {
+                    window.location.href = "verify.html";
+                }, 2000); 
+            } else {
+                showBar(result.detail || "Signup failed", "error");
             }
-
-            const signupData = { name, email, password };
-
-            try {
-                // Ensure your backend has a /users or /signup endpoint
-                const response = await fetch(`${API_BASE}/users`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(signupData)
-                });
-
-                const result = await response.json();
-
-               if (response.ok) {
-                      showBar("Account Created! Redirecting...", "success");
-    
-    // SAVE BOTH EMAIL AND NAME
-                       localStorage.setItem('adminEmail', email);
-                       localStorage.setItem('adminName', name); // ADD THIS LINE
-    
-                       setTimeout(() => {
-                       window.location.href = "who-is-it.html";
-                     }, 1500);
-                       }else {
-                    showBar(result.detail || "Signup Failed", "error");
-                }
-            } catch (error) {
-                showBar("Connection Error", "error");
-            }
+        } catch (error) {
+            // This is the 'catch' block that was missing!
+            console.error("Signup Error:", error);
+            showBar("Server connection failed. Try again later.", "error");
         }
-    </script>
-</body>
+    }
+</script>
+ </body>
 </html>
