@@ -14,7 +14,7 @@
             min-height: 100vh;
         }
 
-        /* Red and Green Sign Boxes */
+        /* Red and Green Sign Boxes (Institution Standards) */
         #notification-bar {
             position: fixed;
             top: -100px;
@@ -108,7 +108,7 @@
 
     <header>
         <h1>🏛️ Institution Admin Panel</h1>
-        <div id="admin-display" class="admin-info">Loading session...</div>
+        <div id="admin-display" class="admin-info">Verifying Gmail...</div>
     </header>
 
     <div class="container">
@@ -138,42 +138,45 @@
     </div>
 
     <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
+  // Get data from localStorage
+const adminEmail = localStorage.getItem("adminEmail");
+const adminName = localStorage.getItem("adminName");
 
-        // Check for active session immediately
-        const adminEmail = localStorage.getItem("adminEmail");
-        
-        function checkSession() {
-            if (!adminEmail) {
-                // If no email in storage, redirect to login
-                window.location.href = "login.html";
-            } else {
-                document.getElementById('admin-display').innerText = `Logged in as: ${adminEmail}`;
-            }
-        }
+function checkSession() {
+    if (!adminEmail) {
+        // If no session found, return to institution login
+        window.location.href = "login.html";
+    } else {
+        // Replace generic display with the Name saved during signup
+        // If name is somehow missing, it falls back to the email
+        const displayName = adminName ? adminName : adminEmail;
+        document.getElementById('admin-display').innerText = `Welcome, ${displayName}`;
+    }
+}
 
-        function showBar(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-            bar.style.top = "20px";
-            setTimeout(() => bar.style.top = "-100px", 3000);
-        }
+function showBar(msg, type) {
+    const bar = document.getElementById('notification-bar');
+    bar.innerText = msg;
+    // Uses the Red or Green sign box based on the 'type' parameter
+    bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+    bar.style.top = "20px";
+    setTimeout(() => bar.style.top = "-100px", 3000);
+}
 
-        function navTo(page) {
-            window.location.href = page;
-        }
+function navTo(page) {
+    window.location.href = page;
+}
 
-        function logout() {
-            localStorage.clear(); // Clears adminEmail and all institution data
-            showBar("Logging out...", "success");
-            setTimeout(() => {
-                window.location.href = "login.html"; // Redirect to your login page
-            }, 1000);
-        }
+function logout() {
+    localStorage.clear(); 
+    showBar("Session Closed. Returning to Login.", "success");
+    setTimeout(() => {
+        window.location.href = "login.html";
+    }, 1000);
+}
 
-        // Run session check on load
-        window.onload = checkSession;
+// Initialize the institution dashboard on load
+window.onload = checkSession;
     </script>
 </body>
 </html>

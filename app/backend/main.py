@@ -9,12 +9,13 @@ app = FastAPI()
 
 # 1. HARD RESET LOGIC - This fixes the 'column name does not exist' error
 @app.on_event("startup")
-def startup_db_check():
-    print("⚠️ SYNCING INSTITUTION DATABASE...")
-    # This wipes the old tables and creates them with the new 'name' and 'created_by' columns
-    models.Base.metadata.drop_all(bind=engine) 
+def force_sync():
+    from app.backend.database import engine
+    from app.backend import models
+    # This deletes EVERYTHING and rebuilds it fresh
+    models.Base.metadata.drop_all(bind=engine)
     models.Base.metadata.create_all(bind=engine)
-    print("✅ DATABASE SYNCHRONIZED SUCCESSFULLY")
+    print("!!! DATABASE FULL RESET PERFORMED !!!")
 
 app.add_middleware(
     CORSMiddleware,
