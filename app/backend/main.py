@@ -39,3 +39,10 @@ async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     if not user or user.password != data.password:
         raise HTTPException(status_code=401, detail="Invalid Credentials")
     return {"status": "success"}
+
+# Add this route so your Card Directory can fetch data
+@app.get("/students", response_model=List[schemas.StudentResponse])
+def get_all_students(db: Session = Depends(get_db)):
+    # This fetches every student record from the institution database
+    students = db.query(models.Student).all()
+    return students
