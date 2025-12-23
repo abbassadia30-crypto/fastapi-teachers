@@ -7,15 +7,20 @@ from typing import List
 
 app = FastAPI()
 
-# 1. Force Database Sync on Startup
+# In your app/backend/main.py
+
 @app.on_event("startup")
 def startup_db_check():
-    # This ensures the database matches your models.py exactly
-    # If the loop persists, change create_all to: 
-    # models.Base.metadata.drop_all(bind=engine) 
-    # models.Base.metadata.create_all(bind=engine)
+    from app.backend.database import engine
+    from app.backend import models
+    
+    # STEP 1: Wipe the old tables that are missing the new columns
+    # Warning: This deletes existing test data one time.
+    models.Base.metadata.drop_all(bind=engine) 
+    
+    # STEP 2: Create fresh tables with 'created_by' and 'name' columns
     models.Base.metadata.create_all(bind=engine)
-
+    print("Institution Database Reset: Tables synchronized successfully.")
 # 2. Middleware setup
 app.add_middleware(
     CORSMiddleware,
