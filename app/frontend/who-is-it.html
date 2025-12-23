@@ -37,12 +37,10 @@
         .name { color: #808080; font-size: 14px; transition: 0.3s; }
         .profile-card:hover .name { color: white; }
         
-        /* Institution Role Colors */
         .student { background: #e50914; }
         .teacher { background: #2b5de4; }
         .admin { background: #e87d0d; }
 
-        /* Notification Bar for Institution settings */
         #notification-bar {
             position: fixed;
             top: -100px;
@@ -90,24 +88,19 @@
         }
 
         function setRole(role) {
-            // Save the chosen role
             localStorage.setItem('user_role', role);
-            
-            // Mark that setup is complete so login won't show this again
             localStorage.setItem('setup_complete', 'true');
 
             showBar("Role set to " + role);
 
-            // Redirect to the dashboard
+            // CHANGED: Unified to dashboard.html
             setTimeout(() => {
-                window.location.href = "admin.dashboard.html"; 
+                window.location.href = "dashboard.html"; 
             }, 1000);
         }
 
-        // Logic to allow switching from settings
-        // If the URL has ?change_role=true, we stay here. 
-        // Otherwise, if setup is done, we skip to dashboard.
         const urlParams = new URLSearchParams(window.location.search);
+        // If setup is already done and we aren't explicitly trying to change it, skip this page
         if (localStorage.getItem('setup_complete') === 'true' && !urlParams.has('change_role')) {
             window.location.href = "dashboard.html";
         }
