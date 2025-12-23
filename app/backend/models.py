@@ -20,4 +20,3 @@ class Student(Base):
     father_cnic = Column(String , nullable=False)
     grade = Column(String, nullable=False)
 
-Base.metadata.create_all(bind=engine)
