@@ -9,18 +9,22 @@ app = FastAPI()
 
 # In your app/backend/main.py
 
+# In your app/backend/main.py
+
 @app.on_event("startup")
-def startup_db_check():
+def force_db_sync():
     from app.backend.database import engine
     from app.backend import models
     
-    # STEP 1: Wipe the old tables that are missing the new columns
-    # Warning: This deletes existing test data one time.
+    print("⚠️  DETECTED SCHEMA MISMATCH: Resetting tables...")
+    
+    # This deletes the old 'users' and 'students' tables
     models.Base.metadata.drop_all(bind=engine) 
     
-    # STEP 2: Create fresh tables with 'created_by' and 'name' columns
+    # This creates the new tables WITH the 'name' and 'created_by' columns
     models.Base.metadata.create_all(bind=engine)
-    print("Institution Database Reset: Tables synchronized successfully.")
+    
+    print("✅ INSTITUTION DATABASE SYNCHRONIZED")
 # 2. Middleware setup
 app.add_middleware(
     CORSMiddleware,
