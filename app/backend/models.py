@@ -14,7 +14,7 @@ class Student(Base):
     id = Column(Integer, primary_key=True, index=True)
     unique_id = Column(String(50), unique=True, index=True)
     student_name = Column(String(100), nullable=False)
-    father_name = Column(String(100))
+    father_name = Column(String(100) , nullable=True)
     phone = Column(String(20))
     father_cnic = Column(String(20))
     grade = Column(String(50))

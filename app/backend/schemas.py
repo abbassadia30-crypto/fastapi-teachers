@@ -18,7 +18,7 @@ class StudentCreate(BaseModel):
     unique_id: Optional[str] = None
     student_name: str = Field(..., min_length=2)
     father_name: str
-    father_cnic: str 
+    father_cnic: Optional[str] = None
     phone: str
     grade: str
     fees: int

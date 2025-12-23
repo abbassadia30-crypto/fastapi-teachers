@@ -12,11 +12,10 @@ app = FastAPI()
 def force_sync():
     from app.backend.database import engine
     from app.backend import models
-    # This deletes EVERYTHING and rebuilds it fresh
-    models.Base.metadata.drop_all(bind=engine)
-    models.Base.metadata.create_all(bind=engine)
-    print("!!! DATABASE FULL RESET PERFORMED !!!")
-
+    # models.Base.metadata.drop_all(bind=engine)  <-- DELETE OR COMMENT THIS OUT
+    models.Base.metadata.create_all(bind=engine) # Keep this one to ensure tables exist
+    print("!!! DATABASE IS NOW IN PERMANENT STORAGE MODE !!!")
+    
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
