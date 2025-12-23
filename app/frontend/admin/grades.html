@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+    <title>Student Records by Grade | Institution Portal</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        
+        header { text-align: center; margin-bottom: 40px; }
+        
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); 
+            gap: 25px; 
+            max-width: 1100px; 
+            margin: auto; 
+        }
+
+        .grade-card { 
+            background: white; 
+            padding: 40px 20px; 
+            border-radius: 15px; 
+            text-align: center; 
+            cursor: pointer; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08); 
+            transition: all 0.3s ease;
+            border-bottom: 5px solid #29b6f6;
+        }
+
+        .grade-card:hover { 
+            transform: translateY(-10px); 
+            background: #29b6f6; 
+            color: white; 
+            border-bottom-color: #0288d1;
+        }
+
+        .grade-card h2 { margin: 0; font-size: 26px; }
+        .grade-card p { margin-top: 10px; opacity: 0.8; font-size: 0.9rem; }
+
+        /* Professional Loader */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #29b6f6;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            animation: spin 1s linear infinite;
+            margin: 60px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px;
+            background: white;
+            border-radius: 15px;
+            color: #666;
+        }
+
+        #notification-bar {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: white;
+            transition: 0.5s;
+            z-index: 1000;
+        }
+        .bg-red { background: #ef5350; }
+        .bg-green { background: #66bb6a; }
+    </style>
+</head>
+<body>
+
+    <div id="notification-bar"></div>
+
+    <header>
+        <h1>🏛️ Institution Grades</h1>
+        <p>Select a custom grade to view student files</p>
+    </header>
+
+    <div class="grid" id="grades-container">
+        <div id="main-loader" class="loader"></div>
+    </div>
+
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+        const adminEmail = localStorage.getItem("adminEmail");
+
+        function showBar(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+            bar.style.top = "20px";
+            setTimeout(() => bar.style.top = "-100px", 3000);
+        }
+
+     async function loadGrades() {
+    const container = document.getElementById('grades-container');
+    const loader = document.getElementById('main-loader');
+    
+    if (!adminEmail) {
+        window.location.href = "../login.html";
+        return;
+    }
+
+    try {
+        console.log("Fetching for:", adminEmail); // See this in F12 Console
+        
+        const response = await fetch(`${API_BASE}/grades/unique?admin_email=${encodeURIComponent(adminEmail)}`);
+        
+        if (!response.ok) {
+            throw new Error(`Server Error: ${response.status}`);
+        }
+
+        const grades = await response.json();
+        console.log("Grades found:", grades);
+
+        container.innerHTML = ""; 
+
+        if (!grades || grades.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h3>No Grades Found</h3>
+                    <p>Go to <b>Student Admission</b> and add a student with a grade name first.</p>
+                </div>`;
+            return;
+        }
+
+        grades.forEach(gradeName => {
+            const card = document.createElement('div');
+            card.className = 'grade-card';
+            card.onclick = () => {
+                window.location.href = `students_list.html?grade=${encodeURIComponent(gradeName)}`;
+            };
+            card.innerHTML = `<h2>${gradeName}</h2><p>View Records</p>`;
+            container.appendChild(card);
+        });
+
+    } catch (err) {
+        if (loader) loader.style.display = 'none';
+        console.error("Fetch Error:", err);
+        showBar("Server is waking up or connection failed. Refresh in 10 seconds.", "error");
+    }
+}
+        window.onload = loadGrades;
+    </script>
+</body>
+</html>

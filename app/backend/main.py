@@ -84,6 +84,25 @@ async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
         "token": "fake-jwt-token-for-now" # We will implement real JWT next
     }
 
+@app.get("/grades/unique")
+def get_unique_grades(admin_email: str, db: Session = Depends(get_db)):
+    # This query finds all unique grade strings created by this admin
+    grades = db.query(models.Student.grade).filter(
+        models.Student.created_by == admin_email
+    ).distinct().all()
+    
+    # Convert from list of tuples [('Grade-1',), ('O-Levels',)] to flat list
+    return [g[0] for g in grades]
+
+@app.get("/grades/unique")
+def get_unique_grades(admin_email: str, db: Session = Depends(get_db)):
+    # This specifically looks for grades created by the logged-in admin
+    results = db.query(models.Student.grade).filter(
+        models.Student.created_by == admin_email
+    ).distinct().all()
+    
+    # Flatten the list: [('Grade 1',), ('Grade 2',)] -> ['Grade 1', 'Grade 2']
+    return [r[0] for r in results if r[0] is not None]
 #git add -A
 #git commit -m "Full sync: $(date)"
 #git push origin main
