@@ -5,10 +5,16 @@ from app.backend.database import engine, get_db
 from app.backend import models, schemas
 from typing import List
 
-# 1. Initialize Tables for the Institution
-models.Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
+
+# 1. Force Database Sync on Startup
+@app.on_event("startup")
+def startup_db_check():
+    # This ensures the database matches your models.py exactly
+    # If the loop persists, change create_all to: 
+    # models.Base.metadata.drop_all(bind=engine) 
+    # models.Base.metadata.create_all(bind=engine)
+    models.Base.metadata.create_all(bind=engine)
 
 # 2. Middleware setup
 app.add_middleware(
@@ -23,22 +29,33 @@ app.add_middleware(
 def read_root():
     return {"message": "Institution API is Online"}
 
+# NEW: Signup Route for Institution Admins
+@app.post("/users", response_model=schemas.UserSchema)
+def create_user(user: schemas.UserSchema, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered to an institution.")
+    
+    new_user = models.User(**user.model_dump())
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
 @app.post("/login")
 async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user or user.password != data.password:
         raise HTTPException(status_code=401, detail="Invalid Credentials")
-    return {"status": "success", "email": user.email} # Returning email to store in frontend
+    return {"status": "success", "email": user.email}
 
 @app.post("/students", response_model=schemas.StudentResponse)
 async def create_student(student: schemas.StudentCreate, admin_email: str, db: Session = Depends(get_db)):
-    # Check if student unique_id already exists
     if student.unique_id:
         existing = db.query(models.Student).filter(models.Student.unique_id == student.unique_id).first()
         if existing:
             raise HTTPException(status_code=400, detail="This Unique ID is already assigned.")
 
-    # Create new student linked to the admin
     new_student = models.Student(**student.model_dump(), created_by=admin_email)
     db.add(new_student)
     db.commit()
@@ -47,5 +64,4 @@ async def create_student(student: schemas.StudentCreate, admin_email: str, db: S
 
 @app.get("/students", response_model=List[schemas.StudentResponse])
 def get_my_students(admin_email: str, db: Session = Depends(get_db)):
-    # Filter: Admins only see students they created
     return db.query(models.Student).filter(models.Student.created_by == admin_email).all()
