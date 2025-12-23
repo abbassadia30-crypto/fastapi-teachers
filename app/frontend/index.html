@@ -112,14 +112,22 @@
 
                 const result = await response.json();
 
-                if(response.ok) {
-                    // CRITICAL: Save as adminEmail to match Dashboard/Admission logic
-                    localStorage.setItem('adminEmail', email);
-                    
-                    showBar("Welcome Back!", "success");
-                    // Navigating to dashboard after success
-                    setTimeout(() => window.location.href = "dashboard.html", 1000);
-                } else {
+            if(response.ok) {
+    // SAVE BOTH EMAIL AND NAME
+                  localStorage.setItem('adminEmail', result.email);
+                  localStorage.setItem('adminName', result.name); // ADD THIS: captures the name from API
+    
+             showBar("Welcome Back!", "success");
+    
+    // Check if role setup is needed, or go straight to dashboard
+             setTimeout(() => {
+            if (localStorage.getItem('setup_complete') === 'true') {
+            window.location.href = "dashboard.html";
+              } else {
+            window.location.href = "who-is-it.html";
+             }
+             }, 1000);
+              }else {
                     showBar(result.detail || "Invalid Credentials", "error");
                 }
             } catch(e) {

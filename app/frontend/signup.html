@@ -133,17 +133,17 @@
 
                 const result = await response.json();
 
-                if (response.ok) {
-                    showBar("Account Created! Redirecting...", "success");
-                    
-                    // Set identity so "Who is it?" knows who just signed up
-                    localStorage.setItem('adminEmail', email);
-                    
-                    // Send to Role Selection (Who is it?)
-                    setTimeout(() => {
-                        window.location.href = "who-is-it.html";
-                    }, 1500);
-                } else {
+               if (response.ok) {
+                      showBar("Account Created! Redirecting...", "success");
+    
+    // SAVE BOTH EMAIL AND NAME
+                       localStorage.setItem('adminEmail', email);
+                       localStorage.setItem('adminName', name); // ADD THIS LINE
+    
+                       setTimeout(() => {
+                       window.location.href = "who-is-it.html";
+                     }, 1500);
+                       }else {
                     showBar(result.detail || "Signup Failed", "error");
                 }
             } catch (error) {

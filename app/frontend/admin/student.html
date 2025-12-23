@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Institution Custom Styles */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -35,7 +34,6 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        /* Red and Green Sign Boxes */
         .bg-red { background: #ef5350; border: 1px solid #d32f2f; }
         .bg-green { background: #66bb6a; border: 1px solid #388e3c; }
 
@@ -113,6 +111,11 @@
         </div>
 
         <div class="input-group">
+            <label for="fees">Monthly Tuition Fee</label>
+            <input type="number" id="fees" placeholder="e.g. 2500">
+        </div>
+
+        <div class="input-group">
             <label for="grade">Grade / Class</label>
             <select id="grade" onchange="checkGrade(this.value)">
                 <option value="">Select Grade</option>
@@ -136,10 +139,8 @@
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
 
-    // 1. Security Check: Redirect if not logged in
     const adminEmail = localStorage.getItem("adminEmail");
     if (!adminEmail) {
-        alert("Please login first to access the institution portal.");
         window.location.href = "login.html";
     }
 
@@ -161,6 +162,7 @@
         const fatherName = document.getElementById('father_name').value.trim();
         const fatherCnic = document.getElementById('father_cnic').value.trim();
         const phone = document.getElementById('phone').value.trim();
+        const fees = document.getElementById('fees').value.trim();
         const uniqueId = document.getElementById('unique_id').value.trim();
         let grade = document.getElementById('grade').value;
 
@@ -168,8 +170,8 @@
             grade = document.getElementById('other_grade_name').value.trim();
         }
 
-        if (!studentName || !fatherName || !fatherCnic || !phone || !grade) {
-            showBar("Please fill all required fields", "error");
+        if (!studentName || !fatherName || !fatherCnic || !phone || !grade || !fees) {
+            showBar("Please fill all required fields, including fees.", "error");
             return;
         }
 
@@ -179,24 +181,23 @@
             father_name: fatherName,
             father_cnic: fatherCnic,
             phone: phone,
-            grade: grade
+            grade: grade,
+            fees: parseInt(fees) // Sending fees as an integer
         };
 
         try {
-            // Updated URL to include the admin_email as a query parameter
             const response = await fetch(`${API_BASE}/students?admin_email=${adminEmail}`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(admissionData)
             });
 
-            const result = await response.json();
-
             if (response.ok) {
                 showBar("Student Registered Successfully!", "success");
-                // Clear form
                 document.querySelectorAll('input').forEach(i => i.value = '');
+                document.getElementById('grade').value = '';
             } else {
+                const result = await response.json();
                 showBar(result.detail || "Registration Failed", "error");
             }
         } catch (error) {

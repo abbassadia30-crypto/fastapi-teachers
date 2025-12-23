@@ -21,6 +21,7 @@ class StudentCreate(BaseModel):
     father_cnic: str 
     phone: str
     grade: str
+    fees: int
 
 class StudentResponse(StudentCreate):
     id: int
@@ -28,3 +29,8 @@ class StudentResponse(StudentCreate):
     
     class Config:
         from_attributes = True
+
+class LoginResponse(BaseModel):
+    status: str
+    email: str
+    name: str  # This allows the backend to send the name to the frontend

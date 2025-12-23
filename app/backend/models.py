@@ -18,5 +18,5 @@ class Student(Base):
     phone = Column(String(20))
     father_cnic = Column(String(20))
     grade = Column(String(50))
-    # This column ensures data privacy between different institution admins
+    fees = Column(Integer, default=0)
     created_by = Column(String(100), index=True, nullable=True)

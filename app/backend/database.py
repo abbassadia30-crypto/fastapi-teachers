@@ -18,14 +18,12 @@ if "sqlite" in SQLALCHEMY_DATABASE_URL:
         connect_args={"check_same_thread": False}
     )
 else:
-    # pool_pre_ping checks if the connection is still alive before using it
-    # This prevents the "Server closed the connection" error on Render
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
         pool_pre_ping=True,
-        pool_recycle=300
+        pool_recycle=300,
+        connect_args={"connect_timeout": 10} # Add this line
     )
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 

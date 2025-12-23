@@ -41,7 +41,13 @@ async def login(data: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user or user.password != data.password:
         raise HTTPException(status_code=401, detail="Invalid Credentials")
-    return {"status": "success", "email": user.email}
+    
+    # FIX: Return the 'name' so the dashboard can display it!
+    return {
+        "status": "success", 
+        "email": user.email, 
+        "name": user.name 
+    }
 
 @app.post("/students", response_model=schemas.StudentResponse)
 async def create_student(student: schemas.StudentCreate, admin_email: str, db: Session = Depends(get_db)):
