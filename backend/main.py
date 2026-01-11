@@ -2,7 +2,7 @@ import os
 import random
 import json
 from datetime import datetime, timedelta
-from typing import List
+
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
