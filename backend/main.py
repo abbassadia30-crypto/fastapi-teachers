@@ -105,15 +105,17 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     try:
         fm = FastMail(conf)
         background_tasks.add_task(fm.send_message, message)
-        return {{"status": "success", "message": "OTP sent successfully."}}
+        # Use SINGLE braces here:
+        return {"status": "success", "message": "OTP sent successfully."}
     except Exception as e:
-        print(f"SMTP Error: {{e}}")
-        return {{
+        # Use f-string correctly for the print
+        print(f"SMTP Error: {e}") 
+        # Use SINGLE braces here:
+        return {
             "status": "partial_success", 
             "message": "Email service timed out, but account is ready for verification.",
-            "otp_debug_only": otp  # You can see this in your terminal/browser to bypass the block
-        }}
-
+            "otp_debug_only": otp 
+        }
 @app.post("/verify-otp/")
 async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
     # 1. Find the pending record
