@@ -1,5 +1,3 @@
-import email
-from email.policy import HTTP
 import os
 import random
 import json
@@ -8,7 +6,6 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
-from grpc import Status, StatusCode
 from sqlalchemy.orm import Session
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
@@ -247,7 +244,31 @@ async def delete_student(student_name: str, father_cnic: str, db: Session = Depe
     db.commit()
     return {"message": "Deleted successfully"}
 
-@app.put("/Edit_student") # Added /
+@app.put("/Edit_student")
 async def edit_student(student: schemas.UpdateStudent, db: Session = Depends(get_db)):
-    return HTTPException(status_code=404, detail="Student not found")
+    # 1. Find the student using unique identifiers
+    db_student = db.query(models.StudentRecord).filter(
+        models.StudentRecord.student_name == student.student_name,
+        models.StudentRecord.Father_cnic == student.father_cnic
+    ).first()
+
+    # 2. If not found, raise the error
+    if not db_student:
+        raise HTTPException(status_code=404, detail="Student record not found")
+
+    # 3. Flexible Update Logic
+    # We convert the incoming data to a dictionary and loop through it.
+    # This allows it to update ANY field defined in your schema/model.
+    update_data = student.dict(exclude_unset=True) # Only update fields the user actually sent
     
+    for key, value in update_data.items():
+        setattr(db_student, key, value)
+
+    # 4. Save changes
+    try:
+        db.commit()
+        db.refresh(db_student)
+        return {"status": "success", "message": "Student updated successfully", "data": db_student}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
