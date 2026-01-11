@@ -19,7 +19,7 @@ import resend  # Add this import
 import os
 
 # 1. Configure Resend (Replace with your actual key)
-resend.api_key = "re_your_api_key_here"
+resend.api_key = "re_48a5S3AV_5nVzDAHEr5ZoSTvso55NJRCU"
 app = FastAPI()
 
 # --- CORS SETTINGS ---
@@ -67,7 +67,7 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     def send_email_task(email: str, name: str, code: str):
         try:
             params = {
-                "from": "Starlight <onboarding@resend.dev>", # Use this exact sender for free tier
+                "from": "onboarding@resend.dev", # Use this exact sender for free tier
                 "to": [email],
                 "subject": "Your Verification Code",
                 "html": f"""
