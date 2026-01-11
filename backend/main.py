@@ -18,14 +18,15 @@ models.Base.metadata.create_all(bind=engine)
 conf = ConnectionConfig(
     MAIL_USERNAME = "starlight01779@gmail.com",
     MAIL_PASSWORD = "quap vhqc ocxk bedk", 
-    MAIL_FROM = "starlight01779@gmail.com", # Sender email
+    MAIL_FROM = "starlight01779@gmail.com",
     MAIL_FROM_NAME = "Starlight Support",
-    MAIL_PORT = 465,
+    MAIL_PORT = 465,               # Use 465 for SSL
     MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = False,
-    MAIL_SSL_TLS = True,
+    MAIL_STARTTLS = False,         # STARTTLS is for port 587
+    MAIL_SSL_TLS = True,           # SSL/TLS is for port 465
     USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True
+    VALIDATE_CERTS = True,
+    TIMEOUT = 60                   # Increased to 60 to prevent the CancelledError
 )
 
 app = FastAPI()
@@ -50,25 +51,14 @@ def get_db():
 
 @app.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # 1. Validation Checks (Important: Use .first())
+    # 1. Validation
     if db.query(models.User).filter(models.User.email == user.email).first():
         raise HTTPException(status_code=400, detail="Email already registered.")
     
-    if db.query(models.User).filter(models.User.name == user.name).first():
-        raise HTTPException(status_code=400, detail="Username already taken.")
-
     # 2. Generate OTP
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
 
-    # 3. HTML Template
-    html_content = f"""
-    <html>
-        <body style="font-family: sans-serif; padding: 20px;">
-            <h2>Verify your Starlight Account</h2>
-            <p>Your verification code is: <b>{otp}</b></p>
-        </body>
-    </html>
-    """
+    # 3. Create User in Database
     new_user = models.User(
         name=user.name,
         email=user.email,
@@ -80,17 +70,47 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     db.add(new_user)
     db.commit()
 
-    # 5. Send Email
+    # 4. Interactive HTML Email Content
+    html_content = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+                <h2 style="color: #4CAF50; text-align: center;">Verify Your Account</h2>
+                <p>Hello <strong>{user.name}</strong>,</p>
+                <p>Thank you for joining Starlight. To complete your registration, please use the verification code below:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background: #f4f4f4; padding: 10px 20px; border-radius: 5px; border: 1px dashed #4CAF50;">
+                        {otp}
+                    </span>
+                </div>
+                <p style="font-size: 12px; color: #777;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+                <hr style="border: 0; border-top: 1px solid #eee;">
+                <p style="text-align: center; font-size: 14px;">Team Starlight Support</p>
+            </div>
+        </body>
+    </html>
+    """
+
     message = MessageSchema(
-        subject="Your Verification Code",
+        subject="Starlight Account Verification",
         recipients=[user.email],
         body=html_content,
         subtype=MessageType.html
     )
-    fm = FastMail(conf)
-    background_tasks.add_task(fm.send_message, message)
-
-    return {"message": "OTP sent successfully"}
+    
+    # 5. Send with Error Handling
+    try:
+        fm = FastMail(conf)
+        background_tasks.add_task(fm.send_message, message)
+        return {"status": "success", "message": "OTP sent to your email."}
+    except Exception as e:
+        # LOG THE ERROR and return the OTP in response so you can still verify for now
+        print(f"Email Failed: {e}")
+        return {
+            "status": "partial_success", 
+            "message": "User registered, but email service timed out.",
+            "otp_debug_only": otp  # USE THIS CODE TO VERIFY UNTIL EMAIL PORT IS OPENED
+        }
 
 @app.post("/verify-otp/")
 async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
@@ -105,7 +125,7 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
         return {"message": "Account already active. Please login."}
 
     # 3. Check OTP and Expiry
-    if user.otp_code != data.otp:
+    if user.otp_code != data.otp & user.email == data.email:
         raise HTTPException(status_code=400, detail="Invalid OTP.")
 
     if datetime.utcnow() > user.otp_created_at + timedelta(minutes=10):
