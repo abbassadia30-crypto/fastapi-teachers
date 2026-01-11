@@ -16,10 +16,11 @@
             box-sizing: border-box; margin-bottom: 20px; font-weight: bold;
         }
         .otp-input:focus { border-color: #0288d1; outline: none; }
+        .otp-input:disabled { background: #f5f5f5; cursor: not-allowed; }
         
         .verify-btn { width: 100%; padding: 12px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; }
+        .verify-btn:disabled { background: #ccc; cursor: not-allowed; }
         
-        /* Required Sign Boxes */
         #notification-bar { 
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
@@ -28,6 +29,8 @@
         }
         .bg-red { background: #ef5350; top: 20px !important; }
         .bg-green { background: #66bb6a; top: 20px !important; }
+        
+        .attempt-text { font-size: 12px; color: #d32f2f; margin-top: 10px; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -36,27 +39,28 @@
 
     <div class="verify-card">
         <h2>Verify Email</h2>
-        <p>Please enter the 4-digit OTP sent to <br><b id="display-email">your email</b></p>
+        <p>Please enter the 6-digit OTP sent to <br><b id="display-email">your email</b></p>
         
         <input type="text" id="otp" class="otp-input" placeholder="000000" maxlength="6">
         
         <button class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
+        <div id="attempt-info" class="attempt-text"></div>
+        
         <p style="margin-top: 20px;"><a href="index.html" style="color: #0288d1; text-decoration: none;">Back to Login</a></p>
     </div>
 
-   <script>
+<script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    const urlParams = new URLSearchParams(window.location.search);
+    const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('pendingEmail');
     
-    // Try getting email from URL first, then from localStorage as backup
-    const email = urlParams.get('email') || localStorage.getItem('pendingEmail');
+    // Security Config
+    const MAX_ATTEMPTS = 3;
+    const LOCK_KEY = `lock_${email}`;
+    const ATTEMPT_KEY = `attempts_${email}`;
+    const BLOCK_KEY = `block_status_${email}`;
 
-    // 1. Set email display or redirect if missing
-    if (email) {
-        document.getElementById('display-email').innerText = email;
-    } else {
-        window.location.href = "signup.html"; // Send back to signup if no email found
-    }
+    if (!email) { window.location.href = "signup.html"; }
+    document.getElementById('display-email').innerText = email;
 
     function showBar(msg, type) {
         const bar = document.getElementById('notification-bar');
@@ -65,53 +69,98 @@
         setTimeout(() => { bar.className = ""; }, 4000);
     }
 
+    // Check Security Status on Load
+    function checkSecurityStatus() {
+        const isBlocked = localStorage.getItem(BLOCK_KEY);
+        const lockTime = localStorage.getItem(LOCK_KEY);
+        const btn = document.querySelector('.verify-btn');
+        const input = document.getElementById('otp');
+        const info = document.getElementById('attempt-info');
+
+        if (isBlocked === "PERMANENT") {
+            btn.disabled = true;
+            input.disabled = true;
+            info.innerText = "This account is blocked. Contact institution admin.";
+            return true;
+        }
+
+        if (lockTime) {
+            const now = new Date().getTime();
+            const waitTime = 24 * 60 * 60 * 1000; // 24 Hours
+            if (now < parseInt(lockTime) + waitTime) {
+                btn.disabled = true;
+                input.disabled = true;
+                const hoursLeft = Math.ceil(((parseInt(lockTime) + waitTime) - now) / (1000 * 60 * 60));
+                info.innerText = `Daily limit reached. Try again in ${hoursLeft} hours.`;
+                return true;
+            } else {
+                // Lock expired
+                localStorage.removeItem(LOCK_KEY);
+                localStorage.setItem(ATTEMPT_KEY, "0");
+            }
+        }
+        return false;
+    }
+
     async function handleVerify() {
+        if (checkSecurityStatus()) return;
+
         const otp = document.getElementById('otp').value.trim();
         const btn = document.querySelector('.verify-btn');
+        let currentAttempts = parseInt(localStorage.getItem(ATTEMPT_KEY) || "0");
 
-        // Match the backend (6-digit generation)
         if (otp.length < 6) {
-            showBar("Please enter the full 6-digit code", "error");
+            showBar("Enter 6-digit code", "error");
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = "Verifying Code...";
+        btn.innerText = "Verifying...";
 
         try {
-            // Note the trailing slash to match @app.post("/verify-otp/")
             const response = await fetch(`${API_BASE}/verify-otp/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ 
-                    email: email, 
-                    otp: otp 
-                })
+                body: JSON.stringify({ email:email, otp:otp })
             });
 
-            const result = await response.json();
-
             if (response.ok) {
-                showBar("Account Verified Successfully!", "success");
-                
-                // Cleanup storage
+                showBar("Verified!", "success");
+                localStorage.removeItem(ATTEMPT_KEY);
+                localStorage.removeItem(LOCK_KEY);
                 localStorage.removeItem('pendingEmail');
-
-                setTimeout(() => {
-                    window.location.href = "index.html"; // Redirect to your actual login page
-                }, 2000);
+                setTimeout(() => { window.location.href = "index.html"; }, 2000);
             } else {
-                // Shows "Invalid OTP" or "OTP Expired" from backend
-                showBar(result.detail || "Verification failed", "error");
+                currentAttempts++;
+                localStorage.setItem(ATTEMPT_KEY, currentAttempts.toString());
+                
+                if (currentAttempts >= MAX_ATTEMPTS) {
+                    const blockCount = parseInt(localStorage.getItem(`day_count_${email}`) || "0") + 1;
+                    localStorage.setItem(`day_count_${email}`, blockCount);
+                    
+                    if (blockCount >= 3) {
+                        localStorage.setItem(BLOCK_KEY, "PERMANENT");
+                        showBar("Maximum attempts reached. Account blocked.", "error");
+                    } else {
+                        localStorage.setItem(LOCK_KEY, new Date().getTime().toString());
+                        showBar("Too many failed attempts. Locked for 24 hours.", "error");
+                    }
+                } else {
+                    showBar(`Invalid OTP. ${MAX_ATTEMPTS - currentAttempts} attempts left.`, "error");
+                }
+                checkSecurityStatus();
+            }
+        } catch (e) {
+            showBar("Connection lost", "error");
+        } finally {
+            if (!document.querySelector('.verify-btn').disabled) {
                 btn.disabled = false;
                 btn.innerText = "Verify & Activate";
             }
-        } catch (e) {
-            showBar("Server connection lost", "error");
-            btn.disabled = false;
-            btn.innerText = "Verify & Activate";
         }
     }
+
+    checkSecurityStatus();
 </script>
 </body>
 </html>

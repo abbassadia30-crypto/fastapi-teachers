@@ -30,21 +30,22 @@
 
         .card { 
             background: white; 
-            padding: 40px 30px; 
+            padding: 30px; 
             border-radius: 30px; 
             box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            width: 85%; 
-            max-width: 380px; 
+            width: 90%; 
+            max-width: 420px; 
             text-align: center; 
         }
 
-        .input-group { margin-bottom: 15px; text-align: left; }
-        label { font-size: 12px; font-weight: 600; color: #666; margin-left: 5px; }
+        .name-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-group { margin-bottom: 15px; text-align: left; position: relative; }
+        label { font-size: 11px; font-weight: 600; color: #888; margin-left: 5px; text-transform: uppercase; }
         
         input { 
             width: 100%; 
-            padding: 14px; 
-            border-radius: 12px; 
+            padding: 12px; 
+            border-radius: 10px; 
             border: 1px solid #eee; 
             background: #f9f9f9; 
             box-sizing: border-box; 
@@ -55,9 +56,13 @@
         }
         input:focus { border-color: #0288d1; background: #fff; }
 
+        .strength-container { width: 100%; height: 4px; background: #eee; border-radius: 5px; margin-top: 8px; overflow: hidden; display: none; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.4s ease; }
+        .strength-text { font-size: 10px; font-weight: 600; display: block; margin-top: 5px; }
+
         .btn { 
             width: 100%; 
-            padding: 15px; 
+            padding: 14px; 
             background: #0288d1; 
             color: white; 
             border: none; 
@@ -70,9 +75,8 @@
         .btn:hover { background: #0277bd; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
         
-        .footer-text { font-size: 12px; margin-top: 20px; color: #777; }
+        .footer-text { font-size: 12px; margin-top: 15px; color: #777; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
-        #AF { color: #888; font-size: 13px; margin-bottom: 25px; }
     </style>
 </head>
 <body>
@@ -80,23 +84,38 @@
     <div id="notification-bar"></div>
 
     <div class="card">
-        <h2>Join Institution</h2>
-        <p id="AF">Create your admin profile</p>
+        <h2 style="margin-bottom: 5px;">Join Institution</h2>
+        <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Create your admin profile</p>
         
         <form id="signupForm" onsubmit="handleSignup(event)">
-            <div class="input-group">
-                <label>Full Name</label>
-                <input type="text" id="name" placeholder="John Doe" required>
+            <div class="name-row">
+                <div class="input-group" style="flex: 1;">
+                    <label>First Name</label>
+                    <input type="text" id="firstName" placeholder="Jane" required>
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Last Name</label>
+                    <input type="text" id="lastName" placeholder="Doe" required>
+                </div>
             </div>
 
             <div class="input-group">
                 <label>Email Address</label>
-                <input type="email" id="email" placeholder="admin@institution.com" required>
+                <input type="email" id="email" placeholder="admin@institution.edu" required>
             </div>
 
             <div class="input-group">
                 <label>Password</label>
-                <input type="password" id="password" placeholder="••••••••" minlength="6" required>
+                <input type="password" id="password" placeholder="••••••••" oninput="checkStrength(this.value)" required>
+                <span id="strengthLabel" class="strength-text"></span>
+                <div class="strength-container" id="strengthContainer">
+                    <div id="strengthBar" class="strength-bar"></div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="••••••••" required>
             </div>
 
             <button type="submit" class="btn" id="signupBtn">Create Account</button>
@@ -106,50 +125,72 @@
     </div>
 
 <script>
-// Change this to http://127.0.0.1:8000 if testing locally
 const API_BASE = "https://fastapi-teachers.onrender.com"; 
 
-const UI = {
-    notify: (msg, type) => {
-        const bar = document.getElementById('notification-bar');
-        if (!bar) {
-            alert(msg); // Fallback if notification bar is missing in HTML
-            return;
-        }
-        bar.innerText = msg;
-        // Using classList is better for CSS transitions
-        bar.className = type === 'error' ? 'notification bg-red active' : 'notification bg-green active';
-        
-        setTimeout(() => {
-            bar.className = 'notification';
-        }, 4000);
+const Notification = {
+    el: document.getElementById('notification-bar'),
+    show(msg, type) {
+        this.el.innerText = msg;
+        this.el.className = type === 'success' ? 'bg-green' : 'bg-red';
+        setTimeout(() => { this.el.className = ''; }, 4000);
     }
 };
+
+function checkStrength(password) {
+    const container = document.getElementById('strengthContainer');
+    const bar = document.getElementById('strengthBar');
+    const label = document.getElementById('strengthLabel');
+    
+    if (password.length === 0) {
+        container.style.display = 'none';
+        label.innerText = '';
+        return;
+    }
+
+    container.style.display = 'block';
+    let strength = 0;
+    if (password.length > 7) strength += 25;
+    if (/[A-Z]/.test(password)) strength += 25;
+    if (/[0-9]/.test(password)) strength += 25;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+
+    bar.style.width = strength + '%';
+    
+    if (strength <= 25) { bar.style.background = '#e53935'; label.innerText = 'Weak'; label.style.color = '#e53935'; }
+    else if (strength <= 75) { bar.style.background = '#ffa000'; label.innerText = 'Moderate'; label.style.color = '#ffa000'; }
+    else { bar.style.background = '#43a047'; label.innerText = 'Strong'; label.style.color = '#43a047'; }
+}
 
 async function handleSignup(event) {
     event.preventDefault();
     
     const btn = document.getElementById('signupBtn');
-    const name = document.getElementById('name').value.trim();
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-
-    // Basic Validation
-    if (!name || !email || !password) {
-        UI.notify("Please fill in all fields", "error");
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const fullName = `${firstName} ${lastName}`;
+    // Developer Logic: Passwords must match
+    if (password !== confirmPassword) {
+        Notification.show("Passwords do not match", "error");
         return;
     }
 
-    // UI Feedback
+    if (password.length < 8) {
+        Notification.show("Password must be at least 8 characters", "error");
+        return;
+    }
+
     btn.disabled = true;
-    btn.innerText = "Processing Admission...";
+    btn.innerText = "Processing...";
 
     try {
         const response = await fetch(`${API_BASE}/signup`, { 
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
-                name: name, 
+                name: `${firstName} ${lastName}`, // Combine names for backend
                 email: email, 
                 password: password 
             })
@@ -158,28 +199,21 @@ async function handleSignup(event) {
         const result = await response.json();
 
         if (response.ok) {
-            UI.notify("OTP Sent! Check your Gmail.", "success");
-            
-            // Store email in local storage so the verify page can grab it automatically
+            Notification.show("OTP Sent! Check your email.", "success");
             localStorage.setItem('pendingEmail', email);
-
-            setTimeout(() => {
-                // Redirect to verify page with email in URL as backup
-                window.location.href = "verify.html";
-            }, 2000); 
+            setTimeout(() => { window.location.href = "verify.html"; }, 2000); 
         } else {
-            // Displays specific backend errors (e.g., "Email already registered")
-            UI.notify(result.detail || "Signup failed", "error");
+            Notification.show(result.detail || "Signup failed", "error");
             btn.disabled = false;
             btn.innerText = "Create Account";
         }
     } catch (error) {
-        console.error("Signup Error:", error);
-        UI.notify("Connection Error: Server is offline", "error");
+        Notification.show("Connection Error", "error");
         btn.disabled = false;
         btn.innerText = "Create Account";
     }
 }
 </script>
 </body>
+</html>
 </html>

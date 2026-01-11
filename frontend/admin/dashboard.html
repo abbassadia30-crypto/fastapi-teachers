@@ -2,178 +2,139 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Institution Admin Dashboard</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
+    <title>Admission Form | Institution Portal</title>
     <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            background: linear-gradient(135deg, #e3f2fd, #fce4ec);
-            min-height: 100vh;
-        }
-
-        #notification-bar {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            padding: 15px;
-            border-radius: 12px;
-            color: white;
-            font-weight: 600;
-            text-align: center;
-            transition: 0.4s ease-in-out;
-            z-index: 1000;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
+        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+        .form-container { max-width: 700px; margin: 20px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { color: #0288d1; margin: 0; }
+        .nav-btn { padding: 8px 15px; background: #546e7a; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .file-box { background: #fff9c4; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; }
+        .dynamic-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .dynamic-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .label-input { font-weight: 600; background: #e3f2fd; color: #0288d1; }
+        .add-row-btn { background: #66bb6a; color: white; border: none; border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 600; }
+        .submit-btn { width: 100%; padding: 15px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
         
-        .bg-red { top: 20px !important; background: #ef5350; border: 1px solid #d32f2f; }
-        .bg-green { top: 20px !important; background: #66bb6a; border: 1px solid #388e3c; }
-
-        header {
-            background: linear-gradient(90deg, #0288d1, #26c6da);
-            color: white;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        #notification-bar { 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
+            color: white; text-align: center; transition: 0.4s; z-index: 1000; font-weight: 600;
         }
-
-        .container {
-            max-width: 1100px;
-            margin: 40px auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            padding: 0 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover { transform: translateY(-5px); }
-
-        .card h2 {
-            color: #0277bd;
-            margin-bottom: 20px;
-            font-size: 22px;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            margin: 8px 0;
-            border: none;
-            border-radius: 10px;
-            background: #29b6f6;
-            color: white;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .btn:hover { background: #0288d1; }
-
-        .btn-logout {
-            background: #f06292;
-            margin-top: 20px;
-        }
-
-        .btn-logout:hover { background: #e91e63; }
-
-        .admin-info {
-            background: rgba(255,255,255,0.2);
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            margin-top: 10px;
-        }
+        .bg-red { background: #ef5350; top: 20px !important; }
+        .bg-green { background: #66bb6a; top: 20px !important; }
     </style>
 </head>
-
 <body>
+    <script>
+        (function() {
+            const role = localStorage.getItem('user_role');
+            if (role !== 'admin') {
+                window.location.replace("../dashboard.html"); // Immediate redirect
+            }
+        })();
+    </script>
 
     <div id="notification-bar"></div>
 
-    <header>
-        <h1>🏛️ Institution Admin Panel</h1>
-        <div id="admin-display" class="admin-info">Verifying Credentials...</div>
-    </header>
+    <div class="form-container">
+        <header class="header-flex">
+            <h2>Student Admission</h2>
+            <nav><a href="dashboard.html" class="nav-btn">← Back to Dashboard</a></nav>
+        </header>
 
-    <div class="container">
-        <div class="card">
-            <h2>Teachers</h2>
-            <button class="btn" onclick="navTo('teacher.html')">Hire Teacher</button>
-            <button class="btn" onclick="navTo('teachers.html')">Teacher Records</button>
-        </div>
+        <section class="file-box">
+            <label style="font-weight: bold; color: #827717; display: block; margin-bottom: 5px;">Target Record File Name</label>
+            <input type="text" id="record_file_name" 
+                   placeholder="e.g. Grade-10-A" 
+                   title="Filename for storage (no spaces allowed)" 
+                   oninput="this.value = this.value.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '')"
+                   style="width:100%; padding:10px; border-radius:5px; border:1px solid #fbc02d; box-sizing: border-box;">
+        </section>
+        
+        <form id="admission-form">
+            <div id="dynamic-fields-container">
+                <div class="dynamic-row">
+                    <input type="text" class="label-input" value="Student Name" readonly title="Core field" aria-label="Core label">
+                    <input type="text" class="value-input" placeholder="Enter student name" required title="Enter student name" aria-label="Student name value">
+                </div>
+                <div class="dynamic-row">
+                    <input type="text" class="label-input" value="Father Name" readonly title="Core field" aria-label="Core label">
+                    <input type="text" class="value-input" placeholder="Enter father name" required title="Enter father name" aria-label="Father name value">
+                </div>
+            </div>
 
-        <div class="card">
-            <h2>Students</h2>
-            <button class="btn" onclick="navTo('admission.html')">Student Admission</button>
-            <button class="btn" onclick="navTo('records.html')">Student Records</button>
-        </div>
-
-        <div class="card">
-            <h2>Staff</h2>
-            <button class="btn" onclick="navTo('staff.html')">Hire Staff</button>
-            <button class="btn" onclick="navTo('staff_record.html')">Staff Records</button>
-        </div>
-
-        <div class="card">
-            <h2>Finances</h2>
-            <button class="btn" onclick="navTo('payments.html')">Payment Records</button>
-            <button class="btn btn-logout" onclick="logout()">Logout Session</button>
-        </div>
+            <button type="button" class="add-row-btn" onclick="addNewRow()">+ Add Custom Information Row</button>
+            <button type="submit" id="submit-btn" class="submit-btn">Save to Institution Records</button>
+        </form>
     </div>
 
     <script>
-        const UI = {
-            notify: (message, type) => {
-                const bar = document.getElementById('notification-bar');
-                bar.innerText = message;
-                bar.className = type === 'success' ? 'bg-green' : 'bg-red';
-                setTimeout(() => { bar.className = ''; }, 3000);
-            }
-        };
+        const API_BASE = "https://fastapi-teachers.onrender.com";
 
-        function checkSession() {
-            const token = localStorage.getItem("institutionToken");
-            const adminEmail = localStorage.getItem("adminEmail");
-            const adminName = localStorage.getItem("adminName");
+        function showBar(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+            setTimeout(() => bar.className = "", 3000);
+        }
 
-            if (!token || !adminEmail) {
-                window.location.href = "../index.html";
+        function addNewRow() {
+            const row = document.createElement('div');
+            row.className = 'dynamic-row';
+            row.innerHTML = `
+                <input type="text" class="label-input" placeholder="Field Label" title="Custom field label" aria-label="Custom label">
+                <input type="text" class="value-input" placeholder="Field Value" title="Custom field value" aria-label="Custom value">
+                <button type="button" style="background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="this.parentElement.remove()" title="Delete row" aria-label="Delete row">×</button>
+            `;
+            document.getElementById('dynamic-fields-container').appendChild(row);
+        }
+
+        document.getElementById('admission-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const fileName = document.getElementById('record_file_name').value.trim();
+            
+            if(!fileName) {
+                showBar("File name is required", "error");
                 return;
             }
 
-            const displayName = adminName || adminEmail;
-            document.getElementById('admin-display').innerText = `Welcome, ${displayName}`;
-        }
+            const studentData = {};
+            document.querySelectorAll('.dynamic-row').forEach(row => {
+                const label = row.querySelector('.label-input').value.trim();
+                const value = row.querySelector('.value-input').value.trim();
+                if (label && value) studentData[label] = value;
+            });
 
-        function navTo(page) {
-            window.location.href = page;
-        }
+            btn.disabled = true;
+            btn.innerText = "Saving...";
 
-        function logout() {
-            localStorage.clear();
-            UI.notify("Session Closed. Returning to Login.", "success");
-            setTimeout(() => {
-                window.location.href = "../index.html";
-            }, 1000);
-        }
+            try {
+                const response = await fetch(`${API_BASE}/add-student/${fileName}`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('institutionToken')}` 
+                    },
+                    body: JSON.stringify(studentData)
+                });
 
-        window.onload = checkSession;
+                if (response.ok) {
+                    showBar("Record Saved Successfully!", "success");
+                    setTimeout(() => window.location.href = "dashboard.html", 2000);
+                } else {
+                    const err = await response.json();
+                    showBar(err.detail || "Failed to save", "error");
+                    btn.disabled = false;
+                    btn.innerText = "Save to Institution Records";
+                }
+            } catch (error) {
+                showBar("Connection Error", "error");
+                btn.disabled = false;
+                btn.innerText = "Save to Institution Records";
+            }
+        };
     </script>
 </body>
 </html>

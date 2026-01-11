@@ -9,40 +9,60 @@
         .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
         h2 { color: #0288d1; margin: 0; }
         .nav-btn { padding: 8px 15px; background: #546e7a; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        
+        /* The Required Sign Boxes */
+        #notification-bar { 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
+            color: white; font-weight: 600; text-align: center; 
+            transition: 0.4s ease-in-out; z-index: 1000; 
+        }
+        .bg-red { background: #ef5350; top: 20px !important; }
+        .bg-green { background: #66bb6a; top: 20px !important; }
+
         .file-box { background: #fff9c4; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; }
         .dynamic-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
         .dynamic-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
         .label-input { font-weight: 600; background: #e3f2fd; color: #0288d1; }
         .add-row-btn { background: #66bb6a; color: white; border: none; border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 600; }
         .submit-btn { width: 100%; padding: 15px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
-        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 1000; }
-        .bg-red { background: #ef5350; }
-        .bg-green { background: #66bb6a; }
     </style>
 </head>
 <body>
-    <div id="notification-bar" role="alert"></div>
+    <script>
+        // Auth Guard: Immediate check before rendering
+        if (localStorage.getItem('user_role') !== 'admin') {
+            window.location.replace("../index.html");
+        }
+    </script>
+
+    <div id="notification-bar"></div>
 
     <div class="form-container">
         <header class="header-flex">
-            <h2 id="form-title">Student Admission</h2>
+            <h2>Student Admission</h2>
             <nav><a href="dashboard.html" class="nav-btn">← Back to Dashboard</a></nav>
         </header>
 
         <section class="file-box">
-            <label for="record_file_name" style="font-weight: bold; color: #827717; display: block; margin-bottom: 5px;">Target Record File Name (e.g., Class-10-A)</label>
-            <input type="text" id="record_file_name" title="Enter the filename where data will be stored" placeholder="e.g. Grade-1-Records" style="width:100%; padding:10px; border-radius:5px; border:1px solid #fbc02d; box-sizing: border-box;">
+            <label style="font-weight: bold; color: #827717; display: block; margin-bottom: 5px;">Record File Name (No spaces)</label>
+            <input type="text" id="record_file_name" 
+                   placeholder="e.g. Class-10-A" 
+                   title="Filename for backend storage" 
+                   oninput="this.value = this.value.replace(/\s+/g, '-')"
+                   required
+                   style="width:100%; padding:10px; border-radius:5px; border:1px solid #fbc02d; box-sizing: border-box;">
         </section>
         
         <form id="admission-form">
             <div id="dynamic-fields-container">
                 <div class="dynamic-row">
-                    <input type="text" class="label-input" value="Student Name" aria-label="Field Label" title="Data Label">
-                    <input type="text" class="value-input" placeholder="Enter student name" required aria-label="Student Name Value" title="Enter value">
+                    <input type="text" class="label-input" value="Student Name" readonly title="Core Field" aria-label="Label">
+                    <input type="text" class="value-input" placeholder="Value" required title="Enter name" aria-label="Value">
                 </div>
                 <div class="dynamic-row">
-                    <input type="text" class="label-input" value="Father Name" aria-label="Field Label" title="Data Label">
-                    <input type="text" class="value-input" placeholder="Enter father name" aria-label="Father Name Value" title="Enter value">
+                    <input type="text" class="label-input" value="Father Name" readonly title="Core Field" aria-label="Label">
+                    <input type="text" class="value-input" placeholder="Value" required title="Enter father name" aria-label="Value">
                 </div>
             </div>
 
@@ -58,45 +78,67 @@
             const bar = document.getElementById('notification-bar');
             bar.innerText = msg;
             bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-            bar.style.top = "20px";
-            setTimeout(() => bar.style.top = "-100px", 3000);
+            setTimeout(() => bar.className = "", 3000);
         }
 
         function addNewRow() {
             const row = document.createElement('div');
             row.className = 'dynamic-row';
             row.innerHTML = `
-                <input type="text" class="label-input" placeholder="Label" title="Custom field label" aria-label="Custom label">
-                <input type="text" class="value-input" placeholder="Value" title="Custom field value" aria-label="Custom value">
-                <button type="button" style="background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="this.parentElement.remove()">×</button>
+                <input type="text" class="label-input" placeholder="Label" title="Field label" aria-label="Label">
+                <input type="text" class="value-input" placeholder="Value" title="Field value" aria-label="Value">
+                <button type="button" style="background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="this.parentElement.remove()" title="Delete" aria-label="Delete">×</button>
             `;
             document.getElementById('dynamic-fields-container').appendChild(row);
         }
 
         document.getElementById('admission-form').onsubmit = async (e) => {
             e.preventDefault();
+            const btn = document.getElementById('submit-btn');
             const fileName = document.getElementById('record_file_name').value.trim();
-            if(!fileName) return showBar("Please enter a file name!", "error");
+            const token = localStorage.getItem('institutionToken'); // Backend requires Bearer token
 
+            if (!fileName) return showBar("File Name is required!", "error");
+
+            // Constructing the JSON object for the backend
             const studentData = {};
             document.querySelectorAll('.dynamic-row').forEach(row => {
                 const label = row.querySelector('.label-input').value.trim();
                 const value = row.querySelector('.value-input').value.trim();
-                if (label) studentData[label] = value;
+                if (label && value) studentData[label] = value;
             });
 
-            // Ensure there is NO slash at the end of the URL
-         if (response.ok) {
-    showBar(`Saved to ${fileName} Successfully!`, "green");
-    setTimeout(() => window.location.href = "dashboard.html", 1500);
-} else {
-    // This part is crucial for a real developer
-    const errorData = await response.json().catch(() => ({ detail: "Unknown Server Error" }));
-    console.error("Backend Error Details:", errorData);
-    
-    // Show the specific error in your red box
-    showBar(`Backend Error: ${errorData.detail || response.statusText}`, "error");
-}
+            btn.disabled = true;
+            btn.innerText = "Syncing with Server...";
+
+            try {
+                // SUCCESS KEY: Matching the Backend Route structure
+              // Change the fetch in admission.html to match your backend's /save-to-file
+const response = await fetch(`${API_BASE}/save-to-file`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+        filename: fileName, // The backend expects "filename"
+        data: studentData   // The backend expects "data"
+    })
+});
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showBar("Record successfully stored!", "success");
+                    setTimeout(() => window.location.href = "dashboard.html", 2000);
+                } else {
+                    showBar(result.detail || "Error: Data not saved", "error");
+                    btn.disabled = false;
+                    btn.innerText = "Save to Institution Records";
+                }
+            } catch (error) {
+                showBar("Connection Error: Backend unreachable", "error");
+                btn.disabled = false;
+                btn.innerText = "Save to Institution Records";
+            }
+        };
     </script>
 </body>
 </html>

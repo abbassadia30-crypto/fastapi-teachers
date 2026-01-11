@@ -102,46 +102,44 @@
         }
 
         async function setRole(role) {
-            const email = localStorage.getItem('pending_email') || localStorage.getItem('adminEmail');
+    // Look for the email saved during signup or login
+    const email = localStorage.getItem('pendingEmail') || localStorage.getItem('userEmail');
+    
+    if (!email) {
+        showBar("Session expired. Please login again.", "error");
+        setTimeout(() => window.location.href = "index.html", 2000);
+        return;
+    }
+
+    document.getElementById('loading').style.display = 'flex';
+
+    try {
+        const response = await fetch(`${API_BASE}/set-role`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email, role: role })
+        });
+
+        if (response.ok) {
+            localStorage.setItem('user_role', role);
+            localStorage.setItem('setup_complete', 'true');
             
-            if (!email) {
-                showBar("Session expired. Please login again.", "error");
-                setTimeout(() => window.location.href = "index.html", 2000);
-                return;
-            }
+            showBar(`Institutional role set to ${role.toUpperCase()}`, "success");
 
-            document.getElementById('loading').style.display = 'flex';
-
-            try {
-                const response = await fetch(`${API_BASE}/set-role`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: email, role: role })
-                });
-
-                if (response.ok) {
-                    localStorage.setItem('user_role', role);
-                    localStorage.setItem('setup_complete', 'true');
-                    
-                    showBar(`Institutional role set to ${role.toUpperCase()}`);
-
-                    setTimeout(() => {
-                        if (role === 'admin') {
-                            window.location.href = "admin/dashboard.html";
-                        } else {
-                            window.location.href = "dashboard.html";
-                        }
-                    }, 1500);
-                } else {
-                    showBar("Failed to update role on server", "error");
-                }
-            } catch (e) {
-                showBar("Server connection error", "error");
-                console.error(e);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
-            }
+            setTimeout(() => {
+                // Navigate to the correct folder
+                window.location.href = (role === 'admin') ? "admin/dashboard.html" : "dashboard.html";
+            }, 1500);
+        } else {
+            const err = await response.json();
+            showBar(err.detail || "Update failed", "error");
         }
+    } catch (e) {
+        showBar("Connection error", "error");
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
 
         window.onload = () => {
             const urlParams = new URLSearchParams(window.location.search);
