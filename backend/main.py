@@ -20,15 +20,14 @@ conf = ConnectionConfig(
     MAIL_PASSWORD = "quap vhqc ocxk bedk", 
     MAIL_FROM = "starlight01779@gmail.com",
     MAIL_FROM_NAME = "Starlight Support",
-    MAIL_PORT = 465,               # Use 465 for SSL
+    MAIL_PORT = 587,               # Change to 587
     MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = False,         # STARTTLS is for port 587
-    MAIL_SSL_TLS = True,           # SSL/TLS is for port 465
+    MAIL_STARTTLS = True,          # Change to True for 587
+    MAIL_SSL_TLS = False,          # Change to False for 587
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = True,
-    TIMEOUT = 60                   # Increased to 60 to prevent the CancelledError
+    TIMEOUT = 60
 )
-
 app = FastAPI()
 
 # --- CORS SETTINGS ---
@@ -125,7 +124,7 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
         return {"message": "Account already active. Please login."}
 
     # 3. Check OTP and Expiry
-    if user.otp_code != data.otp & user.email == data.email:
+    if await user.otp_code != data.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP.")
 
     if datetime.utcnow() > user.otp_created_at + timedelta(minutes=10):
