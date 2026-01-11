@@ -25,7 +25,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Red and Green Sign Boxes */
         .bg-red { background: #e53935; border: 1px solid #b71c1c; top: 20px !important; }
         .bg-green { background: #43a047; border: 1px solid #1b5e20; top: 20px !important; }
 
@@ -39,7 +38,7 @@
             text-align: center; 
         }
 
-        .input-group { margin-bottom: 20px; }
+        .input-group { margin-bottom: 20px; text-align: right; }
         input { 
             width: 100%; 
             padding: 15px; 
@@ -53,6 +52,16 @@
         }
         input:focus { border-color: #0288d1; background: #fff; }
 
+        .forgot-link {
+            font-size: 12px;
+            color: #888;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 8px;
+            transition: 0.3s;
+        }
+        .forgot-link:hover { color: #0288d1; }
+
         .btn { 
             width: 100%; 
             padding: 15px; 
@@ -63,12 +72,16 @@
             font-weight: 600; 
             cursor: pointer; 
             transition: 0.3s;
+            margin-top: 10px;
         }
         .btn:hover { background: #0277bd; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
 
-        #signup { font-size: 12px; margin-top: 15px; color: #666; }
-        #signup a { color: #0288d1; text-decoration: none; font-weight: 600; }
+        .footer-text { font-size: 12px; margin-top: 15px; color: #666; }
+        .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
+
+        /* Hidden section for password reset */
+        #resetSection { display: none; }
     </style>
 </head>
 <body>
@@ -76,93 +89,122 @@
     <div id="notification-bar"></div>
 
     <div class="card">
-        <h2>Institution Login</h2>
-        <form id="loginForm" onsubmit="handleLogin(event)">
-            <div class="input-group">
-                <input type="email" id="email" placeholder="Institutional Email" required>
-            </div>
-            <div class="input-group">
-                <input type="password" id="password" placeholder="Password" required>
-            </div>
-            <button type="submit" class="btn" id="loginBtn">Login</button>
-        </form>
-        <p id="signup">New to the institution? <a href="signup.html">Create Account</a></p>
+        <div id="loginSection">
+            <h2>Institution Login</h2>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <input type="email" id="email" placeholder="Institutional Email" required>
+                </div>
+                <div class="input-group" style="margin-bottom: 10px;">
+                    <input type="password" id="password" placeholder="Password" required>
+                    <a href="#" class="forgot-link" onclick="toggleView('reset')">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn" id="loginBtn">Login</button>
+            </form>
+            <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
+        </div>
+
+        <div id="resetSection">
+            <h2>Reset Password</h2>
+            <p style="font-size: 13px; color: #666; margin-bottom: 20px;">Enter your institutional email to receive a reset link.</p>
+            <form id="resetForm" onsubmit="handleResetRequest(event)">
+                <div class="input-group">
+                    <input type="email" id="resetEmail" placeholder="Institutional Email" required>
+                </div>
+                <button type="submit" class="btn" id="resetBtn">Send Reset Link</button>
+            </form>
+            <p class="footer-text"><a href="#" onclick="toggleView('login')">Back to Login</a></p>
+        </div>
     </div>
 
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
 
-        // Global Notification System (Red/Green Sign Boxes)
         const Notification = {
             el: document.getElementById('notification-bar'),
             show(msg, type) {
                 this.el.innerText = msg;
                 this.el.className = type === 'success' ? 'bg-green' : 'bg-red';
-                
-                setTimeout(() => {
-                    this.el.className = '';
-                }, 3000);
+                setTimeout(() => { this.el.className = ''; }, 4000);
             }
         };
 
-        // Check if already logged in (Frontend Guard)
-        window.onload = () => {
-            if (localStorage.getItem('institutionToken')) {
-                window.location.href = "admin/dashboard.html";
+        // Switch between Login and Reset views
+        function toggleView(view) {
+            const loginSec = document.getElementById('loginSection');
+            const resetSec = document.getElementById('resetSection');
+            if (view === 'reset') {
+                loginSec.style.display = 'none';
+                resetSec.style.display = 'block';
+            } else {
+                loginSec.style.display = 'block';
+                resetSec.style.display = 'none';
             }
-        };
+        }
 
         async function handleLogin(event) {
-            event.preventDefault(); // Prevents page reload
-            
+            event.preventDefault();
             const btn = document.getElementById('loginBtn');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Simple Validation
-            if (!email || !password) {
-                Notification.show("Please fill all fields", "error");
-                return;
-            }
-
-            // UI State: Loading
             btn.disabled = true;
             btn.innerText = "Authenticating...";
 
             try {
-                const response = await fetch(`${API_BASE}/login`, {
+                const response = await fetch(`${API_BASE}/reset_pass`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
-
                 const result = await response.json();
 
                 if (response.ok) {
-                    // In a real app, we store a Token (JWT)
                     localStorage.setItem('institutionToken', result.access_token || 'session_active');
-                    localStorage.setItem('adminEmail', result.email);
-                    localStorage.setItem('adminName', result.name);
-                    
-                    Notification.show("Login Successful! Redirecting...", "success");
-
-                    setTimeout(() => {
-                        window.location.href = "admin/dashboard.html";
-                    }, 1500);
+                    Notification.show("Login Successful!", "success");
+                    setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
                 } else {
                     Notification.show(result.detail || "Invalid Credentials", "error");
-                    resetButton(btn);
+                    btn.disabled = false;
+                    btn.innerText = "Login";
                 }
             } catch (error) {
-                console.error("Login Error:", error);
-                Notification.show("Connection Error: Server is unreachable", "error");
-                resetButton(btn);
+                Notification.show("Connection Error", "error");
+                btn.disabled = false;
+                btn.innerText = "Login";
             }
         }
 
-        function resetButton(btn) {
-            btn.disabled = false;
-            btn.innerText = "Login";
+        // New functionality for Password Reset Request
+        async function handleResetRequest(event) {
+            event.preventDefault();
+            const btn = document.getElementById('resetBtn');
+            const email = document.getElementById('resetEmail').value.trim();
+
+            btn.disabled = true;
+            btn.innerText = "Sending...";
+
+            try {
+                // Endpoint typically follows a pattern like /forgot-password
+                const response = await fetch(`${API_BASE}/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                if (response.ok) {
+                    Notification.show("Instructions sent to your email!", "success");
+                    setTimeout(() => { toggleView('login'); }, 3000);
+                } else {
+                    const result = await response.json();
+                    Notification.show(result.detail || "Email not found in our institution", "error");
+                }
+            } catch (error) {
+                Notification.show("Server error. Please try again later.", "error");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Send Reset Link";
+            }
         }
     </script>
 </body>

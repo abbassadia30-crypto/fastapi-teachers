@@ -60,3 +60,8 @@ class UpdateStudent(BaseModel):
 
 class EmailSchema(BaseModel):
     email: EmailStr
+
+class ResetPasswordSchema(BaseModel):
+    email: str
+    otp: str
+    new_password: str    
