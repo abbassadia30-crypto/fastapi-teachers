@@ -51,49 +51,52 @@ def get_db():
 
 @app.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # 1. Validation
-    if db.query(models.User).filter(models.User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered.")
+    # 1. Check if user already exists
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     
-    # 2. Generate OTP
-    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+    # 2. Handle Existing User logic
+    if existing_user:
+        if existing_user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already registered and verified. Please login.")
+        else:
+            # User exists but isn't verified yet - let's just update their OTP
+            otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+            existing_user.otp_code = otp
+            existing_user.otp_created_at = datetime.utcnow()
+            db.commit()
+            target_user = existing_user
+    else:
+        # 3. Create New User if they don't exist at all
+        otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        new_user = models.User(
+            name=user.name,
+            email=user.email,
+            password=user.password, 
+            otp_code=otp,
+            otp_created_at=datetime.utcnow(),
+            is_verified=False
+        )
+        db.add(new_user)
+        db.commit()
+        target_user = new_user
 
-    # 3. Create User in Database
-    new_user = models.User(
-        name=user.name,
-        email=user.email,
-        password=user.password, 
-        otp_code=otp,
-        otp_created_at=datetime.utcnow(),
-        is_verified=False
-    )
-    db.add(new_user)
-    db.commit()
-
-    # 4. Interactive HTML Email Content
+    # 4. Prepare Interactive Email (Using the 'target_user' which is either new or updated)
     html_content = f"""
     <html>
-        <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
-            <div style="max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
-                <h2 style="color: #4CAF50; text-align: center;">Verify Your Account</h2>
-                <p>Hello <strong>{user.name}</strong>,</p>
-                <p>Thank you for joining Starlight. To complete your registration, please use the verification code below:</p>
-                <div style="text-align: center; margin: 30px 0;">
-                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; background: #f4f4f4; padding: 10px 20px; border-radius: 5px; border: 1px dashed #4CAF50;">
-                        {otp}
-                    </span>
-                </div>
-                <p style="font-size: 12px; color: #777;">This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
-                <hr style="border: 0; border-top: 1px solid #eee;">
-                <p style="text-align: center; font-size: 14px;">Team Starlight Support</p>
+        <body style="font-family: Arial, sans-serif; padding: 20px;">
+            <div style="max-width: 500px; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
+                <h2 style="color: #2e7d32;">Starlight Verification Code</h2>
+                <p>Hello {target_user.name},</p>
+                <p>Your verification code is below. Please enter it to activate your account.</p>
+                <h1 style="background: #f4f4f4; padding: 10px; text-align: center; letter-spacing: 5px;">{otp}</h1>
             </div>
         </body>
     </html>
     """
 
     message = MessageSchema(
-        subject="Starlight Account Verification",
-        recipients=[user.email],
+        subject="Action Required: Verify Your Account",
+        recipients=[target_user.email],
         body=html_content,
         subtype=MessageType.html
     )
@@ -102,15 +105,14 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     try:
         fm = FastMail(conf)
         background_tasks.add_task(fm.send_message, message)
-        return {"status": "success", "message": "OTP sent to your email."}
+        return {{"status": "success", "message": "OTP sent successfully."}}
     except Exception as e:
-        # LOG THE ERROR and return the OTP in response so you can still verify for now
-        print(f"Email Failed: {e}")
-        return {
+        print(f"SMTP Error: {{e}}")
+        return {{
             "status": "partial_success", 
-            "message": "User registered, but email service timed out.",
-            "otp_debug_only": otp  # USE THIS CODE TO VERIFY UNTIL EMAIL PORT IS OPENED
-        }
+            "message": "Email service timed out, but account is ready for verification.",
+            "otp_debug_only": otp  # You can see this in your terminal/browser to bypass the block
+        }}
 
 @app.post("/verify-otp/")
 async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
