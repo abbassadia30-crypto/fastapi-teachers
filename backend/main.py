@@ -15,20 +15,11 @@ from .database import engine, SessionLocal
 models.Base.metadata.drop_all(bind = engine)
 models.Base.metadata.create_all(bind=engine)
 
-# 1. FastAPI-Mail Configuration
-conf = ConnectionConfig(
-    MAIL_USERNAME = "starlight01779@gmail.com",
-    MAIL_PASSWORD = "quap vhqc ocxk bedk", 
-    MAIL_FROM = "starlight01779@gmail.com",
-    MAIL_FROM_NAME = "Starlight Support",
-    MAIL_PORT = 587,               # Change to 587
-    MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = True,          # Change to True for 587
-    MAIL_SSL_TLS = False,          # Change to False for 587
-    USE_CREDENTIALS = True,
-    VALIDATE_CERTS = True,
-    TIMEOUT = 60
-)
+import resend  # Add this import
+import os
+
+# 1. Configure Resend (Replace with your actual key)
+resend.api_key = "re_your_api_key_here"
 app = FastAPI()
 
 # --- CORS SETTINGS ---
@@ -51,100 +42,77 @@ def get_db():
 
 @app.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # 1. Check if user already exists
+    # --- A. DATABASE LOGIC (Keep this as is) ---
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     
-    # 2. Handle Existing User logic
     if existing_user:
         if existing_user.is_verified:
-            raise HTTPException(status_code=400, detail="Email already registered and verified. Please login.")
-        else:
-            # User exists but isn't verified yet - let's just update their OTP
-            otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-            existing_user.otp_code = otp
-            existing_user.otp_created_at = datetime.utcnow()
-            db.commit()
-            target_user = existing_user
+            raise HTTPException(status_code=400, detail="Email already registered.")
+        otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+        existing_user.otp_code = otp
+        existing_user.otp_created_at = datetime.utcnow()
+        db.commit()
+        target_name = existing_user.name
     else:
-        # 3. Create New User if they don't exist at all
         otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
         new_user = models.User(
-            name=user.name,
-            email=user.email,
-            password=user.password, 
-            otp_code=otp,
-            otp_created_at=datetime.utcnow(),
-            is_verified=False
+            name=user.name, email=user.email, password=user.password, 
+            otp_code=otp, otp_created_at=datetime.utcnow(), is_verified=False
         )
         db.add(new_user)
         db.commit()
-        target_user = new_user
+        target_name = user.name
 
-    # 4. Prepare Interactive Email (Using the 'target_user' which is either new or updated)
-    html_content = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; padding: 20px;">
-            <div style="max-width: 500px; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #2e7d32;">Starlight Verification Code</h2>
-                <p>Hello {target_user.name},</p>
-                <p>Your verification code is below. Please enter it to activate your account.</p>
-                <h1 style="background: #f4f4f4; padding: 10px; text-align: center; letter-spacing: 5px;">{otp}</h1>
-            </div>
-        </body>
-    </html>
-    """
+    # --- B. RESEND EMAIL LOGIC ---
+    def send_email_task(email: str, name: str, code: str):
+        try:
+            params = {
+                "from": "Starlight <onboarding@resend.dev>", # Use this exact sender for free tier
+                "to": [email],
+                "subject": "Your Verification Code",
+                "html": f"""
+                <div style="font-family: sans-serif; text-align: center; padding: 20px;">
+                    <h2>Verify Your Account</h2>
+                    <p>Hello {name}, your OTP is:</p>
+                    <h1 style="color: #4A90E2; font-size: 40px; letter-spacing: 5px;">{code}</h1>
+                    <p>This code will expire in 10 minutes.</p>
+                </div>
+                """,
+            }
+            resend.Emails.send(params)
+        except Exception as e:
+            print(f"Resend Error: {e}")
 
-    message = MessageSchema(
-        subject="Action Required: Verify Your Account",
-        recipients=[target_user.email],
-        body=html_content,
-        subtype=MessageType.html
-    )
-    
-    # 5. Send with Error Handling
-    try:
-        fm = FastMail(conf)
-        background_tasks.add_task(fm.send_message, message)
-        # Use SINGLE braces here:
-        return {"status": "success", "message": "OTP sent successfully."}
-    except Exception as e:
-        # Use f-string correctly for the print
-        print(f"SMTP Error: {e}") 
-        # Use SINGLE braces here:
-        return {
-            "status": "partial_success", 
-            "message": "Email service timed out, but account is ready for verification.",
-            "otp_debug_only": otp 
-        }
+    # Add to background tasks so the user gets a fast response
+    background_tasks.add_task(send_email_task, user.email, target_name, otp)
+
+    return {
+        "status": "success", 
+        "message": "OTP sent! Check your email.",
+        "otp_debug_only": otp 
+    }
 @app.post("/verify-otp/")
 async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
-    # 1. Find the pending record
     user = db.query(models.User).filter(models.User.email == data.email).first()
 
     if not user:
-        raise HTTPException(status_code=404, detail="No signup request found for this email.")
+        raise HTTPException(status_code=404, detail="User not found.")
 
-    # 2. Check if already verified
     if user.is_verified:
-        return {"message": "Account already active. Please login."}
+        return {"message": "Account already active."}
 
-    # 3. Check OTP and Expiry
-    if await user.otp_code != data.otp:
+    # FIX: Use 'and' and parentheses for clarity
+    if user.otp_code != data.otp:
         raise HTTPException(status_code=400, detail="Invalid OTP.")
 
     if datetime.utcnow() > user.otp_created_at + timedelta(minutes=10):
-        # If expired, delete the pending record so they can try again fresh
-        db.delete(user)
-        db.commit()
-        raise HTTPException(status_code=400, detail="OTP expired. Please sign up again.")
+        raise HTTPException(status_code=400, detail="OTP expired.")
 
-    # 4. SUCCESS: Now "Create" the user by marking them verified
     user.is_verified = True
-    user.otp_code = None # Clean up
+    user.otp_code = None 
     db.commit()
 
-    return {"message": "User created and verified successfully!"}
-
+    return {"status": "success", "message": "Verified successfully!"}
 @app.post("/login")
 async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
