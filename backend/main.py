@@ -8,6 +8,7 @@ from typing import List
 
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
+from grpc import Status, StatusCode
 from sqlalchemy.orm import Session
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
@@ -137,16 +138,19 @@ async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db))
 # --- STUDENT MANAGEMENT TERMINALS ---
 
 @app.post("/students", response_model=schemas.StudentResponse)
-async def create_student(student: schemas.StudentCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-  
-  if db.query(models.StudentRecord).filter(models.StudentRecord.student_name == student.student_name).first():
-    if db.query(models.StudentRecord).filter(models.StudentRecord.Father_cnic != student.father_cnic )
-        raise HTTPException(status_code=403 , detail="Enter correct Father and student name ")  
-    db_student = models.Student(**student.dict())
+async def create_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.StudentRecord).filter(
+        models.StudentRecord.student_name == student.student_name,
+        models.StudentRecord.Father_cnic == student.father_cnic
+    ).first()
+    
+    if existing:
+        raise HTTPException(status_code=400, detail="Student already exists")
+    
+    db_student = models.StudentRecord(**student.dict()) # Ensure model name matches models.py
     db.add(db_student)
     db.commit()
     db.refresh(db_student)
-    
     return db_student
 
 @app.get("/students")
@@ -230,19 +234,20 @@ async def open_record(filename: str):
         raise HTTPException(status_code=500, detail="Could not read file")
     
 @app.delete("/Delete_student")
-async def delete_student(student : schemas.StudentCreate , db : Session = Depends(get_db()) ):
-    if db.query(models.StudentRecord).filter(models.StudentRecord.Father_cnic != student.father_cnic & models.StudentRecord.student_name != student.student_name ).first():
-          raise HTTPException(status_code=402 , detail="It is already deleted")
+async def delete_student(student_name: str, father_cnic: str, db: Session = Depends(get_db)):
+    record = db.query(models.StudentRecord).filter(
+        models.StudentRecord.student_name == student_name,
+        models.StudentRecord.Father_cnic == father_cnic
+    ).first()
     
-    db.delete(student)
+    if not record:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    db.delete(record)
     db.commit()
+    return {"message": "Deleted successfully"}
 
-@app.put("Edit_student")
-async def edit_student(student : schemas.UpdateStudent  ,  db : Session = Depends(get_db)):
-    students = db.query(models.StudentRecord).filter(models.StudentRecord.Father_cnic != student.father_cnic & models.StudentRecord.student_name != student.student_name ).first()
-    if students:
-        raise HTTPException(status_code=402 , detail="Student does not exist")
-    
-    for row in student:
-       students.row = student.row
+@app.put("/Edit_student") # Added /
+async def edit_student(student: schemas.UpdateStudent, db: Session = Depends(get_db)):
+    return HTTPException(status_code=404, detail="Student not found")
     
