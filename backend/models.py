@@ -16,6 +16,7 @@ class User(Base):
 
 class StudentRecord(Base):
     __tablename__ = "student_records"
+    id = Column(Integer, primary_key=True, index=True)
     student_name = Column(String , nullable=False)
     father_name = Column(String , nullable=False)
     Father_cnic = Column(String , nullable=True)
