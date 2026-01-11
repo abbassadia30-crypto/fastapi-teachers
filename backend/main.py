@@ -9,10 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
-# Internal imports
-import models, schemas
-from database import engine, SessionLocal
-
+from . import models, schemas
+from .database import engine, SessionLocal
 # Initialize database tables
 models.Base.metadata.create_all(bind=engine)
 
