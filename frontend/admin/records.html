@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Records | Institution Portal</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0288d1; padding-bottom: 10px; margin-bottom: 20px; }
+        h2 { color: #0288d1; margin: 0; }
+        
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .file-card { background: #fffde7; border: 1px solid #fbc02d; padding: 15px; border-radius: 8px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .file-card:hover { transform: translateY(-5px); background: #fff9c4; }
+        .file-icon { font-size: 30px; display: block; margin-bottom: 5px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { background: #0288d1; color: white; padding: 12px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        tr:hover { background: #f1f1f1; }
+        
+        .nav-btn { padding: 8px 15px; background: #546e7a; color: white; border: none; border-radius: 6px; text-decoration: none; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Institution File Explorer</h2>
+            <a href="dashboard.html" class="nav-btn">Dashboard</a>
+        </div>
+
+        <p>Select a record file to view students:</p>
+        <div id="file-list" class="file-grid">
+            </div>
+
+        <div id="data-view" style="display:none;">
+            <h3 id="current-file-name" style="color:#0288d1;"></h3>
+            <table id="student-table">
+                <thead id="table-head"></thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+
+        // 1. Fetch the list of files
+        async function loadFileList() {
+            const res = await fetch(`${API_BASE}/list-records`);
+            const files = await res.json();
+            const listDiv = document.getElementById('file-list');
+            listDiv.innerHTML = "";
+
+            files.forEach(file => {
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.innerHTML = `<span class="file-icon">📁</span> <b>${file}</b>`;
+                card.onclick = () => openFile(file);
+                listDiv.appendChild(card);
+            });
+        }
+
+        // 2. Open and display a specific file
+        async function openFile(name) {
+            const res = await fetch(`${API_BASE}/open-record/${name}`);
+            const students = await res.json();
+            
+            document.getElementById('data-view').style.display = "block";
+            document.getElementById('current-file-name').innerText = `Viewing: ${name}.json`;
+
+            if (students.length === 0) return;
+
+            // Generate Table Headers dynamically based on the JSON keys
+            const keys = Object.keys(students[0]);
+            const head = document.getElementById('table-head');
+            head.innerHTML = `<tr>${keys.map(k => `<th>${k.replace('_',' ').toUpperCase()}</th>`).join('')}</tr>`;
+
+            // Generate Rows
+            const body = document.getElementById('table-body');
+            body.innerHTML = students.map(s => `
+                <tr>${keys.map(k => `<td>${s[k] || '-'}</td>`).join('')}</tr>
+            `).join('');
+        }
+
+        window.onload = loadFileList;
+    </script>
+</body>
+</html>

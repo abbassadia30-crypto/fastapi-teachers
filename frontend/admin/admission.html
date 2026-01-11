@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admission Form | Institution Portal</title>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
+        .form-container { max-width: 700px; margin: 20px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h2 { color: #0288d1; margin: 0; }
+        .nav-btn { padding: 8px 15px; background: #546e7a; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
+        .file-box { background: #fff9c4; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; }
+        .dynamic-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
+        .dynamic-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .label-input { font-weight: 600; background: #e3f2fd; color: #0288d1; }
+        .add-row-btn { background: #66bb6a; color: white; border: none; border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 600; }
+        .submit-btn { width: 100%; padding: 15px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
+        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 1000; }
+        .bg-red { background: #ef5350; }
+        .bg-green { background: #66bb6a; }
+    </style>
+</head>
+<body>
+    <div id="notification-bar" role="alert"></div>
+
+    <div class="form-container">
+        <header class="header-flex">
+            <h2 id="form-title">Student Admission</h2>
+            <nav><a href="dashboard.html" class="nav-btn">← Back to Dashboard</a></nav>
+        </header>
+
+        <section class="file-box">
+            <label for="record_file_name" style="font-weight: bold; color: #827717; display: block; margin-bottom: 5px;">Target Record File Name (e.g., Class-10-A)</label>
+            <input type="text" id="record_file_name" title="Enter the filename where data will be stored" placeholder="e.g. Grade-1-Records" style="width:100%; padding:10px; border-radius:5px; border:1px solid #fbc02d; box-sizing: border-box;">
+        </section>
+        
+        <form id="admission-form">
+            <div id="dynamic-fields-container">
+                <div class="dynamic-row">
+                    <input type="text" class="label-input" value="Student Name" aria-label="Field Label" title="Data Label">
+                    <input type="text" class="value-input" placeholder="Enter student name" required aria-label="Student Name Value" title="Enter value">
+                </div>
+                <div class="dynamic-row">
+                    <input type="text" class="label-input" value="Father Name" aria-label="Field Label" title="Data Label">
+                    <input type="text" class="value-input" placeholder="Enter father name" aria-label="Father Name Value" title="Enter value">
+                </div>
+            </div>
+
+            <button type="button" class="add-row-btn" onclick="addNewRow()">+ Add Custom Information Row</button>
+            <button type="submit" id="submit-btn" class="submit-btn">Save to Institution Records</button>
+        </form>
+    </div>
+
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+
+        function showBar(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+            bar.style.top = "20px";
+            setTimeout(() => bar.style.top = "-100px", 3000);
+        }
+
+        function addNewRow() {
+            const row = document.createElement('div');
+            row.className = 'dynamic-row';
+            row.innerHTML = `
+                <input type="text" class="label-input" placeholder="Label" title="Custom field label" aria-label="Custom label">
+                <input type="text" class="value-input" placeholder="Value" title="Custom field value" aria-label="Custom value">
+                <button type="button" style="background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="this.parentElement.remove()">×</button>
+            `;
+            document.getElementById('dynamic-fields-container').appendChild(row);
+        }
+
+        document.getElementById('admission-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const fileName = document.getElementById('record_file_name').value.trim();
+            if(!fileName) return showBar("Please enter a file name!", "error");
+
+            const studentData = {};
+            document.querySelectorAll('.dynamic-row').forEach(row => {
+                const label = row.querySelector('.label-input').value.trim();
+                const value = row.querySelector('.value-input').value.trim();
+                if (label) studentData[label] = value;
+            });
+
+            // Ensure there is NO slash at the end of the URL
+         if (response.ok) {
+    showBar(`Saved to ${fileName} Successfully!`, "green");
+    setTimeout(() => window.location.href = "dashboard.html", 1500);
+} else {
+    // This part is crucial for a real developer
+    const errorData = await response.json().catch(() => ({ detail: "Unknown Server Error" }));
+    console.error("Backend Error Details:", errorData);
+    
+    // Show the specific error in your red box
+    showBar(`Backend Error: ${errorData.detail || response.statusText}`, "error");
+}
+    </script>
+</body>
+</html>
