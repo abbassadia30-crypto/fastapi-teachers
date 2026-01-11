@@ -11,8 +11,7 @@ from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
 from . import models, schemas
 from .database import engine, SessionLocal
-# Initialize database tables
-models.Base.metadata.drop_all(bind=engine)
+
 models.Base.metadata.create_all(bind=engine)
 
 # 1. FastAPI-Mail Configuration
