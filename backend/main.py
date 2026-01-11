@@ -17,14 +17,14 @@ models.Base.metadata.create_all(bind=engine)
 
 # 1. FastAPI-Mail Configuration
 conf = ConnectionConfig(
-    MAIL_USERNAME = "abbassadia30@gmail.com",
-    MAIL_PASSWORD = "wvcz uopu bgir hzev", 
-    MAIL_FROM = "abbassadia30@gmail.com", # Sender email
+    MAIL_USERNAME = "starlight01779@gmail.com",
+    MAIL_PASSWORD = "quap vhqc ocxk bedk", 
+    MAIL_FROM = "starlight01779@gmail.com", # Sender email
     MAIL_FROM_NAME = "Starlight Support",
-    MAIL_PORT = 587,
+    MAIL_PORT = 465,
     MAIL_SERVER = "smtp.gmail.com",
-    MAIL_STARTTLS = True,
-    MAIL_SSL_TLS = False,
+    MAIL_STARTTLS = False,
+    MAIL_SSL_TLS = True,
     USE_CREDENTIALS = True,
     VALIDATE_CERTS = True
 )
