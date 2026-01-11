@@ -7,7 +7,6 @@ from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 
 from . import models, schemas
 from .database import engine, SessionLocal
