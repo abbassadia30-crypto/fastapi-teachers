@@ -2,7 +2,7 @@ import os
 import random
 import json
 from datetime import datetime, timedelta, timezone
-
+import bcrypt
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
@@ -38,12 +38,23 @@ def get_db():
     finally:
         db.close()
 
-# 2. Helper Functions
-def hash_password(password: str):
-    return pwd_context.hash(password)
+def hash_password(password: str) -> str:
+    # Bcrypt has a 72-byte limit. We truncate to be safe, 
+    # though 72 chars is plenty for a real app.
+    pwd_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed.decode('utf-8')
 
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8')[:72], 
+            hashed_password.encode('utf-8')
+        )
+    except Exception as e:
+        print(f"Auth Error: {e}")
+        return False
 
 def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
     try:
