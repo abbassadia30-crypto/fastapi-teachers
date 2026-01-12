@@ -25,8 +25,10 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        .bg-red { top: 20px !important; background: #e53935; border: 1px solid #b71c1c; }
-        .bg-green { top: 20px !important; background: #43a047; border: 1px solid #1b5e20; }
+        /* Added show-notify to handle the slide-down animation */
+        .show-notify { top: 20px !important; }
+        .bg-red { background: #e53935; border: 1px solid #b71c1c; }
+        .bg-green { background: #43a047; border: 1px solid #1b5e20; }
 
         .card { 
             background: white; 
@@ -131,7 +133,8 @@ const Notification = {
     el: document.getElementById('notification-bar'),
     show(msg, type) {
         this.el.innerText = msg;
-        this.el.className = type === 'success' ? 'bg-green' : 'bg-red';
+        // Added show-notify to ensure the element moves to top: 20px
+        this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
         setTimeout(() => { this.el.className = ''; }, 4000);
     }
 };
@@ -170,8 +173,8 @@ async function handleSignup(event) {
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-    const fullName = `${firstName} ${lastName}`;
-    // Developer Logic: Passwords must match
+
+    // Validation
     if (password !== confirmPassword) {
         Notification.show("Passwords do not match", "error");
         return;
@@ -190,7 +193,7 @@ async function handleSignup(event) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
-                name: `${firstName} ${lastName}`, // Combine names for backend
+                name: `${firstName} ${lastName}`, 
                 email: email, 
                 password: password 
             })
@@ -215,5 +218,4 @@ async function handleSignup(event) {
 }
 </script>
 </body>
-</html>
 </html>

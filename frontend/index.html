@@ -25,9 +25,10 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Red and Green Sign Boxes */
-        .bg-red { background: #e53935; border: 1px solid #b71c1c; top: 20px !important; }
-        .bg-green { background: #43a047; border: 1px solid #1b5e20; top: 20px !important; }
+        /* Classes toggled by JS */
+        .show-notify { top: 20px !important; }
+        .bg-red { background: #e53935; border: 1px solid #b71c1c; }
+        .bg-green { background: #43a047; border: 1px solid #1b5e20; }
 
         .card { 
             background: white; 
@@ -81,12 +82,10 @@
         .footer-text { font-size: 12px; margin-top: 15px; color: #666; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
 
-        /* Strength Meter */
         .strength-container { width: 100%; height: 5px; background: #eee; border-radius: 5px; margin-top: 5px; margin-bottom: 10px; overflow: hidden; display: none; }
         .strength-bar { height: 100%; width: 0%; transition: 0.4s ease; }
         .strength-text { font-size: 10px; text-align: left; display: block; margin-top: 5px; }
 
-        /* View Control */
         #resetSection, #otpStep { display: none; }
     </style>
 </head>
@@ -147,7 +146,7 @@
             el: document.getElementById('notification-bar'),
             show(msg, type) {
                 this.el.innerText = msg;
-                this.el.className = type === 'success' ? 'bg-green' : 'bg-red';
+                this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
                 setTimeout(() => { this.el.className = ''; }, 4000);
             }
         };
@@ -161,47 +160,46 @@
             } else {
                 loginSec.style.display = 'block';
                 resetSec.style.display = 'none';
-                // Reset internal steps
                 document.getElementById('emailStep').style.display = 'block';
                 document.getElementById('otpStep').style.display = 'none';
             }
         }
 
         async function handleLogin(event) {
-    event.preventDefault();
-    const btn = document.getElementById('loginBtn');
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+            event.preventDefault();
+            const btn = document.getElementById('loginBtn');
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
 
-    btn.disabled = true;
-    btn.innerText = "Authenticating...";
+            btn.disabled = true;
+            btn.innerText = "Authenticating...";
 
-    try {
-        // FIXED: Pointing to /login instead of /reset_pass
-        const response = await fetch(`${API_BASE}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        
-        const result = await response.json();
+            try {
+                const response = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const result = await response.json();
 
-       if (response.ok) {
-    // CRITICAL FIX: Store the email so the Role Selection page knows WHO is setting the role
-    localStorage.setItem('userEmail', email); 
-    localStorage.setItem('institutionToken', result.access_token);
-    Notification.show("Login Successful!", "success");
-    // Redirect to role selection first, NOT the dashboard
-    setTimeout(() => { window.location.href = "role-selection.html"; }, 1500); 
-} else {
-            Notification.show(result.detail || "Invalid Credentials", "error");
-            btn.disabled = false;
-            btn.innerText = "Login";
-        }
-    } catch (error) {
-        Notification.show("Connection Error", "error");
-        btn.disabled = false;
-    }
+                if (response.ok) {
+                    localStorage.setItem('userEmail', email); 
+                    localStorage.setItem('institutionToken', result.access_token);
+                    Notification.show("Login Successful!", "success");
+                    setTimeout(() => { window.location.href = "role-selection.html"; }, 1500); 
+                } else {
+                    Notification.show(result.detail || "Invalid Credentials", "error");
+                    btn.disabled = false;
+                    btn.innerText = "Login";
+                }
+            } catch (error) {
+                Notification.show("Connection Error", "error");
+                btn.disabled = false;
+                btn.innerText = "Login";
+            }
+        } // Closed handleLogin properly here
+
         async function handleResetRequest(event) {
             event.preventDefault();
             const btn = document.getElementById('resetBtn');
@@ -234,7 +232,7 @@
                 btn.innerText = "Send Reset Code";
             }
         }
-    }
+
         async function handleFinalReset() {
             const btn = document.getElementById('finalResetBtn');
             const email = document.getElementById('resetEmail').value.trim();
