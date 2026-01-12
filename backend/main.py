@@ -1,23 +1,21 @@
 import os
 import random
-import json
 from datetime import datetime, timedelta, timezone
 import bcrypt
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from passlib.context import CryptContext
 
 # Import your local files
 from . import models, schemas
 from .database import engine, SessionLocal
 import resend 
 
-
-models.Base.metadata.drop_all(bind=engine)
+# Database Setup (Warning: drop_all clears data on every restart)
+# models.Base.metadata.drop_all(bind=engine) 
 models.Base.metadata.create_all(bind=engine)
 
-# SECURITY: Use environment variables in production!
+# SECURITY: Set this in Render Environment Variables
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
 
 app = FastAPI()
@@ -37,13 +35,11 @@ def get_db():
     finally:
         db.close()
 
+# --- Auth Helpers using Direct Bcrypt ---
 def hash_password(password: str) -> str:
-    # Bcrypt has a 72-byte limit. We truncate to be safe, 
-    # though 72 chars is plenty for a real app.
     pwd_bytes = password.encode('utf-8')[:72]
     salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(pwd_bytes, salt)
-    return hashed.decode('utf-8')
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     try:
@@ -73,7 +69,7 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
     except Exception as e:
         print(f"Resend Email Error: {e}")
 
-# 3. Authentication Routes
+# --- Authentication Routes ---
 @app.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
@@ -104,8 +100,12 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
     if not user or user.otp_code != data.otp:
         raise HTTPException(status_code=400, detail="Invalid code or user.")
     
-    # Timezone-aware expiry check
-    if datetime.now(timezone.utc) > user.otp_created_at.replace(tzinfo=timezone.utc) + timedelta(minutes=10):
+    # Ensure timezone awareness for comparison
+    otp_time = user.otp_created_at
+    if otp_time.tzinfo is None:
+        otp_time = otp_time.replace(tzinfo=timezone.utc)
+
+    if datetime.now(timezone.utc) > otp_time + timedelta(minutes=10):
         raise HTTPException(status_code=400, detail="OTP expired.")
 
     user.is_verified, user.otp_code = True, None 
@@ -122,7 +122,7 @@ async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db))
     
     return {"message": "Login successful", "user": user.name, "access_token": "token-xyz"}
 
-# 4. Password Reset (Forgot Password)
+# --- Password Reset ---
 @app.post("/forgot-password")
 async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):
     email = payload.get("email")
@@ -147,11 +147,12 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
     db.commit()
     return {"message": "Password updated"}
 
-# 5. Role & File Management
+# --- Institution Role Management ---
 @app.patch("/set-role")
 async def set_role(payload: dict = Body(...), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
-    if not user: raise HTTPException(status_code=404, detail="User not found")
+    if not user: 
+        raise HTTPException(status_code=404, detail="User not found")
     user.role = payload.get("role")
     db.commit()
     return {"status": "success"}
