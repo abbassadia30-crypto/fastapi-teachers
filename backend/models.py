@@ -13,6 +13,7 @@ class User(Base):
     otp_code = Column(String, nullable=True)
     # This field is required for the 1-minute logic
     otp_created_at = Column(DateTime, default=datetime.utcnow)
+    role = Column(String, nullable=True)
 
 class StudentRecord(Base):
     __tablename__ = "student_records"

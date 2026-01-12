@@ -44,8 +44,10 @@ class StudentCreate(StudentBase):
     pass
 
 # This is the critical part for the Frontend
-class StudentResponse(StudentBase):
-    id: int  # The database ID must be here
+class UserResponse(BaseModel):
+    email: str
+    is_verified: bool
+    role: Optional[str] = None # Ensure this is here
 
     class Config:
         from_attributes = True
