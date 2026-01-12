@@ -13,8 +13,7 @@ from . import models, schemas
 from .database import engine, SessionLocal
 import resend 
 
-# 1. Setup & Config
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
 models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
