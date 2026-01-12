@@ -15,6 +15,7 @@ import resend
 
 # 1. Setup & Config
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 # SECURITY: Use environment variables in production!
