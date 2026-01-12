@@ -13,6 +13,7 @@ import resend
 
 # Database Setup (Warning: drop_all clears data on every restart)
 # models.Base.metadata.drop_all(bind=engine) 
+models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 # SECURITY: Set this in Render Environment Variables
