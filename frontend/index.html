@@ -25,7 +25,6 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Classes toggled by JS */
         .show-notify { top: 20px !important; }
         .bg-red { background: #e53935; border: 1px solid #b71c1c; }
         .bg-green { background: #43a047; border: 1px solid #1b5e20; }
@@ -81,12 +80,6 @@
 
         .footer-text { font-size: 12px; margin-top: 15px; color: #666; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
-
-        .strength-container { width: 100%; height: 5px; background: #eee; border-radius: 5px; margin-top: 5px; margin-bottom: 10px; overflow: hidden; display: none; }
-        .strength-bar { height: 100%; width: 0%; transition: 0.4s ease; }
-        .strength-text { font-size: 10px; text-align: left; display: block; margin-top: 5px; }
-
-        #resetSection, #otpStep { display: none; }
     </style>
 </head>
 <body>
@@ -94,49 +87,18 @@
     <div id="notification-bar"></div>
 
     <div class="card">
-        <div id="loginSection">
-            <h2>Institution Login</h2>
-            <form id="loginForm" onsubmit="handleLogin(event)">
-                <div class="input-group">
-                    <input type="email" id="email" placeholder="Institutional Email" required>
-                </div>
-                <div class="input-group" style="margin-bottom: 10px;">
-                    <input type="password" id="password" placeholder="Password" required>
-                    <a href="#" class="forgot-link" onclick="toggleView('reset')">Forgot Password?</a>
-                </div>
-                <button type="submit" class="btn" id="loginBtn">Login</button>
-            </form>
-            <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
-        </div>
-
-        <div id="resetSection">
-            <h2 id="resetTitle">Reset Password</h2>
-            <p id="resetSub" style="font-size: 13px; color: #666; margin-bottom: 20px;">Enter your institutional email.</p>
-            
-            <form id="resetForm" onsubmit="handleResetRequest(event)">
-                <div id="emailStep">
-                    <div class="input-group">
-                        <input type="email" id="resetEmail" placeholder="Institutional Email" required>
-                    </div>
-                    <button type="submit" class="btn" id="resetBtn">Send Reset Code</button>
-                </div>
-
-                <div id="otpStep">
-                    <div class="input-group">
-                        <input type="text" id="resetOTP" placeholder="6-Digit Code" maxlength="6">
-                    </div>
-                    <div class="input-group">
-                        <input type="password" id="newPassword" placeholder="New Password" oninput="checkStrength(this.value)">
-                        <span id="strengthLabel" class="strength-text"></span>
-                        <div class="strength-container" id="strengthContainer">
-                            <div id="strengthBar" class="strength-bar"></div>
-                        </div>
-                    </div>
-                    <button type="button" class="btn" onclick="handleFinalReset()" id="finalResetBtn">Update Password</button>
-                </div>
-            </form>
-            <p class="footer-text"><a href="#" onclick="toggleView('login')">Back to Login</a></p>
-        </div>
+        <h2>Institution Login</h2>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Institutional Email" required>
+            </div>
+            <div class="input-group" style="margin-bottom: 10px;">
+                <input type="password" id="password" placeholder="Password" required>
+                <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
+            </div>
+            <button type="submit" class="btn" id="loginBtn">Login</button>
+        </form>
+        <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
     </div>
 
     <script>
@@ -150,20 +112,6 @@
                 setTimeout(() => { this.el.className = ''; }, 4000);
             }
         };
-
-        function toggleView(view) {
-            const loginSec = document.getElementById('loginSection');
-            const resetSec = document.getElementById('resetSection');
-            if (view === 'reset') {
-                loginSec.style.display = 'none';
-                resetSec.style.display = 'block';
-            } else {
-                loginSec.style.display = 'block';
-                resetSec.style.display = 'none';
-                document.getElementById('emailStep').style.display = 'block';
-                document.getElementById('otpStep').style.display = 'none';
-            }
-        }
 
         async function handleLogin(event) {
             event.preventDefault();
@@ -184,123 +132,22 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    localStorage.setItem('userEmail', email); 
+                    // Success logic matching your backend return
+                    localStorage.setItem('userName', result.user); 
                     localStorage.setItem('institutionToken', result.access_token);
-                    Notification.show("Login Successful!", "success");
+                    
+                    Notification.show(result.message, "success");
                     setTimeout(() => { window.location.href = "role-selection.html"; }, 1500); 
                 } else {
-                    Notification.show(result.detail || "Invalid Credentials", "error");
+                    // This catches the 401 (Credentials) and 403 (Verification) errors
+                    Notification.show(result.detail || "Login failed", "error");
                     btn.disabled = false;
                     btn.innerText = "Login";
                 }
             } catch (error) {
-                Notification.show("Connection Error", "error");
+                Notification.show("Server Connection Error", "error");
                 btn.disabled = false;
                 btn.innerText = "Login";
-            }
-        } // Closed handleLogin properly here
-
-        async function handleResetRequest(event) {
-            event.preventDefault();
-            const btn = document.getElementById('resetBtn');
-            const email = document.getElementById('resetEmail').value.trim();
-
-            btn.disabled = true;
-            btn.innerText = "Sending...";
-
-            try {
-                const response = await fetch(`${API_BASE}/forgot-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                if (response.ok) {
-                    Notification.show("Code sent! Check your inbox.", "success");
-                    document.getElementById('emailStep').style.display = 'none';
-                    document.getElementById('otpStep').style.display = 'block';
-                    document.getElementById('resetTitle').innerText = "Enter Code";
-                    document.getElementById('resetSub').innerText = "Verify the 6-digit code for " + email;
-                } else {
-                    const result = await response.json();
-                    Notification.show(result.detail || "Error finding email", "error");
-                }
-            } catch (error) {
-                Notification.show("Server connection failed", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Send Reset Code";
-            }
-        }
-
-        async function handleFinalReset() {
-            const btn = document.getElementById('finalResetBtn');
-            const email = document.getElementById('resetEmail').value.trim();
-            const otp = document.getElementById('resetOTP').value.trim();
-            const new_password = document.getElementById('newPassword').value;
-
-            if (new_password.length < 8) {
-                Notification.show("Minimum 8 characters required", "error");
-                return;
-            }
-
-            btn.disabled = true;
-            btn.innerText = "Updating...";
-
-            try {
-                const response = await fetch(`${API_BASE}/reset-password-confirm`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, otp, new_password })
-                });
-
-                if (response.ok) {
-                    Notification.show("Password Updated! Please login.", "success");
-                    setTimeout(() => { location.reload(); }, 2000);
-                } else {
-                    const result = await response.json();
-                    Notification.show(result.detail || "Invalid code or expired", "error");
-                }
-            } catch (error) {
-                Notification.show("Connection error", "error");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Update Password";
-            }
-        }
-
-        function checkStrength(password) {
-            const container = document.getElementById('strengthContainer');
-            const bar = document.getElementById('strengthBar');
-            const label = document.getElementById('strengthLabel');
-            
-            if (password.length === 0) {
-                container.style.display = 'none';
-                label.innerText = '';
-                return;
-            }
-
-            container.style.display = 'block';
-            let strength = 0;
-            if (password.length > 7) strength += 25;
-            if (/[A-Z]/.test(password)) strength += 25;
-            if (/[0-9]/.test(password)) strength += 25;
-            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-
-            bar.style.width = strength + '%';
-            
-            if (strength <= 25) {
-                bar.style.background = '#e53935';
-                label.innerText = 'Weak';
-                label.style.color = '#e53935';
-            } else if (strength <= 75) {
-                bar.style.background = '#ffa000';
-                label.innerText = 'Moderate';
-                label.style.color = '#ffa000';
-            } else {
-                bar.style.background = '#43a047';
-                label.innerText = 'Strong';
-                label.style.color = '#43a047';
             }
         }
     </script>
