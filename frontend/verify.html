@@ -50,9 +50,12 @@
     </div>
 
 <script>
-    const API_BASE = "https://fastapi-teachers.onrender.com";
+const API_BASE = "https://fastapi-teachers.onrender.com";
     const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('pendingEmail');
     
+    // Check if this is a password reset flow or a new signup flow
+    const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
+
     // Security Config
     const MAX_ATTEMPTS = 3;
     const LOCK_KEY = `lock_${email}`;
@@ -69,7 +72,6 @@
         setTimeout(() => { bar.className = ""; }, 4000);
     }
 
-    // Check Security Status on Load
     function checkSecurityStatus() {
         const isBlocked = localStorage.getItem(BLOCK_KEY);
         const lockTime = localStorage.getItem(LOCK_KEY);
@@ -86,7 +88,7 @@
 
         if (lockTime) {
             const now = new Date().getTime();
-            const waitTime = 24 * 60 * 60 * 1000; // 24 Hours
+            const waitTime = 24 * 60 * 60 * 1000; 
             if (now < parseInt(lockTime) + waitTime) {
                 btn.disabled = true;
                 input.disabled = true;
@@ -94,7 +96,6 @@
                 info.innerText = `Daily limit reached. Try again in ${hoursLeft} hours.`;
                 return true;
             } else {
-                // Lock expired
                 localStorage.removeItem(LOCK_KEY);
                 localStorage.setItem(ATTEMPT_KEY, "0");
             }
@@ -118,40 +119,50 @@
         btn.innerText = "Verifying...";
 
         try {
+            // Note: If using a different endpoint for reset verification, update here. 
+            // Otherwise, we use the standard OTP verification.
             const response = await fetch(`${API_BASE}/verify-otp/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email:email, otp:otp })
+                body: JSON.stringify({ email: email, otp: otp })
             });
 
             if (response.ok) {
-                showBar("Verified!", "success");
+                showBar("Verified Successfully!", "success");
+                
+                // Cleanup security keys
                 localStorage.removeItem(ATTEMPT_KEY);
                 localStorage.removeItem(LOCK_KEY);
                 localStorage.removeItem('pendingEmail');
-                setTimeout(() => { window.location.href = "index.html"; }, 2000);
+                localStorage.removeItem('isPasswordReset'); // Clear flow flag
+
+                setTimeout(() => {
+                    if (isResetFlow) {
+                        // If they forgot password, they already have a role, send to dashboard
+                        // Note: Ensure your backend login/verify returns the role for better routing
+                        const savedRole = localStorage.getItem('user_role') || 'student';
+                        window.location.href = savedRole === 'admin' ? "admin/dashboard.html" : "dashboard.html";
+                    } else {
+                        // New user: Must select a role
+                        window.location.href = "role-selection.html";
+                    }
+                }, 1500);
+
             } else {
+                const result = await response.json();
                 currentAttempts++;
                 localStorage.setItem(ATTEMPT_KEY, currentAttempts.toString());
                 
                 if (currentAttempts >= MAX_ATTEMPTS) {
-                    const blockCount = parseInt(localStorage.getItem(`day_count_${email}`) || "0") + 1;
-                    localStorage.setItem(`day_count_${email}`, blockCount);
-                    
-                    if (blockCount >= 3) {
-                        localStorage.setItem(BLOCK_KEY, "PERMANENT");
-                        showBar("Maximum attempts reached. Account blocked.", "error");
-                    } else {
-                        localStorage.setItem(LOCK_KEY, new Date().getTime().toString());
-                        showBar("Too many failed attempts. Locked for 24 hours.", "error");
-                    }
+                    localStorage.setItem(LOCK_KEY, new Date().getTime().toString());
+                    showBar("Too many attempts. Locked for 24h.", "error");
                 } else {
-                    showBar(`Invalid OTP. ${MAX_ATTEMPTS - currentAttempts} attempts left.`, "error");
+                    showBar(result.detail || "Invalid OTP", "error");
                 }
                 checkSecurityStatus();
             }
         } catch (e) {
-            showBar("Connection lost", "error");
+            showBar("Server connection lost", "error");
         } finally {
             if (!document.querySelector('.verify-btn').disabled) {
                 btn.disabled = false;

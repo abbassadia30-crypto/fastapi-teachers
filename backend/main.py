@@ -87,7 +87,7 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     background_tasks.add_task(send_email_task, user.email, target_name, otp)
     return {"status": "success", "message": "OTP sent to your email."}
 
-@app.post("/verify-otp")
+@app.post("/verify-otp/")
 async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user or user.otp_code != data.otp:
