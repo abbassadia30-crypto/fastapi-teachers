@@ -2,139 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admission Form | Institution Portal</title>
+    <title>Admin Portal - Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #f0f4f8; margin: 0; padding: 20px; }
-        .form-container { max-width: 700px; margin: 20px auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        h2 { color: #0288d1; margin: 0; }
-        .nav-btn { padding: 8px 15px; background: #546e7a; color: white; border: none; border-radius: 6px; cursor: pointer; text-decoration: none; font-size: 14px; }
-        .file-box { background: #fff9c4; padding: 15px; border-radius: 8px; border: 1px solid #fbc02d; margin-bottom: 20px; }
-        .dynamic-row { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; background: #fafafa; padding: 10px; border-radius: 8px; border: 1px solid #eee; }
-        .dynamic-row input { flex: 1; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .label-input { font-weight: 600; background: #e3f2fd; color: #0288d1; }
-        .add-row-btn { background: #66bb6a; color: white; border: none; border-radius: 8px; padding: 10px; cursor: pointer; width: 100%; margin-bottom: 20px; font-weight: 600; }
-        .submit-btn { width: 100%; padding: 15px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: 600; }
-        
-        #notification-bar { 
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --accent: #00bcd4;
+            --bg: #f0f2f5;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background: var(--bg); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Security Guard Style */
+        #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
-            color: white; text-align: center; transition: 0.4s; z-index: 1000; font-weight: 600;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
         .bg-red { background: #ef5350; top: 20px !important; }
-        .bg-green { background: #66bb6a; top: 20px !important; }
+
+        header {
+            padding: 30px 20px 10px;
+            text-align: center;
+        }
+
+        h1 { color: var(--secondary); margin: 0; font-size: 24px; }
+        p { color: #666; font-size: 14px; }
+
+        /* Animated Grid Container */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 100px; /* Space for bottom bar */
+        }
+
+        .menu-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--secondary);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2);
+            border-color: var(--primary);
+        }
+
+        .menu-card:active { transform: scale(0.95); }
+
+        .icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: #e3f2fd;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 15px;
+            transition: 0.3s;
+        }
+
+        .menu-card:hover .icon { background: var(--primary); color: white; }
+
+        .menu-card span { font-size: 13px; font-weight: 600; text-align: center; }
+
+        /* Animated Bottom Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 500px;
+            background: rgba(38, 50, 56, 0.95);
+            backdrop-filter: blur(10px);
+            height: 70px;
+            border-radius: 25px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            color: #b0bec5;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            transition: 0.3s;
+        }
+
+        .nav-item.active { color: white; }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+        .nav-item:hover { color: var(--accent); }
+
     </style>
 </head>
 <body>
+
     <script>
+        // --- Role Guard ---
         (function() {
-            const role = localStorage.getItem('user_role');
-            if (role !== 'admin') {
-                window.location.replace("../dashboard.html"); // Immediate redirect
+            if (localStorage.getItem('user_role') !== 'admin') {
+                window.location.replace("../index.html");
             }
         })();
     </script>
 
     <div id="notification-bar"></div>
 
-    <div class="form-container">
-        <header class="header-flex">
-            <h2>Student Admission</h2>
-            <nav><a href="dashboard.html" class="nav-btn">← Back to Dashboard</a></nav>
-        </header>
+    <header>
+        <h1>Institution Admin</h1>
+        <p id="admin-welcome">System Overview</p>
+    </header>
 
-        <section class="file-box">
-            <label style="font-weight: bold; color: #827717; display: block; margin-bottom: 5px;">Target Record File Name</label>
-            <input type="text" id="record_file_name" 
-                   placeholder="e.g. Grade-10-A" 
-                   title="Filename for storage (no spaces allowed)" 
-                   oninput="this.value = this.value.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '')"
-                   style="width:100%; padding:10px; border-radius:5px; border:1px solid #fbc02d; box-sizing: border-box;">
-        </section>
-        
-        <form id="admission-form">
-            <div id="dynamic-fields-container">
-                <div class="dynamic-row">
-                    <input type="text" class="label-input" value="Student Name" readonly title="Core field" aria-label="Core label">
-                    <input type="text" class="value-input" placeholder="Enter student name" required title="Enter student name" aria-label="Student name value">
-                </div>
-                <div class="dynamic-row">
-                    <input type="text" class="label-input" value="Father Name" readonly title="Core field" aria-label="Core label">
-                    <input type="text" class="value-input" placeholder="Enter father name" required title="Enter father name" aria-label="Father name value">
-                </div>
-            </div>
+    <div class="admin-grid">
+        <div class="menu-card" onclick="location.href='admission.html'">
+            <div class="icon">📝</div>
+            <span>Student<br>Admission</span>
+        </div>
+        <div class="menu-card" onclick="location.href='student-records.html'">
+            <div class="icon">📂</div>
+            <span>Student<br>Records</span>
+        </div>
 
-            <button type="button" class="add-row-btn" onclick="addNewRow()">+ Add Custom Information Row</button>
-            <button type="submit" id="submit-btn" class="submit-btn">Save to Institution Records</button>
-        </form>
+        <div class="menu-card" onclick="location.href='teacher-hiring.html'">
+            <div class="icon">🤝</div>
+            <span>Teacher<br>Hiring</span>
+        </div>
+        <div class="menu-card" onclick="location.href='teacher-records.html'">
+            <div class="icon">👔</div>
+            <span>Teacher<br>Records</span>
+        </div>
+
+        <div class="menu-card" onclick="location.href='staff-hiring.html'">
+            <div class="icon">🛠️</div>
+            <span>Staff<br>Hiring</span>
+        </div>
+        <div class="menu-card" onclick="location.href='staff-records.html'">
+            <div class="icon">📋</div>
+            <span>Staff<br>Records</span>
+        </div>
     </div>
 
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item active">
+            <i>🏠</i>
+            <span>Home</span>
+        </a>
+        <a href="chat.html" class="nav-item">
+            <i>💬</i>
+            <span>Chat</span>
+        </a>
+        <a href="documents.html" class="nav-item">
+            <i>📄</i>
+            <span>Docs</span>
+        </a>
+        <a href="profile.html" class="nav-item">
+            <i>👤</i>
+            <span>Profile</span>
+        </a>
+    </nav>
+
     <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
-
-        function showBar(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-            setTimeout(() => bar.className = "", 3000);
-        }
-
-        function addNewRow() {
-            const row = document.createElement('div');
-            row.className = 'dynamic-row';
-            row.innerHTML = `
-                <input type="text" class="label-input" placeholder="Field Label" title="Custom field label" aria-label="Custom label">
-                <input type="text" class="value-input" placeholder="Field Value" title="Custom field value" aria-label="Custom value">
-                <button type="button" style="background:red; color:white; border:none; border-radius:50%; width:25px; height:25px; cursor:pointer;" onclick="this.parentElement.remove()" title="Delete row" aria-label="Delete row">×</button>
-            `;
-            document.getElementById('dynamic-fields-container').appendChild(row);
-        }
-
-        document.getElementById('admission-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            const fileName = document.getElementById('record_file_name').value.trim();
-            
-            if(!fileName) {
-                showBar("File name is required", "error");
-                return;
-            }
-
-            const studentData = {};
-            document.querySelectorAll('.dynamic-row').forEach(row => {
-                const label = row.querySelector('.label-input').value.trim();
-                const value = row.querySelector('.value-input').value.trim();
-                if (label && value) studentData[label] = value;
-            });
-
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
-            try {
-                const response = await fetch(`${API_BASE}/add-student/${fileName}`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('institutionToken')}` 
-                    },
-                    body: JSON.stringify(studentData)
-                });
-
-                if (response.ok) {
-                    showBar("Record Saved Successfully!", "success");
-                    setTimeout(() => window.location.href = "dashboard.html", 2000);
-                } else {
-                    const err = await response.json();
-                    showBar(err.detail || "Failed to save", "error");
-                    btn.disabled = false;
-                    btn.innerText = "Save to Institution Records";
-                }
-            } catch (error) {
-                showBar("Connection Error", "error");
-                btn.disabled = false;
-                btn.innerText = "Save to Institution Records";
-            }
-        };
+        document.getElementById('admin-welcome').innerText = "Welcome, Admin " + (localStorage.getItem('userName') || "");
     </script>
 </body>
 </html>

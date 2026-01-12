@@ -101,7 +101,7 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
     if not user or user.otp_code != data.otp:
         raise HTTPException(status_code=400, detail="Invalid code or user.")
     
-    # Ensure timezone awareness for comparison
+    # Timezone check
     otp_time = user.otp_created_at
     if otp_time.tzinfo is None:
         otp_time = otp_time.replace(tzinfo=timezone.utc)
@@ -111,18 +111,31 @@ async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
 
     user.is_verified, user.otp_code = True, None 
     db.commit()
-    return {"status": "success", "message": "Account verified!"}
+
+    # Return the role so the frontend can decide where to redirect
+    return {
+        "status": "success", 
+        "message": "Account verified!",
+        "role": user.role  # Returns 'admin', 'teacher', 'student', or None
+    }
 
 @app.post("/login")
 async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    
     if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
+    
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
     
-    return {"message": "Login successful", "user": user.name, "access_token": "token-xyz"}
-
+    # We include the role in the response so the frontend knows where to send them
+    return {
+        "message": "Login successful", 
+        "user": user.name, 
+        "role": user.role,  # This will be None or empty if not set
+        "access_token": "token-xyz"
+    }
 # --- Password Reset ---
 @app.post("/forgot-password")
 async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):

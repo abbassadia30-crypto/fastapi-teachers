@@ -127,28 +127,33 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
                 body: JSON.stringify({ email: email, otp: otp })
             });
 
-            if (response.ok) {
-                showBar("Verified Successfully!", "success");
-                
-                // Cleanup security keys
-                localStorage.removeItem(ATTEMPT_KEY);
-                localStorage.removeItem(LOCK_KEY);
-                localStorage.removeItem('pendingEmail');
-                localStorage.removeItem('isPasswordReset'); // Clear flow flag
+      if (response.ok) {
+    const result = await response.json();
+    
+    // Save email as the active session
+    localStorage.setItem('userEmail', emailValue);
+    
+    Notification.show("Verification Successful!", "success");
 
-                setTimeout(() => {
-                    if (isResetFlow) {
-                        // If they forgot password, they already have a role, send to dashboard
-                        // Note: Ensure your backend login/verify returns the role for better routing
-                        const savedRole = localStorage.getItem('user_role') || 'student';
-                        window.location.href = savedRole === 'admin' ? "admin/dashboard.html" : "dashboard.html";
-                    } else {
-                        // New user: Must select a role
-                        window.location.href = "role.html";
-                    }
-                }, 1500);
-
+    setTimeout(() => {
+        // DECISION: Does the user already have a role?
+        if (result.role && result.role !== "") {
+            localStorage.setItem('user_role', result.role);
+            
+            // Send to their specific dashboard
+            if (result.role === 'admin') {
+                window.location.href = "admin/dashboard.html";
+            } else if (result.role === 'teacher') {
+                window.location.href = "teacher/dashboard.html";
             } else {
+                window.location.href = "student/dashboard.html";
+            }
+        } else {
+            // New user or no role set: go to selection screen
+            window.location.href = "role.html";
+        }
+    }, 1500);
+} else {
                 const result = await response.json();
                 currentAttempts++;
                 localStorage.setItem(ATTEMPT_KEY, currentAttempts.toString());

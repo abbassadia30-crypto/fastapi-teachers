@@ -131,14 +131,32 @@
                 
                 const result = await response.json();
 
-                if (response.ok) {
-                   localStorage.setItem('userEmail', email);
-                    localStorage.setItem('userName', result.user); 
-                    localStorage.setItem('institutionToken', result.access_token);
-                    
-                    Notification.show(result.message, "success");
-                    setTimeout(() => { window.location.href = "role-selection.html"; }, 1500); 
-                } else {
+               if (response.ok) {
+    localStorage.setItem('userEmail', email);
+    localStorage.setItem('userName', result.user); 
+    localStorage.setItem('institutionToken', result.access_token);
+    
+    Notification.show(result.message, "success");
+
+    setTimeout(() => {
+        // CHECK IF ROLE IS ALREADY SET
+        if (result.role && result.role !== "") {
+            localStorage.setItem('user_role', result.role);
+            
+            // Multi-screen routing based on existing role
+            if (result.role === 'admin') {
+                window.location.href = "admin/dashboard.html";
+            } else if (result.role === 'teacher') {
+                window.location.href = "teacher/dashboard.html";
+            } else {
+                window.location.href = "student/dashboard.html";
+            }
+        } else {
+            // No role found, send to selection page
+            window.location.href = "role-selection.html"; 
+        }
+    }, 1500); 
+} else {
                     // This catches the 401 (Credentials) and 403 (Verification) errors
                     Notification.show(result.detail || "Login failed", "error");
                     btn.disabled = false;

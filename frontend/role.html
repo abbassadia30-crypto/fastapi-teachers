@@ -101,12 +101,11 @@
             setTimeout(() => bar.className = '', 3000);
         }
 
-        async function setRole(role) {
-    // Look for the email saved during signup or login
-    const email = localStorage.getItem('pendingEmail') || localStorage.getItem('userEmail');
+      async function setRole(role) {
+    const email = localStorage.getItem('userEmail') || localStorage.getItem('pendingEmail');
     
     if (!email) {
-        showBar("Session expired. Please login again.", "error");
+        showBar("Session missing. Redirecting...", "error");
         setTimeout(() => window.location.href = "index.html", 2000);
         return;
     }
@@ -122,32 +121,27 @@
 
         if (response.ok) {
             localStorage.setItem('user_role', role);
-            localStorage.setItem('setup_complete', 'true');
-            
-            showBar(`Institutional role set to ${role.toUpperCase()}`, "success");
+            showBar(`Accessing ${role.toUpperCase()} Portal`, "success");
 
             setTimeout(() => {
-                // Navigate to the correct folder
-                window.location.href = (role === 'admin') ? "admin/dashboard.html" : "dashboard.html";
+                // MULTI-SCREEN ROUTING LOGIC
+                if (role === 'admin') {
+                    window.location.href = "admin/dashboard.html";
+                } else if (role === 'teacher') {
+                    window.location.href = "teacher/dashboard.html";
+                } else {
+                    window.location.href = "student/dashboard.html";
+                }
             }, 1500);
         } else {
-            const err = await response.json();
-            showBar(err.detail || "Update failed", "error");
+            showBar("Failed to sync role with institution records", "error");
         }
     } catch (e) {
-        showBar("Connection error", "error");
+        showBar("Network error", "error");
     } finally {
         document.getElementById('loading').style.display = 'none';
     }
 }
-
-        window.onload = () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (localStorage.getItem('setup_complete') === 'true' && !urlParams.has('change_role')) {
-                const role = localStorage.getItem('user_role');
-                window.location.href = role === 'admin' ? "admin/dashboard.html" : "dashboard.html";
-            }
-        };
     </script>
 </body>
 </html>
