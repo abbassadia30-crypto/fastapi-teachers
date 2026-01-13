@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Boolean
 from .database import Base
-from sqlalchemy import Column, Integer, String, Boolean, DateTime
+from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, DateTime
 from datetime import datetime
+from sqlalchemy.sql import func
 
 class User(Base):
     __tablename__ = "users"
@@ -15,12 +15,18 @@ class User(Base):
     otp_created_at = Column(DateTime, default=datetime.utcnow)
     role = Column(String, nullable=True)
 
-class StudentRecord(Base):
-    __tablename__ = "student_records"
+class Student(Base):
+    __tablename__ = "students"
+
     id = Column(Integer, primary_key=True, index=True)
-    student_name = Column(String , nullable=False)
-    father_name = Column(String , nullable=False)
-    Father_cnic = Column(String , nullable=True)
-    phone = Column(Integer , nullable=False)
-    grade = Column(String , nullable=False)
-    fees = Column(Integer , nullable=False)
+    name = Column(String, nullable=False)
+    section = Column(String, nullable=False)
+    fee = Column(Float, nullable=False)
+    
+    # Ownership: Email of the admin who admitted the student
+    admitted_by = Column(String, index=True) 
+    
+    # Stores the flexible rows: {"Phone": "123", "Address": "Street 1"}
+    extra_fields = Column(JSON, nullable=True) 
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())

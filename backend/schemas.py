@@ -32,16 +32,20 @@ class StudentResponse(StudentCreate):
         from_attributes = True
 
 class StudentBase(BaseModel):
-    student_name: str
-    father_name: str
-    grade: str
-    phone: str
-    fees: int
-    father_cnic: Optional[str] = None
-    created_by: str
+    name: str
+    section: str
+    fee: float
+    extra_fields: Optional[Dict[str, str]] = None
 
 class StudentCreate(StudentBase):
-    pass
+    admitted_by: EmailStr # Passed from the frontend localStorage
+
+class StudentResponse(StudentBase):
+    id: int
+    admitted_by: str
+    
+    class Config:
+        from_attributes = True
 
 # This is the critical part for the Frontend
 class UserResponse(BaseModel):

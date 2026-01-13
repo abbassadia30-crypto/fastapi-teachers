@@ -11,9 +11,6 @@ from . import models, schemas
 from .database import engine, SessionLocal
 import resend 
 
-# Database Setup (Warning: drop_all clears data on every restart)
-# models.Base.metadata.drop_all(bind=engine) 
-models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 # SECURITY: Set this in Render Environment Variables
@@ -170,3 +167,17 @@ async def set_role(payload: dict = Body(...), db: Session = Depends(get_db)):
     user.role = payload.get("role")
     db.commit()
     return {"status": "success"}
+
+@app.post("/students/admit", response_model=schemas.StudentResponse)
+def admit_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
+    db_student = models.Student(**student.dict())
+    db.add(db_student)
+    db.commit()
+    db.refresh(db_student)
+    return db_student
+
+@app.get("/students/my-records", response_model=list[schemas.StudentResponse])
+def get_my_students(admin_email: str, db: Session = Depends(get_db)):
+    # Crucial logic: Only fetch students admitted by THIS specific admin
+    records = db.query(models.Student).filter(models.Student.admitted_by == admin_email).all()
+    return records

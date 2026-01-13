@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Portal - Institution</title>
+    <title>Chat Hub - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -23,14 +23,6 @@
             overflow: hidden;
         }
 
-        /* Security Guard Style */
-        #notification-bar {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
-        }
-        .bg-red { background: #ef5350; top: 20px !important; }
-
         header {
             padding: 30px 20px 10px;
             text-align: center;
@@ -39,7 +31,7 @@
         h1 { color: var(--secondary); margin: 0; font-size: 24px; }
         p { color: #666; font-size: 14px; }
 
-        /* Animated Grid Container */
+        /* EXACT Grid from Dashboard model */
         .admin-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -47,9 +39,10 @@
             padding: 20px;
             flex: 1;
             overflow-y: auto;
-            padding-bottom: 100px; /* Space for bottom bar */
+            padding-bottom: 100px;
         }
 
+        /* EXACT Card Style & Hover from Dashboard model */
         .menu-card {
             background: white;
             border-radius: 20px;
@@ -74,6 +67,7 @@
 
         .menu-card:active { transform: scale(0.95); }
 
+        /* EXACT Icon Style from Dashboard model */
         .icon {
             font-size: 32px;
             margin-bottom: 10px;
@@ -88,35 +82,20 @@
         }
 
         .menu-card:hover .icon { background: var(--primary); color: white; }
-
         .menu-card span { font-size: 13px; font-weight: 600; text-align: center; }
 
-        /* Animated Bottom Bar */
+        /* Bottom Nav Styling */
         .bottom-nav {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 500px;
-            background: rgba(38, 50, 56, 0.95);
-            backdrop-filter: blur(10px);
-            height: 70px;
-            border-radius: 25px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 1000;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
+            backdrop-filter: blur(10px); height: 70px; border-radius: 25px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
         }
 
         .nav-item {
-            color: #b0bec5;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 10px;
+            color: #b0bec5; text-decoration: none; display: flex;
+            flex-direction: column; align-items: center; font-size: 10px;
             transition: 0.3s;
         }
 
@@ -128,57 +107,51 @@
 </head>
 <body>
 
-    <script>
-        // --- Role Guard ---
-        (function() {
-            if (localStorage.getItem('user_role') !== 'admin') {
-                window.location.replace("../index.html");
-            }
-        })();
-    </script>
-
-    <div id="notification-bar"></div>
-
     <header>
-        <h1>Institution Admin</h1>
-        <p id="admin-welcome">System Overview</p>
+        <h1>Chat Hub</h1>
+        <p>Institution Messaging</p>
     </header>
 
     <div class="admin-grid">
-        <div class="menu-card" onclick="location.href='admission.html'">
-            <div class="icon">📝</div>
-            <span>Student<br>Admission</span>
-        </div>
-        <div class="menu-card" onclick="location.href='student_records.html'">
-            <div class="icon">📂</div>
-            <span>Student<br>Records</span>
+        <div class="menu-card" style="grid-column: span 2;" onclick="location.href='chat-global.html'">
+            <div class="icon">🌎</div>
+            <span>Global Chat<br>(Everyone)</span>
         </div>
 
-        <div class="menu-card" onclick="location.href='teacher-hiring.html'">
-            <div class="icon">🤝</div>
-            <span>Teacher<br>Hiring</span>
+        <div class="menu-card" onclick="location.href='chat-teachers-group.html'">
+            <div class="icon">👨‍🏫</div>
+            <span>Teachers<br>Group</span>
         </div>
-        <div class="menu-card" onclick="location.href='teacher-records.html'">
-            <div class="icon">👔</div>
-            <span>Teacher<br>Records</span>
+        <div class="menu-card" onclick="location.href='chat-teacher-specific.html'">
+            <div class="icon">👤</div>
+            <span>Specific<br>Teacher</span>
         </div>
 
-        <div class="menu-card" onclick="location.href='staff-hiring.html'">
+        <div class="menu-card" onclick="location.href='chat-students-group.html'">
+            <div class="icon">🎓</div>
+            <span>Students<br>Group</span>
+        </div>
+        <div class="menu-card" onclick="location.href='chat-student-specific.html'">
+            <div class="icon">🧒</div>
+            <span>Specific<br>Student</span>
+        </div>
+
+        <div class="menu-card" onclick="location.href='chat-staff-group.html'">
+            <div class="icon">🏢</div>
+            <span>All Staff<br>Group</span>
+        </div>
+        <div class="menu-card" onclick="location.href='chat-staff-specific.html'">
             <div class="icon">🛠️</div>
-            <span>Staff<br>Hiring</span>
-        </div>
-        <div class="menu-card" onclick="location.href='staff-records.html'">
-            <div class="icon">📋</div>
-            <span>Staff<br>Records</span>
+            <span>Specific<br>Staff Member</span>
         </div>
     </div>
 
     <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-item active">
+        <a href="dashboard.html" class="nav-item">
             <i>🏠</i>
             <span>Home</span>
         </a>
-        <a href="chat.html" class="nav-item">
+        <a href="chat.html" class="nav-item active">
             <i>💬</i>
             <span>Chat</span>
         </a>
@@ -192,8 +165,5 @@
         </a>
     </nav>
 
-    <script>
-        document.getElementById('admin-welcome').innerText = "Welcome, Admin " + (localStorage.getItem('userName') || "");
-    </script>
 </body>
 </html>
