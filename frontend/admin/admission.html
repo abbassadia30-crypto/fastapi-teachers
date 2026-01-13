@@ -82,8 +82,10 @@
             transition: 0.3s;
         }
         .submit-btn:hover { background: #0277bd; }
+        .submit-btn:disabled { background: #ccc; }
         
-        .row-item { display: flex; gap: 10px; margin-bottom: 10px; }
+        .row-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .del-btn { background: none; border: none; color: #ef5350; cursor: pointer; font-size: 18px; padding: 5px; }
     </style>
 </head>
 <body>
@@ -93,7 +95,8 @@
     <header>
         <button class="back-btn" onclick="location.href='dashboard.html'">← Back</button>
         <h1>Admission Desk</h1>
-        <div style="width: 70px;"></div> </header>
+        <div style="width: 70px;"></div> 
+    </header>
 
     <div class="form-container">
         <div class="admission-card">
@@ -120,7 +123,7 @@
 
                 <div id="flexibleRows"></div>
 
-                <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field (Phone, Address, etc.)</button>
+                <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field</button>
                 
                 <button type="submit" class="submit-btn" id="subBtn">Complete Admission</button>
             </form>
@@ -132,8 +135,13 @@
         const sectionDropdown = document.getElementById('sectionSelect');
         let savedSections = JSON.parse(localStorage.getItem('customSections')) || [];
 
-        // Check if admin is logged in
+        // Protection Guard
         if (!adminEmail) { window.location.href = "../index.html"; }
+
+        window.onload = function() {
+            populateSections();
+            loadAdminTemplate();
+        };
 
         function showNotify(msg, type) {
             const bar = document.getElementById('notification-bar');
@@ -142,52 +150,52 @@
             setTimeout(() => bar.className = '', 3000);
         }
 
+        // Load the labels this admin used last time
+        function loadAdminTemplate() {
+            const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || [];
+            template.forEach(label => addNewRow(label));
+        }
+
         function populateSections() {
             sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Class/Section</option>';
             for(let i=1; i<=12; i++) {
                 let opt = document.createElement('option');
-                opt.value = "Class " + i;
-                opt.innerHTML = "Class " + i;
+                opt.value = "Class " + i; opt.innerHTML = "Class " + i;
                 sectionDropdown.appendChild(opt);
             }
             savedSections.forEach(sec => {
                 let opt = document.createElement('option');
-                opt.value = sec;
-                opt.innerHTML = sec;
+                opt.value = sec; opt.innerHTML = sec;
                 sectionDropdown.appendChild(opt);
             });
             let addOpt = document.createElement('option');
-            addOpt.value = "ADD_NEW";
-            addOpt.innerHTML = "+ Add New Section Name...";
+            addOpt.value = "ADD_NEW"; addOpt.innerHTML = "+ Add New Section Name...";
             sectionDropdown.appendChild(addOpt);
         }
 
         function checkCustom(select) {
-            document.getElementById('customSectionGroup').style.display = 
-                (select.value === "ADD_NEW") ? "block" : "none";
+            document.getElementById('customSectionGroup').style.display = (select.value === "ADD_NEW") ? "block" : "none";
         }
 
-        function addNewRow() {
-    const container = document.getElementById('flexibleRows');
-    const rowId = 'row_' + Date.now(); // Unique ID for each row
-    const div = document.createElement('div');
-    div.className = "row-item";
-    div.id = rowId;
-    div.innerHTML = `
-        <input type="text" placeholder="Label" class="extra-key" style="width:35%;">
-        <input type="text" placeholder="Value" class="extra-val" style="width:50%;">
-        <button type="button" onclick="removeRow('${rowId}')" 
-            style="width:10%; background:none; border:none; color:#ef5350; cursor:pointer; font-size:18px;">
-            🗑️
-        </button>
-    `;
-    container.appendChild(div);
-}
+        function addNewRow(labelValue = "") {
+            const container = document.getElementById('flexibleRows');
+            const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+            const div = document.createElement('div');
+            div.className = "row-item";
+            div.id = rowId;
+            div.innerHTML = `
+                <input type="text" placeholder="Label" class="extra-key" style="width:35%;" value="${labelValue}">
+                <input type="text" placeholder="Value" class="extra-val" style="width:55%;">
+                <button type="button" class="del-btn" onclick="removeRow('${rowId}')">🗑️</button>
+            `;
+            container.appendChild(div);
+        }
 
-function removeRow(id) {
-    const row = document.getElementById(id);
-    if (row) row.remove();
-}
+        function removeRow(id) {
+            const row = document.getElementById(id);
+            if (row) row.remove();
+        }
+
         document.getElementById('admissionForm').onsubmit = function(e) {
             e.preventDefault();
             const btn = document.getElementById('subBtn');
@@ -202,36 +210,38 @@ function removeRow(id) {
                 }
             }
 
-            // Gather extra fields
             const extraData = {};
+            const templateLabels = [];
             const keys = document.querySelectorAll('.extra-key');
             const vals = document.querySelectorAll('.extra-val');
+
             keys.forEach((k, i) => {
-                if(k.value) extraData[k.value] = vals[i].value;
+                if(k.value.trim() !== "") {
+                    extraData[k.value] = vals[i].value;
+                    templateLabels.push(k.value); // Save label for template
+                }
             });
+
+            // Save the template for this admin's next session
+            localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
 
             const admissionData = {
                 studentName: document.getElementById('stdName').value,
                 section: finalSection,
                 fee: document.getElementById('stdFee').value,
-                admittedBy: adminEmail, // OWNERSHIP: Only this admin can see this data
+                admittedBy: adminEmail,
                 admittedAt: new Date().toLocaleString(),
                 extraFields: extraData
             };
 
-            // Developer Note: Ready for Backend integration
             let students = JSON.parse(localStorage.getItem('admittedStudents')) || [];
             students.push(admissionData);
             localStorage.setItem('admittedStudents', JSON.stringify(students));
 
-            showNotify(`Student admitted to ${finalSection} successfully!`, "success");
+            showNotify(`Admission Complete & Template Saved!`, "success");
 
-            setTimeout(() => {
-                location.reload(); 
-            }, 2000);
+            setTimeout(() => { location.reload(); }, 2000);
         };
-
-        populateSections();
     </script>
 </body>
 </html>

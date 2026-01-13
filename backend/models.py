@@ -1,5 +1,5 @@
 from .database import Base
-from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Float,Boolean ,  JSON, ForeignKey, DateTime
 from datetime import datetime
 from sqlalchemy.sql import func
 
