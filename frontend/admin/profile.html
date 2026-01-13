@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Profile | Institution Portal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --bg: #f0f2f5;
+            --danger: #ef5350;
+        }
+
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; background: var(--bg); 
+            display: flex; flex-direction: column; 
+            height: 100vh; overflow: hidden;
+        }
+
+        /* Notification Box */
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-green { background: #66bb6a; top: 20px !important; }
+
+        header {
+            background: white;
+            padding: 40px 20px 20px;
+            text-align: center;
+            border-bottom-left-radius: 30px;
+            border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .profile-pic {
+            width: 90px; height: 90px;
+            background: var(--primary);
+            color: white;
+            font-size: 35px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            border: 4px solid #e3f2fd;
+        }
+
+        h2 { margin: 0; color: var(--secondary); font-size: 20px; }
+        .user-email { color: #888; font-size: 13px; margin-top: 5px; }
+
+        /* Settings List */
+        .settings-list {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            padding-bottom: 100px;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            margin: 20px 0 10px 10px;
+        }
+
+        .list-item {
+            background: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-radius: 15px;
+            margin-bottom: 10px;
+            text-decoration: none;
+            color: var(--secondary);
+            transition: 0.3s;
+            cursor: pointer;
+        }
+
+        .list-item:active { background: #e3f2fd; transform: scale(0.98); }
+
+        .list-info { display: flex; align-items: center; gap: 15px; }
+        .list-icon { font-size: 20px; }
+        .list-text { font-size: 14px; font-weight: 500; }
+        .arrow { color: #ccc; font-weight: bold; }
+
+        .logout-btn {
+            color: var(--danger) !important;
+            margin-top: 20px;
+            border: 1px solid #ffcdd2;
+        }
+
+        /* Bottom Nav (Consistent with Dashboard) */
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
+            backdrop-filter: blur(10px); height: 70px; border-radius: 25px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
+        }
+
+        .nav-item {
+            color: #b0bec5; text-decoration: none; display: flex;
+            flex-direction: column; align-items: center; font-size: 10px; transition: 0.3s;
+        }
+
+        .nav-item.active { color: white; }
+        .nav-item i { font-size: 20px; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div id="notification-bar"></div>
+
+    <header>
+        <div class="profile-pic" id="pfp-initial">A</div>
+        <h2 id="display-name">Admin Name</h2>
+        <div class="user-email" id="display-email">admin@institution.com</div>
+    </header>
+
+    <div class="settings-list">
+        <div class="section-label">Account Settings</div>
+        
+        <div class="list-item" onclick="editName()">
+            <div class="list-info">
+                <span class="list-icon">✏️</span>
+                <span class="list-text">Edit Profile Name</span>
+            </div>
+            <span class="arrow">></span>
+        </div>
+
+        <div class="list-item" onclick="location.href='link-phone.html'">
+            <div class="list-info">
+                <span class="list-icon">📱</span>
+                <span class="list-text">Link Phone Number</span>
+            </div>
+            <span class="arrow">></span>
+        </div>
+
+        <div class="section-label">Security & App</div>
+
+        <div class="list-item" onclick="location.href='settings.html'">
+            <div class="list-info">
+                <span class="list-icon">⚙️</span>
+                <span class="list-text">General Settings</span>
+            </div>
+            <span class="arrow">></span>
+        </div>
+
+        <div class="list-item" onclick="location.href='security.html'">
+            <div class="list-info">
+                <span class="list-icon">🛡️</span>
+                <span class="list-text">Security & Privacy</span>
+            </div>
+            <span class="arrow">></span>
+        </div>
+
+        <div class="list-item" onclick="location.href='about.html'">
+            <div class="list-info">
+                <span class="list-icon">ℹ️</span>
+                <span class="list-text">About Institution App</span>
+            </div>
+            <span class="arrow">></span>
+        </div>
+
+        <div class="list-item logout-btn" onclick="handleLogout()">
+            <div class="list-info">
+                <span class="list-icon">🚪</span>
+                <span class="list-text">Logout Account</span>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+        <a href="chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
+        <a href="documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
+        <a href="profile.html" class="nav-item active"><i>👤</i><span>Profile</span></a>
+    </nav>
+
+    <script>
+        // Load user data
+        const userName = localStorage.getItem('userName') || "User";
+        const userEmail = localStorage.getItem('userEmail') || "email@institution.com";
+
+        document.getElementById('display-name').innerText = userName;
+        document.getElementById('display-email').innerText = userEmail;
+        document.getElementById('pfp-initial').innerText = userName.charAt(0).toUpperCase();
+
+        function showBar(msg) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = 'bg-green';
+            setTimeout(() => bar.className = '', 3000);
+        }
+
+        function editName() {
+            const newName = prompt("Enter new profile name:", userName);
+            if(newName) {
+                localStorage.setItem('userName', newName);
+                document.getElementById('display-name').innerText = newName;
+                showBar("Name updated locally!");
+                // Backend integration would happen here
+            }
+        }
+
+        function handleLogout() {
+            if(confirm("Are you sure you want to logout?")) {
+                localStorage.clear(); // Clear all institution session data
+                window.location.replace("../index.html");
+            }
+        }
+    </script>
+</body>
+</html>

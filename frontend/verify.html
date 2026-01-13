@@ -16,9 +16,8 @@
             box-sizing: border-box; margin-bottom: 20px; font-weight: bold;
         }
         .otp-input:focus { border-color: #0288d1; outline: none; }
-        .otp-input:disabled { background: #f5f5f5; cursor: not-allowed; }
         
-        .verify-btn { width: 100%; padding: 12px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; }
+        .verify-btn { width: 100%; padding: 12px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; transition: 0.3s; }
         .verify-btn:disabled { background: #ccc; cursor: not-allowed; }
         
         #notification-bar { 
@@ -27,10 +26,8 @@
             color: white; font-weight: 600; text-align: center; 
             transition: 0.4s ease-in-out; z-index: 1000; 
         }
-        .bg-red { background: #ef5350; top: 20px !important; }
-        .bg-green { background: #66bb6a; top: 20px !important; }
-        
-        .attempt-text { font-size: 12px; color: #d32f2f; margin-top: 10px; font-weight: 600; }
+        .bg-red { background: #ef5350; top: 20px !important; border: 1px solid #b71c1c; }
+        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #388e3c; }
     </style>
 </head>
 <body>
@@ -43,27 +40,17 @@
         
         <input type="text" id="otp" class="otp-input" placeholder="000000" maxlength="6">
         
-        <button class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
-        <div id="attempt-info" class="attempt-text"></div>
+        <button id="mainBtn" class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
         
         <p style="margin-top: 20px;"><a href="index.html" style="color: #0288d1; text-decoration: none;">Back to Login</a></p>
     </div>
 
 <script>
-const API_BASE = "https://fastapi-teachers.onrender.com";
-    const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('pendingEmail');
-    
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+    const email = localStorage.getItem('pendingEmail');
     const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
 
-    // --- TIMING/SECURITY BLOCK COMMENTED OUT ---
-    /*
-    const MAX_ATTEMPTS = 3;
-    const LOCK_KEY = `lock_${email}`;
-    const ATTEMPT_KEY = `attempts_${email}`;
-    const BLOCK_KEY = `block_status_${email}`;
-    */
-
-    if (!email) { window.location.href = "signup.html"; }
+    if (!email) { window.location.href = "index.html"; }
     document.getElementById('display-email').innerText = email;
 
     function showBar(msg, type) {
@@ -73,56 +60,17 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
         setTimeout(() => { bar.className = ""; }, 4000);
     }
 
-    function checkSecurityStatus() {
-        // --- LOCKING LOGIC DISABLED ---
-        
-        const isBlocked = localStorage.getItem(BLOCK_KEY);
-        const lockTime = localStorage.getItem(LOCK_KEY);
-        const btn = document.querySelector('.verify-btn');
-        const input = document.getElementById('otp');
-        const info = document.getElementById('attempt-info');
-
-        if (isBlocked === "PERMANENT") {
-            btn.disabled = true;
-            input.disabled = true;
-            info.innerText = "This account is blocked. Contact institution admin.";
-            return true;
-        }
-
-        if (lockTime) {
-            const now = new Date().getTime();
-            const waitTime = 24 * 60 * 60 * 1000; 
-            if (now < parseInt(lockTime) + waitTime) {
-                btn.disabled = true;
-                input.disabled = true;
-                const hoursLeft = Math.ceil(((parseInt(lockTime) + waitTime) - now) / (1000 * 60 * 60));
-                info.innerText = `Daily limit reached. Try again in ${hoursLeft} hours.`;
-                return true;
-            } else {
-                localStorage.removeItem(LOCK_KEY);
-                localStorage.setItem(ATTEMPT_KEY, "0");
-            }
-        }
-        
-        return false;
-    }
-
     async function handleVerify() {
-        if (checkSecurityStatus()) return;
-
         const otp = document.getElementById('otp').value.trim();
-        const btn = document.querySelector('.verify-btn');
-        
-        // --- ATTEMPTS TRACKING DISABLED ---
-        // let currentAttempts = parseInt(localStorage.getItem(ATTEMPT_KEY) || "0");
+        const btn = document.getElementById('mainBtn');
 
         if (otp.length < 6) {
-            showBar("Enter 6-digit code", "error");
+            showBar("Please enter the full 6-digit code", "error");
             return;
         }
 
         btn.disabled = true;
-        btn.innerText = "Verifying...";
+        btn.innerText = "Processing...";
 
         try {
             const response = await fetch(`${API_BASE}/verify-otp/`, {
@@ -131,54 +79,35 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
                 body: JSON.stringify({ email: email, otp: otp })
             });
 
-            if (response.ok) {
-                localStorage.setItem('resetEmail', emailValue);
-                localStorage.setItem('passwordResetAuthorized', 'true');
-                const result = await response.json();
-                localStorage.setItem('userEmail', email); // Fixed: email variable used instead of undefined emailValue
-                showBar("Verification Successful!", "success");
+            const result = await response.json();
 
-                setTimeout(() => {
-                    if (result.role && result.role !== "") {
-                        localStorage.setItem('user_role', result.role);
-                        if (result.role === 'admin') {
-                            window.location.href = "admin/dashboard.html";
-                        } else if (result.role === 'teacher') {
-                            window.location.href = "teacher/dashboard.html";
-                        } else {
-                            window.location.href = "student/dashboard.html";
-                        }
-                    } else {
-                        window.location.href = "reset-password.html";
-                    }
-                }, 1500);
-            } else {
-                const result = await response.json();
-                
-                // --- ATTEMPT INCREMENTING DISABLED ---
-                
-                currentAttempts++;
-                localStorage.setItem(ATTEMPT_KEY, currentAttempts.toString());
-                
-                if (currentAttempts >= MAX_ATTEMPTS) {
-                    localStorage.setItem(LOCK_KEY, new Date().getTime().toString());
-                    showBar("Too many attempts. Locked for 24h.", "error");
+            if (response.ok) {
+                showBar("OTP Verified!", "success");
+
+                if (isResetFlow) {
+                    // --- FORGET PASSWORD FLOW ---
+                    localStorage.setItem('resetEmail', email); 
+                    localStorage.setItem('passwordResetAuthorized', 'true');
+                    localStorage.removeItem('isPasswordReset'); 
+                    
+                    setTimeout(() => { window.location.href = "reset-password.html"; }, 1500);
                 } else {
-                    showBar(result.detail || "Invalid OTP", "error");
+                    // --- SIGN UP FLOW ---
+                    localStorage.setItem('userEmail', email);
+                    // Redirect to role selection as you requested
+                    setTimeout(() => { window.location.href = "role.html"; }, 1500);
                 }
-                checkSecurityStatus();
-                
-                showBar(result.detail || "Invalid OTP", "error");
+            } else {
+                showBar(result.detail || "Invalid or Expired OTP", "error");
+                btn.disabled = false;
+                btn.innerText = "Verify & Activate";
             }
         } catch (e) {
-            showBar("Server connection lost", "error");
-        } finally {
+            showBar("Network Error: Could not connect to institution server", "error");
             btn.disabled = false;
             btn.innerText = "Verify & Activate";
         }
     }
-
-    checkSecurityStatus();
 </script>
 </body>
 </html>

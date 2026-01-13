@@ -9,20 +9,11 @@
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         
         #notification-bar { 
-            position: fixed; 
-            top: -100px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 90%; 
-            max-width: 350px; 
-            padding: 15px; 
-            border-radius: 15px; 
-            color: white; 
-            font-weight: 600; 
-            text-align: center; 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 350px; padding: 15px; border-radius: 15px; 
+            color: white; font-weight: 600; text-align: center; 
             transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            z-index: 1000; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .show-notify { top: 20px !important; }
@@ -30,60 +21,44 @@
         .bg-green { background: #43a047; border: 1px solid #1b5e20; }
 
         .card { 
-            background: white; 
-            padding: 40px 30px; 
-            border-radius: 30px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            width: 85%; 
-            max-width: 350px; 
-            text-align: center; 
+            background: white; padding: 40px 30px; border-radius: 30px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 85%; 
+            max-width: 350px; text-align: center; 
         }
 
-        .input-group { margin-bottom: 20px; text-align: right; position: relative; }
+        .input-group { margin-bottom: 20px; text-align: left; position: relative; }
         input { 
-            width: 100%; 
-            padding: 15px; 
-            border-radius: 12px; 
-            border: 1px solid #eee; 
-            background: #f9f9f9; 
-            box-sizing: border-box; 
-            outline: none; 
-            font-family: 'Poppins', sans-serif;
-            transition: 0.3s;
+            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #eee; 
+            background: #f9f9f9; box-sizing: border-box; outline: none; 
+            font-family: 'Poppins', sans-serif; transition: 0.3s;
         }
         input:focus { border-color: #0288d1; background: #fff; }
 
-        .forgot-link {
-            font-size: 12px;
-            color: #888;
-            text-decoration: none;
-            display: inline-block;
-            margin-top: 8px;
-            transition: 0.3s;
-        }
+        .options-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .remember-me { display: flex; align-items: center; font-size: 12px; color: #666; cursor: pointer; }
+        .remember-me input { width: auto; margin-right: 8px; padding: 0; }
+
+        .forgot-link { font-size: 12px; color: #888; text-decoration: none; transition: 0.3s; }
         .forgot-link:hover { color: #0288d1; }
 
         .btn { 
-            width: 100%; 
-            padding: 15px; 
-            background: #0288d1; 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: 0.3s;
-            margin-top: 10px;
+            width: 100%; padding: 15px; background: #0288d1; color: white; 
+            border: none; border-radius: 12px; font-weight: 600; 
+            cursor: pointer; transition: 0.3s;
         }
         .btn:hover { background: #0277bd; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
 
         .footer-text { font-size: 12px; margin-top: 15px; color: #666; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
+        
+        /* Overlay to prevent flicker during auto-login check */
+        #auth-check-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 2000; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
 <body>
 
+    <div id="auth-check-overlay">Authenticating...</div>
     <div id="notification-bar"></div>
 
     <div class="card">
@@ -92,10 +67,17 @@
             <div class="input-group">
                 <input type="email" id="email" placeholder="Starlight Email" required>
             </div>
-            <div class="input-group" style="margin-bottom: 10px;">
+            <div class="input-group">
                 <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <div class="options-row">
+                <label class="remember-me">
+                    <input type="checkbox" id="remember"> Remember Me
+                </label>
                 <a href="forgot-password.html" class="forgot-link">Forgot Password?</a>
             </div>
+
             <button type="submit" class="btn" id="loginBtn">Login</button>
         </form>
         <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
@@ -103,6 +85,20 @@
 
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
+
+        // --- 1. SESSION GUARD (Runs Immediately) ---
+        (function checkSession() {
+            const token = localStorage.getItem('institutionToken');
+            const role = localStorage.getItem('user_role');
+            
+            if (token && role) {
+                // User is already logged in, redirect immediately
+                routeToDashboard(role);
+            } else {
+                // No session found, hide overlay and show login form
+                document.getElementById('auth-check-overlay').style.display = 'none';
+            }
+        })();
 
         const Notification = {
             el: document.getElementById('notification-bar'),
@@ -113,11 +109,21 @@
             }
         };
 
+        function routeToDashboard(role) {
+            const paths = {
+                'admin': 'admin/dashboard.html',
+                'teacher': 'teacher/dashboard.html',
+                'student': 'student/dashboard.html'
+            };
+            window.location.href = paths[role] || "roles/role.html";
+        }
+
         async function handleLogin(event) {
             event.preventDefault();
             const btn = document.getElementById('loginBtn');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const remember = document.getElementById('remember').checked;
 
             btn.disabled = true;
             btn.innerText = "Authenticating...";
@@ -131,33 +137,25 @@
                 
                 const result = await response.json();
 
-               if (response.ok) {
-    localStorage.setItem('userEmail', email);
-    localStorage.setItem('userName', result.user); 
-    localStorage.setItem('institutionToken', result.access_token);
-    
-    Notification.show(result.message, "success");
+                if (response.ok) {
+                    // Save Session Data
+                    localStorage.setItem('userEmail', email);
+                    localStorage.setItem('institutionToken', result.access_token);
+                    
+                    if (result.role) {
+                        localStorage.setItem('user_role', result.role);
+                    }
 
-    setTimeout(() => {
-        // CHECK IF ROLE IS ALREADY SET
-        if (result.role && result.role !== "") {
-            localStorage.setItem('user_role', result.role);
-            
-            // Multi-screen routing based on existing role
-            if (result.role === 'admin') {
-                window.location.href = "admin/dashboard.html";
-            } else if (result.role === 'teacher') {
-                window.location.href = "teacher/dashboard.html";
-            } else {
-                window.location.href = "student/dashboard.html";
-            }
-        } else {
-            // No role found, send to selection page
-            window.location.href = "role.html"; 
-        }
-    }, 1500); 
-} else {
-                    // This catches the 401 (Credentials) and 403 (Verification) errors
+                    Notification.show("Welcome back!", "success");
+
+                    setTimeout(() => {
+                        if (result.role && result.role !== "") {
+                            routeToDashboard(result.role);
+                        } else {
+                            window.location.href = "roles/role.html"; 
+                        }
+                    }, 1500); 
+                } else {
                     Notification.show(result.detail || "Login failed", "error");
                     btn.disabled = false;
                     btn.innerText = "Login";
