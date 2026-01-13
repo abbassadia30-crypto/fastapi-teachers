@@ -151,7 +151,7 @@ async def forgot_password(payload: dict = Body(...), background_tasks: Backgroun
     background_tasks.add_task(send_email_task, email, user.name, otp, "Password Reset Code")
     return {"message": "Reset code sent"}
 
-@app.post("/reset-password-confirm")
+@app.post("/reset-password")
 async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
     if not user or user.otp_code != payload.get("otp"):

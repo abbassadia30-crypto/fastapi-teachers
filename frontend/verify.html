@@ -95,7 +95,7 @@
                     // --- SIGN UP FLOW ---
                     localStorage.setItem('userEmail', email);
                     // Redirect to role selection as you requested
-                    setTimeout(() => { window.location.href = "role.html"; }, 1500);
+                    setTimeout(() => { window.location.href = "roles/role.html"; }, 1500);
                 }
             } else {
                 showBar(result.detail || "Invalid or Expired OTP", "error");
