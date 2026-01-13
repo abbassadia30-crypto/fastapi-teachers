@@ -90,3 +90,7 @@ input:focus { border-color: #0288d1; background: #fff; }
 .strength-text { font-size: 10px; text-align: left; display: block; margin-top: 5px; }
 .footer-text { font-size: 12px; margin-top: 20px; color: #666; }
 .sub-text { font-size: 13px; color: #666; margin-bottom: 20px; }
+
+#btn2{
+    margin-top: 5pt;
+}

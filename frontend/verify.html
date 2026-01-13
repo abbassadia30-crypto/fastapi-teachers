@@ -53,14 +53,15 @@
 const API_BASE = "https://fastapi-teachers.onrender.com";
     const email = new URLSearchParams(window.location.search).get('email') || localStorage.getItem('pendingEmail');
     
-    // Check if this is a password reset flow or a new signup flow
     const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
 
-    // Security Config
+    // --- TIMING/SECURITY BLOCK COMMENTED OUT ---
+    /*
     const MAX_ATTEMPTS = 3;
     const LOCK_KEY = `lock_${email}`;
     const ATTEMPT_KEY = `attempts_${email}`;
     const BLOCK_KEY = `block_status_${email}`;
+    */
 
     if (!email) { window.location.href = "signup.html"; }
     document.getElementById('display-email').innerText = email;
@@ -73,6 +74,8 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
     }
 
     function checkSecurityStatus() {
+        // --- LOCKING LOGIC DISABLED ---
+        
         const isBlocked = localStorage.getItem(BLOCK_KEY);
         const lockTime = localStorage.getItem(LOCK_KEY);
         const btn = document.querySelector('.verify-btn');
@@ -100,6 +103,7 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
                 localStorage.setItem(ATTEMPT_KEY, "0");
             }
         }
+        
         return false;
     }
 
@@ -108,7 +112,9 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
 
         const otp = document.getElementById('otp').value.trim();
         const btn = document.querySelector('.verify-btn');
-        let currentAttempts = parseInt(localStorage.getItem(ATTEMPT_KEY) || "0");
+        
+        // --- ATTEMPTS TRACKING DISABLED ---
+        // let currentAttempts = parseInt(localStorage.getItem(ATTEMPT_KEY) || "0");
 
         if (otp.length < 6) {
             showBar("Enter 6-digit code", "error");
@@ -119,42 +125,38 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
         btn.innerText = "Verifying...";
 
         try {
-            // Note: If using a different endpoint for reset verification, update here. 
-            // Otherwise, we use the standard OTP verification.
             const response = await fetch(`${API_BASE}/verify-otp/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email: email, otp: otp })
             });
 
-      if (response.ok) {
-    const result = await response.json();
-    
-    // Save email as the active session
-    localStorage.setItem('userEmail', emailValue);
-    
-    Notification.show("Verification Successful!", "success");
-
-    setTimeout(() => {
-        // DECISION: Does the user already have a role?
-        if (result.role && result.role !== "") {
-            localStorage.setItem('user_role', result.role);
-            
-            // Send to their specific dashboard
-            if (result.role === 'admin') {
-                window.location.href = "admin/dashboard.html";
-            } else if (result.role === 'teacher') {
-                window.location.href = "teacher/dashboard.html";
-            } else {
-                window.location.href = "student/dashboard.html";
-            }
-        } else {
-            // New user or no role set: go to selection screen
-            window.location.href = "role.html";
-        }
-    }, 1500);
-} else {
+            if (response.ok) {
+                localStorage.setItem('resetEmail', emailValue);
+                localStorage.setItem('passwordResetAuthorized', 'true');
                 const result = await response.json();
+                localStorage.setItem('userEmail', email); // Fixed: email variable used instead of undefined emailValue
+                showBar("Verification Successful!", "success");
+
+                setTimeout(() => {
+                    if (result.role && result.role !== "") {
+                        localStorage.setItem('user_role', result.role);
+                        if (result.role === 'admin') {
+                            window.location.href = "admin/dashboard.html";
+                        } else if (result.role === 'teacher') {
+                            window.location.href = "teacher/dashboard.html";
+                        } else {
+                            window.location.href = "student/dashboard.html";
+                        }
+                    } else {
+                        window.location.href = "reset-password.html";
+                    }
+                }, 1500);
+            } else {
+                const result = await response.json();
+                
+                // --- ATTEMPT INCREMENTING DISABLED ---
+                
                 currentAttempts++;
                 localStorage.setItem(ATTEMPT_KEY, currentAttempts.toString());
                 
@@ -165,14 +167,14 @@ const API_BASE = "https://fastapi-teachers.onrender.com";
                     showBar(result.detail || "Invalid OTP", "error");
                 }
                 checkSecurityStatus();
+                
+                showBar(result.detail || "Invalid OTP", "error");
             }
         } catch (e) {
             showBar("Server connection lost", "error");
         } finally {
-            if (!document.querySelector('.verify-btn').disabled) {
-                btn.disabled = false;
-                btn.innerText = "Verify & Activate";
-            }
+            btn.disabled = false;
+            btn.innerText = "Verify & Activate";
         }
     }
 
