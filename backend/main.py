@@ -1,4 +1,5 @@
 import os
+from pyexpat import model
 import random
 from datetime import datetime, timedelta, timezone
 import bcrypt
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 from . import models, schemas
 from .database import engine, SessionLocal
 import resend 
-
+models.Base.metadta.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 # SECURITY: Set this in Render Environment Variables

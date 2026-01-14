@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* All CSS in head as requested for the institution app */
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         
         #notification-bar { 
@@ -101,9 +102,9 @@
 <script>
 const API_BASE = "https://fastapi-teachers.onrender.com"; 
 
-// --- SESSION GUARD: Don't allow signup if already logged in ---
-if (localStorage.getItem('institutionToken')) {
-    window.location.href = "dashboard.html";
+// --- SESSION GUARD ---
+if (localStorage.getItem('userEmail')) {
+    window.location.href = "admin_dashboard.html";
 }
 
 const Notification = {
@@ -155,6 +156,9 @@ async function handleSignup(event) {
         return;
     }
 
+    // Fix: Add a space between names
+    const fullName = firstName + " " + lastName;
+
     btn.disabled = true;
     btn.innerText = "Processing...";
 
@@ -163,7 +167,7 @@ async function handleSignup(event) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
-                full_name: `${firstName} ${lastName}`, 
+                name: fullName, // Critical Fix: Changed full_name to name to match backend
                 email: email, 
                 password: password 
             })
@@ -174,7 +178,7 @@ async function handleSignup(event) {
         if (response.ok) {
             Notification.show("OTP Sent! Check your email.", "success");
             localStorage.setItem('pendingEmail', email);
-            // Developer Tip: Storing the email allows the Verify page to know who to verify
+            localStorage.setItem('isPasswordReset', 'false'); 
             setTimeout(() => { window.location.href = "verify.html"; }, 2000); 
         } else {
             Notification.show(result.detail || "Signup failed", "error");
@@ -182,7 +186,7 @@ async function handleSignup(event) {
             btn.innerText = "Create Account";
         }
     } catch (error) {
-        Notification.show("Server Connection Error", "error");
+        Notification.show("Institution server is unreachable.", "error");
         btn.disabled = false;
         btn.innerText = "Create Account";
     }
