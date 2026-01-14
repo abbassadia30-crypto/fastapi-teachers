@@ -160,7 +160,7 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
     return {"message": "Password updated"}
 
 # --- Institution Role Management ---
-@app.patch("/set-role")
+@app.patch("/users/update-role")
 async def set_role(payload: dict = Body(...), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
     if not user: 
