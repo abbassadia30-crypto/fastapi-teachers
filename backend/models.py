@@ -30,7 +30,7 @@ class Student(Base):
     # Ownership: Email of the admin who admitted the student
     admitted_by = Column(String, index=True) 
     
-    # Stores the flexible rows: {"Phone": "123", "Address": "Street 1"}
+    # This stores the flexible data as a dictionary
     extra_fields = Column(JSON, nullable=True) 
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())

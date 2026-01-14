@@ -102,10 +102,8 @@
 <script>
 const API_BASE = "https://fastapi-teachers.onrender.com"; 
 
-// --- SESSION GUARD ---
-if (localStorage.getItem('userEmail')) {
-    window.location.href = "admin/dashboard.html";
-}
+
+
 
 const Notification = {
     el: document.getElementById('notification-bar'),
@@ -180,7 +178,7 @@ async function handleSignup(event) {
             localStorage.setItem('pendingEmail', email);
             localStorage.setItem('isPasswordReset', 'false'); 
             localStorage.setItem('token' , 'true')
-            setTimeout(() => { window.location.href = "frontend/verify.html"; }, 2000); 
+            setTimeout(() => { window.location.href = "verify.html"; }, 2000); 
         } else {
             Notification.show(result.detail || "Signup failed", "error");
             btn.disabled = false;

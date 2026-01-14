@@ -77,7 +77,7 @@
 
             try {
                 // PROFESSIONAL ADVICE: Fetch profile using the Token (much safer)
-                const response = await fetch(`${API_BASE}/users/me`, {
+                const response = await fetch(`${API_BASE}/users/update-role`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -132,6 +132,46 @@
                 document.getElementById('loading').style.display = 'none';
             }
         }
+
+        async function setRole(selectedRole) {
+    document.getElementById('loading').style.display = 'flex';
+    
+    // We get the email from localStorage (stored during login/signup)
+    const email = localStorage.getItem('userEmail'); 
+
+    if (!email) {
+        showBar("Session expired. Please login again.", "error");
+        setTimeout(() => window.location.href = "../index.html", 2000);
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE}/users/update-role`, {
+            method: 'PATCH',
+            headers: { 
+                'Content-Type': 'application/json'
+                // Removed Authorization header as backend is currently using email in body
+            },
+            body: JSON.stringify({ 
+                email: email, 
+                role: selectedRole 
+            })
+        });
+
+        if (response.ok) {
+            localStorage.setItem('user_role', selectedRole);
+            showBar(`Setting up ${selectedRole.toUpperCase()} workspace...`, "success");
+            setTimeout(() => handleRedirect(selectedRole), 1200);
+        } else {
+            const err = await response.json();
+            showBar(err.detail || "Update failed", "error");
+        }
+    } catch (e) {
+        showBar("Could not connect to institution server", "error");
+    } finally {
+        document.getElementById('loading').style.display = 'none';
+    }
+}
 
         // Initialize
         checkExistingRole();

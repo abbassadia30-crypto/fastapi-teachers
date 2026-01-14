@@ -15,18 +15,12 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
 
-class StudentBase(BaseModel):
+class AdmissionPayload(BaseModel):
     name: str
     section: str
     fee: float
-    extra_fields: Optional[Dict[str, str]] = None
-
-class StudentCreate(StudentBase):
-    admitted_by: EmailStr 
-
-class StudentResponse(StudentBase):
-    id: int
     admitted_by: str
+    extra_fields: str
     
     class Config:
         from_attributes = True

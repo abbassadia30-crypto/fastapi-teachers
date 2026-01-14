@@ -116,134 +116,161 @@
         </div>
     </div>
 
-    <script>
-        const API_URL = "https://fastapi-teachers.onrender.com"; 
-        const adminEmail = localStorage.getItem('userEmail');
-        const token = localStorage.getItem('institutionToken');
-        const sectionDropdown = document.getElementById('sectionSelect');
+<script>
+    const API_URL = "https://fastapi-teachers.onrender.com"; 
+    const adminEmail = localStorage.getItem('userEmail');
+    const token = localStorage.getItem('institutionToken');
+    const sectionDropdown = document.getElementById('sectionSelect');
+    
+    // SQLite Plugin Reference
+    const sqlite = window.Capacitor ? window.Capacitor.Plugins.CapacitorSQLite : null;
 
-        if (!adminEmail) { window.location.href = "../index.html"; }
+    if (!adminEmail) { window.location.href = "../index.html"; }
 
-        window.onload = () => { 
-            populateSections(); 
-            loadAdminTemplate(); 
+    window.onload = async () => { 
+        populateSections(); 
+        loadAdminTemplate(); 
+        if (sqlite) await initSQLite(); // Initialize local institution DB
+    };
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+        setTimeout(() => bar.className = '', 3000);
+    }
+
+    // --- SQLite INITIALIZATION ---
+    async function initSQLite() {
+        try {
+            const db = await sqlite.createConnection({ database: "institution_db" });
+            await db.open();
+            await db.execute(`
+                CREATE TABLE IF NOT EXISTS local_admissions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT,
+                    section TEXT,
+                    fee REAL,
+                    extra_data TEXT,
+                    admitted_by TEXT,
+                    sync_status INTEGER DEFAULT 0
+                );
+            `);
+        } catch (e) { console.error("SQLite Init Failed", e); }
+    }
+
+    // --- FORM LOGIC ---
+    function loadAdminTemplate() {
+        const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || ["Father's Name", "Phone Number"];
+        template.forEach(label => addNewRow(label));
+    }
+
+    async function populateSections() {
+        sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Section</option>';
+        const defaults = ["Grade 1", "Grade 2", "Grade 3"];
+        defaults.forEach(d => addOption(d));
+
+        try {
+            const res = await fetch(`${API_URL}/sections`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const sections = await res.json();
+                sections.forEach(sec => addOption(sec.name));
+            }
+        } catch (e) { console.log("Online sections unavailable"); }
+        addOption("+ Add New Section...", "ADD_NEW");
+    }
+
+    function addOption(text, value = null) {
+        let opt = document.createElement('option');
+        opt.value = value || text;
+        opt.innerHTML = text;
+        sectionDropdown.appendChild(opt);
+    }
+
+    function checkCustom(select) {
+        document.getElementById('customSectionGroup').style.display = (select.value === "ADD_NEW") ? "block" : "none";
+    }
+
+    function addNewRow(labelValue = "") {
+        const container = document.getElementById('flexibleRows');
+        const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+        const div = document.createElement('div');
+        div.className = "row-item";
+        div.id = rowId;
+        div.innerHTML = `
+            <input type="text" placeholder="Field Label" class="extra-key" style="width:35%;" value="${labelValue}">
+            <input type="text" placeholder="Value" class="extra-val" style="width:55%;">
+            <button type="button" class="del-btn" onclick="document.getElementById('${rowId}').remove()">🗑️</button>
+        `;
+        container.appendChild(div);
+    }
+
+    // --- SUBMISSION & SYNC LOGIC ---
+    document.getElementById('admissionForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('subBtn');
+        btn.disabled = true;
+
+        let finalSection = sectionDropdown.value;
+        if(finalSection === "ADD_NEW") finalSection = document.getElementById('newSectionInput').value;
+
+        const extraData = {};
+        const templateLabels = [];
+        document.querySelectorAll('.extra-key').forEach((k, i) => {
+            if(k.value.trim() !== "") {
+                extraData[k.value] = document.querySelectorAll('.extra-val')[i].value;
+                templateLabels.push(k.value);
+            }
+        });
+
+        const payload = {
+            name: document.getElementById('stdName').value,
+            section: finalSection,
+            fee: parseFloat(document.getElementById('stdFee').value),
+            admitted_by: adminEmail,
+            extra_fields: JSON.stringify(extraData)
         };
 
-        function showNotify(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
-            setTimeout(() => bar.className = '', 3000);
-        }
-
-        // Load fields that this specific admin uses frequently
-        function loadAdminTemplate() {
-            const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || ["Father's Name", "Phone Number"];
-            template.forEach(label => addNewRow(label));
-        }
-
-        async function populateSections() {
-            sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Section</option>';
-            
-            // Hardcoded defaults for a standard institution
-            const defaults = ["Grade 1", "Grade 2", "Grade 3"];
-            defaults.forEach(d => addOption(d));
-
-            // FETCH CUSTOM SECTIONS FROM DATABASE
+        // 1. SAVE TO SQLite FIRST (Offline-First)
+        if (sqlite) {
             try {
-                const res = await fetch(`${API_URL}/sections`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    const sections = await res.json();
-                    sections.forEach(sec => addOption(sec.name));
-                }
-            } catch (e) { console.log("Database sections unavailable"); }
-
-            addOption("+ Add New Section...", "ADD_NEW");
+                const db = await sqlite.createConnection({ database: "institution_db" });
+                await db.open();
+                await db.run(`INSERT INTO local_admissions (name, section, fee, extra_data, admitted_by) VALUES (?,?,?,?,?)`, 
+                    [payload.name, payload.section, payload.fee, payload.extra_fields, payload.admitted_by]);
+                showNotify("Saved to device locally", "success");
+            } catch (err) { console.error("Local Save Failed", err); }
         }
 
-        function addOption(text, value = null) {
-            let opt = document.createElement('option');
-            opt.value = value || text;
-            opt.innerHTML = text;
-            sectionDropdown.appendChild(opt);
-        }
-
-        function checkCustom(select) {
-            document.getElementById('customSectionGroup').style.display = (select.value === "ADD_NEW") ? "block" : "none";
-        }
-
-        function addNewRow(labelValue = "") {
-            const container = document.getElementById('flexibleRows');
-            const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
-            const div = document.createElement('div');
-            div.className = "row-item";
-            div.id = rowId;
-            div.innerHTML = `
-                <input type="text" placeholder="Field Label" class="extra-key" style="width:35%;" value="${labelValue}">
-                <input type="text" placeholder="Value" class="extra-val" style="width:55%;">
-                <button type="button" class="del-btn" onclick="document.getElementById('${rowId}').remove()">🗑️</button>
-            `;
-            container.appendChild(div);
-        }
-
-        document.getElementById('admissionForm').onsubmit = async function(e) {
-            e.preventDefault();
-            const btn = document.getElementById('subBtn');
-            btn.disabled = true;
-            btn.innerText = "Syncing with Database...";
-
-            let finalSection = sectionDropdown.value;
-            if(finalSection === "ADD_NEW") {
-                finalSection = document.getElementById('newSectionInput').value;
-            }
-
-            const extraData = {};
-            const templateLabels = [];
-            const keys = document.querySelectorAll('.extra-key');
-            const vals = document.querySelectorAll('.extra-val');
-
-            keys.forEach((k, i) => {
-                if(k.value.trim() !== "") {
-                    extraData[k.value] = vals[i].value;
-                    templateLabels.push(k.value);
-                }
+        // 2. TRY TO SYNC WITH RENDER
+        try {
+            const response = await fetch(`${API_URL}/students/admit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
             });
 
-            const payload = {
-                name: document.getElementById('stdName').value,
-                section: finalSection,
-                fee: parseFloat(document.getElementById('stdFee').value),
-                admitted_by: adminEmail,
-                extra_fields: extraData
-            };
-
-            try {
-                const response = await fetch(`${API_URL}/students/admit`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (response.ok) {
-                    // Remember this admin's preferred fields for next time
-                    localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
-                    showNotify("Admission Successful!", "success");
-                    setTimeout(() => location.reload(), 2000);
-                } else {
-                    const err = await response.json();
-                    showNotify(err.detail || "Database Error", "error");
-                    btn.disabled = false;
+            if (response.ok) {
+                localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
+                showNotify("Synced with Institution Cloud!", "success");
+                
+                // Update local status to synced
+                if (sqlite) {
+                    const db = await sqlite.createConnection({ database: "institution_db" });
+                    await db.run(`UPDATE local_admissions SET sync_status = 1 WHERE name = ?`, [payload.name]);
                 }
-            } catch (err) {
-                showNotify("Institution server connection lost", "error");
-                btn.disabled = false;
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                showNotify("Saved locally. Will sync when online.", "success");
+                setTimeout(() => location.reload(), 2000);
             }
-        };
-    </script>
+        } catch (err) {
+            showNotify("Offline: Stored on phone for later sync", "success");
+            setTimeout(() => location.reload(), 2000);
+        }
+    };
+</script>
 </body>
 </html>

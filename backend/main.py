@@ -1,5 +1,6 @@
 import os
 from pyexpat import model
+import json
 import random
 from datetime import datetime, timedelta, timezone
 import bcrypt
@@ -7,7 +8,7 @@ from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-# Import your local files
+from schemas import AdmissionPayload
 from . import models, schemas
 from .database import engine, SessionLocal
 import resend 
@@ -161,24 +162,37 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
 
 # --- Institution Role Management ---
 @app.patch("/users/update-role")
-async def set_role(payload: dict = Body(...), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
-    if not user: 
-        raise HTTPException(status_code=404, detail="User not found")
-    user.role = payload.get("role")
-    db.commit()
-    return {"status": "success"}
+async def update_user_role(payload: dict = Body(...), db: Session = Depends(get_db)):
+    email = payload.get("email")
+    role = payload.get("role")
+    
+    if not email or not role:
+        raise HTTPException(status_code=400, detail="Missing email or role")
 
-@app.post("/students/admit", response_model=schemas.StudentResponse)
-def admit_student(student: schemas.StudentCreate, db: Session = Depends(get_db)):
-    db_student = models.Student(**student.dict())
-    db.add(db_student)
-    db.commit()
-    db.refresh(db_student)
-    return db_student
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Institution user not found")
 
-@app.get("/students/my-records", response_model=list[schemas.StudentResponse])
-def get_my_students(admin_email: str, db: Session = Depends(get_db)):
-    # Crucial logic: Only fetch students admitted by THIS specific admin
-    records = db.query(models.Student).filter(models.Student.admitted_by == admin_email).all()
-    return records
+    user.role = role
+    db.commit()
+    return {"status": "success", "message": f"Role updated to {role}"}
+
+@app.post("/students/admit")
+async def admit_student(payload: AdmissionPayload, db: Session = Depends(get_db)):
+    # Convert the string from frontend into a Python dictionary
+    try:
+        extra_data_dict = json.loads(payload.extra_fields)
+    except:
+        extra_data_dict = {}
+
+    new_student = Student(
+        name=payload.name,
+        section=payload.section,
+        fee=payload.fee,
+        admitted_by=payload.admitted_by,
+        extra_fields=extra_data_dict # SQLAlchemy handles the dictionary -> JSON conversion
+    )
+    
+    db.add(new_student)
+    db.commit()
+    return {"status": "success", "message": "Synced to Institution Cloud"}
