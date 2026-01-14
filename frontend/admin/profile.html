@@ -4,11 +4,19 @@
     <meta charset="UTF-8">
     <title>User Profile | Institution Portal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script>
+        if (!localStorage.getItem('userEmail')) {
+            window.location.replace("../index.html");
+        }
+    </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0288d1;
             --secondary: #263238;
+            --accent: #00bcd4;
             --bg: #f0f2f5;
             --danger: #ef5350;
         }
@@ -20,13 +28,14 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* Notification Box */
+        /* Red/Green Notification Bar */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-green { background: #66bb6a; top: 20px !important; }
+        .bg-red { background: var(--danger); top: 20px !important; border: 1px solid #b71c1c; }
+        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #2e7d32; }
 
         header {
             background: white;
@@ -51,7 +60,6 @@
         h2 { margin: 0; color: var(--secondary); font-size: 20px; }
         .user-email { color: #888; font-size: 13px; margin-top: 5px; }
 
-        /* Settings List */
         .settings-list {
             flex: 1;
             padding: 20px;
@@ -94,7 +102,6 @@
             border: 1px solid #ffcdd2;
         }
 
-        /* Bottom Nav (Consistent with Dashboard) */
         .bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
@@ -118,8 +125,8 @@
 
     <header>
         <div class="profile-pic" id="pfp-initial">A</div>
-        <h2 id="display-name">Admin Name</h2>
-        <div class="user-email" id="display-email">admin@institution.com</div>
+        <h2 id="display-name">Loading...</h2>
+        <div class="user-email" id="display-email">email@institution.com</div>
     </header>
 
     <div class="settings-list">
@@ -133,7 +140,7 @@
             <span class="arrow">></span>
         </div>
 
-        <div class="list-item" onclick="location.href='link-phone.html'">
+        <div class="list-item" onclick="showNotify('Phone linking feature coming soon', 'green')">
             <div class="list-info">
                 <span class="list-icon">📱</span>
                 <span class="list-text">Link Phone Number</span>
@@ -147,22 +154,6 @@
             <div class="list-info">
                 <span class="list-icon">⚙️</span>
                 <span class="list-text">General Settings</span>
-            </div>
-            <span class="arrow">></span>
-        </div>
-
-        <div class="list-item" onclick="location.href='security.html'">
-            <div class="list-info">
-                <span class="list-icon">🛡️</span>
-                <span class="list-text">Security & Privacy</span>
-            </div>
-            <span class="arrow">></span>
-        </div>
-
-        <div class="list-item" onclick="location.href='about.html'">
-            <div class="list-info">
-                <span class="list-icon">ℹ️</span>
-                <span class="list-text">About Institution App</span>
             </div>
             <span class="arrow">></span>
         </div>
@@ -183,7 +174,7 @@
     </nav>
 
     <script>
-        // Load user data
+        // Load user data from localStorage
         const userName = localStorage.getItem('userName') || "User";
         const userEmail = localStorage.getItem('userEmail') || "email@institution.com";
 
@@ -191,28 +182,30 @@
         document.getElementById('display-email').innerText = userEmail;
         document.getElementById('pfp-initial').innerText = userName.charAt(0).toUpperCase();
 
-        function showBar(msg) {
+        function showNotify(msg, type) {
             const bar = document.getElementById('notification-bar');
             bar.innerText = msg;
-            bar.className = 'bg-green';
+            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
             setTimeout(() => bar.className = '', 3000);
         }
 
         function editName() {
+            // In a real app, this would update the backend database
             const newName = prompt("Enter new profile name:", userName);
             if(newName) {
                 localStorage.setItem('userName', newName);
                 document.getElementById('display-name').innerText = newName;
-                showBar("Name updated locally!");
-                // Backend integration would happen here
+                document.getElementById('pfp-initial').innerText = newName.charAt(0).toUpperCase();
+                showNotify("Name updated locally!", "success");
             }
         }
 
         function handleLogout() {
-            if(confirm("Are you sure you want to logout?")) {
-                localStorage.clear(); // Clear all institution session data
+            showNotify("Logging out...", "red");
+            setTimeout(() => {
+                localStorage.clear(); 
                 window.location.replace("../index.html");
-            }
+            }, 1500);
         }
     </script>
 </body>

@@ -1,9 +1,9 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Optional, Dict  # <--- MUST HAVE CAPITAL 'D' Dict HERE
 
-# Added for the Verify.html page logic
+# Match the name used in your main.py
 class VerifyOTP(BaseModel):
-    email: EmailStr
+    email: str
     otp: str
 
 class LoginSchema(BaseModel):
@@ -15,22 +15,6 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
 
-class StudentCreate(BaseModel):
-    Roll_number : int
-    student_name: str
-    father_name: str
-    father_cnic: Optional[str] = None
-    phone: str
-    grade: str
-    fees: int
-
-class StudentResponse(StudentCreate):
-    id: int
-    created_by: str
-    
-    class Config:
-        from_attributes = True
-
 class StudentBase(BaseModel):
     name: str
     section: str
@@ -38,7 +22,7 @@ class StudentBase(BaseModel):
     extra_fields: Optional[Dict[str, str]] = None
 
 class StudentCreate(StudentBase):
-    admitted_by: EmailStr # Passed from the frontend localStorage
+    admitted_by: EmailStr 
 
 class StudentResponse(StudentBase):
     id: int
@@ -47,25 +31,13 @@ class StudentResponse(StudentBase):
     class Config:
         from_attributes = True
 
-# This is the critical part for the Frontend
 class UserResponse(BaseModel):
     email: str
     is_verified: bool
-    role: Optional[str] = None # Ensure this is here
+    role: Optional[str] = None 
 
     class Config:
         from_attributes = True
-
-class UpdateStudent(BaseModel):
-    student_name: Optional[str] = None
-    father_name: Optional[str] = None
-    grade: Optional[str] = None
-    phone: Optional[str] = None
-    fees: Optional[int] = None
-    father_cnic: Optional[str] = None
-
-class EmailSchema(BaseModel):
-    email: EmailStr
 
 class ResetPasswordSchema(BaseModel):
     email: EmailStr

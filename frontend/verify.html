@@ -2,9 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
+<script>
+        if (!localStorage.getItem('userEmail')) {
+            window.location.replace("../index.html");
+        }
+    </script>
+
     <title>Verify Account | Institution Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* All CSS kept in head for the institution app */
         body { font-family: 'Poppins', sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .verify-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
         h2 { color: #0288d1; margin-bottom: 10px; }
@@ -26,6 +34,7 @@
             color: white; font-weight: 600; text-align: center; 
             transition: 0.4s ease-in-out; z-index: 1000; 
         }
+        /* Red/Green Sign Boxes as requested */
         .bg-red { background: #ef5350; top: 20px !important; border: 1px solid #b71c1c; }
         .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #388e3c; }
     </style>
@@ -50,8 +59,12 @@
     const email = localStorage.getItem('pendingEmail');
     const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
 
-    if (!email) { window.location.href = "index.html"; }
-    document.getElementById('display-email').innerText = email;
+    // Guard Clause
+    if (!email) { 
+        window.location.href = "index.html"; 
+    } else {
+        document.getElementById('display-email').innerText = email;
+    }
 
     function showBar(msg, type) {
         const bar = document.getElementById('notification-bar');
@@ -61,7 +74,8 @@
     }
 
     async function handleVerify() {
-        const otp = document.getElementById('otp').value.trim();
+        const otpInput = document.getElementById('otp');
+        const otp = otpInput.value.trim();
         const btn = document.getElementById('mainBtn');
 
         if (otp.length < 6) {
@@ -70,9 +84,10 @@
         }
 
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "Connecting to Server...";
 
         try {
+            // DEVELOPER NOTE: The trailing slash in /verify-otp/ should match your FastAPI router
             const response = await fetch(`${API_BASE}/verify-otp/`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -82,28 +97,35 @@
             const result = await response.json();
 
             if (response.ok) {
-                showBar("OTP Verified!", "success");
+                showBar("Identity Confirmed!", "success");
 
                 if (isResetFlow) {
-                    // --- FORGET PASSWORD FLOW ---
+                    // Logic for Password Recovery
                     localStorage.setItem('resetEmail', email); 
                     localStorage.setItem('passwordResetAuthorized', 'true');
                     localStorage.removeItem('isPasswordReset'); 
+                    localStorage.removeItem('pendingEmail'); 
                     
                     setTimeout(() => { window.location.href = "reset-password.html"; }, 1500);
                 } else {
-                    // --- SIGN UP FLOW ---
+                    // Logic for New Institution Admin Registration
                     localStorage.setItem('userEmail', email);
-                    // Redirect to role selection as you requested
+                    // result.access_token should be returned by backend upon successful OTP
+                    if (result.access_token) {
+                        localStorage.setItem('institutionToken', result.access_token);
+                    }
+                    localStorage.removeItem('pendingEmail');
+                    
                     setTimeout(() => { window.location.href = "roles/role.html"; }, 1500);
                 }
             } else {
-                showBar(result.detail || "Invalid or Expired OTP", "error");
+                showBar(result.detail || "Invalid OTP. Please try again.", "error");
                 btn.disabled = false;
                 btn.innerText = "Verify & Activate";
+                otpInput.value = ""; // Clear on failure for security
             }
         } catch (e) {
-            showBar("Network Error: Could not connect to institution server", "error");
+            showBar("Institution server is currently unreachable.", "error");
             btn.disabled = false;
             btn.innerText = "Verify & Activate";
         }

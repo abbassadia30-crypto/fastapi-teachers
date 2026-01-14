@@ -4,174 +4,56 @@
     <meta charset="UTF-8">
     <title>Document Center - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script>
+        if (!localStorage.getItem('userEmail')) { window.location.replace("../index.html"); }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #0288d1;
-            --secondary: #263238;
-            --accent: #00bcd4;
-            --bg: #f0f2f5;
-        }
-
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            background: var(--bg); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        header {
-            padding: 30px 20px 10px;
-            text-align: center;
-        }
-
-        h1 { color: var(--secondary); margin: 0; font-size: 24px; }
-        p { color: #666; font-size: 14px; }
-
-        .admin-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 100px;
-        }
-
-        .menu-card {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--secondary);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255,255,255,0.3);
-            cursor: pointer;
-        }
-
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2);
-            border-color: var(--primary);
-        }
-
-        .icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            background: #e3f2fd;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-
-        .menu-card:hover .icon { background: var(--primary); color: white; }
-        .menu-card span { font-size: 13px; font-weight: 600; text-align: center; }
-
-        /* Hidden Input for Gallery */
-        #gallery-input { display: none; }
-
-        /* Bottom Nav */
-        .bottom-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
-            backdrop-filter: blur(10px); height: 70px; border-radius: 25px;
-            display: flex; justify-content: space-around; align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
-        }
-
-        .nav-item {
-            color: #b0bec5; text-decoration: none; display: flex;
-            flex-direction: column; align-items: center; font-size: 10px;
-        }
+        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600; }
+        .bg-red { background: #ef5350; top: 20px !important; }
+        .bg-green { background: #66bb6a; top: 20px !important; }
+        header { padding: 30px 20px 10px; text-align: center; background: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
+        .doc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 100px; }
+        .doc-card { background: white; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
+        .doc-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2); border-color: var(--primary); }
+        .icon { font-size: 32px; margin-bottom: 10px; background: #e3f2fd; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 15px; }
+        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95); height: 70px; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+        .nav-item { color: #b0bec5; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 10px; }
         .nav-item.active { color: white; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
-
-        @media print {
-            .bottom-nav, header, .admin-grid { display: none; }
-            .print-section { display: block; }
-        }
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>Document Center</h1>
-        <p>Manage and process your files</p>
-    </header>
-
-    <input type="file" id="gallery-input" accept="image/*, .pdf, .doc, .docx">
-
-    <div class="admin-grid">
-        <div class="menu-card" onclick="document.getElementById('gallery-input').click()">
-            <div class="icon">🖼️</div>
-            <span>From<br>Gallery</span>
+    <div id="notification-bar"></div>
+    <header><h1>Document Center</h1><p>Academic & Notices</p></header>
+    <div class="doc-grid">
+        <div class="doc-card" onclick="showNotify('Syllabus Archive Opening...', 'success')">
+            <div class="icon">📚</div><span>Syllabus</span>
         </div>
-
-        <div class="menu-card" onclick="alert('Translation module starting...')">
-            <div class="icon">🌍</div>
-            <span>Translate<br>Docs</span>
+        <div class="doc-card" onclick="showNotify('Datesheet loading...', 'success')">
+            <div class="icon">📅</div><span>Datesheet</span>
         </div>
-
-        <div class="menu-card" onclick="alert('Accessing Camera for Scanning...')">
-            <div class="icon">📸</div>
-            <span>Scan<br>Page</span>
+        <div class="doc-card" onclick="showNotify('Holiday & Event Notices', 'success')">
+            <div class="icon">📢</div><span>Notices</span>
         </div>
-
-        <div class="menu-card" onclick="location.href='editor.html'">
-            <div class="icon">✍️</div>
-            <span>Create<br>Document</span>
-        </div>
-
-        <div class="menu-card" onclick="window.print()">
-            <div class="icon">🖨️</div>
-            <span>Print<br>Document</span>
-        </div>
-
-        <div class="menu-card" onclick="location.href='archive.html'">
-            <div class="icon">📁</div>
-            <span>Document<br>Archive</span>
+        <div class="doc-card" onclick="showNotify('Generating Fee Vouchers...', 'success')">
+            <div class="icon">💳</div><span>Fee Voucher</span>
         </div>
     </div>
-
     <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-item">
-            <i>🏠</i>
-            <span>Home</span>
-        </a>
-        <a href="chat.html" class="nav-item">
-            <i>💬</i>
-            <span>Chat</span>
-        </a>
-        <a href="documents.html" class="nav-item active">
-            <i>📄</i>
-            <span>Docs</span>
-        </a>
-        <a href="profile.html" class="nav-item">
-            <i>👤</i>
-            <span>Profile</span>
-        </a>
+        <a href="dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+        <a href="chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
+        <a href="documents.html" class="nav-item active"><i>📄</i><span>Docs</span></a>
+        <a href="profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
     </nav>
-
     <script>
-        // Handle file selection from gallery
-        document.getElementById('gallery-input').onchange = function() {
-            if(this.files && this.files[0]) {
-                alert("Selected: " + this.files[0].name);
-                // You can add logic here to upload or display the file
-            }
-        };
+        function showNotify(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+            setTimeout(() => bar.className = '', 3000);
+        }
     </script>
 </body>
 </html>

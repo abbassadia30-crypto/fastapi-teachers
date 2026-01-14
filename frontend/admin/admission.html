@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
+<script>
+        if (!localStorage.getItem('userEmail')) {
+            window.location.replace("../index.html");
+        }
+    </script>
+
     <title>Student Admission - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
@@ -15,77 +22,57 @@
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            background: var(--bg); 
-            display: flex; 
-            flex-direction: column; 
-            min-height: 100vh;
+            margin: 0; background: var(--bg); 
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        /* Notification Bar */
+        /* Red/Green Sign Boxes */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-red { background: #ef5350; top: 20px !important; }
-        .bg-green { background: #66bb6a; top: 20px !important; }
+        .bg-red { background: #ef5350; top: 20px !important; border: 1px solid #b71c1c; }
+        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #2e7d32; }
 
         header { 
-            padding: 20px; 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between;
-            background: white;
+            padding: 20px; display: flex; align-items: center; 
+            justify-content: space-between; background: white;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
         .back-btn {
-            background: #f0f2f5;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--secondary);
+            background: #f0f2f5; border: none; padding: 8px 15px;
+            border-radius: 10px; cursor: pointer; font-weight: 600; color: var(--secondary);
         }
 
         header h1 { color: var(--secondary); margin: 0; font-size: 20px; flex: 1; text-align: center; }
-
-        .form-container { padding: 20px; flex: 1; }
-
-        .admission-card {
-            background: white; border-radius: 20px; padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-
+        .form-container { padding: 20px; flex: 1; overflow-y: auto; }
+        .admission-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .input-group { margin-bottom: 15px; }
         label { display: block; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 5px; }
 
         input, select {
             width: 100%; padding: 12px; border-radius: 12px;
-            border: 1px solid #ddd; font-family: 'Poppins'; outline: none;
-            box-sizing: border-box;
+            border: 1px solid #ddd; font-family: 'Poppins'; outline: none; box-sizing: border-box;
         }
+        input:focus { border-color: var(--primary); }
 
         .flex-row-btn {
             background: #e3f2fd; color: var(--primary); border: none;
             padding: 10px 15px; border-radius: 10px; font-size: 12px;
-            font-weight: 600; cursor: pointer; margin-bottom: 20px;
-            width: 100%;
+            font-weight: 600; cursor: pointer; margin-bottom: 20px; width: 100%;
         }
 
         .submit-btn {
             background: var(--primary); color: white; border: none;
             padding: 15px; width: 100%; border-radius: 15px;
-            font-weight: 600; cursor: pointer;
-            transition: 0.3s;
+            font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-        .submit-btn:hover { background: #0277bd; }
-        .submit-btn:disabled { background: #ccc; }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
         
         .row-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
-        .del-btn { background: none; border: none; color: #ef5350; cursor: pointer; font-size: 18px; padding: 5px; }
+        .del-btn { background: none; border: none; color: #ef5350; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -118,11 +105,10 @@
 
                 <div class="input-group">
                     <label>Admission Fee</label>
-                    <input type="number" id="stdFee" placeholder="0.00" required>
+                    <input type="number" id="stdFee" placeholder="0.00" step="0.01" required>
                 </div>
 
                 <div id="flexibleRows"></div>
-
                 <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field</button>
                 
                 <button type="submit" class="submit-btn" id="subBtn">Complete Admission</button>
@@ -131,16 +117,16 @@
     </div>
 
     <script>
+        const API_URL = "https://fastapi-teachers.onrender.com"; 
         const adminEmail = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('institutionToken');
         const sectionDropdown = document.getElementById('sectionSelect');
-        let savedSections = JSON.parse(localStorage.getItem('customSections')) || [];
 
-        // Protection Guard
         if (!adminEmail) { window.location.href = "../index.html"; }
 
-        window.onload = function() {
-            populateSections();
-            loadAdminTemplate();
+        window.onload = () => { 
+            populateSections(); 
+            loadAdminTemplate(); 
         };
 
         function showNotify(msg, type) {
@@ -150,27 +136,38 @@
             setTimeout(() => bar.className = '', 3000);
         }
 
-        // Load the labels this admin used last time
+        // Load fields that this specific admin uses frequently
         function loadAdminTemplate() {
-            const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || [];
+            const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || ["Father's Name", "Phone Number"];
             template.forEach(label => addNewRow(label));
         }
 
-        function populateSections() {
-            sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Class/Section</option>';
-            for(let i=1; i<=12; i++) {
-                let opt = document.createElement('option');
-                opt.value = "Class " + i; opt.innerHTML = "Class " + i;
-                sectionDropdown.appendChild(opt);
-            }
-            savedSections.forEach(sec => {
-                let opt = document.createElement('option');
-                opt.value = sec; opt.innerHTML = sec;
-                sectionDropdown.appendChild(opt);
-            });
-            let addOpt = document.createElement('option');
-            addOpt.value = "ADD_NEW"; addOpt.innerHTML = "+ Add New Section Name...";
-            sectionDropdown.appendChild(addOpt);
+        async function populateSections() {
+            sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Section</option>';
+            
+            // Hardcoded defaults for a standard institution
+            const defaults = ["Grade 1", "Grade 2", "Grade 3"];
+            defaults.forEach(d => addOption(d));
+
+            // FETCH CUSTOM SECTIONS FROM DATABASE
+            try {
+                const res = await fetch(`${API_URL}/sections`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const sections = await res.json();
+                    sections.forEach(sec => addOption(sec.name));
+                }
+            } catch (e) { console.log("Database sections unavailable"); }
+
+            addOption("+ Add New Section...", "ADD_NEW");
+        }
+
+        function addOption(text, value = null) {
+            let opt = document.createElement('option');
+            opt.value = value || text;
+            opt.innerHTML = text;
+            sectionDropdown.appendChild(opt);
         }
 
         function checkCustom(select) {
@@ -184,30 +181,22 @@
             div.className = "row-item";
             div.id = rowId;
             div.innerHTML = `
-                <input type="text" placeholder="Label" class="extra-key" style="width:35%;" value="${labelValue}">
+                <input type="text" placeholder="Field Label" class="extra-key" style="width:35%;" value="${labelValue}">
                 <input type="text" placeholder="Value" class="extra-val" style="width:55%;">
-                <button type="button" class="del-btn" onclick="removeRow('${rowId}')">🗑️</button>
+                <button type="button" class="del-btn" onclick="document.getElementById('${rowId}').remove()">🗑️</button>
             `;
             container.appendChild(div);
         }
 
-        function removeRow(id) {
-            const row = document.getElementById(id);
-            if (row) row.remove();
-        }
-
-        document.getElementById('admissionForm').onsubmit = function(e) {
+        document.getElementById('admissionForm').onsubmit = async function(e) {
             e.preventDefault();
             const btn = document.getElementById('subBtn');
             btn.disabled = true;
+            btn.innerText = "Syncing with Database...";
 
             let finalSection = sectionDropdown.value;
             if(finalSection === "ADD_NEW") {
                 finalSection = document.getElementById('newSectionInput').value;
-                if(!savedSections.includes(finalSection) && finalSection !== "") {
-                    savedSections.push(finalSection);
-                    localStorage.setItem('customSections', JSON.stringify(savedSections));
-                }
             }
 
             const extraData = {};
@@ -218,29 +207,42 @@
             keys.forEach((k, i) => {
                 if(k.value.trim() !== "") {
                     extraData[k.value] = vals[i].value;
-                    templateLabels.push(k.value); // Save label for template
+                    templateLabels.push(k.value);
                 }
             });
 
-            // Save the template for this admin's next session
-            localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
-
-            const admissionData = {
-                studentName: document.getElementById('stdName').value,
+            const payload = {
+                name: document.getElementById('stdName').value,
                 section: finalSection,
-                fee: document.getElementById('stdFee').value,
-                admittedBy: adminEmail,
-                admittedAt: new Date().toLocaleString(),
-                extraFields: extraData
+                fee: parseFloat(document.getElementById('stdFee').value),
+                admitted_by: adminEmail,
+                extra_fields: extraData
             };
 
-            let students = JSON.parse(localStorage.getItem('admittedStudents')) || [];
-            students.push(admissionData);
-            localStorage.setItem('admittedStudents', JSON.stringify(students));
+            try {
+                const response = await fetch(`${API_URL}/students/admit`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-            showNotify(`Admission Complete & Template Saved!`, "success");
-
-            setTimeout(() => { location.reload(); }, 2000);
+                if (response.ok) {
+                    // Remember this admin's preferred fields for next time
+                    localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
+                    showNotify("Admission Successful!", "success");
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    const err = await response.json();
+                    showNotify(err.detail || "Database Error", "error");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                showNotify("Institution server connection lost", "error");
+                btn.disabled = false;
+            }
         };
     </script>
 </body>

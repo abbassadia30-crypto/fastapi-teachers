@@ -8,12 +8,16 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
     email = Column(String, unique=True)
+    phone = Column(String, nullable=True) # Required for chat later
     password = Column(String)
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
-    # This field is required for the 1-minute logic
     otp_created_at = Column(DateTime, default=datetime.utcnow)
     role = Column(String, nullable=True)
+    
+    # SOFT DELETE: Professional apps use this for recovery
+    is_deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
 
 class Student(Base):
     __tablename__ = "students"

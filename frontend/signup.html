@@ -9,35 +9,21 @@
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         
         #notification-bar { 
-            position: fixed; 
-            top: -100px; 
-            left: 50%; 
-            transform: translateX(-50%); 
-            width: 90%; 
-            max-width: 350px; 
-            padding: 15px; 
-            border-radius: 15px; 
-            color: white; 
-            font-weight: 600; 
-            text-align: center; 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
+            width: 90%; max-width: 350px; padding: 15px; border-radius: 15px; 
+            color: white; font-weight: 600; text-align: center; 
             transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-            z-index: 1000; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
-        /* Added show-notify to handle the slide-down animation */
         .show-notify { top: 20px !important; }
         .bg-red { background: #e53935; border: 1px solid #b71c1c; }
         .bg-green { background: #43a047; border: 1px solid #1b5e20; }
 
         .card { 
-            background: white; 
-            padding: 30px; 
-            border-radius: 30px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
-            width: 90%; 
-            max-width: 420px; 
-            text-align: center; 
+            background: white; padding: 30px; border-radius: 30px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 90%; 
+            max-width: 420px; text-align: center; 
         }
 
         .name-row { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -45,16 +31,9 @@
         label { font-size: 11px; font-weight: 600; color: #888; margin-left: 5px; text-transform: uppercase; }
         
         input { 
-            width: 100%; 
-            padding: 12px; 
-            border-radius: 10px; 
-            border: 1px solid #eee; 
-            background: #f9f9f9; 
-            box-sizing: border-box; 
-            outline: none; 
-            font-family: 'Poppins', sans-serif;
-            margin-top: 5px;
-            transition: 0.3s;
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #eee; 
+            background: #f9f9f9; box-sizing: border-box; outline: none; 
+            font-family: 'Poppins', sans-serif; margin-top: 5px; transition: 0.3s;
         }
         input:focus { border-color: #0288d1; background: #fff; }
 
@@ -63,16 +42,9 @@
         .strength-text { font-size: 10px; font-weight: 600; display: block; margin-top: 5px; }
 
         .btn { 
-            width: 100%; 
-            padding: 14px; 
-            background: #0288d1; 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: 0.3s;
-            margin-top: 10px;
+            width: 100%; padding: 14px; background: #0288d1; color: white; 
+            border: none; border-radius: 12px; font-weight: 600; 
+            cursor: pointer; transition: 0.3s; margin-top: 10px;
         }
         .btn:hover { background: #0277bd; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
@@ -87,23 +59,23 @@
 
     <div class="card">
         <h2 style="margin-bottom: 5px;">Join Institution</h2>
-        <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Create your admin profile</p>
+        <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Create your profile</p>
         
         <form id="signupForm" onsubmit="handleSignup(event)">
             <div class="name-row">
                 <div class="input-group" style="flex: 1;">
                     <label>First Name</label>
-                    <input type="text" id="firstName" placeholder="Jane" required>
+                    <input type="text" id="firstName" placeholder="First Name" required>
                 </div>
                 <div class="input-group" style="flex: 1;">
                     <label>Last Name</label>
-                    <input type="text" id="lastName" placeholder="Doe" required>
+                    <input type="text" id="lastName" placeholder="Last Name" required>
                 </div>
             </div>
 
             <div class="input-group">
                 <label>Email Address</label>
-                <input type="email" id="email" placeholder="admin@institution.edu" required>
+                <input type="email" id="email" placeholder="admin@institution.com" required>
             </div>
 
             <div class="input-group">
@@ -129,11 +101,15 @@
 <script>
 const API_BASE = "https://fastapi-teachers.onrender.com"; 
 
+// --- SESSION GUARD: Don't allow signup if already logged in ---
+if (localStorage.getItem('institutionToken')) {
+    window.location.href = "dashboard.html";
+}
+
 const Notification = {
     el: document.getElementById('notification-bar'),
     show(msg, type) {
         this.el.innerText = msg;
-        // Added show-notify to ensure the element moves to top: 20px
         this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
         setTimeout(() => { this.el.className = ''; }, 4000);
     }
@@ -174,14 +150,8 @@ async function handleSignup(event) {
     const password = document.getElementById('password').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
 
-    // Validation
     if (password !== confirmPassword) {
         Notification.show("Passwords do not match", "error");
-        return;
-    }
-
-    if (password.length < 8) {
-        Notification.show("Password must be at least 8 characters", "error");
         return;
     }
 
@@ -193,7 +163,7 @@ async function handleSignup(event) {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ 
-                name: `${firstName} ${lastName}`, 
+                full_name: `${firstName} ${lastName}`, 
                 email: email, 
                 password: password 
             })
@@ -204,6 +174,7 @@ async function handleSignup(event) {
         if (response.ok) {
             Notification.show("OTP Sent! Check your email.", "success");
             localStorage.setItem('pendingEmail', email);
+            // Developer Tip: Storing the email allows the Verify page to know who to verify
             setTimeout(() => { window.location.href = "verify.html"; }, 2000); 
         } else {
             Notification.show(result.detail || "Signup failed", "error");
@@ -211,7 +182,7 @@ async function handleSignup(event) {
             btn.innerText = "Create Account";
         }
     } catch (error) {
-        Notification.show("Connection Error", "error");
+        Notification.show("Server Connection Error", "error");
         btn.disabled = false;
         btn.innerText = "Create Account";
     }

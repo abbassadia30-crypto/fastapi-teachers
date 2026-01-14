@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        /* All CSS kept in head as requested */
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
         
         #notification-bar { 
@@ -52,7 +53,6 @@
         .footer-text { font-size: 12px; margin-top: 15px; color: #666; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
         
-        /* Overlay to prevent flicker during auto-login check */
         #auth-check-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f4f7f6; z-index: 2000; display: flex; justify-content: center; align-items: center; }
     </style>
 </head>
@@ -65,7 +65,7 @@
         <h2>Starlight Login</h2>
         <form id="loginForm" onsubmit="handleLogin(event)">
             <div class="input-group">
-                <input type="email" id="email" placeholder="Starlight Email" required>
+                <input type="email" id="email" placeholder="Institution Email" required>
             </div>
             <div class="input-group">
                 <input type="password" id="password" placeholder="Password" required>
@@ -86,20 +86,18 @@
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
 
-        // --- 1. SESSION GUARD (Runs Immediately) ---
+        // --- 1. SESSION GUARD ---
         (function checkSession() {
             const token = localStorage.getItem('institutionToken');
             const role = localStorage.getItem('user_role');
-            
             if (token && role) {
-                // User is already logged in, redirect immediately
                 routeToDashboard(role);
             } else {
-                // No session found, hide overlay and show login form
                 document.getElementById('auth-check-overlay').style.display = 'none';
             }
         })();
 
+        // --- 2. SIGN BOX (NOTIFICATION) ---
         const Notification = {
             el: document.getElementById('notification-bar'),
             show(msg, type) {
@@ -123,45 +121,41 @@
             const btn = document.getElementById('loginBtn');
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const remember = document.getElementById('remember').checked;
 
             btn.disabled = true;
-            btn.innerText = "Authenticating...";
+            btn.innerText = "Verifying Credentials...";
 
             try {
+                // Real Developer Tip: FastAPI OAuth2 often expects form-data for login, 
+                // but since we are using JSON schemas, we stick to JSON.
                 const response = await fetch(`${API_BASE}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                    body: JSON.stringify({ email: email, password: password })
                 });
                 
                 const result = await response.json();
 
                 if (response.ok) {
-                    // Save Session Data
+                    // SECURE STORAGE
                     localStorage.setItem('userEmail', email);
                     localStorage.setItem('institutionToken', result.access_token);
                     
                     if (result.role) {
                         localStorage.setItem('user_role', result.role);
+                        Notification.show("Login Successful!", "success");
+                        setTimeout(() => routeToDashboard(result.role), 1500);
+                    } else {
+                        // If user hasn't picked a role yet
+                        window.location.href = "roles/role.html";
                     }
-
-                    Notification.show("Welcome back!", "success");
-
-                    setTimeout(() => {
-                        if (result.role && result.role !== "") {
-                            routeToDashboard(result.role);
-                        } else {
-                            window.location.href = "roles/role.html"; 
-                        }
-                    }, 1500); 
                 } else {
-                    Notification.show(result.detail || "Login failed", "error");
+                    Notification.show(result.detail || "Invalid Email or Password", "error");
                     btn.disabled = false;
                     btn.innerText = "Login";
                 }
             } catch (error) {
-                Notification.show("Server Connection Error", "error");
+                Notification.show("Cannot reach the institution server", "error");
                 btn.disabled = false;
                 btn.innerText = "Login";
             }

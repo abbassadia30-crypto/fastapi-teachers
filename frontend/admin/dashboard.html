@@ -2,8 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Portal - Institution</title>
+    <title>Student Admission - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script>
+        if (!localStorage.getItem('userEmail')) {
+            window.location.replace("../index.html");
+        }
+    </script>
+
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -15,185 +22,206 @@
 
         body { 
             font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            background: var(--bg); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh;
-            overflow: hidden;
+            margin: 0; background: var(--bg); 
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        /* Security Guard Style */
+        /* Red/Green Sign Boxes */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
         .bg-red { background: #ef5350; top: 20px !important; }
+        .bg-green { background: #66bb6a; top: 20px !important; }
 
-        header {
-            padding: 30px 20px 10px;
-            text-align: center;
+        header { 
+            padding: 20px; display: flex; align-items: center; 
+            justify-content: space-between; background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
 
-        h1 { color: var(--secondary); margin: 0; font-size: 24px; }
-        p { color: #666; font-size: 14px; }
-
-        /* Animated Grid Container */
-        .admin-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-            padding-bottom: 100px; /* Space for bottom bar */
+        .back-btn {
+            background: #f0f2f5; border: none; padding: 8px 15px;
+            border-radius: 10px; cursor: pointer; font-weight: 600; color: var(--secondary);
         }
 
-        .menu-card {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: var(--secondary);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 1px solid rgba(255,255,255,0.3);
-            cursor: pointer;
+        header h1 { color: var(--secondary); margin: 0; font-size: 20px; flex: 1; text-align: center; }
+        .form-container { padding: 20px; flex: 1; }
+        .admission-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 5px; }
+
+        input, select {
+            width: 100%; padding: 12px; border-radius: 12px;
+            border: 1px solid #ddd; font-family: 'Poppins'; outline: none; box-sizing: border-box;
         }
 
-        .menu-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2);
-            border-color: var(--primary);
+        .flex-row-btn {
+            background: #e3f2fd; color: var(--primary); border: none;
+            padding: 10px 15px; border-radius: 10px; font-size: 12px;
+            font-weight: 600; cursor: pointer; margin-bottom: 20px; width: 100%;
         }
 
-        .menu-card:active { transform: scale(0.95); }
-
-        .icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            background: #e3f2fd;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 15px;
-            transition: 0.3s;
+        .submit-btn {
+            background: var(--primary); color: white; border: none;
+            padding: 15px; width: 100%; border-radius: 15px;
+            font-weight: 600; cursor: pointer; transition: 0.3s;
         }
-
-        .menu-card:hover .icon { background: var(--primary); color: white; }
-
-        .menu-card span { font-size: 13px; font-weight: 600; text-align: center; }
-
-        /* Animated Bottom Bar */
-        .bottom-nav {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 500px;
-            background: rgba(38, 50, 56, 0.95);
-            backdrop-filter: blur(10px);
-            height: 70px;
-            border-radius: 25px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            z-index: 1000;
-        }
-
-        .nav-item {
-            color: #b0bec5;
-            text-decoration: none;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 10px;
-            transition: 0.3s;
-        }
-
-        .nav-item.active { color: white; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
-        .nav-item:hover { color: var(--accent); }
-
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .row-item { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .del-btn { background: none; border: none; color: #ef5350; cursor: pointer; font-size: 18px; }
     </style>
 </head>
 <body>
 
-    <script>
-        // --- Role Guard ---
-        (function() {
-            if (localStorage.getItem('user_role') !== 'admin') {
-                window.location.replace("../index.html");
-            }
-        })();
-    </script>
-
     <div id="notification-bar"></div>
 
     <header>
-        <h1>Institution Admin</h1>
-        <p id="admin-welcome">System Overview</p>
+        <button class="back-btn" onclick="location.href='dashboard.html'">← Back</button>
+        <h1>Admission Desk</h1>
+        <div style="width: 70px;"></div> 
     </header>
 
-    <div class="admin-grid">
-        <div class="menu-card" onclick="location.href='admission.html'">
-            <div class="icon">📝</div>
-            <span>Student<br>Admission</span>
-        </div>
-        <div class="menu-card" onclick="location.href='student_records.html'">
-            <div class="icon">📂</div>
-            <span>Student<br>Records</span>
-        </div>
+    <div class="form-container">
+        <div class="admission-card">
+            <form id="admissionForm">
+                <div class="input-group">
+                    <label>Student Full Name</label>
+                    <input type="text" id="stdName" placeholder="Full legal name" required>
+                </div>
 
-        <div class="menu-card" onclick="location.href='teacher-hiring.html'">
-            <div class="icon">🤝</div>
-            <span>Teacher<br>Hiring</span>
-        </div>
-        <div class="menu-card" onclick="location.href='teacher-records.html'">
-            <div class="icon">👔</div>
-            <span>Teacher<br>Records</span>
-        </div>
+                <div class="input-group">
+                    <label>Select Section</label>
+                    <select id="sectionSelect" onchange="checkCustom(this)" required></select>
+                </div>
 
-        <div class="menu-card" onclick="location.href='staff-hiring.html'">
-            <div class="icon">🛠️</div>
-            <span>Staff<br>Hiring</span>
-        </div>
-        <div class="menu-card" onclick="location.href='staff-records.html'">
-            <div class="icon">📋</div>
-            <span>Staff<br>Records</span>
+                <div class="input-group" id="customSectionGroup" style="display:none;">
+                    <label>New Section Name</label>
+                    <input type="text" id="newSectionInput" placeholder="Enter custom section name">
+                </div>
+
+                <div class="input-group">
+                    <label>Admission Fee</label>
+                    <input type="number" id="stdFee" placeholder="0.00" required>
+                </div>
+
+                <div id="flexibleRows"></div>
+                <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field</button>
+                <button type="submit" class="submit-btn" id="subBtn">Complete Admission</button>
+            </form>
         </div>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-item active">
-            <i>🏠</i>
-            <span>Home</span>
-        </a>
-        <a href="chat.html" class="nav-item">
-            <i>💬</i>
-            <span>Chat</span>
-        </a>
-        <a href="documents.html" class="nav-item">
-            <i>📄</i>
-            <span>Docs</span>
-        </a>
-        <a href="profile.html" class="nav-item">
-            <i>👤</i>
-            <span>Profile</span>
-        </a>
-    </nav>
-
     <script>
-        document.getElementById('admin-welcome').innerText = "Welcome, Admin " + (localStorage.getItem('userName') || "");
+        const API_URL = "https://your-backend-name.onrender.com"; 
+        const adminEmail = localStorage.getItem('userEmail');
+        const sectionDropdown = document.getElementById('sectionSelect');
+        let savedSections = JSON.parse(localStorage.getItem('customSections')) || [];
+
+        if (!adminEmail) { window.location.href = "../index.html"; }
+
+        window.onload = () => { populateSections(); loadAdminTemplate(); };
+
+        function showNotify(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            bar.innerText = msg;
+            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+            setTimeout(() => bar.className = '', 3000);
+        }
+
+        function loadAdminTemplate() {
+            const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || [];
+            template.forEach(label => addNewRow(label));
+        }
+
+        function populateSections() {
+            sectionDropdown.innerHTML = '<option value="" disabled selected>Choose Section</option>';
+            for(let i=1; i<=12; i++) {
+                let opt = document.createElement('option');
+                opt.value = "Class " + i; opt.innerHTML = "Class " + i;
+                sectionDropdown.appendChild(opt);
+            }
+            savedSections.forEach(sec => {
+                let opt = document.createElement('option');
+                opt.value = sec; opt.innerHTML = sec;
+                sectionDropdown.appendChild(opt);
+            });
+            let addOpt = document.createElement('option');
+            addOpt.value = "ADD_NEW"; addOpt.innerHTML = "+ Add New Section...";
+            sectionDropdown.appendChild(addOpt);
+        }
+
+        function checkCustom(select) {
+            document.getElementById('customSectionGroup').style.display = (select.value === "ADD_NEW") ? "block" : "none";
+        }
+
+        function addNewRow(labelValue = "") {
+            const container = document.getElementById('flexibleRows');
+            const rowId = 'row_' + Math.random().toString(36).substr(2, 9);
+            const div = document.createElement('div');
+            div.className = "row-item";
+            div.id = rowId;
+            div.innerHTML = `
+                <input type="text" placeholder="Label" class="extra-key" style="width:35%;" value="${labelValue}">
+                <input type="text" placeholder="Value" class="extra-val" style="width:55%;">
+                <button type="button" class="del-btn" onclick="removeRow('${rowId}')">🗑️</button>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeRow(id) { document.getElementById(id)?.remove(); }
+
+        document.getElementById('admissionForm').onsubmit = async function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('subBtn');
+            btn.disabled = true;
+
+            let finalSection = sectionDropdown.value;
+            if(finalSection === "ADD_NEW") {
+                finalSection = document.getElementById('newSectionInput').value;
+            }
+
+            const extraData = {};
+            const templateLabels = [];
+            const keys = document.querySelectorAll('.extra-key');
+            const vals = document.querySelectorAll('.extra-val');
+
+            keys.forEach((k, i) => {
+                if(k.value.trim() !== "") {
+                    extraData[k.value] = vals[i].value;
+                    templateLabels.push(k.value);
+                }
+            });
+
+            const payload = {
+                name: document.getElementById('stdName').value,
+                section: finalSection,
+                fee: parseFloat(document.getElementById('stdFee').value),
+                admitted_by: adminEmail,
+                extra_fields: extraData
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/students/admit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    localStorage.setItem(`template_${adminEmail}`, JSON.stringify(templateLabels));
+                    showNotify("Admission saved to Institution Database!", "success");
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    showNotify("Server Error: Check your backend.", "red");
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                showNotify("Failed to connect to Render server.", "red");
+                btn.disabled = false;
+            }
+        };
     </script>
 </body>
 </html>
