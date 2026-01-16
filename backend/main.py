@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from backend import schemas
 from backend.models import Student
-from backend.schemas import AdmissionPayload
+from backend.schemas import AdmissionPayload, RoleUpdate
 from backend.models import Student
 from backend import models
 from backend.database import engine, SessionLocal
