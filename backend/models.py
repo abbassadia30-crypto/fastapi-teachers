@@ -1,5 +1,4 @@
 from resend import Contact
-from sympy import true
 from backend.database import Base
 from sqlalchemy import Column, Integer, String, Float,Boolean ,  JSON, ForeignKey, DateTime
 from datetime import datetime
