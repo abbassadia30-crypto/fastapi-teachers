@@ -1,4 +1,4 @@
-package com.example.starlight;
+package com.institution.app;
 
 import com.getcapacitor.BridgeActivity;
 

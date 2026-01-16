@@ -7,10 +7,12 @@ import bcrypt
 from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-
-from schemas import AdmissionPayload
-from . import models, schemas
-from .database import engine, SessionLocal
+from backend import schemas
+from backend.models import Student
+from backend.schemas import AdmissionPayload
+from backend.models import Student
+from backend import models
+from backend.database import engine, SessionLocal
 import resend 
 models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
@@ -162,20 +164,18 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
 
 # --- Institution Role Management ---
 @app.patch("/users/update-role")
-async def update_user_role(payload: dict = Body(...), db: Session = Depends(get_db)):
-    email = payload.get("email")
-    role = payload.get("role")
+async def update_user_role(payload: RoleUpdate, db: Session = Depends(get_db)):
+    # Pydantic automatically validates email and role now
+    user = db.query(models.User).filter(models.User.email == payload.email).first()
     
-    if not email or not role:
-        raise HTTPException(status_code=400, detail="Missing email or role")
-
-    user = db.query(models.User).filter(models.User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Institution user not found")
 
-    user.role = role
+    user.role = payload.role
     db.commit()
-    return {"status": "success", "message": f"Role updated to {role}"}
+    
+    # Removed the trailing comma to avoid returning a tuple
+    return {"status": "success", "message": f"Role updated to {payload.role}"}
 
 @app.post("/students/admit")
 async def admit_student(payload: AdmissionPayload, db: Session = Depends(get_db)):
@@ -184,15 +184,19 @@ async def admit_student(payload: AdmissionPayload, db: Session = Depends(get_db)
         extra_data_dict = json.loads(payload.extra_fields)
     except:
         extra_data_dict = {}
-
+    
+    std = db.query(models.Student).filter(models.Student.is_active)
     new_student = Student(
         name=payload.name,
         section=payload.section,
         fee=payload.fee,
         admitted_by=payload.admitted_by,
         extra_fields=extra_data_dict # SQLAlchemy handles the dictionary -> JSON conversion
+        
     )
     
     db.add(new_student)
     db.commit()
+    db.refresh()
     return {"status": "success", "message": "Synced to Institution Cloud"}
+

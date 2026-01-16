@@ -1,12 +1,10 @@
 {
-  "appId": "com.example.starlight",
-  "appName": "Starlight",
+  "appId": "com.institution.app",
+  "appName": "InstitutionManager",
   "webDir": "frontend",
   "server": {
     "androidScheme": "http",
     "cleartext": true,
-    "allowNavigation": [
-      "10.0.2.2:8000"
-    ]
+    "allowNavigation": ["https://fastapi-teachers.onrender.com"]
   }
 }

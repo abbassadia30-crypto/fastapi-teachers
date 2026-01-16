@@ -1,4 +1,7 @@
-from .database import Base
+from resend import Contact
+from sklearn import base
+from sympy import true
+from backend.database import Base
 from sqlalchemy import Column, Integer, String, Float,Boolean ,  JSON, ForeignKey, DateTime
 from datetime import datetime
 from sqlalchemy.sql import func
@@ -13,24 +16,20 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime, default=datetime.utcnow)
-    role = Column(String, nullable=True)
-    
-    # SOFT DELETE: Professional apps use this for recovery
+    role = Column(String, nullable=True)    
     is_deleted = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True)
 
 class Student(Base):
     __tablename__ = "students"
-
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+    father_name = Column(String , nullable=False)
     section = Column(String, nullable=False)
     fee = Column(Float, nullable=False)
-    
-    # Ownership: Email of the admin who admitted the student
     admitted_by = Column(String, index=True) 
+    extra_fields = Column(JSON, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.current_timestamp())
     
-    # This stores the flexible data as a dictionary
-    extra_fields = Column(JSON, nullable=True) 
-    
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+

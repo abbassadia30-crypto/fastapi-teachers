@@ -17,6 +17,7 @@ class UserCreate(BaseModel):
 
 class AdmissionPayload(BaseModel):
     name: str
+    father_name : str
     section: str
     fee: float
     admitted_by: str
@@ -37,3 +38,7 @@ class ResetPasswordSchema(BaseModel):
     email: EmailStr
     otp: str
     new_password: str
+
+class RoleUpdate(BaseModel):
+    email: str
+    role: str

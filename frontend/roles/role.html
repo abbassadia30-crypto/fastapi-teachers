@@ -96,14 +96,19 @@
             }
         }
 
-        function handleRedirect(role) {
-            const pathMap = {
-                'admin': '../admin/dashboard.html',
-                'teacher': '../teacher/dashboard.html',
-                'student': '../student/dashboard.html'
-            };
-            window.location.href = pathMap[role] || "../index.html";
+       function handleRedirect(role) {
+    if (role === 'admin') {
+        // Logic: If they are admin, check if they have registered their institution
+        const hasInstitution = localStorage.getItem('hasInstitution');
+        if (hasInstitution === 'true') {
+            window.location.href = '../admin/dashboard.html';
+        } else {
+            window.location.href = '../admin/institution-setup.html'; // Direct to setup!
         }
+    } else {
+        window.location.href = `../${role}/dashboard.html`;
+    }
+}
 
         async function setRole(selectedRole) {
             document.getElementById('loading').style.display = 'flex';
@@ -133,10 +138,8 @@
             }
         }
 
-        async function setRole(selectedRole) {
+       async function setRole(selectedRole) {
     document.getElementById('loading').style.display = 'flex';
-    
-    // We get the email from localStorage (stored during login/signup)
     const email = localStorage.getItem('userEmail'); 
 
     if (!email) {
@@ -148,10 +151,7 @@
     try {
         const response = await fetch(`${API_BASE}/users/update-role`, {
             method: 'PATCH',
-            headers: { 
-                'Content-Type': 'application/json'
-                // Removed Authorization header as backend is currently using email in body
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 email: email, 
                 role: selectedRole 
@@ -160,8 +160,9 @@
 
         if (response.ok) {
             localStorage.setItem('user_role', selectedRole);
-            showBar(`Setting up ${selectedRole.toUpperCase()} workspace...`, "success");
-            setTimeout(() => handleRedirect(selectedRole), 1200);
+            // Show the Green Sign Box
+            showBar(`Success! Identity set as ${selectedRole.toUpperCase()}`, "success");
+            setTimeout(() => handleRedirect(selectedRole), 1500);
         } else {
             const err = await response.json();
             showBar(err.detail || "Update failed", "error");
