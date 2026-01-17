@@ -1,30 +1,35 @@
 import os
-from pyexpat import model
 import json
 import random
 from datetime import datetime, timedelta, timezone
 import bcrypt
-from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks, Body
+from fastapi import APIRouter, FastAPI, HTTPException, Depends, BackgroundTasks, Body
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from backend import schemas
-from backend.models import Student
-from backend.schemas import AdmissionPayload, RoleUpdate
+from backend.models import School, Student
+from backend.routers import auth, institution
+from backend.schemas import RoleUpdate
 from backend.models import Student
 from backend import models
 from backend.database import engine, SessionLocal
-import resend 
-models.Base.metadata.drop_all(bind=engine)
+import resend
+from . import models
+
 models.Base.metadata.create_all(bind=engine)
 
-# SECURITY: Set this in Render Environment Variables
+router = APIRouter()
+
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
 
 app = FastAPI()
 
+app.include_router(auth.router)
+app.include_router(institution.router)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -37,166 +42,72 @@ def get_db():
     finally:
         db.close()
 
-# --- Auth Helpers using Direct Bcrypt ---
-def hash_password(password: str) -> str:
-    pwd_bytes = password.encode('utf-8')[:72]
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
-
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8')[:72], 
-            hashed_password.encode('utf-8')
-        )
-    except Exception as e:
-        print(f"Auth Error: {e}")
-        return False
-
-def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
-    try:
-        resend.Emails.send({
-            "from": "Institution Portal <onboarding@resend.dev>", 
-            "to": [email],
-            "subject": subject,
-            "html": f"""
-            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 15px;">
-                <h2 style="color: #0288d1;">{subject}</h2>
-                <p>Hello {name}, your code is:</p>
-                <h1 style="color: #333; font-size: 40px; letter-spacing: 5px;">{code}</h1>
-                <p>This code will expire in 10 minutes.</p>
-            </div>
-            """
-        })
-    except Exception as e:
-        print(f"Resend Email Error: {e}")
-
-# --- Authentication Routes ---
-@app.post("/signup")
-async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
-    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    hashed_pwd = hash_password(user.password)
-
-    if existing_user:
-        if existing_user.is_verified:
-            raise HTTPException(status_code=400, detail="Email already registered.")
-        existing_user.otp_code, existing_user.password = otp, hashed_pwd
-        existing_user.otp_created_at = datetime.now(timezone.utc)
-        target_name = existing_user.name
-    else:
-        new_user = models.User(
-            name=user.name, email=user.email, password=hashed_pwd, 
-            otp_code=otp, otp_created_at=datetime.now(timezone.utc), is_verified=False
-        )
-        db.add(new_user)
-        target_name = user.name
-
-    db.commit()
-    background_tasks.add_task(send_email_task, user.email, target_name, otp)
-    return {"status": "success", "message": "OTP sent to your email."}
-
-@app.post("/verify-otp/")
-async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == data.email).first()
-    if not user or user.otp_code != data.otp:
-        raise HTTPException(status_code=400, detail="Invalid code or user.")
-    
-    # Timezone check
-    otp_time = user.otp_created_at
-    if otp_time.tzinfo is None:
-        otp_time = otp_time.replace(tzinfo=timezone.utc)
-
-    if datetime.now(timezone.utc) > otp_time + timedelta(minutes=10):
-        raise HTTPException(status_code=400, detail="OTP expired.")
-
-    user.is_verified, user.otp_code = True, None 
-    db.commit()
-
-    # Return the role so the frontend can decide where to redirect
-    return {
-        "status": "success", 
-        "message": "Account verified!",
-        "role": user.role  # Returns 'admin', 'teacher', 'student', or None
-    }
-
-@app.post("/login")
-async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == credentials.email).first()
-    
-    if not user or not verify_password(credentials.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid credentials.")
-    
-    if not user.is_verified:
-        raise HTTPException(status_code=403, detail="Please verify your email first.")
-    
-    # We include the role in the response so the frontend knows where to send them
-    return {
-        "message": "Login successful", 
-        "user": user.name, 
-        "role": user.role,  # This will be None or empty if not set
-        "access_token": "token-xyz"
-    }
-# --- Password Reset ---
-@app.post("/forgot-password")
-async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):
-    email = payload.get("email")
-    user = db.query(models.User).filter(models.User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Email not found")
-
-    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    user.otp_code, user.otp_created_at = otp, datetime.now(timezone.utc)
-    db.commit()
-
-    background_tasks.add_task(send_email_task, email, user.name, otp, "Password Reset Code")
-    return {"message": "Reset code sent"}
-
-@app.post("/reset-password")
-async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
-    if not user or user.otp_code != payload.get("otp"):
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    user.password, user.otp_code = hash_password(payload.get("new_password")), None
-    db.commit()
-    return {"message": "Password updated"}
-
-# --- Institution Role Management ---
-@app.patch("/users/update-role")
-async def update_user_role(payload: RoleUpdate, db: Session = Depends(get_db)):
-    # Pydantic automatically validates email and role now
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
-    
-    if not user:
-        raise HTTPException(status_code=404, detail="Institution user not found")
-
-    user.role = payload.role
-    db.commit()
-    
-    # Removed the trailing comma to avoid returning a tuple
-    return {"status": "success", "message": f"Role updated to {payload.role}"}
-
 @app.post("/students/admit")
-async def admit_student(payload: AdmissionPayload, db: Session = Depends(get_db)):
-    # Convert the string from frontend into a Python dictionary
-    try:
-        extra_data_dict = json.loads(payload.extra_fields)
-    except:
-        extra_data_dict = {}
-    
-    std = db.query(models.Student).filter(models.Student.is_active)
-    new_student = Student(
-        name=payload.name,
-        section=payload.section,
-        fee=payload.fee,
-        admitted_by=payload.admitted_by,
-        extra_fields=extra_data_dict # SQLAlchemy handles the dictionary -> JSON conversion
-        
-    )
-    
-    db.add(new_student)
-    db.commit()
-    db.refresh()
-    return {"status": "success", "message": "Synced to Institution Cloud"}
 
+async def admit_student(payload: schemas.AdmissionPayload, db: Session = Depends(get_db)):
+
+    # Validate institution exists
+
+    inst = db.query(models.Institution).filter(models.Institution.id == payload.institution_id).first()
+
+    if not inst:
+
+        raise HTTPException(status_code=404, detail="Institution not found")
+
+
+
+    new_student = models.Student(
+
+        name=payload.name,
+
+        father_name=payload.father_name,
+
+        section=payload.section,
+
+        fee=payload.fee,
+
+        admitted_by=payload.admitted_by,
+
+        institution_id=payload.institution_id,
+
+        extra_fields=payload.extra_fields # Pydantic dict converts to JSON automatically
+
+    )
+
+   
+
+    db.add(new_student)
+
+    db.commit()
+
+    db.refresh(new_student)
+
+    return {"status": "success", "student_id": new_student.id}
+
+
+
+@app.get("/institutions/{inst_id}/students")
+
+async def get_institution_students(inst_id: int, db: Session = Depends(get_db)):
+
+    students = db.query(models.Student).filter(models.Student.institution_id == inst_id).all()
+
+    return students
+
+
+
+# --- User Management ---
+
+
+
+@app.get("/users/me")
+
+async def get_current_user_profile(email: str, db: Session = Depends(get_db)):
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    if not user:
+
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user

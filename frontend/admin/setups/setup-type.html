@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Workspace Type</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --admin-theme: #e50914; --text-main: #263238; }
+        
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background: #f8f9fa; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh; 
+        }
+
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { font-size: 22px; color: var(--text-main); margin: 0; }
+        .header p { font-size: 14px; color: #666; }
+
+        .selection-grid { 
+            display: grid; 
+            grid-template-columns: 1fr; 
+            gap: 20px; 
+            width: 90%; 
+            max-width: 400px; 
+        }
+
+        /* Card Styles with Hover Effects */
+        .type-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 2px solid transparent;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        }
+
+        .type-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-color: #ddd;
+        }
+
+        .type-card:hover .icon-box {
+            background: var(--admin-theme);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .type-card:active { transform: scale(0.97); }
+        
+        .type-card.selected { 
+            border-color: var(--admin-theme); 
+            background: #fff5f5; 
+            box-shadow: 0 0 0 2px var(--admin-theme);
+        }
+
+        .icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: 0.3s;
+        }
+
+        .info h3 { margin: 0; font-size: 16px; color: var(--text-main); }
+        .info p { margin: 5px 0 0; font-size: 12px; color: #777; }
+
+        .next-btn {
+            margin-top: 40px;
+            width: 90%;
+            max-width: 400px;
+            background: var(--admin-theme);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+        }
+
+        .next-btn:hover {
+            background: #b20710;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+        }
+
+        /* Red Sign Box for errors */
+        #error-sign {
+            display: none;
+            position: fixed;
+            top: 20px;
+            background: #ef5350;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            z-index: 100;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="error-sign">Please select a type to continue</div>
+
+    <div class="header">
+        <h1>Institution Setup</h1>
+        <p>Step 1 of 2: Select your model</p>
+    </div>
+
+    <div class="selection-grid">
+        <div class="type-card" onclick="selectType('school', this)">
+            <div class="icon-box">🏫</div>
+            <div class="info">
+                <h3>Formal Institution</h3>
+                <p>Registered School or High School.</p>
+            </div>
+        </div>
+
+        <div class="type-card" onclick="selectType('academy', this)">
+            <div class="icon-box">✍️</div>
+            <div class="info">
+                <h3>Coaching / Academy</h3>
+                <p>Tuition center or Skill development lab.</p>
+            </div>
+        </div>
+
+        <div class="type-card" onclick="selectType('college', this)">
+            <div class="icon-box">🎓</div>
+            <div class="info">
+                <h3>College / Higher Ed</h3>
+                <p>Intermediate or Degree College.</p>
+            </div>
+        </div>
+    </div>
+
+    <button class="next-btn" onclick="proceed()">Continue to Details</button>
+
+    <script>
+        let selectedValue = "";
+
+        function selectType(val, element) {
+            selectedValue = val;
+            document.querySelectorAll('.type-card').forEach(card => card.classList.remove('selected'));
+            element.classList.add('selected');
+        }
+
+        function proceed() {
+            if (!selectedValue) {
+                const sign = document.getElementById('error-sign');
+                sign.style.display = 'block';
+                setTimeout(() => sign.style.display = 'none', 2000);
+                return;
+            }
+            
+            // Store choice for the backend later
+            localStorage.setItem('temp_inst_type', selectedValue);
+            
+            // Dynamic routing based on choice
+            switch(selectedValue) {
+                case 'school':
+                    window.location.href = "setup-formal.html";
+                    break;
+                case 'academy':
+                    window.location.href = "setup-academy.html";
+                    break;
+                case 'college':
+                    window.location.href = "setup-college.html";
+                    break;
+                default:
+                    console.error("Unknown institution type");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -2,13 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-<script>
-        if (!localStorage.getItem('pendingEmail')) {
-            window.location.replace("../index.html");
-        }
-    </script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Account | Institution Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -58,13 +52,6 @@
     const API_BASE = "https://fastapi-teachers.onrender.com";
     const email = localStorage.getItem('pendingEmail');
     const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
-
-    // Guard Clause
-    if (!email) { 
-        window.location.href = "index.html"; 
-    } else {
-        document.getElementById('display-email').innerText = email;
-    }
 
     function showBar(msg, type) {
         const bar = document.getElementById('notification-bar');

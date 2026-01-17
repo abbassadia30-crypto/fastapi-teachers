@@ -1,44 +1,62 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, Dict  # <--- MUST HAVE CAPITAL 'D' Dict HERE
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, Literal, Dict, Any
 
-# Match the name used in your main.py
+# --- Auth Schemas ---
+class UserCreate(BaseModel):
+    name: str = Field(..., min_length=2)
+    email: EmailStr
+    password: str = Field(..., min_length=6)
+
 class VerifyOTP(BaseModel):
-    email: str
+    email: EmailStr
     otp: str
 
 class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
-class UserCreate(BaseModel):
-    name: str = Field(..., min_length=2)
+class RoleUpdate(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    role: str # 'admin', 'teacher', etc.
 
+# --- Institution Schemas ---
+class InstitutionBase(BaseModel):
+    name: str
+    address: Optional[str] = None
+    email: Optional[EmailStr] = None
+    # We remove institution_code from "Create" schemas if you want it auto-generated
+
+class SchoolSchema(InstitutionBase):
+    principal_name: str
+    campus: Optional[str] = None
+    website: Optional[str] = None
+    type: Literal["school"] = "school"
+
+class AcademySchema(InstitutionBase):
+    edu_type: str
+    campus_name: Optional[str] = None
+    contact: str
+    type: Literal["academy"] = "academy"
+
+class CollegeSchema(InstitutionBase):
+    dean_name: str
+    code: Optional[str] = None
+    uni: Optional[str] = None
+    type: Literal["college"] = "college"
+
+# --- Student Schemas ---
 class AdmissionPayload(BaseModel):
     name: str
-    father_name : str
+    father_name: str
     section: str
     fee: float
     admitted_by: str
-    extra_fields: str
-    
-    class Config:
-        from_attributes = True
+    institution_id: int # Needed to link student to an institute
+    extra_fields: Optional[Dict[str, Any]] = None 
 
-class UserResponse(BaseModel):
-    email: str
-    is_verified: bool
-    role: Optional[str] = None 
-
-    class Config:
-        from_attributes = True
-
-class ResetPasswordSchema(BaseModel):
-    email: EmailStr
-    otp: str
-    new_password: str
-
-class RoleUpdate(BaseModel):
-    email: str
-    role: str
+class StudentResponse(BaseModel):
+    id: int
+    name: str
+    institution_id: int
+    created_at: Any
+    model_config = ConfigDict(from_attributes=True)

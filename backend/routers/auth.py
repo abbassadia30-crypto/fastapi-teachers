@@ -1,0 +1,132 @@
+import os
+import random
+import bcrypt
+import resend
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
+from sqlalchemy.orm import Session
+
+from .. import models, schemas, database
+
+# --- Configuration ---
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"]
+)
+
+resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
+
+# --- Helpers ---
+def hash_password(password: str) -> str:
+    pwd_bytes = password.encode('utf-8')[:72]
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8')[:72], 
+            hashed_password.encode('utf-8')
+        )
+    except Exception:
+        return False
+
+def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
+    try:
+        resend.Emails.send({
+            "from": "Institution Portal <onboarding@resend.dev>", 
+            "to": [email],
+            "subject": subject,
+            "html": f"""
+            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 15px;">
+                <h2 style="color: #0288d1;">{subject}</h2>
+                <p>Hello {name}, your code is:</p>
+                <h1 style="color: #333; font-size: 40px; letter-spacing: 5px;">{code}</h1>
+                <p>This code will expire in 10 minutes.</p>
+            </div>
+            """
+        })
+    except Exception as e:
+        print(f"Resend Email Error: {e}")
+
+# --- Routes ---
+
+@router.post("/signup")
+async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
+    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+    hashed_pwd = hash_password(user.password)
+
+    if existing_user:
+        if existing_user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already registered.")
+        existing_user.otp_code, existing_user.password = otp, hashed_pwd
+        existing_user.otp_created_at = datetime.now(timezone.utc)
+        target_name = existing_user.name
+    else:
+        new_user = models.User(
+            name=user.name, email=user.email, password=hashed_pwd, 
+            otp_code=otp, otp_created_at=datetime.now(timezone.utc), is_verified=False
+        )
+        db.add(new_user)
+        target_name = user.name
+
+    db.commit()
+    background_tasks.add_task(send_email_task, user.email, target_name, otp)
+    return {"status": "success", "message": "OTP sent to your email."}
+
+@router.post("/verify-otp")
+async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    if not user or user.otp_code != data.otp:
+        raise HTTPException(status_code=400, detail="Invalid code or user.")
+    
+    otp_time = user.otp_created_at.replace(tzinfo=timezone.utc) if user.otp_created_at.tzinfo is None else user.otp_created_at
+
+    if datetime.now(timezone.utc) > otp_time + timedelta(minutes=10):
+        raise HTTPException(status_code=400, detail="OTP expired.")
+
+    user.is_verified, user.otp_code = True, None 
+    db.commit()
+    return {"status": "success", "message": "Account verified!", "role": user.role}
+
+@router.post("/login")
+async def login(credentials: schemas.LoginSchema, db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    
+    if not user or not verify_password(credentials.password, user.password):
+        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    
+    if not user.is_verified:
+        raise HTTPException(status_code=403, detail="Please verify your email first.")
+    
+    return {
+        "message": "Login successful", 
+        "user": user.name, 
+        "role": user.role, 
+        "access_token": "token-xyz" # Recommend replacing with actual JWT
+    }
+
+@router.post("/forgot-password")
+async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(database.get_db)):
+    email = payload.get("email")
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+    user.otp_code, user.otp_created_at = otp, datetime.now(timezone.utc)
+    db.commit()
+
+    background_tasks.add_task(send_email_task, email, user.name, otp, "Password Reset Code")
+    return {"message": "Reset code sent"}
+
+@router.post("/reset-password")
+async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(database.get_db)):
+    user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
+    if not user or user.otp_code != payload.get("otp"):
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    user.password, user.otp_code = hash_password(payload.get("new_password")), None
+    db.commit()
+    return {"message": "Password updated"}

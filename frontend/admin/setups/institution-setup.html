@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Registration Complete</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #66bb6a; --secondary: #263238; --bg: #ffffff; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; 
+            background: var(--bg); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+
+        .success-card {
+            text-align: center;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        /* The Animated Checkmark */
+        .checkmark-circle {
+            width: 100px;
+            height: 100px;
+            background: #e8f5e9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: var(--primary);
+            font-size: 50px;
+            animation: scaleUp 0.5s ease-out;
+        }
+
+        @keyframes scaleUp {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        h1 { color: var(--secondary); font-size: 24px; margin-bottom: 10px; }
+        p { color: #666; font-size: 14px; margin-bottom: 30px; }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
+
+        /* Green Sign Box for final confirmation */
+        #final-sign {
+            position: fixed;
+            bottom: 30px;
+            background: var(--primary);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(102, 187, 106, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="success-card">
+        <div class="checkmark-circle">✓</div>
+        <h1>Setup Complete!</h1>
+        <p>Your institution profile has been verified and registered on our servers.</p>
+        
+        <div style="color: #999; font-size: 13px;">
+            Preparing your dashboard<span class="loading-dots"></span>
+        </div>
+    </div>
+
+    <div id="final-sign">🏛️ Workspace Ready</div>
+
+    <script>
+        setTimeout(() => {
+            window.location.href = "dashboard.html";
+        }, 3500);
+        
+        const API_BASE = "https://fastapi-teachers.onrender.com"
+
+        try{
+            fetch
+        }
+    </script>
+</body>
+</html>

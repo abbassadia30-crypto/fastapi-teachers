@@ -77,7 +77,7 @@
 
             try {
                 // PROFESSIONAL ADVICE: Fetch profile using the Token (much safer)
-                const response = await fetch(`${API_BASE}/users/update-role`, {
+                const response = await fetch(`${API_BASE}"/users/update-role"`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 
@@ -97,18 +97,9 @@
         }
 
        function handleRedirect(role) {
-    if (role === 'admin') {
-        // Logic: If they are admin, check if they have registered their institution
-        const hasInstitution = localStorage.getItem('hasInstitution');
-        if (hasInstitution === 'true') {
-            window.location.href = '../admin/dashboard.html';
-        } else {
-            window.location.href = '../admin/institution-setup.html'; // Direct to setup!
-        }
-    } else {
-        window.location.href = `../${role}/dashboard.html`;
+           window.location.href = `../${role}/dashboard.html`;
     }
-}
+
 
         async function setRole(selectedRole) {
             document.getElementById('loading').style.display = 'flex';
