@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 # Import local modules correctly
 # Ensure 'models', 'schemas', and 'database' are in the same directory or adjust paths
 from .. import models, schemas, database
-from main import get_db 
+from backend.main import get_db 
 
 load_dotenv()
 
