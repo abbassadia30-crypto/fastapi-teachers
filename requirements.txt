@@ -13,3 +13,4 @@ resend>=2.4.0
 regex==2025.11.3
 sympy==1.14
 python-jose[cryptography]==3.4.0
+passlib[bcrypt]==1.7.4
