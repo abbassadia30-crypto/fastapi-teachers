@@ -65,10 +65,10 @@ class StudentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class Student_update(AdmissionPayload):
-    name: str[Optional]
-    father_name: str[Optional]
-    section: str[Optional]
-    fee: float[Optional]
+    name: Optional[str]
+    father_name: Optional[str]
+    section: Optional[str]
+    fee: Optional[float]
     extra_fields: Optional[Dict[str, Any]] = None 
 
 class StaffBase(BaseModel):
