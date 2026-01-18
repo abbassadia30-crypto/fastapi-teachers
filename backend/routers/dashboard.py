@@ -5,7 +5,7 @@ from backend.routers import institution
 from backend.routers.auth import get_current_user
 
 from .. import models, schemas
-from backend.main import app, get_db
+from backend.database import get_db
 
 router = APIRouter(
     prefix="/institution",
