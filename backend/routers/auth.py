@@ -21,8 +21,9 @@ load_dotenv()
 
 # --- Config ---
 SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+raw_expiry = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(raw_expiry)
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

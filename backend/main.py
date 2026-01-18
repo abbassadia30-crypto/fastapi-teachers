@@ -1,18 +1,11 @@
+from json import load
 import os
-import json
-import random
-from datetime import datetime, timedelta, timezone
-import bcrypt
-from fastapi import APIRouter, FastAPI, HTTPException, Depends, BackgroundTasks, Body
+from dotenv import load_dotenv
+from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.orm import Session
-from backend import schemas
-from backend.models import School, Student
 from backend.routers import auth, institution
-from backend.schemas import RoleUpdate
-from backend.models import Student
 from backend import models
-from backend.database import engine, SessionLocal
+from backend.database import engine
 import resend
 from . import models
 
@@ -23,6 +16,7 @@ router = APIRouter()
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
 
 app = FastAPI()
+load_dotenv()
 
 app.include_router(auth.router)
 app.include_router(institution.router)

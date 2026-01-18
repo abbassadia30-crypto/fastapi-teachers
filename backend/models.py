@@ -22,12 +22,11 @@ class Institution(Base):
     address = Column(String)
     email = Column(String)
 
-    owner = relationship("User", back_populates="institution")
+    # FIX: Explicitly tell SQLAlchemy which FK to use for the owner
+    owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
-
-# Inherited models (School, Academy, College) remain largely the same...
 
 class Student(Base):
     __tablename__ = "students"
@@ -39,7 +38,7 @@ class Student(Base):
     admitted_by = Column(String, index=True) 
     extra_fields = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    is_active = Column(Boolean , default=None)
+    is_active = Column(Boolean, default=True)
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution = relationship("Institution", back_populates="students")
 
@@ -53,9 +52,16 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # This is for staff/teachers who belong to an institution
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     
-    institution = relationship("Institution", back_populates="owner", uselist=False)
+    # FIX: Separate 'the institution I own' from 'the institution I work for'
+    # This relationship represents the school the user OWNED
+    owned_institution = relationship("Institution", back_populates="owner", foreign_keys="[Institution.owner_id]", uselist=False)
+    
+    # This relationship represents the school the user belongs to (Staff/Teacher)
+    employed_at = relationship("Institution", foreign_keys=[institution_id])
 # --- Specific Institution Types ---
 
 class School(Institution):
