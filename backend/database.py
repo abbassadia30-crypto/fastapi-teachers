@@ -3,7 +3,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Render PostgreSQL URL fix
 uri = os.getenv("DATABASE_URL")
 if uri and uri.startswith("postgres://"):
     uri = uri.replace("postgres://", "postgresql://", 1)
@@ -11,7 +10,6 @@ if uri and uri.startswith("postgres://"):
 # Default to local sqlite if DATABASE_URL is missing
 SQLALCHEMY_DATABASE_URL = uri or "sqlite:///./institution.db"
 
-# Engine setup with Connection Pooling
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL, 
@@ -22,12 +20,11 @@ else:
         SQLALCHEMY_DATABASE_URL,
         pool_pre_ping=True,
         pool_recycle=300,
-        connect_args={"connect_timeout": 10} # Add this line
+        connect_args={"connect_timeout": 10} 
     )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Dependency for routes
 def get_db():
     db = SessionLocal()
     try:

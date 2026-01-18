@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import auth, institution
+from backend.routers import auth, dashboard, institution
 from backend import models
 from backend.database import engine
 import resend
@@ -20,6 +20,7 @@ load_dotenv()
 
 app.include_router(auth.router)
 app.include_router(institution.router)
+app.include_router(dashboard.router)
 
 app.add_middleware(
     CORSMiddleware,

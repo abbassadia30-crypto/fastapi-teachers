@@ -2,7 +2,6 @@ from xmlrpc.client import boolean
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional, Literal, Dict, Any
 
-# --- Auth Schemas ---
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=2)
     email: EmailStr
@@ -19,9 +18,8 @@ class LoginSchema(BaseModel):
 
 class RoleUpdate(BaseModel):
     email: EmailStr
-    role: str # 'admin', 'teacher', etc.
+    role: str 
 
-# --- Institution Schemas ---
 class InstitutionBase(BaseModel):
     name: str
     address: Optional[str] = None
@@ -45,7 +43,6 @@ class CollegeSchema(InstitutionBase):
     uni: Optional[str] = None
     type: Literal["college"] = "college"
 
-# --- Student Schemas ---
 class AdmissionPayload(BaseModel):
     name: str
     father_name: str
@@ -54,7 +51,7 @@ class AdmissionPayload(BaseModel):
     fee: float
     admitted_by: str
     is_active : boolean
-    institution_id: int # Needed to link student to an institute
+    institution_id: int 
     extra_fields: Optional[Dict[str, Any]] = None 
 
 class StudentResponse(BaseModel):
@@ -73,20 +70,15 @@ class Student_update(AdmissionPayload):
 
 class StaffBase(BaseModel):
     name: str
-    designation: str # e.g., Teacher, Driver, Clerk
+    designation: str 
     phone: str
     salary: float
-    joining_date: str # You can use 'date' type, but 'str' is easier for simple records
-    
-    # This field acts like the extra columns in Excel
-    # You can send: {"Address": "Street 1", "Experience": "5 Years"}
+    joining_date: str 
     extra_details: Optional[Dict[str, Any]] = {}
 
-# --- Schema for Creating Staff ---
 class StaffCreate(StaffBase):
-    pass # Uses all fields from StaffBase
+    pass 
 
-# --- Schema for Updating Staff ---
 class StaffUpdate(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
@@ -95,11 +87,10 @@ class StaffUpdate(BaseModel):
     extra_details: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
 
-# --- Schema for the Response (What the API returns) ---
 class StaffResponse(StaffBase):
     id: int
     institution_id: int
     is_active: bool
 
     class Config:
-        from_attributes = True # This allows Pydantic to read SQLAlchemy models
+        from_attributes = True 
