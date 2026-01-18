@@ -39,7 +39,7 @@ class Student(Base):
     admitted_by = Column(String, index=True) 
     extra_fields = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+    is_active = Column(Boolean , default=None)
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution = relationship("Institution", back_populates="students")
 
@@ -53,6 +53,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
     
     institution = relationship("Institution", back_populates="owner", uselist=False)
 # --- Specific Institution Types ---
@@ -95,3 +96,19 @@ class UserRole(enum.Enum):
     ADMIN = "admin"
     TEACHER = "teacher"
     STUDENT = "student"
+
+class Staff(Base):
+    __tablename__ = "staff_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String)
+    designation = Column(String) # Teacher, Accountant, Driver, etc.
+    phone = Column(String)
+    salary = Column(Float)
+    joining_date = Column(String) 
+    # This ensures only the Admin who hired them can see them
+    institution_id = Column(Integer, ForeignKey("institutions.id") , index=True)
+    is_active = Column(Boolean, default=True)
+    # This stores "Excel-like" extra data (JSON)
+    extra_details = Column(JSON, nullable=True)
+   

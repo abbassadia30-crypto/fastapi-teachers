@@ -3,33 +3,68 @@ import random
 import bcrypt
 import resend
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, status
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from dotenv import load_dotenv
 
+# Import local modules correctly
+# Ensure 'models', 'schemas', and 'database' are in the same directory or adjust paths
 from .. import models, schemas, database
+from main import get_db 
 
-# --- Configuration ---
+load_dotenv()
+
+# --- Config ---
+SECRET_KEY = os.getenv("SECRET_KEY")
+ALGORITHM = os.getenv("ALGORITHM")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
 router = APIRouter(
     prefix="/auth",
     tags=["Authentication"]
 )
 
-resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
+# --- Security Helpers ---
 
-# --- Helpers ---
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None:
+        raise credentials_exception
+    return user
+
 def hash_password(password: str) -> str:
-    pwd_bytes = password.encode('utf-8')[:72]
-    salt = bcrypt.gensalt()
-    return bcrypt.hashpw(pwd_bytes, salt).decode('utf-8')
+    return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    try:
-        return bcrypt.checkpw(
-            plain_password.encode('utf-8')[:72], 
-            hashed_password.encode('utf-8')
-        )
-    except Exception:
-        return False
+    return pwd_context.verify(plain_password, hashed_password)
 
 def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
     try:
@@ -38,11 +73,9 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
             "to": [email],
             "subject": subject,
             "html": f"""
-            <div style="font-family: sans-serif; text-align: center; padding: 20px; border: 1px solid #eee; border-radius: 15px;">
-                <h2 style="color: #0288d1;">{subject}</h2>
-                <p>Hello {name}, your code is:</p>
-                <h1 style="color: #333; font-size: 40px; letter-spacing: 5px;">{code}</h1>
-                <p>This code will expire in 10 minutes.</p>
+            <div style="font-family: sans-serif; text-align: center; padding: 20px;">
+                <h2>{subject}</h2>
+                <p>Hello {name}, your code is: <strong>{code}</strong></p>
             </div>
             """
         })
@@ -52,7 +85,7 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
 # --- Routes ---
 
 @router.post("/signup")
-async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(database.get_db)):
+async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     existing_user = db.query(models.User).filter(models.User.email == user.email).first()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
     hashed_pwd = hash_password(user.password)
@@ -60,13 +93,20 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     if existing_user:
         if existing_user.is_verified:
             raise HTTPException(status_code=400, detail="Email already registered.")
-        existing_user.otp_code, existing_user.password = otp, hashed_pwd
+        existing_user.otp_code = otp
+        existing_user.password = hashed_pwd
         existing_user.otp_created_at = datetime.now(timezone.utc)
         target_name = existing_user.name
     else:
+        # NOTE: Ensure your User model has 'institution_id'
         new_user = models.User(
-            name=user.name, email=user.email, password=hashed_pwd, 
-            otp_code=otp, otp_created_at=datetime.now(timezone.utc), is_verified=False
+            name=user.name, 
+            email=user.email, 
+            password=hashed_pwd, 
+            institution_id=user.institution_id, # Connects user to their institution
+            otp_code=otp, 
+            otp_created_at=datetime.now(timezone.utc), 
+            is_verified=False
         )
         db.add(new_user)
         target_name = user.name
@@ -75,23 +115,8 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     background_tasks.add_task(send_email_task, user.email, target_name, otp)
     return {"status": "success", "message": "OTP sent to your email."}
 
-@router.post("/verify-otp")
-async def verify_otp(data: schemas.VerifyOTP, db: Session = Depends(database.get_db)):
-    user = db.query(models.User).filter(models.User.email == data.email).first()
-    if not user or user.otp_code != data.otp:
-        raise HTTPException(status_code=400, detail="Invalid code or user.")
-    
-    otp_time = user.otp_created_at.replace(tzinfo=timezone.utc) if user.otp_created_at.tzinfo is None else user.otp_created_at
-
-    if datetime.now(timezone.utc) > otp_time + timedelta(minutes=10):
-        raise HTTPException(status_code=400, detail="OTP expired.")
-
-    user.is_verified, user.otp_code = True, None 
-    db.commit()
-    return {"status": "success", "message": "Account verified!", "role": user.role}
-
 @router.post("/login")
-async def login(credentials: schemas.LoginSchema, db: Session = Depends(database.get_db)):
+async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
     
     if not user or not verify_password(credentials.password, user.password):
@@ -100,11 +125,13 @@ async def login(credentials: schemas.LoginSchema, db: Session = Depends(database
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
     
+    access_token = create_access_token(data={"sub": user.email})
+    
     return {
-        "message": "Login successful", 
+        "access_token": access_token, 
+        "token_type": "bearer",
         "user": user.name, 
-        "role": user.role, 
-        "access_token": "token-xyz" # Recommend replacing with actual JWT
+        "institution_id": user.institution_id 
     }
 
 @router.post("/forgot-password")
