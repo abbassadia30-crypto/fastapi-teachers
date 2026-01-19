@@ -18,7 +18,7 @@ def reset_database(engine):
     
     # Now recreate everything from your models
     models.Base.metadata.create_all(bind=engine)
-reset_database()
+reset_database(engine)
 router = APIRouter()
 
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
