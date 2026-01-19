@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from .. import schemas, models, database  # Use relative imports for core files
-from .auth import get_current_user         # This is fine once the loop is broken
+from ..dependencies import get_current_user         # This is fine once the loop is broken
 
 router = APIRouter(
     prefix="/institution",
