@@ -71,44 +71,45 @@
         }
 
         async function checkExistingRole() {
-            // 1. If no token, they aren't logged in. Send to login.
-            if (!token) {
-                window.location.href = "../index.html";
-                return;
-            }
+    if (!token) {
+        window.location.href = "../index.html";
+        return;
+    }
 
-            // 2. Immediate Check: Use LocalStorage for instant redirect
-            const localRole = localStorage.getItem('user_role');
-            if (localRole && localRole !== "unassigned" && localRole !== "null") {
-                handleRedirect(localRole);
-                return;
-            }
+    // STEP 1: Instant Local Check (Fastest UX)
+    const localRole = localStorage.getItem('user_role');
+    if (localRole && localRole !== "unassigned" && localRole !== "null") {
+        handleRedirect(localRole);
+        return;
+    }
 
-            // 3. Server Check: If LocalStorage is empty, ask the Institution API
-            // This handles cases where a user cleared their cache but is still logged in
-            try {
-                document.getElementById('loading').style.display = 'flex';
+    // STEP 2: Database Check (The Source of Truth)
+    // If local storage is empty, we check if the EMAIL has a role in the DB
+    try {
+        document.getElementById('loading').style.display = 'flex';
 
-                // We use the same endpoint but as a GET request to fetch user status
-                const response = await fetch(`${API_BASE}/update-role`, {
-                    method: 'GET',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+        const response = await fetch(`${API_BASE}/update-role`, {
+            method: 'GET', // We added this route to the backend above
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    // If the server says they already have a role, save and redirect
-                    if (data.role && data.role !== "unassigned") {
-                        localStorage.setItem('user_role', data.role);
-                        handleRedirect(data.role);
-                    }
-                }
-            } catch (e) {
-                console.error("Institution Server Check Failed", e);
-            } finally {
-                document.getElementById('loading').style.display = 'none';
+        if (response.ok) {
+            const data = await response.json();
+            // If the database says this email already has a role assigned
+            if (data.role && data.role !== "unassigned") {
+                localStorage.setItem('user_role', data.role);
+                handleRedirect(data.role);
+                return; // User never sees the selection screen
             }
         }
+    } catch (e) {
+        console.error("Institution database check failed.");
+    } finally {
+        // ONLY if data.role was 'unassigned' do we show this page
+        document.getElementById('loading').style.display = 'none';
+        document.body.style.visibility = 'visible'; 
+    }
+}
 
         function handleRedirect(role) {
             window.location.href = `../${role.toLowerCase()}/dashboard.html`;

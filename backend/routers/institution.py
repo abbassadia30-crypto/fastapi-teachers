@@ -24,7 +24,7 @@ async def update_user_role(
     """
     current_user.role = payload.role
     db.commit()
-    return {"status": "success", "message": f"Role updated to {payload.role}" ,  "role": current_user.role}
+    return {"status": "success", "message": f"Role updated to {payload.role}" ,  "role": current_user.role , "email" : current_user.email}
 
 
 # --- Institution Creation (Step 3 of Onboarding) ---
