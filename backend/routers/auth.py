@@ -158,3 +158,43 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
     user.password, user.otp_code = hash_password(payload.get("new_password")), None
     db.commit()
     return {"message": "Password updated"}
+
+@router.post("/verify-action")
+async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)):
+    """
+    Handles both signup verification AND password reset confirmation.
+    Payload: {"email": "...", "otp": "...", "new_password": "...", "action": "verify_or_reset"}
+    """
+    email = payload.get("email")
+    otp_received = payload.get("otp")
+    new_password = payload.get("new_password")
+    action = payload.get("action") # 'signup' or 'reset'
+
+    user = db.query(models.User).filter(models.User.email == email).first()
+
+    # 1. Basic Security Checks
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if not user.otp_code or user.otp_code != otp_received:
+        raise HTTPException(status_code=400, detail="Invalid verification code")
+
+    # 2. Logic Branching
+    if action == "signup":
+        user.is_verified = True
+        user.otp_code = None 
+        msg = "Account verified successfully."
+
+    elif action == "reset":
+        if not new_password:
+            raise HTTPException(status_code=400, detail="New password required for reset")
+        
+        user.password = hash_password(new_password)
+        user.otp_code = None # Clear OTP after success
+        msg = "Password reset successfully."
+
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action type")
+
+    db.commit()
+    return {"status": "success", "message": msg}

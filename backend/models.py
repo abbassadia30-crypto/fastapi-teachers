@@ -1,28 +1,72 @@
-import enum
 import uuid
-from pydantic import EmailStr
-from regex import T
-from sqlalchemy import Boolean, Column, Integer, String, Float, JSON, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
+from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
-from sympy import true
-from backend.database import Base
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
-from backend.database import Base
+
+class Base(DeclarativeBase):
+    pass
 
 class Institution(Base):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
-    institution_code = Column(String, unique=True, index=True, nullable=False, default=lambda: str(uuid.uuid4().hex[:8].upper()))
+    institution_id = Column(String, unique=True, index=True, nullable=False, 
+                            default=lambda: str(uuid.uuid4().hex[:8].upper()))
     type = Column(String(50)) 
     name = Column(String, nullable=False)
     address = Column(String)
     email = Column(String)
+    is_active = Column(Boolean, default=True)
+
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
+    # Added relationship for staff
+    staff_members = relationship("Staff", back_populates="institution")
+
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
+
+class School(Institution):
+    __tablename__ = "schools"
+    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
+    principal_name = Column(String)
+    campus = Column(String)
+    website = Column(String)
+    __mapper_args__ = {"polymorphic_identity": "school"}
+
+class Academy(Institution):
+    __tablename__ = "academies"
+    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
+    edu_type = Column(String)
+    campus_name = Column(String)
+    contact = Column(String)
+    __mapper_args__ = {"polymorphic_identity": "academy"}
+
+class College(Institution):
+    __tablename__ = "colleges"
+    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
+    dean_name = Column(String)
+    code = Column(String)
+    uni = Column(String)
+    __mapper_args__ = {"polymorphic_identity": "college"}
+
+class User(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    password = Column(String, nullable=False)
+    role = Column(String, default="student") # Set to None/Null for onboarding later
+    is_verified = Column(Boolean, default=False)
+    otp_code = Column(String, nullable=True)
+    otp_created_at = Column(DateTime(timezone=True), nullable=True)
+    
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    
+    # Ownership (For Admins)
+    owned_institution = relationship("Institution", back_populates="owner", 
+                                     foreign_keys=[Institution.owner_id], uselist=False)
+    # Employment/Enrollment (Where they belong)
+    employed_at = relationship("Institution", foreign_keys=[institution_id])
 
 class Student(Base):
     __tablename__ = "students"
@@ -35,67 +79,46 @@ class Student(Base):
     extra_fields = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
+    
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution = relationship("Institution", back_populates="students")
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
-    role = Column(String, default="student")
-    is_verified = Column(Boolean, default=False)
-    otp_code = Column(String, nullable=True)
-    otp_created_at = Column(DateTime(timezone=True), nullable=True)
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
-    owned_institution = relationship("Institution", back_populates="owner", foreign_keys="[Institution.owner_id]", uselist=False)
-    employed_at = relationship("Institution", foreign_keys=[institution_id])
-
-class School(Institution):
-    __tablename__ = "schools"
-    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
-    principal_name = Column(String)
-    campus = Column(String)
-    website = Column(String)
-    __mapper_args__ = {
-        "polymorphic_identity": "school",
-    }
-
-class Academy(Institution):
-    __tablename__ = "academies"
-    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
-    edu_type = Column(String)
-    campus_name = Column(String)
-    contact = Column(String)
-    __mapper_args__ = {
-        "polymorphic_identity": "academy",
-    }
-
-class College(Institution):
-    __tablename__ = "colleges"
-    id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
-    dean_name = Column(String)
-    code = Column(String)
-    uni = Column(String)
-    __mapper_args__ = {
-        "polymorphic_identity": "college",
-    }
-
-class UserRole(enum.Enum):
-    ADMIN = "admin"
-    TEACHER = "teacher"
-    STUDENT = "student"
 
 class Staff(Base):
     __tablename__ = "staff_records"
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String, nullable=False)
     designation = Column(String) 
     phone = Column(String)
     salary = Column(Float)
-    joining_date = Column(String) 
-    institution_id = Column(Integer, ForeignKey("institutions.id") , index=True)
+    joining_date = Column(String) # Format: YYYY-MM-DD
     is_active = Column(Boolean, default=True)
     extra_details = Column(JSON, nullable=True)
-   
+    
+    institution_id = Column(Integer, ForeignKey("institutions.id"), index=True)
+    institution = relationship("Institution", back_populates="staff_members")
+
+class FeeRecord(Base):
+    __tablename__ = "fee_records"
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, ForeignKey("students.id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    arrears = Column(Float, default=0.0) 
+    total_due = Column(Float) # monthly_fee + arrears
+    amount_paid = Column(Float, default=0.0)
+    remaining_balance = Column(Float)
+    month = Column(String) # YYYY-MM
+    status = Column(String) 
+    is_archived = Column(Boolean, default=False)
+
+class SalaryRecord(Base):
+    __tablename__ = "salary_records"
+    id = Column(Integer, primary_key=True)
+    staff_id = Column(Integer, ForeignKey("staff_records.id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    arrears = Column(Float, default=0.0) 
+    total_due = Column(Float)
+    amount_paid = Column(Float, default=0.0)
+    remaining_balance = Column(Float)
+    month = Column(String)
+    status = Column(String)
+    is_archived = Column(Boolean, default=False)
