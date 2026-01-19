@@ -75,7 +75,7 @@
 
         try {
             // DEVELOPER NOTE: The trailing slash in /verify-otp/ should match your FastAPI router
-            const response = await fetch(`${API_BASE}/verify-otp/`, {
+            const response = await fetch(`${API_BASE}/auth/verify-action`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email: email, otp: otp })
