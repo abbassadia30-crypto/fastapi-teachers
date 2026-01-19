@@ -1,8 +1,5 @@
-from xmlrpc.client import boolean
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Literal, Dict, Any
-
-from backend.routers import institution
+from pydantic import BaseModel, EmailStr, Field
+from typing import Optional
 
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=2)
