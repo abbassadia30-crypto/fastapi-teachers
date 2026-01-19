@@ -1,15 +1,12 @@
 import os
 import random
-import bcrypt
 import resend
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, status
-from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from dotenv import load_dotenv
 from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 
@@ -65,10 +62,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
     try:
         resend.Emails.send({
-            "from": "Institution Portal <onboarding@resend.dev>", 
-            "to": [email],
-            "subject": subject,
-            "html": f"""
+        "from": "Institution Portal <onboarding@resend.dev>",
+        "to": [email],
+        "subject": subject,
+        "html": f"""
             <div style="font-family: sans-serif; text-align: center; padding: 20px;">
                 <h2>{subject}</h2>
                 <p>Hello {name}, your code is: <strong>{code}</strong></p>

@@ -72,7 +72,7 @@ async def submit_payment(
         
         arrears = prev_rec.remaining_balance if prev_rec else 0.0
         base_amt = person.fee if payload.category == "student" else person.salary
-        
+        x
         record = rec_model(
             institution_id=current_user.institution_id, month=payload.month,
             **{fk_field: payload.id}, arrears=arrears, total_due=base_amt + arrears, amount_paid=0.0
