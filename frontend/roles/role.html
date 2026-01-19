@@ -86,7 +86,7 @@
                     if (data.role && data.role !== "unassigned") {
                         localStorage.setItem('user_role', data.role);
                         handleRedirect(data.role);
-                        return;
+
                     }
                 }
             } catch (e) {
@@ -102,68 +102,44 @@
 
 
         async function setRole(selectedRole) {
+            const email = localStorage.getItem('userEmail');
+            const token = localStorage.getItem('institutionToken'); // CRITICAL: Get the token
+
+            if (!token || !email) {
+                showBar("Session expired. Please login again.", "error");
+                setTimeout(() => window.location.href = "../index.html", 2000);
+                return;
+            }
+
             document.getElementById('loading').style.display = 'flex';
 
             try {
-                const response = await fetch(`${API_BASE}/users/update-role`, {
+                const response = await fetch(`${API_BASE}/institution/update-role`, { // Match your backend path
                     method: 'PATCH',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}` // CRITICAL: Added security back
                     },
-                    body: JSON.stringify({ role: selectedRole })
+                    body: JSON.stringify({
+                        email: email,
+                        role: selectedRole
+                    })
                 });
 
                 if (response.ok) {
                     localStorage.setItem('user_role', selectedRole);
-                    showBar(`Opening ${selectedRole.toUpperCase()} Dashboard`, "success");
-                    setTimeout(() => handleRedirect(selectedRole), 1200);
+                    showBar(`Success! Identity set as ${selectedRole.toUpperCase()}`, "success");
+                    setTimeout(() => handleRedirect(selectedRole), 1500);
                 } else {
                     const err = await response.json();
-                    showBar(err.detail || "Could not save role selection", "error");
+                    showBar(err.detail || "Update failed", "error");
                 }
             } catch (e) {
-                showBar("Connection to institution server lost", "error");
+                showBar("Could not connect to institution server", "error");
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
-
-       async function setRole(selectedRole) {
-    document.getElementById('loading').style.display = 'flex';
-    const email = localStorage.getItem('userEmail'); 
-
-    if (!email) {
-        showBar("Session expired. Please login again.", "error");
-        setTimeout(() => window.location.href = "../index.html", 2000);
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/users/update-role`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                email: email, 
-                role: selectedRole 
-            })
-        });
-
-        if (response.ok) {
-            localStorage.setItem('user_role', selectedRole);
-            // Show the Green Sign Box
-            showBar(`Success! Identity set as ${selectedRole.toUpperCase()}`, "success");
-            setTimeout(() => handleRedirect(selectedRole), 1500);
-        } else {
-            const err = await response.json();
-            showBar(err.detail || "Update failed", "error");
-        }
-    } catch (e) {
-        showBar("Could not connect to institution server", "error");
-    } finally {
-        document.getElementById('loading').style.display = 'none';
-    }
-}
 
         // Initialize
         checkExistingRole();

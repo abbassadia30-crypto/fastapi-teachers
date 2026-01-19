@@ -78,7 +78,7 @@
             const response = await fetch(`${API_BASE}/auth/verify-action`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: email, otp: otp })
+                body: JSON.stringify({ email: email, otp: otp , action : isResetFlow ? 'reset' : 'signup' })
             });
 
             const result = await response.json();
@@ -103,7 +103,7 @@
                     }
                     localStorage.removeItem('pendingEmail');
                     
-                    setTimeout(() => { window.location.href = "roles/role.html"; }, 1500);
+                    setTimeout(() => { window.location.href = "index.html"; }, 1500);
                 }
             } else {
                 showBar(result.detail || "Invalid OTP. Please try again.", "error");
