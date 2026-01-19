@@ -1,7 +1,8 @@
 from fastapi import Depends, HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-from . import database, models, oauth2_scheme # Move your secret key/algorithm here too
+from . import database, models
+from backend.routers.auth import oauth2_scheme
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     credentials_exception = HTTPException(
