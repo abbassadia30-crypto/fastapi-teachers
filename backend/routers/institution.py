@@ -1,6 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body, HTTPException
+from sqlalchemy.orm import Session
+
 from .. import schemas, models, database  # Use relative imports for core files
-from ..dependencies import get_current_user         # This is fine once the loop is broken
+from ..dependencies import get_current_user
+from backend.database import SessionLocal , engine
 
 router = APIRouter(
     prefix="/institution",
