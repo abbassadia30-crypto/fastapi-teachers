@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
+from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 
 # Import local modules correctly
 # Ensure 'models', 'schemas', and 'database' are in the same directory or adjust paths
@@ -19,15 +20,9 @@ from backend.database import get_db
 
 load_dotenv()
 
-# --- Config ---
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
 raw_expiry = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(raw_expiry)
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 router = APIRouter(
     prefix="/auth",
