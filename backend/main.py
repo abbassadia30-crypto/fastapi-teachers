@@ -8,6 +8,7 @@ from backend.database import engine
 import resend
 from . import models
 
+models.Base.metadata.drop_all(bind=engine)
 models.Base.metadata.create_all(bind=engine)
 
 router = APIRouter()
