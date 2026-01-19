@@ -166,7 +166,6 @@ async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
     # We need a token to secure the NEXT step
-    from backend.routers.auth import create_access_token 
     temp_token = create_access_token(data={"sub": user.email})
 
     if action == "signup":

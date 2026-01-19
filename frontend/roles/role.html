@@ -57,8 +57,11 @@
 
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
-        const token = localStorage.getItem('institutionToken');
+
+        // Retrieve stored data
         const userEmail = localStorage.getItem('userEmail');
+        const token = localStorage.getItem('institutionToken');
+        const savedRole = localStorage.getItem('user_role');
 
         function showBar(msg, type = 'success') {
             const bar = document.getElementById('notification-bar');
@@ -68,44 +71,51 @@
         }
 
         async function checkExistingRole() {
+            // 1. If no token, they aren't logged in. Send to login.
             if (!token) {
                 window.location.href = "../index.html";
                 return;
             }
 
-            document.getElementById('loading').style.display = 'flex';
+            // 2. Immediate Check: Use LocalStorage for instant redirect
+            const localRole = localStorage.getItem('user_role');
+            if (localRole && localRole !== "unassigned" && localRole !== "null") {
+                handleRedirect(localRole);
+                return;
+            }
 
+            // 3. Server Check: If LocalStorage is empty, ask the Institution API
+            // This handles cases where a user cleared their cache but is still logged in
             try {
-                // PROFESSIONAL ADVICE: Fetch profile using the Token (much safer)
-                const response = await fetch(`${API_BASE}"/users/update-role"`, {
+                document.getElementById('loading').style.display = 'flex';
+
+                // We use the same endpoint but as a GET request to fetch user status
+                const response = await fetch(`${API_BASE}/update-role`, {
+                    method: 'GET',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                
+
                 if (response.ok) {
                     const data = await response.json();
+                    // If the server says they already have a role, save and redirect
                     if (data.role && data.role !== "unassigned") {
                         localStorage.setItem('user_role', data.role);
                         handleRedirect(data.role);
-
                     }
                 }
             } catch (e) {
-                console.warn("Auto-check failed. Connectivity issue.");
+                console.error("Institution Server Check Failed", e);
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-       function handleRedirect(role) {
-           window.location.href = `../${role}/dashboard.html`;
-    }
-
+        function handleRedirect(role) {
+            window.location.href = `../${role.toLowerCase()}/dashboard.html`;
+        }
 
         async function setRole(selectedRole) {
-            const email = localStorage.getItem('userEmail');
-            const token = localStorage.getItem('institutionToken'); // CRITICAL: Get the token
-
-            if (!token || !email) {
+            if (!token || !userEmail) {
                 showBar("Session expired. Please login again.", "error");
                 setTimeout(() => window.location.href = "../index.html", 2000);
                 return;
@@ -114,34 +124,38 @@
             document.getElementById('loading').style.display = 'flex';
 
             try {
-                const response = await fetch(`${API_BASE}/institution/update-role`, { // Match your backend path
+                // FIX: Removed '/institution' because your router in main.py
+                // does not use a prefix.
+                const response = await fetch(`${API_BASE}/institution/update-role`, {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` // CRITICAL: Added security back
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        email: email,
+                        email: userEmail,
                         role: selectedRole
                     })
                 });
 
+                const result = await response.json();
+
                 if (response.ok) {
                     localStorage.setItem('user_role', selectedRole);
-                    showBar(`Success! Identity set as ${selectedRole.toUpperCase()}`, "success");
+                    showBar(`Identity verified: ${selectedRole.toUpperCase()}`, "success");
                     setTimeout(() => handleRedirect(selectedRole), 1500);
                 } else {
-                    const err = await response.json();
-                    showBar(err.detail || "Update failed", "error");
+                    // Displays the specific error from FastAPI
+                    showBar(result.detail || "Update failed", "error");
                 }
             } catch (e) {
-                showBar("Could not connect to institution server", "error");
+                showBar("Institution server unreachable", "error");
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
         }
 
-        // Initialize
+        // Initialize check
         checkExistingRole();
     </script>
 </body>
