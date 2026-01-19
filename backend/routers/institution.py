@@ -1,7 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Body # Added Body
-from sqlalchemy.orm import Session
-from .. import models, schemas, database
-from .auth import get_current_user # Critical: Needed for setup-workspace
+from fastapi import APIRouter, Depends
+from .. import schemas, models, database  # Use relative imports for core files
+from .auth import get_current_user         # This is fine once the loop is broken
 
 router = APIRouter(
     prefix="/institution",
