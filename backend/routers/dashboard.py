@@ -12,7 +12,7 @@ router = APIRouter(
 
 @router.post("/admit-student")
 async def admit_student(
-    data: schemas.StudentCreate, 
+    data: schemas.AdmissionPayload,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
