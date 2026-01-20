@@ -59,7 +59,7 @@ class User(Base):
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
-    
+    has_institution = Column(Boolean, default=False)
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     
     # Ownership (For Admins)

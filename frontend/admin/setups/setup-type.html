@@ -7,31 +7,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { --admin-theme: #e50914; --text-main: #263238; }
-        
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            background: #f8f9fa; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh; 
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
         }
 
         .header { text-align: center; margin-bottom: 30px; }
         .header h1 { font-size: 22px; color: var(--text-main); margin: 0; }
         .header p { font-size: 14px; color: #666; }
 
-        .selection-grid { 
-            display: grid; 
-            grid-template-columns: 1fr; 
-            gap: 20px; 
-            width: 90%; 
-            max-width: 400px; 
+        .selection-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            width: 90%;
+            max-width: 400px;
         }
 
-        /* Card Styles with Hover Effects */
         .type-card {
             background: white;
             padding: 20px;
@@ -57,11 +56,9 @@
             transform: scale(1.1);
         }
 
-        .type-card:active { transform: scale(0.97); }
-        
-        .type-card.selected { 
-            border-color: var(--admin-theme); 
-            background: #fff5f5; 
+        .type-card.selected {
+            border-color: var(--admin-theme);
+            background: #fff5f5;
             box-shadow: 0 0 0 2px var(--admin-theme);
         }
 
@@ -80,10 +77,17 @@
         .info h3 { margin: 0; font-size: 16px; color: var(--text-main); }
         .info p { margin: 5px 0 0; font-size: 12px; color: #777; }
 
-        .next-btn {
+        /* --- NEW BUTTON ROW STYLES --- */
+        .button-row {
+            display: flex;
+            gap: 12px;
             margin-top: 40px;
             width: 90%;
             max-width: 400px;
+        }
+
+        .next-btn {
+            flex: 2; /* Takes more space */
             background: var(--admin-theme);
             color: white;
             border: none;
@@ -96,13 +100,25 @@
             box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
         }
 
-        .next-btn:hover {
-            background: #b20710;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.4);
+        .btn-back {
+            flex: 1; /* Smaller back button */
+            background: #f0f0f0;
+            color: #555;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
         }
 
-        /* Red Sign Box for errors */
+        .next-btn:hover { background: #b20710; transform: translateY(-2px); }
+        .btn-back:hover { background: #e0e0e0; color: #333; }
+
         #error-sign {
             display: none;
             position: fixed;
@@ -119,76 +135,70 @@
 </head>
 <body>
 
-    <div id="error-sign">Please select a type to continue</div>
+<div id="error-sign">Please select a type to continue</div>
 
-    <div class="header">
-        <h1>Institution Setup</h1>
-        <p>Step 1 of 2: Select your model</p>
-    </div>
+<div class="header">
+    <h1>Institution Setup</h1>
+    <p>Step 1 of 2: Select your model</p>
+</div>
 
-    <div class="selection-grid">
-        <div class="type-card" onclick="selectType('school', this)">
-            <div class="icon-box">🏫</div>
-            <div class="info">
-                <h3>Formal Institution</h3>
-                <p>Registered School or High School.</p>
-            </div>
-        </div>
-
-        <div class="type-card" onclick="selectType('academy', this)">
-            <div class="icon-box">✍️</div>
-            <div class="info">
-                <h3>Coaching / Academy</h3>
-                <p>Tuition center or Skill development lab.</p>
-            </div>
-        </div>
-
-        <div class="type-card" onclick="selectType('college', this)">
-            <div class="icon-box">🎓</div>
-            <div class="info">
-                <h3>College / Higher Ed</h3>
-                <p>Intermediate or Degree College.</p>
-            </div>
+<div class="selection-grid">
+    <div class="type-card" onclick="selectType('school', this)">
+        <div class="icon-box">🏫</div>
+        <div class="info">
+            <h3>Formal Institution</h3>
+            <p>Registered School or High School.</p>
         </div>
     </div>
 
-    <button class="next-btn" onclick="proceed()">Continue to Details</button>
+    <div class="type-card" onclick="selectType('academy', this)">
+        <div class="icon-box">✍️</div>
+        <div class="info">
+            <h3>Coaching / Academy</h3>
+            <p>Tuition center or Skill development lab.</p>
+        </div>
+    </div>
 
-    <script>
-        let selectedValue = "";
+    <div class="type-card" onclick="selectType('college', this)">
+        <div class="icon-box">🎓</div>
+        <div class="info">
+            <h3>College / Higher Ed</h3>
+            <p>Intermediate or Degree College.</p>
+        </div>
+    </div>
+</div>
 
-        function selectType(val, element) {
-            selectedValue = val;
-            document.querySelectorAll('.type-card').forEach(card => card.classList.remove('selected'));
-            element.classList.add('selected');
+<div class="button-row">
+    <button class="btn-back" onclick="history.back()">← Back</button>
+    <button class="next-btn" onclick="proceed()">Continue</button>
+</div>
+
+<script>
+    let selectedValue = "";
+
+    function selectType(val, element) {
+        selectedValue = val;
+        document.querySelectorAll('.type-card').forEach(card => card.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    function proceed() {
+        if (!selectedValue) {
+            const sign = document.getElementById('error-sign');
+            sign.style.display = 'block';
+            setTimeout(() => sign.style.display = 'none', 2000);
+            return;
         }
 
-        function proceed() {
-            if (!selectedValue) {
-                const sign = document.getElementById('error-sign');
-                sign.style.display = 'block';
-                setTimeout(() => sign.style.display = 'none', 2000);
-                return;
-            }
-            
-            // Store choice for the backend later
-            localStorage.setItem('temp_inst_type', selectedValue);
-            
-            // Dynamic routing based on choice
-            switch(selectedValue) {
-                case 'school':
-                    window.location.href = "setup-formal.html";
-                    break;
-                case 'academy':
-                    window.location.href = "setup-academy.html";
-                    break;
-                case 'college':
-                    window.location.href = "setup-college.html";
-                    break;
-                default:
-                    console.error("Unknown institution type");
-            }
+        localStorage.setItem('temp_inst_type', selectedValue);
+
+        switch(selectedValue) {
+            case 'school': window.location.href = "setup-formal.html"; break;
+            case 'academy': window.location.href = "setup-academy.html"; break;
+            case 'college': window.location.href = "setup-college.html"; break;
+            default: console.error("Unknown institution type");
         }
-    </script>
+    }
+</script>
 </body>
 </html>

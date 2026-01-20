@@ -85,20 +85,24 @@ async def get_students(
 
 @router.get("/check-ownership")
 async def check_institution_ownership(
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(get_current_user)
+        current_user: models.User = Depends(get_current_user),
+        db: Session = Depends(database.get_db)
 ):
-    # Search for an institution where the current user is the owner
+    # If the boolean flag is False, we don't even need to query the Institutions table
+    if not current_user.has_institution:
+        return {
+            "has_institution": False,
+            "redirect": "/admin/setups/no-institution.html"
+        }
+
+    # If True, get the details for the frontend
     institution = db.query(models.Institution).filter(
         models.Institution.owner_id == current_user.id
     ).first()
 
-    if not institution:
-        return {"has_institution": False, "redirect": "/onboarding/create-institution.html"}
-    
     return {
-        "has_institution": True, 
-        "institution_name": institution.name,
-        "institution_id": institution.institution_id,
+        "has_institution": True,
+        "institution_name": institution.name if institution else "My Institution",
+        "institution_type": institution.type if institution else "school",
         "redirect": "/admin/dashboard.html"
     }

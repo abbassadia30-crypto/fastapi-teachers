@@ -74,7 +74,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/create-school`, {
+            const res = await fetch(`${API_BASE}/pay/create-school`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
@@ -82,7 +82,7 @@
 
             if (res.ok) {
                 showSign("🏫 School Registered Successfully!");
-                setTimeout(() => location.href = "dashboard.html", 2000);
+                setTimeout(() => location.href = "institution-setup.html", 2000);
             } else {
                 const err = await res.json();
                 showSign(err.detail || "Registration Failed", "error");

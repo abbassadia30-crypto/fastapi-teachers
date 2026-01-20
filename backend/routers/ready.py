@@ -33,6 +33,9 @@ async def create_school(
         website=payload.website
     )
 
+    current_user.has_institution = True
+    current_user.institution_id = new_school.id
+
     db.add(new_school)
     db.commit()
     db.refresh(new_school)

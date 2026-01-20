@@ -126,29 +126,47 @@
             btn.innerText = "Verifying Credentials...";
 
             try {
-                // Real Developer Tip: FastAPI OAuth2 often expects form-data for login, 
-                // but since we are using JSON schemas, we stick to JSON.
                 const response = await fetch(`${API_BASE}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email: email, password: password })
                 });
-                
+
                 const result = await response.json();
 
                 if (response.ok) {
                     // SECURE STORAGE
                     localStorage.setItem('userEmail', email);
                     localStorage.setItem('institutionToken', result.access_token);
-                    
-                    if (result.role) {
-                        localStorage.setItem('user_role', result.role);
-                        Notification.show("Login Successful!", "success");
-                        setTimeout(() => routeToDashboard(result.role), 1500);
-                    } else {
-                        // If user hasn't picked a role yet
-                        window.location.href = "roles/role.html";
+
+                    // SAVE ROLE IF BACKEND PROVIDES IT
+                    if (result.role) localStorage.setItem('user_role', result.role);
+
+                    // --- NEW: OWNERSHIP CHECK GUARD ---
+                    try {
+                        const checkRes = await fetch(`${API_BASE}/check-ownership`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${result.access_token}`, // FIXED: used result.access_token
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const checkData = await checkRes.json();
+
+                        if (checkDat.has_institution) {
+                            Notification.show("Welcome back to " + checkData.institution_name, "success");
+                            setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
+                        } else {
+                            // If they are admin but have no institution yet
+                            Notification.show("Login successful! Setting up workspace...", "success");
+                            setTimeout(() => { window.location.href = "admin/setups/no-institution.html"; }, 1500);
+                        }
+                    } catch (checkErr) {
+                        // Fallback if ownership check fails
+                        routeToDashboard(result.role);
                     }
+
                 } else {
                     Notification.show(result.detail || "Invalid Email or Password", "error");
                     btn.disabled = false;

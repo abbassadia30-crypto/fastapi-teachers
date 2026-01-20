@@ -13,12 +13,10 @@ bcrypt.__about__ = type('about', (object,), {'__version__': bcrypt.__version__})
 
 def reset_database(engine):
     with engine.connect() as conn:
-        # This tells PostgreSQL to ignore foreign key constraints during the drop
         conn.execute(text("DROP SCHEMA public CASCADE;"))
         conn.execute(text("CREATE SCHEMA public;"))
         conn.commit()
-    
-    # Now recreate everything from your models
+
     models.Base.metadata.create_all(bind=engine)
 router = APIRouter()
 

@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from typing import Optional, Literal, Dict, Any, List
+
 
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=2)
     email: EmailStr
     password: str = Field(..., min_length=6)
-    institution_id: int
 
 class VerifyOTP(BaseModel):
     email: EmailStr
@@ -24,39 +24,6 @@ class InstitutionBase(BaseModel):
     address: Optional[str] = None
     email: Optional[EmailStr] = None
     institution_id : str
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional, Literal, Dict, Any, List
-
-# --- Auth & User Schemas ---
-
-class UserCreate(BaseModel):
-    name: str = Field(..., min_length=2)
-    email: EmailStr
-    password: str = Field(..., min_length=6)
-    # institution_id is optional here because they haven't created one yet
-    institution_id: Optional[int] = None 
-
-class VerifyOTP(BaseModel):
-    email: EmailStr
-    otp: str
-
-class LoginSchema(BaseModel):
-    email: EmailStr
-    password: str
-
-class RoleUpdate(BaseModel):
-    # Security note: in a real app, we usually get email from the token, 
-    # but keeping this for your specific route logic.
-    email: EmailStr
-    role: str 
-
-# --- Institution Polymorphic Schemas ---
-
-class InstitutionBase(BaseModel):
-    name: str
-    address: Optional[str] = None
-    email: Optional[EmailStr] = None
-    # We remove institution_id from here because the DB generates it automatically
 
 class SchoolSchema(InstitutionBase):
     principal_name: str
