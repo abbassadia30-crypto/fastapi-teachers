@@ -17,8 +17,9 @@ def reset_database(engine):
         conn.execute(text("CREATE SCHEMA public;"))
         conn.commit()
 
-    models.Base.metadata.drop_all(bind=engine)
-    models.Base.metadata.create_all(bind=engine)
+    
+models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.drop_all(bind=engine)
 router = APIRouter()
 
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
