@@ -8,7 +8,7 @@ from fastapi.responses import StreamingResponse
 from .. import models, schemas, database
 from .auth import get_current_user
 
-router = APIRouter(prefix="/pay", tags=["Finance & Payroll"])
+router = APIRouter(prefix="/ready", tags=["Institution creation"])
 
 @router.post("/create-school" , status_code=status.HTTP_201_CREATED)
 async def create_school(

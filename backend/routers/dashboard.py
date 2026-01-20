@@ -6,7 +6,7 @@ from backend.database import get_db
 
 router = APIRouter(
     prefix="/dashboard",
-    tags=["Institution Management"]
+    tags=["dashboard Management"]
 )
 
 @router.post("/admit-student")

@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
-from backend.routers import auth, dashboard, institution, ready
+from backend.routers import auth, dashboard, institution, ready, pay
 from backend.database import engine
 import resend
 from . import models
@@ -29,6 +29,7 @@ app.include_router(auth.router)
 app.include_router(institution.router)
 app.include_router(dashboard.router)
 app.include_router(ready.router)
+app.include_router(pay.router)
 
 app.add_middleware(
     CORSMiddleware,
