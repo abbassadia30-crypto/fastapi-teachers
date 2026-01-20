@@ -17,6 +17,7 @@ def reset_database(engine):
         conn.execute(text("CREATE SCHEMA public;"))
         conn.commit()
 
+    models.Base.metadata.drop_all(bind=engine)
     models.Base.metadata.create_all(bind=engine)
 router = APIRouter()
 
