@@ -99,7 +99,6 @@
             if (data.role && data.role !== "unassigned") {
                 localStorage.setItem('user_role', data.role);
                 handleRedirect(data.role);
-                return; // User never sees the selection screen
             }
         }
     } catch (e) {
@@ -112,7 +111,7 @@
 }
 
         function handleRedirect(role) {
-            window.location.href = `../${role.toLowerCase()}/dashboard.html`;
+            window.location.href = "../../admin/setups/no-institution.html"
         }
 
         async function setRole(selectedRole) {
@@ -140,15 +139,18 @@
                 });
 
                 const result = await response.json();
-
                 if (response.ok) {
-                    localStorage.setItem('user_role', selectedRole);
-                    showBar(`Identity verified: ${selectedRole.toUpperCase()}`, "success");
-                    setTimeout(() => handleRedirect(selectedRole), 1500);
+                      localStorage.setItem('user_role', selectedRole);
+        
+                if (selectedRole === 'admin') {
+            // Take the admin to the interactive Gateway
+                     window.location.href = "../admin/setups/no-institution.html";
                 } else {
-                    // Displays the specific error from FastAPI
-                    showBar(result.detail || "Update failed", "error");
+            // Students/Teachers go to their dashboard
+                       window.location.href = `../${selectedRole}/dashboard.html`;
+                    }
                 }
+
             } catch (e) {
                 showBar("Institution server unreachable", "error");
             } finally {

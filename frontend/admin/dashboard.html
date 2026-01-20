@@ -159,6 +159,12 @@
         const API_BASE = "https://fastapi-teachers.onrender.com";
         const token = localStorage.getItem('institutionToken');
 
+        async function checkExistingInstitute() {
+            try{
+                const response = await fetch(``)
+            }
+        }
+
         // Welcome logic
         document.getElementById('admin-welcome').innerText = "Welcome, " + (localStorage.getItem('userName') || "Admin");
 

@@ -1,8 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 from backend.routers.auth import get_current_user
-from .. import models, schemas
+from .. import models, schemas, database
 from backend.database import get_db
 
 router = APIRouter(
@@ -16,7 +15,7 @@ async def admit_student(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    # Admission is tied to the current institution of the admin
+
     new_student = models.Student(
         **data.dict(),
         institution_id=current_user.institution_id,
@@ -82,4 +81,24 @@ async def get_students(
     return {
         "count": len(students),
         "students": students
+    }
+
+@router.get("/check-ownership")
+async def check_institution_ownership(
+    db: Session = Depends(database.get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    # Search for an institution where the current user is the owner
+    institution = db.query(models.Institution).filter(
+        models.Institution.owner_id == current_user.id
+    ).first()
+
+    if not institution:
+        return {"has_institution": False, "redirect": "/onboarding/create-institution.html"}
+    
+    return {
+        "has_institution": True, 
+        "institution_name": institution.name,
+        "institution_id": institution.institution_id,
+        "redirect": "/admin/dashboard.html"
     }

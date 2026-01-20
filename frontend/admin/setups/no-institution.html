@@ -7,15 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         /* Institution App Branding */
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; 
-            background: #f4f7f6; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            height: 100vh; 
-            color: #333; 
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #f4f7f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: #333;
         }
 
         .setup-card {
@@ -25,7 +25,8 @@
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             max-width: 450px;
             text-align: center;
-            border-top: 6px solid #e50914; 
+            border-top: 6px solid #e50914;
+            position: relative;
         }
 
         .icon-circle {
@@ -44,6 +45,12 @@
         h1 { font-size: 24px; margin-bottom: 10px; color: #1a1a1a; }
         p { color: #666; line-height: 1.6; margin-bottom: 30px; }
 
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
         .btn-setup {
             background: #e50914;
             color: white;
@@ -55,10 +62,39 @@
             cursor: pointer;
             transition: 0.3s;
             text-decoration: none;
-            display: inline-block;
+            display: block;
         }
 
         .btn-setup:hover { background: #b20710; transform: translateY(-2px); }
+
+        /* Search Button Style */
+        .btn-search {
+            background: #2b5de4;
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            text-decoration: none;
+            display: block;
+        }
+        .btn-search:hover { background: #1a3fb1; transform: translateY(-2px); }
+
+        /* Back Button */
+        .btn-back {
+            margin-top: 20px;
+            background: transparent;
+            color: #888;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+            transition: 0.3s;
+        }
+        .btn-back:hover { color: #333; }
 
         /* Red Sign Box for errors */
         #error-sign {
@@ -77,61 +113,68 @@
 </head>
 <body>
 
-    <div id="error-sign">Session expired. Please re-login.</div>
+<div id="error-sign">Session expired. Please re-login.</div>
 
-    <div class="setup-card" id="card-content">
-        <div class="icon-circle">🏛️</div>
-        <h1>Workspace Required</h1>
-        <p>Welcome, Admin. It looks like you haven't registered an institution yet. To start managing students and teachers, you need to create your workspace first.</p>
-        
+<div class="setup-card" id="card-content">
+    <div class="icon-circle">🏛️</div>
+    <h1>Workspace Required</h1>
+    <p>Welcome, Admin. To start managing your institution, you need to either create a new workspace or search for an existing one on the platform.</p>
+
+    <div class="btn-group">
         <a href="setup-type.html" class="btn-setup">Create New Institution</a>
+        <a href="search-institution.html" class="btn-search">Search Platform</a>
     </div>
 
-    <script>
-        window.onload = async () => {
-            const token = localStorage.getItem('institutionToken');
-            const errorSign = document.getElementById('error-sign');
+    <button class="btn-back" onclick="backbutton()" >Back to Role Selection</button>
+</div>
 
-            // 1. Basic Local Check
-            if (!token) {
-                showError("No session found. Redirecting...");
-                return;
-            }
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
-            try {
-                // 2. Real Backend Check
-                // Replace '/api/check-institution' with your actual endpoint
-                const response = await fetch('/api/check-institution', {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
+    async function backbutton(){
+        window.location.href = "../../roles/role.html";
+        localStorage.removeItem('user_role')
+    }
 
-                const data = await response.json();
+    window.onload = async () => {
+        const token = localStorage.getItem('institutionToken');
 
-                if (response.status === 401) {
-                    showError("Session expired. Please re-login.");
-                } else if (data.has_institution === true) {
-                    // Logic: If they already have one, don't show this setup page
-                    window.location.href = "dashboard.html";
-                }
-                
-
-            } catch (err) {
-                console.error("Backend connection failed:", err);
-            }
-        };
-
-        function showError(msg) {
-            const sign = document.getElementById('error-sign');
-            sign.innerText = msg;
-            sign.style.display = 'block';
-            setTimeout(() => {
-                window.location.href = "../index.html";
-            }, 2500);
+        if (!token) {
+            showError("No session found. Redirecting...");
+            return;
         }
-    </script>
+
+        try {
+            // Check if user already has an institution linked to their email
+            const response = await fetch(`${API_BASE}/check-ownership`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.status === 401) {
+                showError("Session expired. Please re-login.");
+            } else if (data.has_institution === true) {
+                // Redirect directly to dashboard if they own one
+                window.location.href = "dashboard.html";
+            }
+        } catch (err) {
+            console.error("Institution server connection failed:", err);
+        }
+    };
+
+    function showError(msg) {
+        const sign = document.getElementById('error-sign');
+        sign.innerText = msg;
+        sign.style.display = 'block';
+        setTimeout(() => {
+            window.location.href = "../index.html";
+        }, 2500);
+    }
+</script>
 </body>
 </html>

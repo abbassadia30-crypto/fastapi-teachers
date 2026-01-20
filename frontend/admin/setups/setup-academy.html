@@ -19,63 +19,127 @@
         .btn { background: var(--admin-theme); color: white; border: none; padding: 16px; border-radius: 12px; font-weight: 600; cursor: pointer; flex: 2; transition: 0.3s; }
         .btn-back { background: #f0f0f0; color: #555; flex: 1; text-decoration: none; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-weight: 600; font-size: 14px; }
         .btn:hover { background: #b20710; transform: translateY(-2px); }
-        #status-sign { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: white; padding: 14px 30px; border-radius: 12px; font-weight: 600; z-index: 1000; }
-        .success-bg { background: var(--success-green); }
+
+        /* Institutional Sign Boxes */
+        #status-sign {
+            display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            color: white; padding: 14px 30px; border-radius: 12px; font-weight: 600; z-index: 1000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s;
+        }
+        .bg-green { background: var(--success-green) !important; display: block !important; }
+        .bg-red { background: var(--error-red) !important; display: block !important; }
     </style>
 </head>
 <body>
-    <div id="status-sign" class="success-bg">🏛️ Institution Saved Successfully!</div>
-    <div class="form-card">
-        <h2>✍️ Academy Details</h2>
-        <form id="academyForm">
+<div id="status-sign"></div>
+
+<div class="form-card">
+    <h2>✍️ Academy Details</h2>
+    <form id="academyForm">
+        <div class="input-group">
+            <label>Academy Name</label>
+            <input type="text" id="acadName" placeholder="e.g. Star Excellence Academy" required>
+        </div>
+        <div class="grid">
             <div class="input-group">
-                <label>Academy Name</label>
-                <input type="text" id="acadName" placeholder="e.g. Star Excellence Academy" required>
-            </div>
-            <div class="grid">
-                <div class="input-group">
-                    <label>Campus Name</label>
-                    <input type="text" id="campus" placeholder="e.g. South Branch">
-                </div>
-                <div class="input-group">
-                    <label>Academy Type</label>
-                    <select id="acadType">
-                        <option value="tuition">Tuition Center</option>
-                        <option value="skills">IT / Vocational</option>
-                        <option value="test_prep">Entry Test Prep</option>
-                    </select>
-                </div>
+                <label>Campus Name</label>
+                <input type="text" id="campus" placeholder="e.g. South Branch">
             </div>
             <div class="input-group">
-                <label>Description</label>
-                <textarea id="desc" placeholder="Briefly describe your academy..."></textarea>
+                <label>Academy Type</label>
+                <select id="acadType">
+                    <option value="tuition">Tuition Center</option>
+                    <option value="skills">IT / Vocational</option>
+                    <option value="test_prep">Entry Test Prep</option>
+                </select>
+            </div>
+        </div>
+        <div class="input-group">
+            <label>Description</label>
+            <textarea id="desc" placeholder="Briefly describe your academy..."></textarea>
+        </div>
+        <div class="input-group">
+            <label>Address</label>
+            <input type="text" id="address" placeholder="Full location address" required>
+        </div>
+        <div class="grid">
+            <div class="input-group">
+                <label>Principal Name</label>
+                <input type="text" id="owner" required>
             </div>
             <div class="input-group">
-                <label>Address</label>
-                <input type="text" id="address" placeholder="Full location address" required>
+                <label>Contact Number</label>
+                <input type="tel" id="phone" required>
             </div>
-            <div class="grid">
-                <div class="input-group">
-                    <label>Principal Name</label>
-                    <input type="text" id="owner" required>
-                </div>
-                <div class="input-group">
-                    <label>Contact Number</label>
-                    <input type="tel" id="phone" required>
-                </div>
-            </div>
-            <div class="button-row">
-                <a href="setup-type.html" class="btn-back">← Back</a>
-                <button type="submit" class="btn">Initialize Academy</button>
-            </div>
-        </form>
-    </div>
-    <script>
-        document.getElementById('academyForm').onsubmit = (e) => {
-            e.preventDefault();
-            document.getElementById('status-sign').style.display = 'block';
-            setTimeout(() => { window.location.href = "dashboard.html"; }, 2000);
+        </div>
+        <div class="button-row">
+            <a href="setup-type.html" class="btn-back">← Back</a>
+            <button type="submit" class="btn">Initialize Academy</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+    const token = localStorage.getItem('institutionToken');
+
+    function showSign(msg, type = 'success') {
+        const sign = document.getElementById('status-sign');
+        sign.innerText = msg;
+        sign.className = type === 'success' ? 'bg-green' : 'bg-red';
+
+        if(type === 'error') {
+            setTimeout(() => {
+                sign.className = '';
+            }, 4000);
+        }
+    }
+
+    document.getElementById('academyForm').onsubmit = async (e) => {
+        e.preventDefault();
+
+        if (!token) {
+            showSign("Session expired. Please login.", "error");
+            return;
+        }
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        const payload = {
+            name: document.getElementById('acadName').value,
+            campus_name: document.getElementById('campus').value,
+            edu_type: document.getElementById('acadType').value,
+            address: document.getElementById('address').value,
+            contact: document.getElementById('phone').value
         };
-    </script>
+
+        try {
+            const res = await fetch(`${API_BASE}/create-academy`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showSign("🏛️ Academy Initialized Successfully!", "success");
+                setTimeout(() => { window.location.href = "dashboard.html"; }, 2000);
+            } else {
+                const err = await res.json();
+                showSign(err.detail || "Error creating Academy", "error");
+                btn.disabled = false;
+                btn.innerText = "Initialize Academy";
+            }
+        } catch (e) {
+            showSign("Institution Server Error", "error");
+            btn.disabled = false;
+            btn.innerText = "Initialize Academy";
+        }
+    };
+</script>
 </body>
 </html>
