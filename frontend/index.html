@@ -144,7 +144,7 @@
 
                     // --- NEW: OWNERSHIP CHECK GUARD ---
                     try {
-                        const checkRes = await fetch(`${API_BASE}/check-ownership`, {
+                        const checkRes = await fetch(`${API_BASE}/institution/check-ownership`, {
                             method: 'GET',
                             headers: {
                                 'Authorization': `Bearer ${result.access_token}`, // FIXED: used result.access_token
@@ -154,7 +154,7 @@
 
                         const checkData = await checkRes.json();
 
-                        if (checkDat.has_institution) {
+                        if (checkData.has_institution) {
                             Notification.show("Welcome back to " + checkData.institution_name, "success");
                             setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
                         } else {

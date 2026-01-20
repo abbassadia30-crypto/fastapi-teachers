@@ -5,7 +5,7 @@ from .. import models, schemas, database
 from backend.database import get_db
 
 router = APIRouter(
-    prefix="/institution",
+    prefix="/dashboard",
     tags=["Institution Management"]
 )
 
