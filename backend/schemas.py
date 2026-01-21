@@ -25,7 +25,6 @@ class InstitutionBase(BaseModel):
     address: Optional[str] = None
     email: Optional[EmailStr] = None
     description: Optional[str] = None
-    institution_id : str
 
 class SchoolSchema(InstitutionBase):
     principal_name: str

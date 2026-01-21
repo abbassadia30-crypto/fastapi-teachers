@@ -65,6 +65,7 @@
         btn.disabled = true; btn.innerText = "Registering...";
 
         const payload = {
+            description: document.getElementById('schDesc').value,
             name: document.getElementById('schName').value,
             campus: document.getElementById('schCampus').value,
             principal_name: document.getElementById('schPrincipal').value,

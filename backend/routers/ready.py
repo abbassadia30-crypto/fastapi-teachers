@@ -10,22 +10,22 @@ from .auth import get_current_user
 
 router = APIRouter(prefix="/ready", tags=["Institution creation"])
 
-@router.post("/create-school" , status_code=status.HTTP_201_CREATED)
+@router.post("/create-school", status_code=status.HTTP_201_CREATED)
 async def create_school(
         payload: schemas.SchoolSchema,
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    # 1. Check if user already owns an institution
+    # 1. Validation
     existing = db.query(models.Institution).filter(models.Institution.owner_id == current_user.id).first()
     if existing:
-        raise HTTPException(status_code=400, detail="You already own an institution.")
+        raise HTTPException(status_code=400, detail="User already owns an institution.")
 
-    # 2. Create the School (SQLAlchemy handles the Institution part automatically)
+    # 2. Map payload to School Model
     new_school = models.School(
         owner_id=current_user.id,
         name=payload.name,
-        description=payload.description, # ADD THIS LINE
+        description=payload.description,
         type="school",
         address=payload.address,
         email=str(payload.email) if payload.email else None,
@@ -34,21 +34,21 @@ async def create_school(
         website=payload.website
     )
 
+    # 3. Save School first to generate its ID
+    db.add(new_school)
+    db.flush()  # This allows us to access new_school.id before the final commit
+
+    # 4. Link User to the new institution
     current_user.has_institution = True
     current_user.institution_id = new_school.id
 
-    db.add(current_user)
     db.commit()
-    db.refresh(current_user)
-
-    db.add(new_school )
-    db.commit()
-    db.refresh(new_school )
+    db.refresh(new_school)
 
     return {
         "status": "success",
-        "message": "Institution created successfully",
-        "institution_id": new_school.institution_id
+        "message": "Institution registered",
+        "institution_id": new_school.institution_id # This is the UUID string
     }
 
 @router.post("/create-academy", status_code=status.HTTP_201_CREATED)
