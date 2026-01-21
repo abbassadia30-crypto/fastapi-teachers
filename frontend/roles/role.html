@@ -143,7 +143,30 @@
                       localStorage.setItem('user_role', selectedRole);
         
                 if (selectedRole === 'admin') {
-            // Take the admin to the interactive Gateway
+                    try {
+                        const checkRes = await fetch(`${API_BASE}/institution/check-ownership`, {
+                            method: 'GET',
+                            headers: {
+                                'Authorization': `Bearer ${result.access_token}`, // FIXED: used result.access_token
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        const checkData = await checkRes.json();
+
+                        if (checkData.has_institution) {
+                            Notification.show("Welcome back to " + checkData.institution_name, "success");
+                            setTimeout(() => { window.location.href = "../admin/dashboard.html"; }, 1500);
+                        } else {
+                            // If they are admin but have no institution yet
+                            Notification.show("Login successful! Setting up workspace...", "success");
+                            setTimeout(() => { window.location.href = "../admin/setups/no-institution.html"; }, 1500);
+                        }
+                    } catch (checkErr) {
+                        // Fallback if ownership check fails
+                        window.location.href = "../admin/setups/no-institution.html"
+                    }
+                }
                      window.location.href = "../admin/setups/no-institution.html";
                 } else {
             // Students/Teachers go to their dashboard
@@ -151,12 +174,12 @@
                     }
                 }
 
-            } catch (e) {
+                     catch (e) {
                 showBar("Institution server unreachable", "error");
             } finally {
                 document.getElementById('loading').style.display = 'none';
             }
-        }
+        }        
 
         // Initialize check
         checkExistingRole();

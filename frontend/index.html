@@ -143,6 +143,7 @@
                     if (result.role) localStorage.setItem('user_role', result.role);
 
                     // --- NEW: OWNERSHIP CHECK GUARD ---
+                    if(result.role == "admin"){
                     try {
                         const checkRes = await fetch(`${API_BASE}/institution/check-ownership`, {
                             method: 'GET',
@@ -164,8 +165,9 @@
                         }
                     } catch (checkErr) {
                         // Fallback if ownership check fails
-                        routeToDashboard(result.role);
+                       window.location.href = "admin/setups/no-institution.html"
                     }
+                }
 
                 } else {
                     Notification.show(result.detail || "Invalid Email or Password", "error");

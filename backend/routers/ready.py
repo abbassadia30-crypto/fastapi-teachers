@@ -36,9 +36,13 @@ async def create_school(
     current_user.has_institution = True
     current_user.institution_id = new_school.id
 
-    db.add(new_school)
+    db.add(current_user)
     db.commit()
-    db.refresh(new_school)
+    db.refresh(current_user)
+
+    db.add(new_school )
+    db.commit()
+    db.refresh(new_school )
 
     return {
         "status": "success",
@@ -70,9 +74,16 @@ async def create_academy(
         contact=payload.contact
     )
 
-    db.add(new_academy)
+    current_user.has_institution = True
+    current_user.institution_id = new_academy.id
+
+    db.add(current_user)
     db.commit()
-    db.refresh(new_academy)
+    db.refresh(current_user)
+
+    db.add(new_academy )
+    db.commit()
+    db.refresh(new_academy )
 
     return {
         "status": "success",
@@ -105,6 +116,12 @@ async def create_college(
         code=payload.code,
         uni=payload.uni
     )
+
+    current_user.has_institution = True
+    current_user.institution_id = new_college.id
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
 
     db.add(new_college)
     db.commit()

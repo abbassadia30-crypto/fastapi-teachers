@@ -94,9 +94,17 @@
         
         const API_BASE = "https://fastapi-teachers.onrender.com"
 
-        try{
-            fetch
+        try {
+            const response = await fetch(`${API_BASE}/check-ownership`, {
+                method: 'GET', // We added this route to the backend above
+                headers: {'Authorization': `Bearer ${token}`}
+            });
+            const data = await response.json
+
+            if(data.has_institution)
         }
+
+
     </script>
 </body>
 </html>

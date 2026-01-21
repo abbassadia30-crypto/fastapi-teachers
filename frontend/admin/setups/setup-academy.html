@@ -108,11 +108,13 @@
         btn.innerText = "Processing...";
 
         const payload = {
-            name: document.getElementById('acadName').value,
+            name: document.getElementById("acadName").value,
             campus_name: document.getElementById('campus').value,
             edu_type: document.getElementById('acadType').value,
             address: document.getElementById('address').value,
-            contact: document.getElementById('phone').value
+            contact: document.getElementById('phone').value,
+            description : document.getElementById('desc').value,
+            principal_name: document.getElementById('owner').value
         };
 
         try {
