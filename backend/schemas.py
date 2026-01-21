@@ -6,6 +6,7 @@ class UserCreate(BaseModel):
     name: str = Field(..., min_length=2)
     email: EmailStr
     password: str = Field(..., min_length=6)
+    institution_id: Optional[int] = None
 
 class VerifyOTP(BaseModel):
     email: EmailStr

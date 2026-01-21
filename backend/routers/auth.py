@@ -79,7 +79,7 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
 
 @router.post("/signup")
 async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == user.email).first()
+    existing_user = db.query(models.User).filter(models.User.email == str(user.email)).first()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
     hashed_pwd = hash_password(user.password)
 
@@ -91,21 +91,22 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
         existing_user.otp_created_at = datetime.now(timezone.utc)
         target_name = existing_user.name
     else:
-        # NOTE: Ensure your User model has 'institution_id'
+        # FIXED: Handling missing institution_id safely
         new_user = models.User(
-            name=user.name, 
-            email=user.email, 
-            password=hashed_pwd, 
-            institution_id=user.institution_id, # Connects user to their institution
-            otp_code=otp, 
-            otp_created_at=datetime.now(timezone.utc), 
+            name=user.name,
+            email=str(user.email), # FIXED: Convert EmailStr to str
+            password=hashed_pwd,
+            institution_id=user.institution_id, # This now works because it's in UserCreate
+            has_institution=False, # New users start with False
+            otp_code=otp,
+            otp_created_at=datetime.now(timezone.utc),
             is_verified=False
         )
         db.add(new_user)
         target_name = user.name
 
     db.commit()
-    background_tasks.add_task(send_email_task, user.email, target_name, otp)
+    background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "OTP sent to your email."}
 
 @router.post("/login")
