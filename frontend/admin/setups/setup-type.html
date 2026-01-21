@@ -169,12 +169,16 @@
 </div>
 
 <div class="button-row">
-    <button class="btn-back" onclick="history.back()">← Back</button>
+    <button class="btn-back" onclick=back()>← Back</button>
     <button class="next-btn" onclick="proceed()">Continue</button>
 </div>
 
 <script>
     let selectedValue = "";
+
+    function back(){
+        window.location.href = "no-institution.html"
+    }
 
     function selectType(val, element) {
         selectedValue = val;

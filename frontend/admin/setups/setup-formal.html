@@ -74,7 +74,7 @@
         };
 
         try {
-            const res = await fetch(`${API_BASE}/pay/create-school`, {
+            const res = await fetch(`${API_BASE}/ready/create-school`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)

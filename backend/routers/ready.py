@@ -25,9 +25,10 @@ async def create_school(
     new_school = models.School(
         owner_id=current_user.id,
         name=payload.name,
-        type="school", # Sets the polymorphic identity
+        description=payload.description, # ADD THIS LINE
+        type="school",
         address=payload.address,
-        email=payload.email,
+        email=str(payload.email) if payload.email else None,
         principal_name=payload.principal_name,
         campus=payload.campus,
         website=payload.website

@@ -83,7 +83,7 @@
         <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
     </div>
 
-    <script>
+<script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
 
         // --- 1. SESSION GUARD ---
@@ -93,7 +93,8 @@
             if (token && role) {
                 routeToDashboard(role);
             } else {
-                document.getElementById('auth-check-overlay').style.display = 'none';
+                const overlay = document.getElementById('auth-check-overlay');
+                if(overlay) overlay.style.display = 'none';
             }
         })();
 
@@ -138,36 +139,42 @@
                     // SECURE STORAGE
                     localStorage.setItem('userEmail', email);
                     localStorage.setItem('institutionToken', result.access_token);
+                    
+                    const role = result.role;
+                    if (role) localStorage.setItem('user_role', role);
 
-                    // SAVE ROLE IF BACKEND PROVIDES IT
-                    if (result.role) localStorage.setItem('user_role', result.role);
+                    // --- LOGIC GATE ---
+                    if (role === "admin") {
+                        try {
+                            const checkRes = await fetch(`${API_BASE}/institution/check-ownership`, {
+                                method: 'GET',
+                                headers: {
+                                    'Authorization': `Bearer ${result.access_token}`,
+                                    'Content-Type': 'application/json'
+                                }
+                            });
 
-                    // --- NEW: OWNERSHIP CHECK GUARD ---
-                    if(result.role == "admin"){
-                    try {
-                        const checkRes = await fetch(`${API_BASE}/institution/check-ownership`, {
-                            method: 'GET',
-                            headers: {
-                                'Authorization': `Bearer ${result.access_token}`, // FIXED: used result.access_token
-                                'Content-Type': 'application/json'
+                            const checkData = await checkRes.json();
+
+                            if (checkData.has_institution) {
+                                Notification.show("Welcome back to " + checkData.institution_name, "success");
+                                setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
+                            } else {
+                                Notification.show("Workspace setup required", "success");
+                                setTimeout(() => { window.location.href = "admin/setups/no-institution.html"; }, 1500);
                             }
-                        });
-
-                        const checkData = await checkRes.json();
-
-                        if (checkData.has_institution) {
-                            Notification.show("Welcome back to " + checkData.institution_name, "success");
-                            setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
-                        } else {
-                            // If they are admin but have no institution yet
-                            Notification.show("Login successful! Setting up workspace...", "success");
-                            setTimeout(() => { window.location.href = "admin/setups/no-institution.html"; }, 1500);
+                        } catch (checkErr) {
+                            // Backend failed but login worked: send to setup as safety
+                            window.location.href = "admin/setups/no-institution.html";
                         }
-                    } catch (checkErr) {
-                        // Fallback if ownership check fails
-                       window.location.href = "admin/setups/no-institution.html"
+                    } else if (role) {
+                        // FIX: Redirect Teachers and Students immediately
+                        Notification.show("Login Successful!", "success");
+                        setTimeout(() => routeToDashboard(role), 1500);
+                    } else {
+                        // FIX: If user has no role assigned yet
+                        window.location.href = "roles/role.html";
                     }
-                }
 
                 } else {
                     Notification.show(result.detail || "Invalid Email or Password", "error");

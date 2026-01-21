@@ -1,4 +1,6 @@
 import uuid
+from sqlalchemy import Text
+
 from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
@@ -17,7 +19,7 @@ class Institution(Base):
     address = Column(String)
     email = Column(String)
     is_active = Column(Boolean, default=True)
-
+    description = Column(Text, nullable=True)
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
     # Added relationship for staff
