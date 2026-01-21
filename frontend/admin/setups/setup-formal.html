@@ -65,6 +65,7 @@
         btn.disabled = true; btn.innerText = "Registering...";
 
         const payload = {
+            type: "school", // Explicitly add this to match SchoolSchema
             description: document.getElementById('schDesc').value,
             name: document.getElementById('schName').value,
             campus: document.getElementById('schCampus').value,

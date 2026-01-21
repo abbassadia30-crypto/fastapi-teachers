@@ -28,7 +28,7 @@ async def create_school(
         description=payload.description,
         type="school",
         address=payload.address,
-        email=str(payload.email) if payload.email else None,
+        email=str(payload.email) if payload.email else None, # Explicitly cast to string
         principal_name=payload.principal_name,
         campus=payload.campus,
         website=payload.website
