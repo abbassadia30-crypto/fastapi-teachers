@@ -88,23 +88,56 @@
     <div id="final-sign">🏛️ Workspace Ready</div>
 
     <script>
-        setTimeout(() => {
-            window.location.href = "../dashboard.html";
-        }, 3500);
-        
-        const API_BASE = "https://fastapi-teachers.onrender.com"
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+        const token = localStorage.getItem('institutionToken');
+        const sign = document.getElementById('final-sign');
 
-        try {
-            const response = await fetch(`${API_BASE}/check-ownership`, {
-                method: 'GET', // We added this route to the backend above
-                headers: {'Authorization': `Bearer ${token}`}
-            });
-            const data = await response.json
+        async function initializeSuccessPage() {
+            // 1. Session Guard
+            if (!token) {
+                window.location.href = "../login.html";
+                return;
+            }
 
-            if(data.has_institution)
+            try {
+                // 2. Fetch the newly created institution details
+                const response = await fetch(`${API_BASE}/institution/check-ownership`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    if (data.has_institution) {
+                        // 3. Update UI with real Institution data
+                        sign.innerText = `🏛️ ${data.institution_name} Workspace Ready`;
+                        console.log("Institution ID generated:", data.institution_id);
+
+                        // Store the ID locally for future use in the dashboard
+                        localStorage.setItem('current_institution_id', data.institution_id);
+                    }
+                } else {
+                    // If the check fails, the setup might not have indexed yet
+                    sign.style.background = "#ef5350";
+                    sign.innerText = "⚠️ Finalizing setup...";
+                }
+            } catch (error) {
+                console.error("Initialization error:", error);
+                sign.innerText = "🏛️ Workspace Ready";
+            }
+
+            // 4. Final Redirect to Admin Dashboard
+            setTimeout(() => {
+                window.location.href = "../dashboard.html";
+            }, 4000);
         }
 
-
+        // Run the logic on page load
+        initializeSuccessPage();
     </script>
 </body>
 </html>

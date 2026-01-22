@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>User Profile | Institution Portal</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <script>
         if (!localStorage.getItem('userEmail')) {
             window.location.replace("../index.html");
@@ -13,6 +13,14 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+
+        #current-role-badge {
+            background: #e3f2fd;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 2px;
+        }
         :root {
             --primary: #0288d1;
             --secondary: #263238;
@@ -21,40 +29,60 @@
             --danger: #ef5350;
         }
 
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            margin: 0; background: var(--bg); 
-            display: flex; flex-direction: column; 
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg);
+            display: flex; flex-direction: column;
             height: 100vh; overflow: hidden;
         }
 
-        /* Red/Green Notification Bar */
+        /* Notification Bar */
         #notification-bar {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-red { background: var(--danger); top: 20px !important; border: 1px solid #b71c1c; }
-        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #2e7d32; }
+        .bg-red { background: var(--danger); top: 20px !important; }
+        .bg-green { background: #66bb6a; top: 20px !important; }
 
+        /* Professional Header with Edit Icon */
         header {
             background: white;
-            padding: 40px 20px 20px;
+            padding: 40px 20px 30px;
             text-align: center;
             border-bottom-left-radius: 30px;
             border-bottom-right-radius: 30px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .pfp-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
         }
 
         .profile-pic {
-            width: 90px; height: 90px;
+            width: 100%; height: 100%;
             background: var(--primary);
-            color: white;
-            font-size: 35px;
+            color: white; font-size: 35px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
-            margin: 0 auto 15px;
             border: 4px solid #e3f2fd;
+        }
+
+        .edit-pfp-icon {
+            position: absolute;
+            bottom: 0; right: 0;
+            background: var(--secondary);
+            color: white;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px;
+            border: 3px solid white;
+            cursor: pointer;
         }
 
         h2 { margin: 0; color: var(--secondary); font-size: 20px; }
@@ -64,43 +92,40 @@
             flex: 1;
             padding: 20px;
             overflow-y: auto;
-            padding-bottom: 100px;
+            padding-bottom: 120px;
+        }
+
+        /* Search Card Styling */
+        .search-platform-card {
+            background: linear-gradient(135deg, #0288d1, #00bcd4);
+            color: white !important; width: 100%;
+            padding: 20px; border-radius: 20px;
+            margin: 0 0 25px; display: flex;
+            align-items: center; gap: 15px;
+            box-shadow: 0 8px 20px rgba(0, 188, 212, 0.3);
+            border: none; cursor: pointer; transition: 0.3s;
         }
 
         .section-label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #999;
-            text-transform: uppercase;
-            margin: 20px 0 10px 10px;
+            font-size: 12px; font-weight: 600; color: #999;
+            text-transform: uppercase; margin: 20px 0 10px 10px;
         }
 
         .list-item {
-            background: white;
-            padding: 15px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-radius: 15px;
-            margin-bottom: 10px;
-            text-decoration: none;
-            color: var(--secondary);
-            transition: 0.3s;
-            cursor: pointer;
+            background: white; padding: 15px 20px;
+            display: flex; align-items: center;
+            justify-content: space-between; border-radius: 15px;
+            margin-bottom: 10px; color: var(--secondary);
+            transition: 0.3s; cursor: pointer;
         }
 
-        .list-item:active { background: #e3f2fd; transform: scale(0.98); }
-
+        .list-item:active { background: #f5f5f5; transform: scale(0.98); }
         .list-info { display: flex; align-items: center; gap: 15px; }
         .list-icon { font-size: 20px; }
         .list-text { font-size: 14px; font-weight: 500; }
-        .arrow { color: #ccc; font-weight: bold; }
+        .arrow { color: #ccc; }
 
-        .logout-btn {
-            color: var(--danger) !important;
-            margin-top: 20px;
-            border: 1px solid #ffcdd2;
-        }
+        .logout-btn { color: var(--danger) !important; border: 1px solid #ffcdd2; margin-top: 20px; }
 
         .bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
@@ -109,104 +134,150 @@
             display: flex; justify-content: space-around; align-items: center;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
         }
-
-        .nav-item {
-            color: #b0bec5; text-decoration: none; display: flex;
-            flex-direction: column; align-items: center; font-size: 10px; transition: 0.3s;
-        }
-
+        .nav-item { color: #b0bec5; text-decoration: none; text-align: center; font-size: 10px; }
         .nav-item.active { color: white; }
-        .nav-item i { font-size: 20px; margin-bottom: 4px; }
     </style>
 </head>
 <body>
 
-    <div id="notification-bar"></div>
+<div id="notification-bar"></div>
 
-    <header>
+<header>
+    <div class="pfp-container">
         <div class="profile-pic" id="pfp-initial">A</div>
-        <h2 id="display-name">Loading...</h2>
-        <div class="user-email" id="display-email">email@institution.com</div>
-    </header>
+        <div class="edit-pfp-icon" onclick="showNotify('Image upload coming soon', 'green')">📷</div>
+    </div>
+    <h2 id="display-name">Loading...</h2>
+    <div class="user-email" id="display-email">email@institution.com</div>
+</header>
 
-    <div class="settings-list">
-        <div class="section-label">Account Settings</div>
-        
-        <div class="list-item" onclick="editName()">
-            <div class="list-info">
-                <span class="list-icon">✏️</span>
-                <span class="list-text">Edit Profile Name</span>
-            </div>
-            <span class="arrow">></span>
+<div class="settings-list">
+    <button class="search-platform-card" onclick="location.href='../plateforme/search.html'">
+        <div style="background: rgba(255,255,255,0.2); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🔍</div>
+        <div style="text-align:left;">
+            <div style="font-weight:600; font-size:16px;">Search Platform</div>
+            <div style="font-size:11px; opacity:0.8;">Explore users & institutions</div>
         </div>
+    </button>
 
-        <div class="list-item" onclick="showNotify('Phone linking feature coming soon', 'green')">
-            <div class="list-info">
-                <span class="list-icon">📱</span>
-                <span class="list-text">Link Phone Number</span>
-            </div>
-            <span class="arrow">></span>
+    <div class="section-label">Public Identity</div>
+
+    <div class="list-item" onclick="editProfile()">
+        <div class="list-info">
+            <span class="list-icon">👤</span>
+            <span class="list-text">Personal Information</span>
         </div>
-
-        <div class="section-label">Security & App</div>
-
-        <div class="list-item" onclick="location.href='settings.html'">
-            <div class="list-info">
-                <span class="list-icon">⚙️</span>
-                <span class="list-text">General Settings</span>
-            </div>
-            <span class="arrow">></span>
-        </div>
-
-        <div class="list-item logout-btn" onclick="handleLogout()">
-            <div class="list-info">
-                <span class="list-icon">🚪</span>
-                <span class="list-text">Logout Account</span>
-            </div>
-        </div>
+        <span class="arrow">></span>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
-        <a href="chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
-        <a href="documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
-        <a href="profile.html" class="nav-item active"><i>👤</i><span>Profile</span></a>
-    </nav>
+    <div class="list-item" onclick="showNotify('Headline updated', 'success')">
+        <div class="list-info">
+            <span class="list-icon">📝</span>
+            <span class="list-text">Professional Bio & Headline</span>
+        </div>
+        <span class="arrow">></span>
+    </div>
 
-    <script>
-        // Load user data from localStorage
-        const userName = localStorage.getItem('userName') || "User";
-        const userEmail = localStorage.getItem('userEmail') || "email@institution.com";
+    <div class="list-item" onclick="showNotify('Add your history', 'green')">
+        <div class="list-info">
+            <span class="list-icon">🎓</span>
+            <span class="list-text">Work & Education History</span>
+        </div>
+        <span class="arrow">></span>
+    </div>
 
-        document.getElementById('display-name').innerText = userName;
-        document.getElementById('display-email').innerText = userEmail;
-        document.getElementById('pfp-initial').innerText = userName.charAt(0).toUpperCase();
+    <div class="section-label">Permissions & Access</div>
 
-        function showNotify(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
-            setTimeout(() => bar.className = '', 3000);
+    <div class="list-item" onclick="toggleRoleSwitcher()">
+        <div class="list-info">
+            <span class="list-icon">🔄</span>
+            <div class="search-text-group">
+                <span class="list-text">Switch User Role</span>
+                <div id="current-role-badge" style="font-size: 10px; color: var(--primary); font-weight: 600; text-transform: uppercase;">
+                    Current: Admin
+                </div>
+            </div>
+        </div>
+        <span class="arrow">></span>
+    </div>
+
+    <div class="list-item logout-btn" onclick="handleLogout()">
+        <div class="list-info">
+            <span class="list-icon">🚪</span>
+            <span class="list-text">Logout Account</span>
+        </div>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item"><i>🏠</i><br>Home</a>
+    <a href="chat.html" class="nav-item"><i>💬</i><br>Chat</a>
+    <a href="documents.html" class="nav-item"><i>📄</i><br>Docs</a>
+    <a href="profile.html" class="nav-item active"><i>👤</i><br>Profile</a>
+</nav>
+
+<script>
+    const userName = localStorage.getItem('userName') || "User";
+    const userEmail = localStorage.getItem('userEmail') || "email@institution.com";
+
+    document.getElementById('display-name').innerText = userName;
+    document.getElementById('display-email').innerText = userEmail;
+    document.getElementById('pfp-initial').innerText = userName.charAt(0).toUpperCase();
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+        setTimeout(() => bar.className = '', 3000);
+    }
+
+    function editProfile() {
+        const newName = prompt("Update your full name:", userName);
+        if(newName) {
+            localStorage.setItem('userName', newName);
+            document.getElementById('display-name').innerText = newName;
+            document.getElementById('pfp-initial').innerText = newName.charAt(0).toUpperCase();
+            showNotify("Profile updated!", "success");
         }
+    }
 
-        function editName() {
-            // In a real app, this would update the backend database
-            const newName = prompt("Enter new profile name:", userName);
-            if(newName) {
-                localStorage.setItem('userName', newName);
-                document.getElementById('display-name').innerText = newName;
-                document.getElementById('pfp-initial').innerText = newName.charAt(0).toUpperCase();
-                showNotify("Name updated locally!", "success");
+    function handleLogout() {
+        showNotify("Logging out...", "red");
+        setTimeout(() => {
+            localStorage.clear();
+            window.location.replace("../index.html");
+        }, 1500);
+    }
+
+    // Initialize role from storage or default to Admin
+    let currentRole = localStorage.getItem('userRole') || "Admin";
+    document.getElementById('current-role-badge').innerText = `Current: ${currentRole}`;
+
+    function toggleRoleSwitcher() {
+        const roles = ["Admin", "Teacher", "Student"];
+        let currentIndex = roles.indexOf(currentRole);
+
+        // Cycle through roles for demo purposes
+        currentIndex = (currentIndex + 1) % roles.length;
+        currentRole = roles[currentIndex];
+
+        // Save to localStorage so other pages (like dashboard) can adapt
+        localStorage.setItem('userRole', currentRole);
+
+        // Update UI
+        document.getElementById('current-role-badge').innerText = `Current: ${currentRole}`;
+
+        // Show the green sign box for confirmation
+        showNotify(`Role switched to ${currentRole}`, 'success');
+
+        // Developer Tip: In a real app, you would fetch new permissions
+        // from the backend here or refresh the page.
+        setTimeout(() => {
+            if(confirm("Would you like to reload the dashboard with these permissions?")) {
+                window.location.href = "dashboard.html";
             }
-        }
-
-        function handleLogout() {
-            showNotify("Logging out...", "red");
-            setTimeout(() => {
-                localStorage.clear(); 
-                window.location.replace("../index.html");
-            }, 1500);
-        }
-    </script>
+        }, 1000);
+    }
+</script>
 </body>
 </html>

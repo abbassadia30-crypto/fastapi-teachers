@@ -11,16 +11,8 @@ from . import models
 import bcrypt
 bcrypt.__about__ = type('about', (object,), {'__version__': bcrypt.__version__})
 
-def reset_database(engine):
-    with engine.connect() as conn:
-        conn.execute(text("DROP SCHEMA public CASCADE;"))
-        conn.execute(text("CREATE SCHEMA public;"))
-        conn.commit()
 
-    
-    models.Base.metadata.create_all(bind=engine)
 router = APIRouter()
-reset_database(engine)
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
 
 app = FastAPI()

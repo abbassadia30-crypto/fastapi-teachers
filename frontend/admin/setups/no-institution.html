@@ -160,7 +160,7 @@
                 showError("Session expired. Please re-login.");
             } else if (data.has_institution === true) {
                 // Redirect directly to dashboard if they own one
-                window.location.href = "dashboard.html";
+                window.location.href = "../dashboard.html";
             }
         } catch (err) {
             console.error("Institution server connection failed:", err);

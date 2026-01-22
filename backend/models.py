@@ -124,3 +124,30 @@ class SalaryRecord(Base):
     month = Column(String)
     status = Column(String)
     is_archived = Column(Boolean, default=False)
+
+class Post(Base):
+    __tablename__ = "posts"
+    id = Column(Integer, primary_key=True, index=True)
+    content = Column(Text, nullable=False)
+    image_url = Column(String, nullable=True)
+    author_id = Column(Integer, ForeignKey("users.id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
+    created_at = Column(DateTime, default=func.now())
+
+    # Relationships
+    author = relationship("User")
+    likes = relationship("Like", back_populates="post")
+    comments = relationship("Comment", back_populates="post")
+
+class Like(Base):
+    __tablename__ = "likes"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    post_id = Column(Integer, ForeignKey("posts.id"))
+
+class Comment(Base):
+    __tablename__ = "comments"
+    id = Column(Integer, primary_key=True)
+    post_id = Column(Integer, ForeignKey("posts.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+    content = Column(String(500))
