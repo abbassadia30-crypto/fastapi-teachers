@@ -136,8 +136,9 @@ class Post(Base):
 
     # Relationships
     author = relationship("User")
-    likes = relationship("Like", back_populates="post")
-    comments = relationship("Comment", back_populates="post")
+    # Changed "Post" to "post" (lowercase) to match the attribute in Like/Comment
+    likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
 class Like(Base):
     __tablename__ = "likes"
@@ -145,9 +146,17 @@ class Like(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
     post_id = Column(Integer, ForeignKey("posts.id"))
 
+    # 🏛️ Added this to resolve the Mapper error
+    post = relationship("Post", back_populates="likes")
+    user = relationship("User")
+
 class Comment(Base):
     __tablename__ = "comments"
     id = Column(Integer, primary_key=True)
     post_id = Column(Integer, ForeignKey("posts.id"))
     user_id = Column(Integer, ForeignKey("users.id"))
     content = Column(String(500))
+
+    # 🏛️ Added this to resolve the Mapper error
+    post = relationship("Post", back_populates="comments")
+    user = relationship("User")
