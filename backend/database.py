@@ -16,16 +16,14 @@ if "sqlite" in SQLALCHEMY_DATABASE_URL:
         connect_args={"check_same_thread": False}
     )
 else:
-    # 🏛️ Updated for Render's External Connection Requirements
+    # 🏛️ Updated for Render's External SSL Requirements
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True,      # Checks if connection is alive before using it
-        pool_recycle=300,        # Prevents "Connection closed by peer" errors
-        pool_size=10,            # Max persistent connections
-        max_overflow=20,         # Extra connections if peak traffic hits
+        pool_pre_ping=True,
+        pool_recycle=300,
         connect_args={
             "connect_timeout": 10,
-            "sslmode": "require" # 🏛️ THE FIX: Forces secure handshake
+            "sslmode": "require"  # 🏛️ MANDATORY: This fixes the "SSL closed unexpectedly" error
         }
     )
 
