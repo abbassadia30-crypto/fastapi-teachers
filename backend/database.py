@@ -1,5 +1,6 @@
 import os
 from sqlalchemy import create_engine
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # 🏛️ Get the URL from Render's Environment
@@ -11,10 +12,15 @@ if not SQLALCHEMY_DATABASE_URL:
 
 # 🏛️ Real Developer Setup: Handle SSL for Production
 if "postgresql" in SQLALCHEMY_DATABASE_URL:
+    # Ensure the URL uses 'postgresql://' instead of 'postgres://'
+    if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
+        pool_pre_ping=True,
         connect_args={
-            "sslmode": "require"  # 🏛️ This fixes the "Closed Unexpectedly" error
+            "sslmode": "require"
         }
     )
 else:
@@ -24,4 +30,14 @@ else:
         connect_args={"check_same_thread": False}
     )
 
+# 🏛️ These are the parts that were missing!
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# This function is what auth.py is looking for
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
