@@ -12,16 +12,23 @@ SQLALCHEMY_DATABASE_URL = uri or "sqlite:///./institution.db"
 
 if "sqlite" in SQLALCHEMY_DATABASE_URL:
     engine = create_engine(
-        SQLALCHEMY_DATABASE_URL, 
+        SQLALCHEMY_DATABASE_URL,
         connect_args={"check_same_thread": False}
     )
 else:
+    # 🏛️ Updated for Render's External Connection Requirements
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=300,
-        connect_args={"connect_timeout": 10} 
+        pool_pre_ping=True,      # Checks if connection is alive before using it
+        pool_recycle=300,        # Prevents "Connection closed by peer" errors
+        pool_size=10,            # Max persistent connections
+        max_overflow=20,         # Extra connections if peak traffic hits
+        connect_args={
+            "connect_timeout": 10,
+            "sslmode": "require" # 🏛️ THE FIX: Forces secure handshake
+        }
     )
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
