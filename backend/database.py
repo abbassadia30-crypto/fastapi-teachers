@@ -16,14 +16,14 @@ if "sqlite" in SQLALCHEMY_DATABASE_URL:
         connect_args={"check_same_thread": False}
     )
 else:
-    # 🏛️ Updated for Render's External SSL Requirements
+    # 🏛️ Professional configuration for Render External PostgreSQL
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True,
-        pool_recycle=300,
+        pool_pre_ping=True,      # Checks if connection is valid before using it
+        pool_recycle=300,        # Refreshes connections to prevent ghosting
         connect_args={
-            "connect_timeout": 10,
-            "sslmode": "require"  # 🏛️ MANDATORY: This fixes the "SSL closed unexpectedly" error
+            "sslmode": "require", # 🏛️ THE KEY: This forces the SSL handshake
+            "connect_timeout": 10
         }
     )
 
