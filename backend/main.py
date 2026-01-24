@@ -1,15 +1,8 @@
 
-import os
-from dotenv import load_dotenv
-from fastapi import APIRouter, FastAPI
-# 1. Standard imports
-import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-# 2. Database & Model imports (CRITICAL ORDER)
-from backend.database import engine, Base
-from backend import models  # This must happen before create_all
+from backend.routers import auth, dashboard, institution, ready, pay
+from backend.database import engine, Base # This must happen before create_all
 
 # 3. Define the reset/init logic
 def init_db():
