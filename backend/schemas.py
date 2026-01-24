@@ -142,7 +142,6 @@ class HistoricalRecordExport(BaseModel):
 class BioUpdate(BaseModel):
     full_name: str
     short_bio: Optional[str] = None
-    # 🏛️ This accepts any key-pair values from your flexible form
     custom_details: Optional[Dict[str, str]] = {}
 
 class BioResponse(BioUpdate):
