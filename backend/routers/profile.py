@@ -3,16 +3,22 @@ from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from pydantic import BaseModel
 from .. import models, database
-from .auth import get_current_user # Dependency that extracts user from JWT
+from .auth import get_current_user
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
+# 🏛️ SCHEMAS MUST BE DEFINED FIRST
+class BioUpdate(BaseModel):
+    full_name: str
+    short_bio: Optional[str] = None
+    custom_details: Optional[Dict[str, str]] = {}
+
+# 🏛️ NOW THE ROUTES CAN USE THEM
 @router.get("/me")
 def get_my_bio(
         current_user: models.User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
-    """Fetch the bio for the logged-in institution member"""
     bio = db.query(models.UserBio).filter(models.UserBio.user_id == current_user.id).first()
     if not bio:
         return {"full_name": "", "short_bio": "", "custom_details": {}}
@@ -20,11 +26,10 @@ def get_my_bio(
 
 @router.post("/update")
 def update_bio(
-        bio_data: BioUpdate,
+        bio_data: BioUpdate,  # Now 'BioUpdate' is recognized!
         current_user: models.User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
-    """Save or Update the bio for the current user"""
     db_bio = db.query(models.UserBio).filter(models.UserBio.user_id == current_user.id).first()
 
     if db_bio:
