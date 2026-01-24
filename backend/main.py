@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import engine, Base
 from backend import models
-from backend.routers import auth, dashboard, institution, ready, pay
+from backend.routers import auth, dashboard, institution, ready, pay, profile
 
 # 1. Physical Delete
 db_file = "institution.db"
@@ -32,6 +32,7 @@ app.include_router(institution.router)
 app.include_router(dashboard.router)
 app.include_router(ready.router)
 app.include_router(pay.router)
+app.include_router(profile.router)
 
 app.add_middleware(
     CORSMiddleware,
