@@ -1,6 +1,8 @@
 import os
 import time
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from backend.database import engine, Base
 from backend import models
 from backend.routers import auth, dashboard, institution, ready, pay
