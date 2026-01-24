@@ -138,3 +138,16 @@ class HistoricalRecordExport(BaseModel):
     year: int
     # We use List[Dict] so we can dump the entire row for the CSV/Phone storage
     records: List[Dict[str, Any]]
+
+class BioUpdate(BaseModel):
+    full_name: str
+    short_bio: Optional[str] = None
+    # 🏛️ This accepts any key-pair values from your flexible form
+    custom_details: Optional[Dict[str, str]] = {}
+
+class BioResponse(BioUpdate):
+    id: int
+    user_id: int
+
+    class Config:
+        from_attributes = True

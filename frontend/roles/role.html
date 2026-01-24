@@ -111,7 +111,7 @@
 }
 
         function handleRedirect(role) {
-            window.location.href = "../../admin/setups/no-institution.html"
+            window.location.href = "../admin/setups/no-institution.html"
         }
 
         async function setRole(selectedRole) {
@@ -156,7 +156,7 @@
 
                         if (checkData.has_institution) {
                             Notification.show("Welcome back to " + checkData.institution_name, "success");
-                            setTimeout(() => { window.location.href = "../admin/dashboard.html"; }, 1500);
+                            setTimeout(() => { window.location.href = "../admin/dashboard/dashboard.html"; }, 1500);
                         } else {
                             // If they are admin but have no institution yet
                             Notification.show("Login successful! Setting up workspace...", "success");
@@ -170,7 +170,7 @@
                      window.location.href = "../admin/setups/no-institution.html";
                 } else {
             // Students/Teachers go to their dashboard
-                       window.location.href = `../${selectedRole}/dashboard.html`;
+                       window.location.href = `../${selectedRole}/dashboard/dashboard.html`;
                     }
                 }
 

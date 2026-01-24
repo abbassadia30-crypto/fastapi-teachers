@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Institution Bio</title>
+    <style>
+        :root { --primary: #2c3e50; --success: #2e7d32; --danger: #c62828; }
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; color: var(--primary); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+
+        /* 🏛️ Sign Box Styles */
+        .sign-box { padding: 15px; border-radius: 4px; margin-bottom: 20px; font-weight: bold; display: none; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); display: block !important; }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); display: block !important; }
+
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+
+        .dynamic-field { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .btn { padding: 10px 15px; cursor: pointer; border: none; border-radius: 4px; transition: 0.3s; }
+        .btn-add { background: var(--primary); color: white; margin-top: 10px; }
+        .btn-remove { background: var(--danger); color: white; }
+        .btn-save { background: var(--success); color: white; width: 100%; font-size: 16px; margin-top: 20px; }
+        .btn:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Update Global Bio</h2>
+    <div id="messageBox" class="sign-box"></div>
+
+    <form id="bioForm">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="fullName" placeholder="Your Name at Institution" required>
+        </div>
+
+        <div class="form-group">
+            <label>Short Bio</label>
+            <textarea id="shortBio" rows="3" placeholder="Tell the world about your role..."></textarea>
+        </div>
+
+        <hr>
+        <h3>Additional Details</h3>
+        <p style="font-size: 0.8em; color: #666;">Add custom fields like 'Location', 'Expertise', or 'Links'.</p>
+
+        <div id="dynamicFieldsContainer"></div>
+
+        <button type="button" class="btn btn-add" onclick="addField()">+ Add Custom Field</button>
+        <button type="submit" class="btn btn-save">Save Global Profile</button>
+    </form>
+</div>
+
+<script>
+    const container = document.getElementById('dynamicFieldsContainer');
+    const messageBox = document.getElementById('messageBox');
+    const API_URL = "https://fastapi-teachers.onrender.com";
+
+    function showMessage(text, isSuccess) {
+        messageBox.innerText = text;
+        messageBox.className = isSuccess ? "sign-box sign-green" : "sign-box sign-red";
+        setTimeout(() => { messageBox.style.display = 'none'; }, 5000);
+    }
+
+    function addField(labelValue = '', contentValue = '') {
+        const div = document.createElement('div');
+        div.className = 'dynamic-field';
+        div.innerHTML = `
+            <input type="text" placeholder="Label" value="${labelValue}" class="field-label">
+            <input type="text" placeholder="Value" value="${contentValue}" class="field-value">
+            <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(div);
+    }
+
+    // 🏛️ Real App Method: Fetch existing data on load
+    window.onload = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+            showMessage("Please login to manage your institution bio.", false);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/profile/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('fullName').value = data.full_name || '';
+                document.getElementById('shortBio').value = data.short_bio || '';
+                if (data.custom_details) {
+                    Object.entries(data.custom_details).forEach(([k, v]) => addField(k, v));
+                }
+            }
+        } catch (err) { console.error("Initial load failed"); }
+    };
+
+    document.getElementById('bioForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("token");
+
+        const customData = {};
+        document.querySelectorAll('.dynamic-field').forEach(field => {
+            const label = field.querySelector('.field-label').value;
+            const value = field.querySelector('.field-value').value;
+            if (label) customData[label] = value;
+        });
+
+        const payload = {
+            full_name: document.getElementById('fullName').value,
+            short_bio: document.getElementById('shortBio').value,
+            custom_details: customData
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/profile/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                showMessage("Institution profile updated successfully!", true);
+            } else {
+                const error = await response.json();
+                showMessage(error.detail || "Update failed.", false);
+            }
+        } catch (err) {
+            showMessage("Network error. Could not connect to the institution server.", false);
+        }
+    };
+</script>
+</body>
+</html>

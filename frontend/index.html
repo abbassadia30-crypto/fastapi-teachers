@@ -110,7 +110,7 @@
 
         function routeToDashboard(role) {
             const paths = {
-                'admin': 'admin/dashboard.html',
+                'admin': 'admin/dashboard/dashboard.html',
                 'teacher': 'teacher/dashboard.html',
                 'student': 'student/dashboard.html'
             };
@@ -158,7 +158,7 @@
 
                             if (checkData.has_institution) {
                                 Notification.show("Welcome back to " + checkData.institution_name, "success");
-                                setTimeout(() => { window.location.href = "admin/dashboard.html"; }, 1500);
+                                setTimeout(() => { window.location.href = "admin/dashboard/dashboard.html"; }, 1500);
                             } else {
                                 Notification.show("Workspace setup required", "success");
                                 setTimeout(() => { window.location.href = "admin/setups/no-institution.html"; }, 1500);

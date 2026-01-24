@@ -160,3 +160,18 @@ class Comment(Base):
     # 🏛️ Added this to resolve the Mapper error
     post = relationship("Post", back_populates="comments")
     user = relationship("User")
+
+class UserBio(Base):
+    __tablename__ = "user_bios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(100), nullable=False)
+    short_bio = Column(Text, nullable=True)
+    # 🏛️ This stores the flexible "Add/Remove" fields as a dictionary
+    custom_details = Column(JSON, nullable=True, default={})
+
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    user = relationship("User", back_populates="bio")
+
+# Update your User model to include the relationship:
+# bio = relationship("UserBio", back_populates="user", uselist=False)
