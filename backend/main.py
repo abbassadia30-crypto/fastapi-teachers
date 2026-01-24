@@ -2,29 +2,31 @@
 import os
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI
+# 1. Standard imports
+import os
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
-from backend.routers import auth, dashboard, institution, ready, pay
+
+# 2. Database & Model imports (CRITICAL ORDER)
 from backend.database import engine, Base
-import resend
-from . import models
-import bcrypt
-bcrypt.__about__ = type('about', (object,), {'__version__': bcrypt.__version__})
+from backend import models  # This must happen before create_all
 
-
-router = APIRouter()
-def reset_database():
-    print("🏛️ Dropping all tables...")
+# 3. Define the reset/init logic
+def init_db():
+    # Only delete and recreate if you are still fixing the schema
+    # Once fixed, you should remove the drop_all line
+    print("🏛️ Initializing Institution Database...")
     Base.metadata.drop_all(bind=engine)
-    print("🏛️ Recreating all tables with new columns...")
     Base.metadata.create_all(bind=engine)
+    print("🏛️ Database Tables Created Successfully.")
 
-# Call this right before the app starts
-reset_database()
-resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
+# Execute initialization immediately
+init_db()
 
+# 4. Initialize FastAPI app
 app = FastAPI()
-load_dotenv()
+
+# ... (rest of your middleware and router includes)
 
 app.include_router(auth.router)
 app.include_router(institution.router)
