@@ -6,37 +6,60 @@
     <title>Admission - Institution</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); }
-        header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; --success: #2e7d32; --danger: #c62828; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 50px; }
+
+        header {
+            padding: 20px; display: flex; align-items: center; justify-content: space-between;
+            background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100;
+        }
+
         .scan-btn { background: #e3f2fd; color: var(--primary); border: 1px solid var(--primary); padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
         .form-container { padding: 20px; max-width: 500px; margin: auto; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-family: inherit; }
+        .card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
 
-        /* Extra Fields Styling */
-        .flex-row-btn { background: #f0f7ff; color: var(--primary); border: 1px dashed var(--primary); padding: 10px; width: 100%; border-radius: 10px; font-weight: 600; cursor: pointer; margin: 10px 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #eee; box-sizing: border-box; font-family: inherit; font-size: 14px; transition: 0.3s; }
+        input:focus { border-color: var(--primary); outline: none; }
+
+        /* 🏛️ Custom Sign Box (Peer Instruction) */
+        .sign-box {
+            padding: 15px; border-radius: 12px; margin-bottom: 20px;
+            text-align: center; font-weight: 600; display: none;
+        }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
+
+        .flex-row-btn { background: #f0f7ff; color: var(--primary); border: 1px dashed var(--primary); padding: 12px; width: 100%; border-radius: 10px; font-weight: 600; cursor: pointer; margin: 10px 0; }
         .row-item { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
-        .del-btn { background: #ffebee; color: #c62828; border: none; padding: 10px; border-radius: 8px; cursor: pointer; }
-        .submit-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 600; margin-top: 15px; font-size: 16px; }
+        .del-btn { background: #ffebee; color: #c62828; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        .submit-btn { background: var(--primary); color: white; border: none; padding: 16px; width: 100%; border-radius: 12px; font-weight: 600; margin-top: 15px; font-size: 16px; cursor: pointer; box-shadow: 0 4px 12px rgba(2, 136, 209, 0.3); }
+        .submit-btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; }
     </style>
 </head>
 <body>
 
 <header>
-    <button onclick="location.href='dashboard.html'" style="border:none; background:none; font-weight:600; cursor:pointer;">← Back</button>
-    <h2 style="margin:0; font-size:18px;">New Admission</h2>
-    <button class="scan-btn" onclick="startScan()">📷 Scan</button>
+    <button onclick="location.href='dashboard.html'" style="border:none; background:none; font-weight:600; cursor:pointer; color: var(--primary);">← Back</button>
+    <h2 style="margin:0; font-size:18px; color: var(--secondary);">New Admission</h2>
+    <button class="scan-btn" onclick="triggerScan()">📷 Scan</button>
 </header>
 
 <div class="form-container">
+    <div id="statusBox" class="sign-box"></div>
+
     <div class="card">
         <form id="admissionForm">
             <div class="input-group">
                 <label>Student Full Name</label>
-                <input type="text" id="stdName" required>
+                <input type="text" id="stdName" placeholder="Enter student name" required>
+            </div>
+
+            <div class="input-group">
+                <label>Father's Name</label>
+                <input type="text" id="fatherName" placeholder="Enter father's name" required>
             </div>
 
             <div class="input-group">
@@ -46,40 +69,51 @@
 
             <div class="input-group" id="customSectionGroup" style="display:none;">
                 <label>New Section Name</label>
-                <input type="text" id="newSectionInput" placeholder="Enter Class Name">
+                <input type="text" id="newSectionInput" placeholder="e.g., Grade 10-A">
             </div>
 
             <div class="input-group">
                 <label>Admission Fee</label>
-                <input type="number" id="stdFee" required>
+                <input type="number" id="stdFee" placeholder="0.00" required>
             </div>
 
-            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-            <label>Extra Information</label>
-            <div id="flexibleRows"></div>
-            <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field (Father, Phone, etc.)</button>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 25px 0;">
 
-            <button type="submit" class="submit-btn" id="subBtn">Save Student Record</button>
+            <label>Extra Information (Custom Fields)</label>
+            <div id="flexibleRows"></div>
+            <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Field (Phone, Address, etc.)</button>
+
+            <button type="submit" class="submit-btn" id="subBtn">Commit Record to Institution</button>
         </form>
     </div>
 </div>
 
 <script>
-    const API_URL = "https://your-backend-url.com";
+    const API_URL = "https://fastapi-teachers.onrender.com"; // Updated to your URL
     const token = localStorage.getItem('institutionToken');
     const adminEmail = localStorage.getItem('userEmail');
 
     window.onload = async () => {
         await loadSections();
-        // Load default template fields if they exist
-        const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || ["Father's Name", "Contact Number"];
+        // Default Template Fields for this Institution
+        const template = ["Contact Number", "Address"];
         template.forEach(label => addNewRow(label));
     };
+
+    function showStatus(msg, isSuccess) {
+        const box = document.getElementById('statusBox');
+        box.innerText = msg;
+        box.className = isSuccess ? "sign-box sign-green" : "sign-box sign-red";
+        box.style.display = 'block';
+        window.scrollTo(0,0);
+    }
 
     async function loadSections() {
         const select = document.getElementById('sectionSelect');
         try {
-            const res = await fetch(`${API_URL}/sections`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const res = await fetch(`${API_URL}/sections`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             const sections = await res.json();
             select.innerHTML = '<option value="" disabled selected>Select Section</option>';
             sections.forEach(sec => {
@@ -87,7 +121,9 @@
                 opt.value = sec; opt.innerText = sec;
                 select.appendChild(opt);
             });
-        } catch (e) { select.innerHTML = '<option value="">No sections found</option>'; }
+        } catch (e) {
+            select.innerHTML = '<option value="">No sections found</option>';
+        }
         select.innerHTML += '<option value="ADD_NEW">+ Add New Section</option>';
     }
 
@@ -100,14 +136,16 @@
         const div = document.createElement('div');
         div.className = "row-item";
         div.innerHTML = `
-            <input type="text" placeholder="Label" class="extra-key" style="width:40%;" value="${labelValue}">
+            <input type="text" placeholder="Field Label" class="extra-key" style="width:40%;" value="${labelValue}">
             <input type="text" placeholder="Value" class="extra-val" style="width:50%;">
             <button type="button" class="del-btn" onclick="this.parentElement.remove()">✕</button>
         `;
         container.appendChild(div);
     }
 
-    function startScan() { alert("OCR Scanner Placeholder - Integrate camera here."); }
+    function triggerScan() {
+        showStatus("OCR Scanner requires active camera permissions.", false);
+    }
 
     document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
@@ -115,31 +153,51 @@
         btn.disabled = true;
 
         let section = document.getElementById('sectionSelect').value;
-        if(section === "ADD_NEW") section = document.getElementById('newSectionInput').value;
+        if(section === "ADD_NEW") {
+            section = document.getElementById('newSectionInput').value;
+            if(!section) {
+                showStatus("Please enter a name for the new section.", false);
+                btn.disabled = false;
+                return;
+            }
+        }
 
+        // 🏛️ Collect extra fields as a clean Object (Dict) for the Backend
         const extraData = {};
         const keys = document.querySelectorAll('.extra-key');
         const vals = document.querySelectorAll('.extra-val');
-        keys.forEach((k, i) => { if(k.value) extraData[k.value] = vals[i].value; });
+        keys.forEach((k, i) => {
+            if(k.value.trim() !== "") extraData[k.value] = vals[i].value;
+        });
 
         const payload = {
             name: document.getElementById('stdName').value,
+            father_name: document.getElementById('fatherName').value,
             section: section,
             fee: parseFloat(document.getElementById('stdFee').value),
-            extra_fields: JSON.stringify(extraData)
+            extra_fields: extraData // Sent as JSON Object
         };
 
-        const res = await fetch(`${API_URL}/admit-student`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(payload)
-        });
+        try {
+            const res = await fetch(`${API_URL}/dashboard/admit-student`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
 
-        if(res.ok) {
-            alert("Success!");
-            location.href = "sections_list.html";
-        } else {
-            alert("Error saving record");
+            if(res.ok) {
+                showStatus("Record successfully committed to database.", true);
+                setTimeout(() => { location.href = "section_records.html"; }, 1500);
+            } else {
+                const error = await res.json();
+                showStatus(error.detail || "Error: Record could not be saved.", false);
+                btn.disabled = false;
+            }
+        } catch (err) {
+            showStatus("Network Error: Institution server is unreachable.", false);
             btn.disabled = false;
         }
     };
