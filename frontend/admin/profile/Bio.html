@@ -3,62 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Institution Bio Manager</title>
+    <title>Global Profile | Institution</title>
     <style>
-        :root { --primary: #2c3e50; --success: #2e7d32; --danger: #c62828; --bg: #f4f7f6; }
+        :root { --primary: #2c3e50; --success: #2e7d32; --danger: #c62828; --bg: #f4f7f6; --accent: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: var(--primary); }
-        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .container { max-width: 650px; margin: auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); position: relative; min-height: 400px; }
 
-        .sign-box { padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; display: none; text-align: center; }
-        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); display: block; }
-        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); display: block; }
+        /* 🏛️ UI Components */
+        .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .back-link { text-decoration: none; color: var(--accent); font-weight: 600; cursor: pointer; }
 
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; }
-        input, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+        .sign-box { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: none; text-align: center; border: 1px solid transparent; }
+        .sign-red { background: #ffebee; color: var(--danger); border-color: var(--danger); display: block; }
+        .sign-green { background: #e8f5e9; color: var(--success); border-color: var(--success); display: block; }
 
-        .dynamic-field { display: flex; gap: 10px; margin-bottom: 10px; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* 🏛️ Form & Output States */
+        .form-group { margin-bottom: 25px; }
+        .label-style { display: block; margin-bottom: 8px; font-weight: 700; color: #555; text-transform: uppercase; font-size: 12px; }
 
-        .btn { padding: 12px 18px; cursor: pointer; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        .btn-add { background: var(--primary); color: white; margin-bottom: 20px; }
-        .btn-remove { background: #eee; color: var(--danger); }
-        .btn-save { background: var(--success); color: white; width: 100%; font-size: 16px; }
-        .btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .output-text { padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid var(--accent); min-height: 20px; font-size: 16px; margin-top: 5px; }
+        input, textarea { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
+
+        .hidden { display: none !important; }
+
+        .dynamic-field { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .tag { background: #e1f5fe; color: #01579b; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+
+        .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: all 0.2s; }
+        .btn-edit { background: var(--accent); color: white; }
+        .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
+        .btn-add { background: #f0f2f5; margin-bottom: 20px; border: 1px dashed #ccc; width: 100%; color: var(--primary); }
+        .btn-remove { background: #fff1f0; color: var(--danger); }
+
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; border-radius: 16px; z-index: 100; font-weight: bold; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Global Institution Profile</h2>
+    <div id="loader">Syncing with Institution...</div>
+
+    <div class="nav-header">
+        <a onclick="location.href='profile.html'" class="back-link">← Back to Profile</a>
+        <h2 id="pageTitle">Global Bio</h2>
+        <button id="editToggle" class="btn btn-edit hidden" onclick="toggleEdit()">Edit Bio</button>
+    </div>
+
     <div id="statusMsg" class="sign-box"></div>
 
-    <form id="bioForm">
+    <div id="viewMode" class="hidden">
         <div class="form-group">
-            <label>Full Name</label>
-            <input type="text" id="fullName" placeholder="Enter your display name" required>
+            <span class="label-style">Full Name</span>
+            <div id="viewName" class="output-text"></div>
         </div>
-
         <div class="form-group">
-            <label>Short Bio</label>
-            <textarea id="shortBio" rows="3" placeholder="Describe your expertise..."></textarea>
+            <span class="label-style">Professional Summary</span>
+            <div id="viewBio" class="output-text"></div>
         </div>
+        <span class="label-style">Additional Details</span>
+        <div id="viewDetails" class="tag-row"></div>
+    </div>
 
+    <form id="bioForm" class="hidden">
+        <div class="form-group">
+            <label class="label-style" for="fullName">Full Name</label>
+            <input type="text" id="fullName" placeholder="Enter your full name" required>
+        </div>
+        <div class="form-group">
+            <label class="label-style" for="shortBio">Professional Summary</label>
+            <textarea id="shortBio" rows="4" placeholder="Describe your expertise..."></textarea>
+        </div>
         <div id="dynamicFields">
-            <label>Custom Details (Add as many as you need)</label>
+            <label class="label-style">Custom Detail Fields</label>
         </div>
-
-        <button type="button" class="btn btn-add" onclick="addField()">+ Add Custom Field</button>
-        <button type="submit" class="btn btn-save">Save Profile Changes</button>
+        <button type="button" class="btn btn-add" onclick="addField()">+ Add Detail Field</button>
+        <button type="submit" class="btn btn-save" id="saveBtn">Save & Update Profile</button>
     </form>
 </div>
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
+    const token = localStorage.getItem("institutionToken");
     const statusMsg = document.getElementById('statusMsg');
-    const token = localStorage.getItem("token");
+    const loader = document.getElementById('loader');
+    let originalData = null;
+
+    function showStatus(text, isError = true) {
+        statusMsg.innerText = text;
+        statusMsg.className = isError ? "sign-box sign-red" : "sign-box sign-green";
+        statusMsg.style.display = "block";
+    }
+
+    function toggleEdit() {
+        document.getElementById('viewMode').classList.add('hidden');
+        document.getElementById('bioForm').classList.remove('hidden');
+        document.getElementById('editToggle').classList.add('hidden');
+        document.getElementById('pageTitle').innerText = "Update Bio";
+    }
 
     function addField(key = '', val = '') {
+        const container = document.getElementById('dynamicFields');
         const div = document.createElement('div');
         div.className = 'dynamic-field';
         div.innerHTML = `
@@ -66,14 +111,13 @@
             <input type="text" placeholder="Value" value="${val}" class="f-val">
             <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
         `;
-        document.getElementById('dynamicFields').appendChild(div);
+        container.appendChild(div);
     }
 
-    // 🏛️ Step 1: Load current data on page open
     window.onload = async () => {
         if (!token) {
-            statusMsg.innerText = "Error: No login token found. Please login first.";
-            statusMsg.className = "sign-box sign-red";
+            showStatus("Auth Error: Login Required.");
+            loader.style.display = 'none';
             return;
         }
 
@@ -81,54 +125,55 @@
             const res = await fetch(`${API_BASE}/profile/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            if (res.status === 401) {
+                showStatus("Session expired. Redirecting...");
+                setTimeout(() => { location.href = "login.html"; }, 2000);
+                return;
+            }
+
             const data = await res.json();
 
-            document.getElementById('fullName').value = data.full_name || '';
-            document.getElementById('shortBio').value = data.short_bio || '';
+            // 🏛️ Check if profile has real content
+            const hasProfile = data && data.full_name && data.full_name.trim() !== "";
 
-            if (data.custom_details) {
-                Object.entries(data.custom_details).forEach(([k, v]) => addField(k, v));
-            }
-        } catch (e) { console.error("Could not load profile"); }
-    };
+            if (hasProfile) {
+                originalData = data;
 
-    // 🏛️ Step 2: Save updated data
-    document.getElementById('bioForm').onsubmit = async (e) => {
-        e.preventDefault();
+                // UI Cleanup
+                document.getElementById('viewDetails').innerHTML = '';
+                document.getElementById('dynamicFields').innerHTML = '<label class="label-style">Custom Detail Fields</label>';
 
-        const details = {};
-        document.querySelectorAll('.dynamic-field').forEach(row => {
-            const k = row.querySelector('.f-key').value;
-            const v = row.querySelector('.f-val').value;
-            if (k) details[k] = v;
-        });
+                // Render View
+                document.getElementById('viewName').innerText = data.full_name;
+                document.getElementById('viewBio').innerText = data.short_bio || 'No summary available.';
 
-        const payload = {
-            full_name: document.getElementById('fullName').value,
-            short_bio: document.getElementById('shortBio').value,
-            custom_details: details
-        };
+                if (data.custom_details) {
+                    Object.entries(data.custom_details).forEach(([k, v]) => {
+                        const tag = document.createElement('div');
+                        tag.className = 'tag';
+                        tag.innerHTML = `<strong>${k}:</strong> ${v}`;
+                        document.getElementById('viewDetails').appendChild(tag);
+                        addField(k, v);
+                    });
+                }
 
-        try {
-            const res = await fetch(`${API_BASE}/profile/update`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
-            });
+                // Prep Edit Form
+                document.getElementById('fullName').value = data.full_name;
+                document.getElementById('shortBio').value = data.short_bio || '';
 
-            if (res.ok) {
-                statusMsg.innerText = "Profile updated successfully!";
-                statusMsg.className = "sign-box sign-green";
+                document.getElementById('viewMode').classList.remove('hidden');
+                document.getElementById('editToggle').classList.remove('hidden');
             } else {
-                statusMsg.innerText = "Failed to save profile.";
-                statusMsg.className = "sign-box sign-red";
+                // New User Setup
+                document.getElementById('bioForm').classList.remove('hidden');
+                document.getElementById('pageTitle').innerText = "Create Your Bio";
+                addField("Role", "Member"); // Suggest a default
             }
-        } catch (err) {
-            statusMsg.innerText = "Connection error.";
-            statusMsg.className = "sign-box sign-red";
+        } catch (e) {
+            showStatus("Connection Error: Check institution server status.");
+        } finally {
+            loader.style.display = 'none';
         }
     };
 </script>

@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from pydantic import BaseModel
+from sqlalchemy.orm.attributes import flag_modified
+
 from .. import models, database
 from .auth import get_current_user
 
@@ -15,18 +17,9 @@ class BioUpdate(BaseModel):
 
 # 🏛️ NOW THE ROUTES CAN USE THEM
 @router.get("/me")
-def get_my_bio(
-        current_user: models.User = Depends(get_current_user),
-        db: Session = Depends(database.get_db)
-):
-    bio = db.query(models.UserBio).filter(models.UserBio.user_id == current_user.id).first()
-    if not bio:
-        return {"full_name": "", "short_bio": "", "custom_details": {}}
-    return bio
-
 @router.post("/update")
 def update_bio(
-        bio_data: BioUpdate,  # Now 'BioUpdate' is recognized!
+        bio_data: BioUpdate,
         current_user: models.User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
@@ -36,14 +29,15 @@ def update_bio(
         db_bio.full_name = bio_data.full_name
         db_bio.short_bio = bio_data.short_bio
         db_bio.custom_details = bio_data.custom_details
-    else:
-        db_bio = models.UserBio(
+        # 🏛️ CRITICAL: Tell SQLAlchemy the JSON field was modified
+        flag_modified(db_bio, "custom_details")
+    else:        db_bio = models.UserBio(
             full_name=bio_data.full_name,
             short_bio=bio_data.short_bio,
             custom_details=bio_data.custom_details,
             user_id=current_user.id
         )
-        db.add(db_bio)
+    db.add(db_bio)
 
     try:
         db.commit()
