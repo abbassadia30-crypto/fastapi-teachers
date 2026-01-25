@@ -3,46 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sections - Institution</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Sections</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #0288d1; --bg: #f0f2f5; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding: 20px; }
-        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .section-card {
-            background: white; padding: 30px 10px; border-radius: 15px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .card {
+            background: white; padding: 25px 15px; border-radius: 15px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
         }
-        .section-card:active { transform: scale(0.95); }
-        .section-card i { font-size: 24px; color: var(--primary); display: block; margin-bottom: 10px; }
-        h3 { margin: 0; color: #263238; font-size: 16px; }
+        .card:active { transform: scale(0.98); }
+        .icon { font-size: 32px; margin-bottom: 10px; display: block; }
+        h3 { margin: 0; font-size: 16px; color: #333; }
     </style>
 </head>
 <body>
-<h2 style="margin-bottom: 20px;">School Sections</h2>
-<div class="section-grid" id="grid"></div>
+<div class="header">
+    <h2 style="margin:0;">Classes</h2>
+    <button onclick="location.href='admission.html'" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px;">+ New</button>
+</div>
+
+<div class="grid" id="sectionGrid"></div>
 
 <script>
     const API_URL = "https://your-backend-url.com";
     const token = localStorage.getItem('institutionToken');
 
     async function load() {
-        const res = await fetch(`${API_URL}/sections`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/sections`, { headers: { 'Authorization': `Bearer ${token}` } });
         const sections = await res.json();
-        const grid = document.getElementById('grid');
-
-        grid.innerHTML = sections.map(sec => `
-                <div class="section-card" onclick="viewSection('${sec}')">
-                    <div style="font-size:30px;">📂</div>
+        document.getElementById('sectionGrid').innerHTML = sections.map(sec => `
+                <div class="card" onclick="window.location.href='students_by_section.html?name=${encodeURIComponent(sec)}'">
+                    <span class="icon">📁</span>
                     <h3>${sec}</h3>
                 </div>
             `).join('');
-    }
-
-    function viewSection(name) {
-        window.location.href = `students.html?name=${encodeURIComponent(name)}`;
     }
     window.onload = load;
 </script>

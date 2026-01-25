@@ -8,24 +8,26 @@
     <style>
         :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); }
-        header {
-            padding: 20px; display: flex; align-items: center; justify-content: space-between;
-            background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0;
-        }
-        .scan-btn { background: #e3f2fd; color: var(--primary); border: 2px solid var(--primary); padding: 8px 15px; border-radius: 10px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px; }
-        .form-container { padding: 20px; }
+        header { padding: 20px; display: flex; align-items: center; justify-content: space-between; background: white; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .scan-btn { background: #e3f2fd; color: var(--primary); border: 1px solid var(--primary); padding: 8px 12px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .form-container { padding: 20px; max-width: 500px; margin: auto; }
         .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; }
-        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; }
-        .submit-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 600; margin-top: 10px; }
+        label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--secondary); }
+        input, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; font-family: inherit; }
+
+        /* Extra Fields Styling */
+        .flex-row-btn { background: #f0f7ff; color: var(--primary); border: 1px dashed var(--primary); padding: 10px; width: 100%; border-radius: 10px; font-weight: 600; cursor: pointer; margin: 10px 0; }
+        .row-item { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        .del-btn { background: #ffebee; color: #c62828; border: none; padding: 10px; border-radius: 8px; cursor: pointer; }
+        .submit-btn { background: var(--primary); color: white; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: 600; margin-top: 15px; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <header>
-    <button onclick="location.href='dashboard.html'" style="border:none; background:none; font-weight:600;">← Back</button>
-    <h2 style="margin:0; font-size:18px;">Admission</h2>
+    <button onclick="location.href='dashboard.html'" style="border:none; background:none; font-weight:600; cursor:pointer;">← Back</button>
+    <h2 style="margin:0; font-size:18px;">New Admission</h2>
     <button class="scan-btn" onclick="startScan()">📷 Scan</button>
 </header>
 
@@ -33,7 +35,7 @@
     <div class="card">
         <form id="admissionForm">
             <div class="input-group">
-                <label>Student Name</label>
+                <label>Student Full Name</label>
                 <input type="text" id="stdName" required>
             </div>
 
@@ -44,7 +46,7 @@
 
             <div class="input-group" id="customSectionGroup" style="display:none;">
                 <label>New Section Name</label>
-                <input type="text" id="newSectionInput">
+                <input type="text" id="newSectionInput" placeholder="Enter Class Name">
             </div>
 
             <div class="input-group">
@@ -52,7 +54,12 @@
                 <input type="number" id="stdFee" required>
             </div>
 
-            <button type="submit" class="submit-btn">Admit Student</button>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+            <label>Extra Information</label>
+            <div id="flexibleRows"></div>
+            <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field (Father, Phone, etc.)</button>
+
+            <button type="submit" class="submit-btn" id="subBtn">Save Student Record</button>
         </form>
     </div>
 </div>
@@ -60,53 +67,66 @@
 <script>
     const API_URL = "https://your-backend-url.com";
     const token = localStorage.getItem('institutionToken');
+    const adminEmail = localStorage.getItem('userEmail');
 
     window.onload = async () => {
         await loadSections();
+        // Load default template fields if they exist
+        const template = JSON.parse(localStorage.getItem(`template_${adminEmail}`)) || ["Father's Name", "Contact Number"];
+        template.forEach(label => addNewRow(label));
     };
 
     async function loadSections() {
         const select = document.getElementById('sectionSelect');
-        select.innerHTML = '<option value="" disabled selected>Loading...</option>';
-
         try {
-            // This pulls UNIQUE section names currently in your DB
-            const res = await fetch(`${API_URL}/sections`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const res = await fetch(`${API_URL}/sections`, { headers: { 'Authorization': `Bearer ${token}` } });
             const sections = await res.json();
-
             select.innerHTML = '<option value="" disabled selected>Select Section</option>';
             sections.forEach(sec => {
                 let opt = document.createElement('option');
                 opt.value = sec; opt.innerText = sec;
                 select.appendChild(opt);
             });
-
-            let addOpt = document.createElement('option');
-            addOpt.value = "ADD_NEW"; addOpt.innerText = "+ Add New Section";
-            select.appendChild(addOpt);
-        } catch (e) { console.error("Could not load sections"); }
+        } catch (e) { select.innerHTML = '<option value="">No sections found</option>'; }
+        select.innerHTML += '<option value="ADD_NEW">+ Add New Section</option>';
     }
 
     function checkCustom(select) {
         document.getElementById('customSectionGroup').style.display = (select.value === "ADD_NEW") ? "block" : "none";
     }
 
-    function startScan() {
-        alert("Camera opening... (Integrate Capacitor Camera or Tesseract.js here)");
+    function addNewRow(labelValue = "") {
+        const container = document.getElementById('flexibleRows');
+        const div = document.createElement('div');
+        div.className = "row-item";
+        div.innerHTML = `
+            <input type="text" placeholder="Label" class="extra-key" style="width:40%;" value="${labelValue}">
+            <input type="text" placeholder="Value" class="extra-val" style="width:50%;">
+            <button type="button" class="del-btn" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
     }
+
+    function startScan() { alert("OCR Scanner Placeholder - Integrate camera here."); }
 
     document.getElementById('admissionForm').onsubmit = async (e) => {
         e.preventDefault();
+        const btn = document.getElementById('subBtn');
+        btn.disabled = true;
+
         let section = document.getElementById('sectionSelect').value;
         if(section === "ADD_NEW") section = document.getElementById('newSectionInput').value;
+
+        const extraData = {};
+        const keys = document.querySelectorAll('.extra-key');
+        const vals = document.querySelectorAll('.extra-val');
+        keys.forEach((k, i) => { if(k.value) extraData[k.value] = vals[i].value; });
 
         const payload = {
             name: document.getElementById('stdName').value,
             section: section,
             fee: parseFloat(document.getElementById('stdFee').value),
-            extra_fields: "{}"
+            extra_fields: JSON.stringify(extraData)
         };
 
         const res = await fetch(`${API_URL}/admit-student`, {
@@ -115,7 +135,13 @@
             body: JSON.stringify(payload)
         });
 
-        if(res.ok) { alert("Student Admitted!"); location.reload(); }
+        if(res.ok) {
+            alert("Success!");
+            location.href = "sections_list.html";
+        } else {
+            alert("Error saving record");
+            btn.disabled = false;
+        }
     };
 </script>
 </body>

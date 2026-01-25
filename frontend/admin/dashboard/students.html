@@ -3,54 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Students List</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Student List</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #0288d1; --bg: #f0f2f5; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); }
-        header { padding: 20px; background: white; display: flex; align-items: center; gap: 15px; }
-        .list-container { padding: 20px; }
-        .student-item {
-            background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .fee-pill { background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        header { padding: 20px; background: white; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .list { padding: 15px; }
+        .student-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .name { font-weight: 600; font-size: 16px; display: block; }
+        .extra-info { font-size: 12px; color: #666; margin-top: 8px; border-top: 1px solid #f9f9f9; padding-top: 5px; }
+        .fee { float: right; color: #2e7d32; font-weight: 600; }
     </style>
 </head>
 <body>
 <header>
     <button onclick="history.back()" style="border:none; background:none; font-size:20px;">←</button>
-    <h2 id="sectionTitle">Section</h2>
+    <h2 id="title" style="margin:0; font-size:18px;">Section</h2>
 </header>
 
-<div class="list-container" id="studentList"></div>
+<div class="list" id="studentList"></div>
 
 <script>
     const API_URL = "https://your-backend-url.com";
     const token = localStorage.getItem('institutionToken');
-    const urlParams = new URLSearchParams(window.location.search);
-    const sectionName = urlParams.get('name');
-
-    document.getElementById('sectionTitle').innerText = sectionName;
+    const section = new URLSearchParams(window.location.search).get('name');
+    document.getElementById('title').innerText = "Class: " + section;
 
     async function load() {
-        const res = await fetch(`${API_URL}/my_students`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`${API_URL}/my_students`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
+        const filtered = data.students.filter(s => s.section === section);
 
-        // FILTER logic: Only show students in THIS section
-        const filtered = data.students.filter(s => s.section === sectionName);
+        document.getElementById('studentList').innerHTML = filtered.map(s => {
+            // Parse the extra_fields JSON string back into an object
+            let extras = "";
+            try {
+                const fields = JSON.parse(s.extra_fields);
+                for (let key in fields) {
+                    extras += `<div><strong>${key}:</strong> ${fields[key]}</div>`;
+                }
+            } catch(e) { extras = "No extra info"; }
 
-        document.getElementById('studentList').innerHTML = filtered.map(s => `
-                <div class="student-item">
-                    <div>
-                        <div style="font-weight:600;">${s.name}</div>
-                        <div style="font-size:12px; color:gray;">By: ${s.admitted_by}</div>
+            return `
+                    <div class="student-card">
+                        <span class="fee">$${s.fee}</span>
+                        <span class="name">${s.name}</span>
+                        <div class="extra-info">${extras}</div>
                     </div>
-                    <div class="fee-pill">$${s.fee}</div>
-                </div>
-            `).join('');
+                `;
+        }).join('');
     }
     window.onload = load;
 </script>
