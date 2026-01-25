@@ -2,62 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-<script>
-        if (!localStorage.getItem('userEmail')) {
-            window.location.replace("../index.html");
-        }
-    </script>
-
-    <title>Student Records - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sections - Institution</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; min-height: 100vh; }
-        header { padding: 20px; background: white; display: flex; align-items: center; gap: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .search-box { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #ddd; outline: none; }
-        .record-container { padding: 20px; flex: 1; }
-        .student-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .student-info h4 { margin: 0; color: var(--secondary); }
-        .student-info p { margin: 2px 0; font-size: 12px; color: #777; }
-        .fee-tag { background: #e3f2fd; color: var(--primary); padding: 5px 10px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+        :root { --primary: #0288d1; --bg: #f0f2f5; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding: 20px; }
+        .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .section-card {
+            background: white; padding: 30px 10px; border-radius: 15px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s;
+        }
+        .section-card:active { transform: scale(0.95); }
+        .section-card i { font-size: 24px; color: var(--primary); display: block; margin-bottom: 10px; }
+        h3 { margin: 0; color: #263238; font-size: 16px; }
     </style>
 </head>
 <body>
-    <header>
-        <button onclick="history.back()" style="border:none; background:none; font-size:20px; cursor:pointer;">←</button>
-        <input type="text" id="search" class="search-box" placeholder="Search student records..." onkeyup="filter()">
-    </header>
-    <div class="record-container" id="list">
-        <p style="text-align:center;">Loading records from Institution Database...</p>
-    </div>
-    <script>
-        const API_URL = "https://your-backend-name.onrender.com";
-        let students = [];
+<h2 style="margin-bottom: 20px;">School Sections</h2>
+<div class="section-grid" id="grid"></div>
 
-        async function load() {
-            try {
-                const r = await fetch(`${API_URL}/students`);
-                students = await r.json();
-                render(students);
-            } catch (e) { document.getElementById('list').innerHTML = "Connection Error"; }
-        }
+<script>
+    const API_URL = "https://your-backend-url.com";
+    const token = localStorage.getItem('institutionToken');
 
-        function render(data) {
-            document.getElementById('list').innerHTML = data.map(s => `
-                <div class="student-card">
-                    <div class="student-info"><h4>${s.name}</h4><p>Section: ${s.section}</p></div>
-                    <div class="fee-tag">$${s.fee}</div>
+    async function load() {
+        const res = await fetch(`${API_URL}/sections`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const sections = await res.json();
+        const grid = document.getElementById('grid');
+
+        grid.innerHTML = sections.map(sec => `
+                <div class="section-card" onclick="viewSection('${sec}')">
+                    <div style="font-size:30px;">📂</div>
+                    <h3>${sec}</h3>
                 </div>
             `).join('');
-        }
+    }
 
-        function filter() {
-            const q = document.getElementById('search').value.toLowerCase();
-            render(students.filter(s => s.name.toLowerCase().includes(q)));
-        }
-        window.onload = load;
-    </script>
+    function viewSection(name) {
+        window.location.href = `students.html?name=${encodeURIComponent(name)}`;
+    }
+    window.onload = load;
+</script>
 </body>
 </html>

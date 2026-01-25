@@ -106,3 +106,16 @@ async def check_institution_ownership(
         "institution_type": institution.type if institution else "school",
         "redirect": "/admin/dashboard.html"
     }
+
+@router.get("/sections")
+async def get_unique_sections(
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user)
+):
+    # This query gets distinct section names for the logged-in user's institution
+    sections = db.query(models.Student.section).filter(
+        models.Student.institution_id == current_user.institution_id,
+        models.Student.is_active == True
+    ).distinct().all()
+
+    return [s[0] for s in sections] # Returns a simple list of strings
