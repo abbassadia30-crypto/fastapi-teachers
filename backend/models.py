@@ -65,6 +65,7 @@ class User(Base):
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     
     # Ownership (For Admins)
+    bio = relationship("UserBio", back_populates="user", uselist=False)
     owned_institution = relationship("Institution", back_populates="owner", 
                                      foreign_keys=[Institution.owner_id], uselist=False)
     # Employment/Enrollment (Where they belong)
@@ -163,15 +164,11 @@ class Comment(Base):
 
 class UserBio(Base):
     __tablename__ = "user_bios"
-
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String(100), nullable=False)
     short_bio = Column(Text, nullable=True)
-    # 🏛️ This stores the flexible "Add/Remove" fields as a dictionary
     custom_details = Column(JSON, nullable=True, default={})
-
     user_id = Column(Integer, ForeignKey("users.id"), unique=True)
-    user = relationship("User", back_populates="bio")
 
-# Update your User model to include the relationship:
-# bio = relationship("UserBio", back_populates="user", uselist=False)
+    # This matches the 'bio' property we just added to User
+    user = relationship("User", back_populates="bio")
