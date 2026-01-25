@@ -89,18 +89,23 @@
     const loader = document.getElementById('loader');
     let originalData = null;
 
+    /**
+     * 🏛️ UI Helpers
+     */
     function showStatus(text, isError = true) {
         if (!statusMsg) return;
         statusMsg.innerText = text;
         statusMsg.className = isError ? "sign-box sign-red" : "sign-box sign-green";
         statusMsg.style.display = "block";
+        // Auto-scroll to message
+        statusMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function toggleEdit() {
         document.getElementById('viewMode').classList.add('hidden');
         document.getElementById('bioForm').classList.remove('hidden');
         document.getElementById('editToggle').classList.add('hidden');
-        document.getElementById('pageTitle').innerText = "Update Bio";
+        document.getElementById('pageTitle').innerText = "Update Global Bio";
     }
 
     function addField(key = '', val = '') {
@@ -116,12 +121,14 @@
         container.appendChild(div);
     }
 
+    /**
+     * 🏛️ Initialization: Fetch Profile on Page Load
+     */
     window.onload = async () => {
-        // 🏛️ Safety: Always clear loader even if everything crashes
         const hideLoader = () => { if(loader) loader.style.display = 'none'; };
 
         if (!token) {
-            showStatus("Auth Error: No session found. Please login.");
+            showStatus("Auth Error: Login Required.");
             hideLoader();
             return;
         }
@@ -131,28 +138,29 @@
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Accept': 'application/json'
                 }
             });
 
             if (res.status === 401) {
-                showStatus("Session invalid or expired. Please re-login.");
-                // We don't redirect immediately so the user can read the red box
+                showStatus("Session invalid or expired. Please login again.");
                 hideLoader();
                 return;
             }
 
             const data = await res.json();
 
-            // 🏛️ Real Dev Logic: Check if profile data exists
+            // 🏛️ Logic: If full_name exists, show View Mode. Otherwise, show Create Mode.
             if (data && data.full_name && data.full_name.trim() !== "") {
                 originalData = data;
 
+                // Clean UI containers
                 document.getElementById('viewDetails').innerHTML = '';
                 document.getElementById('dynamicFields').innerHTML = '<label class="label-style">Custom Detail Fields</label>';
 
+                // Inject Data into View Mode
                 document.getElementById('viewName').innerText = data.full_name;
-                document.getElementById('viewBio').innerText = data.short_bio || 'No summary available.';
+                document.getElementById('viewBio').innerText = data.short_bio || 'No summary provided.';
 
                 if (data.custom_details) {
                     Object.entries(data.custom_details).forEach(([k, v]) => {
@@ -160,35 +168,40 @@
                         tag.className = 'tag';
                         tag.innerHTML = `<strong>${k}:</strong> ${v}`;
                         document.getElementById('viewDetails').appendChild(tag);
-                        addField(k, v);
+                        addField(k, v); // Pre-fill the edit form
                     });
                 }
 
+                // Pre-fill the Form (Edit Mode)
                 document.getElementById('fullName').value = data.full_name;
                 document.getElementById('shortBio').value = data.short_bio || '';
 
+                // Set UI State
                 document.getElementById('viewMode').classList.remove('hidden');
                 document.getElementById('editToggle').classList.remove('hidden');
+                document.getElementById('bioForm').classList.add('hidden');
             } else {
-                // New User / Empty Profile
+                // New Profile Mode
                 document.getElementById('bioForm').classList.remove('hidden');
-                document.getElementById('pageTitle').innerText = "Create Your Bio";
+                document.getElementById('pageTitle').innerText = "Create New Bio";
                 if(document.querySelectorAll('.dynamic-field').length === 0) addField("Role", "Member");
             }
         } catch (e) {
-            console.error("Fetch Error:", e);
-            showStatus("Connection Error: Check institution server.");
+            console.error("Sync Error:", e);
+            showStatus("Connection Error: Could not sync with institution server.");
         } finally {
             hideLoader();
         }
     };
 
-    // 🏛️ POST Update logic
+    /**
+     * 🏛️ Form Submission: Update/Save Profile
+     */
     document.getElementById('bioForm').onsubmit = async (e) => {
         e.preventDefault();
         const saveBtn = document.getElementById('saveBtn');
-        saveBtn.disabled = true;
 
+        // Collect Dynamic Fields
         const details = {};
         document.querySelectorAll('.dynamic-field').forEach(row => {
             const k = row.querySelector('.f-key').value.trim();
@@ -202,26 +215,44 @@
             custom_details: details
         };
 
+        // 🏛️ Real Dev Optimization: Don't save if nothing changed
+        if (originalData) {
+            const isSame = payload.full_name === originalData.full_name &&
+                payload.short_bio === originalData.short_bio &&
+                JSON.stringify(payload.custom_details) === JSON.stringify(originalData.custom_details);
+            if (isSame) {
+                showStatus("No changes detected.");
+                return;
+            }
+        }
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Saving to Institution...";
+
         try {
             const res = await fetch(`${API_BASE}/profile/update`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showStatus("Success! Profile updated.", false);
+                showStatus("Success! Global profile updated.", false);
+                // Refresh to show updated view mode
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showStatus("Update failed. Check your data.");
+                const err = await res.json();
+                showStatus(err.detail || "Server rejected update.");
                 saveBtn.disabled = false;
+                saveBtn.innerText = "Save & Update Profile";
             }
         } catch (err) {
-            showStatus("Network Error.");
+            showStatus("Network Error: Connection to institution failed.");
             saveBtn.disabled = false;
+            saveBtn.innerText = "Save & Update Profile";
         }
     };
 </script>
