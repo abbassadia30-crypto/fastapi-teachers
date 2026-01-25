@@ -57,7 +57,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(String, default="student") # Set to None/Null for onboarding later
+    role = Column(String) # Set to None/Null for onboarding later
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)

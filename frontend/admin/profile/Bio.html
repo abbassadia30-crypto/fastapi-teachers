@@ -5,78 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Profile | Institution</title>
     <style>
+        /* CSS defined in head per institution standards */
         :root { --primary: #2c3e50; --success: #2e7d32; --danger: #c62828; --bg: #f4f7f6; --accent: #3498db; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); padding: 20px; color: var(--primary); }
         .container { max-width: 650px; margin: auto; background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); position: relative; min-height: 400px; }
-
-        /* 🏛️ UI Components */
         .nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .back-link { text-decoration: none; color: var(--accent); font-weight: 600; cursor: pointer; }
-
+        .back-link { text-decoration: none; color: var(--accent); font-weight: 600; cursor: pointer; font-size: 14px; }
         .sign-box { padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: none; text-align: center; border: 1px solid transparent; }
         .sign-red { background: #ffebee; color: var(--danger); border-color: var(--danger); display: block; }
         .sign-green { background: #e8f5e9; color: var(--success); border-color: var(--success); display: block; }
-
-        /* 🏛️ Form & Output States */
         .form-group { margin-bottom: 25px; }
-        .label-style { display: block; margin-bottom: 8px; font-weight: 700; color: #555; text-transform: uppercase; font-size: 12px; }
-
+        .label-style { display: block; margin-bottom: 8px; font-weight: 700; color: #555; text-transform: uppercase; font-size: 11px; letter-spacing: 1px; }
         .output-text { padding: 12px; background: #f9f9f9; border-radius: 8px; border-left: 4px solid var(--accent); min-height: 20px; font-size: 16px; margin-top: 5px; }
-        input, textarea { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-
+        input, textarea { width: 100%; padding: 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; box-sizing: border-box; font-size: 15px; outline: none; }
+        input:focus { border-color: var(--accent); }
         .hidden { display: none !important; }
-
         .dynamic-field { display: flex; gap: 12px; margin-bottom: 12px; align-items: center; }
         .tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
-        .tag { background: #e1f5fe; color: #01579b; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: 600; }
-
+        .tag { background: #e1f5fe; color: #01579b; padding: 6px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; }
         .btn { padding: 12px 20px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: all 0.2s; }
         .btn-edit { background: var(--accent); color: white; }
         .btn-save { background: var(--primary); color: white; width: 100%; margin-top: 15px; }
         .btn-add { background: #f0f2f5; margin-bottom: 20px; border: 1px dashed #ccc; width: 100%; color: var(--primary); }
-        .btn-remove { background: #fff1f0; color: var(--danger); }
-
-        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; border-radius: 16px; z-index: 100; font-weight: bold; }
+        .btn-remove { background: #fff1f0; color: var(--danger); padding: 8px 12px; }
+        #loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; display: flex; justify-content: center; align-items: center; border-radius: 16px; z-index: 100; font-weight: bold; font-size: 18px; color: var(--accent); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="loader">Syncing with Institution...</div>
+    <div id="loader">Fetching Profile...</div>
 
     <div class="nav-header">
-        <a onclick="location.href='profile.html'" class="back-link">← Back to Profile</a>
+        <a onclick="window.history.back()" class="back-link">← Back</a>
         <h2 id="pageTitle">Global Bio</h2>
-        <button id="editToggle" class="btn btn-edit hidden" onclick="toggleEdit()">Edit Bio</button>
+        <button id="editToggle" class="btn btn-edit hidden" onclick="enableEditMode()">Edit Bio</button>
     </div>
 
     <div id="statusMsg" class="sign-box"></div>
 
     <div id="viewMode" class="hidden">
-        <div class="form-group">
-            <span class="label-style">Full Name</span>
-            <div id="viewName" class="output-text"></div>
-        </div>
-        <div class="form-group">
-            <span class="label-style">Professional Summary</span>
-            <div id="viewBio" class="output-text"></div>
-        </div>
+        <div class="form-group"><span class="label-style">Full Name</span><div id="viewName" class="output-text"></div></div>
+        <div class="form-group"><span class="label-style">Professional Summary</span><div id="viewBio" class="output-text"></div></div>
         <span class="label-style">Additional Details</span>
         <div id="viewDetails" class="tag-row"></div>
     </div>
 
     <form id="bioForm" class="hidden">
-        <div class="form-group">
-            <label class="label-style" for="fullName">Full Name</label>
-            <input type="text" id="fullName" placeholder="Enter your full name" required>
-        </div>
-        <div class="form-group">
-            <label class="label-style" for="shortBio">Professional Summary</label>
-            <textarea id="shortBio" rows="4" placeholder="Describe your expertise..."></textarea>
-        </div>
+        <div class="form-group"><label class="label-style">Full Name</label><input type="text" id="fullName" placeholder="Enter your name" required></div>
+        <div class="form-group"><label class="label-style">Professional Summary</label><textarea id="shortBio" rows="4" placeholder="Briefly describe your role at the institution..."></textarea></div>
+
         <div id="dynamicFields">
             <label class="label-style">Custom Detail Fields</label>
         </div>
+
         <button type="button" class="btn btn-add" onclick="addField()">+ Add Detail Field</button>
         <button type="submit" class="btn btn-save" id="saveBtn">Save & Update Profile</button>
     </form>
@@ -85,123 +67,88 @@
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
     const token = localStorage.getItem("institutionToken");
+
+    // 🏛️ Logic 1: Immediate Token Check
+    if (!token) {
+        window.location.href = "index.html";
+    }
+
     const statusMsg = document.getElementById('statusMsg');
     const loader = document.getElementById('loader');
-    let originalData = null;
+    const viewMode = document.getElementById('viewMode');
+    const bioForm = document.getElementById('bioForm');
+    const editToggle = document.getElementById('editToggle');
 
-    /**
-     * 🏛️ UI Helpers
-     */
     function showStatus(text, isError = true) {
-        if (!statusMsg) return;
         statusMsg.innerText = text;
         statusMsg.className = isError ? "sign-box sign-red" : "sign-box sign-green";
         statusMsg.style.display = "block";
-        // Auto-scroll to message
-        statusMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    function toggleEdit() {
-        document.getElementById('viewMode').classList.add('hidden');
-        document.getElementById('bioForm').classList.remove('hidden');
-        document.getElementById('editToggle').classList.add('hidden');
-        document.getElementById('pageTitle').innerText = "Update Global Bio";
-    }
-
-    function addField(key = '', val = '') {
-        const container = document.getElementById('dynamicFields');
-        if (!container) return;
+    function addField(k = '', v = '') {
         const div = document.createElement('div');
         div.className = 'dynamic-field';
         div.innerHTML = `
-        <input type="text" placeholder="Label (e.g. Office)" value="${key}" class="f-key">
-        <input type="text" placeholder="Value" value="${val}" class="f-val">
-        <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
-    `;
-        container.appendChild(div);
+            <input type="text" value="${k}" class="f-key" placeholder="Label (e.g. Dept)">
+            <input type="text" value="${v}" class="f-val" placeholder="Value">
+            <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
+        `;
+        document.getElementById('dynamicFields').appendChild(div);
     }
 
-    /**
-     * 🏛️ Initialization: Fetch Profile on Page Load
-     */
-    window.onload = async () => {
-        const hideLoader = () => { if(loader) loader.style.display = 'none'; };
+    function enableEditMode() {
+        viewMode.classList.add('hidden');
+        editToggle.classList.add('hidden');
+        bioForm.classList.remove('hidden');
+    }
 
-        if (!token) {
-            showStatus("Auth Error: Login Required.");
-            hideLoader();
-            return;
-        }
-
+    // 🏛️ Logic 2: Fetch and Conditional Display
+    async function init() {
         try {
             const res = await fetch(`${API_BASE}/profile/me`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            if (res.status === 401) {
-                showStatus("Session invalid or expired. Please login again.");
-                hideLoader();
-                return;
-            }
 
             const data = await res.json();
 
-            // 🏛️ Logic: If full_name exists, show View Mode. Otherwise, show Create Mode.
+            // Check if profile exists (Full name is a required field in our model)
             if (data && data.full_name && data.full_name.trim() !== "") {
-                originalData = data;
-
-                // Clean UI containers
-                document.getElementById('viewDetails').innerHTML = '';
-                document.getElementById('dynamicFields').innerHTML = '<label class="label-style">Custom Detail Fields</label>';
-
-                // Inject Data into View Mode
+                // Populate View Mode
                 document.getElementById('viewName').innerText = data.full_name;
                 document.getElementById('viewBio').innerText = data.short_bio || 'No summary provided.';
 
-                if (data.custom_details) {
-                    Object.entries(data.custom_details).forEach(([k, v]) => {
-                        const tag = document.createElement('div');
-                        tag.className = 'tag';
-                        tag.innerHTML = `<strong>${k}:</strong> ${v}`;
-                        document.getElementById('viewDetails').appendChild(tag);
-                        addField(k, v); // Pre-fill the edit form
-                    });
-                }
+                const detailRow = document.getElementById('viewDetails');
+                detailRow.innerHTML = '';
 
-                // Pre-fill the Form (Edit Mode)
+                // Populate Form Fields for potential editing
                 document.getElementById('fullName').value = data.full_name;
                 document.getElementById('shortBio').value = data.short_bio || '';
 
-                // Set UI State
-                document.getElementById('viewMode').classList.remove('hidden');
-                document.getElementById('editToggle').classList.remove('hidden');
-                document.getElementById('bioForm').classList.add('hidden');
+                if (data.custom_details) {
+                    Object.entries(data.custom_details).forEach(([k, v]) => {
+                        detailRow.innerHTML += `<div class="tag"><strong>${k}:</strong> ${v}</div>`;
+                        addField(k, v);
+                    });
+                }
+
+                viewMode.classList.remove('hidden');
+                editToggle.classList.remove('hidden');
             } else {
-                // New Profile Mode
-                document.getElementById('bioForm').classList.remove('hidden');
-                document.getElementById('pageTitle').innerText = "Create New Bio";
-                if(document.querySelectorAll('.dynamic-field').length === 0) addField("Role", "Member");
+                // No existing data: Show Input Form directly
+                bioForm.classList.remove('hidden');
+                addField("Role", "Member");
             }
         } catch (e) {
-            console.error("Sync Error:", e);
-            showStatus("Connection Error: Could not sync with institution server.");
+            showStatus("Connection error: Unable to reach institution server.");
         } finally {
-            hideLoader();
+            loader.style.display = 'none';
         }
-    };
+    }
 
-    /**
-     * 🏛️ Form Submission: Update/Save Profile
-     */
-    document.getElementById('bioForm').onsubmit = async (e) => {
+    // 🏛️ Logic 3: Save / Update Data
+    bioForm.onsubmit = async (e) => {
         e.preventDefault();
-        const saveBtn = document.getElementById('saveBtn');
 
-        // Collect Dynamic Fields
         const details = {};
         document.querySelectorAll('.dynamic-field').forEach(row => {
             const k = row.querySelector('.f-key').value.trim();
@@ -215,20 +162,6 @@
             custom_details: details
         };
 
-        // 🏛️ Real Dev Optimization: Don't save if nothing changed
-        if (originalData) {
-            const isSame = payload.full_name === originalData.full_name &&
-                payload.short_bio === originalData.short_bio &&
-                JSON.stringify(payload.custom_details) === JSON.stringify(originalData.custom_details);
-            if (isSame) {
-                showStatus("No changes detected.");
-                return;
-            }
-        }
-
-        saveBtn.disabled = true;
-        saveBtn.innerText = "Saving to Institution...";
-
         try {
             const res = await fetch(`${API_BASE}/profile/update`, {
                 method: 'POST',
@@ -240,21 +173,18 @@
             });
 
             if (res.ok) {
-                showStatus("Success! Global profile updated.", false);
-                // Refresh to show updated view mode
-                setTimeout(() => location.reload(), 1500);
+                showStatus("Profile updated successfully!", false);
+                setTimeout(() => location.reload(), 1200);
             } else {
-                const err = await res.json();
-                showStatus(err.detail || "Server rejected update.");
-                saveBtn.disabled = false;
-                saveBtn.innerText = "Save & Update Profile";
+                showStatus("Error: Could not save profile details.");
             }
         } catch (err) {
-            showStatus("Network Error: Connection to institution failed.");
-            saveBtn.disabled = false;
-            saveBtn.innerText = "Save & Update Profile";
+            showStatus("Critical Server Error.");
         }
     };
+
+    window.onload = init;
 </script>
+
 </body>
 </html>
