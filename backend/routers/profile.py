@@ -82,6 +82,7 @@ async def update_profile(
         profile.full_name = data.full_name
         profile.short_bio = data.short_bio
         profile.custom_details = data.custom_details
+        db.add(profile)
     else:
         new_profile = models.Profile(**data.dict(), user_id=current_user.id)
         db.add(new_profile)
@@ -92,5 +93,5 @@ async def update_profile(
 # 🏛️ GET: Global Search (Public)
 @router.get("/profiles/all", response_model=list[ProfileOut])
 def get_all_profiles(db: Session = Depends(get_db)):
-    # 🏛️ Real Dev Tip: In a large app, we would add .limit(20) here
-    return db.query(models.Profile).all()
+    profiles = db.query(models.Profile).all()
+    return profiles
