@@ -93,5 +93,8 @@ async def update_profile(
 # 🏛️ GET: Global Search (Public)
 @router.get("/profiles/all", response_model=list[ProfileOut])
 def get_all_profiles(db: Session = Depends(get_db)):
-    profiles = db.query(models.Profile).all()
+    # Order by ID descending so "Newest" works logically on the frontend
+    profiles = db.query(models.Profile).order_by(models.Profile.id.desc()).all()
+
+    # Do NOT return a comma; return only the profiles list
     return profiles
