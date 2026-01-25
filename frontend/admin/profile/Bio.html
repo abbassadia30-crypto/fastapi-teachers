@@ -90,6 +90,7 @@
     let originalData = null;
 
     function showStatus(text, isError = true) {
+        if (!statusMsg) return;
         statusMsg.innerText = text;
         statusMsg.className = isError ? "sign-box sign-red" : "sign-box sign-green";
         statusMsg.style.display = "block";
@@ -104,47 +105,52 @@
 
     function addField(key = '', val = '') {
         const container = document.getElementById('dynamicFields');
+        if (!container) return;
         const div = document.createElement('div');
         div.className = 'dynamic-field';
         div.innerHTML = `
-            <input type="text" placeholder="Label (e.g. Office)" value="${key}" class="f-key">
-            <input type="text" placeholder="Value" value="${val}" class="f-val">
-            <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
-        `;
+        <input type="text" placeholder="Label (e.g. Office)" value="${key}" class="f-key">
+        <input type="text" placeholder="Value" value="${val}" class="f-val">
+        <button type="button" class="btn btn-remove" onclick="this.parentElement.remove()">✕</button>
+    `;
         container.appendChild(div);
     }
 
     window.onload = async () => {
+        // 🏛️ Safety: Always clear loader even if everything crashes
+        const hideLoader = () => { if(loader) loader.style.display = 'none'; };
+
         if (!token) {
-            showStatus("Auth Error: Login Required.");
-            loader.style.display = 'none';
+            showStatus("Auth Error: No session found. Please login.");
+            hideLoader();
             return;
         }
 
         try {
             const res = await fetch(`${API_BASE}/profile/me`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             if (res.status === 401) {
-                showStatus("Session expired. Redirecting...");
-                setTimeout(() => { location.href = "login.html"; }, 2000);
+                showStatus("Session invalid or expired. Please re-login.");
+                // We don't redirect immediately so the user can read the red box
+                hideLoader();
                 return;
             }
 
             const data = await res.json();
 
-            // 🏛️ Check if profile has real content
-            const hasProfile = data && data.full_name && data.full_name.trim() !== "";
-
-            if (hasProfile) {
+            // 🏛️ Real Dev Logic: Check if profile data exists
+            if (data && data.full_name && data.full_name.trim() !== "") {
                 originalData = data;
 
-                // UI Cleanup
                 document.getElementById('viewDetails').innerHTML = '';
                 document.getElementById('dynamicFields').innerHTML = '<label class="label-style">Custom Detail Fields</label>';
 
-                // Render View
                 document.getElementById('viewName').innerText = data.full_name;
                 document.getElementById('viewBio').innerText = data.short_bio || 'No summary available.';
 
@@ -158,22 +164,64 @@
                     });
                 }
 
-                // Prep Edit Form
                 document.getElementById('fullName').value = data.full_name;
                 document.getElementById('shortBio').value = data.short_bio || '';
 
                 document.getElementById('viewMode').classList.remove('hidden');
                 document.getElementById('editToggle').classList.remove('hidden');
             } else {
-                // New User Setup
+                // New User / Empty Profile
                 document.getElementById('bioForm').classList.remove('hidden');
                 document.getElementById('pageTitle').innerText = "Create Your Bio";
-                addField("Role", "Member"); // Suggest a default
+                if(document.querySelectorAll('.dynamic-field').length === 0) addField("Role", "Member");
             }
         } catch (e) {
-            showStatus("Connection Error: Check institution server status.");
+            console.error("Fetch Error:", e);
+            showStatus("Connection Error: Check institution server.");
         } finally {
-            loader.style.display = 'none';
+            hideLoader();
+        }
+    };
+
+    // 🏛️ POST Update logic
+    document.getElementById('bioForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+
+        const details = {};
+        document.querySelectorAll('.dynamic-field').forEach(row => {
+            const k = row.querySelector('.f-key').value.trim();
+            const v = row.querySelector('.f-val').value.trim();
+            if (k && v) details[k] = v;
+        });
+
+        const payload = {
+            full_name: document.getElementById('fullName').value,
+            short_bio: document.getElementById('shortBio').value,
+            custom_details: details
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/profile/update`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showStatus("Success! Profile updated.", false);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showStatus("Update failed. Check your data.");
+                saveBtn.disabled = false;
+            }
+        } catch (err) {
+            showStatus("Network Error.");
+            saveBtn.disabled = false;
         }
     };
 </script>

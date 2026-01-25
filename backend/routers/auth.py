@@ -124,6 +124,7 @@ async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db))
     return {
         "access_token": access_token, 
         "token_type": "bearer",
+        "role" : user.role,
         "user": user.name, 
         "institution_id": user.institution_id 
     }
