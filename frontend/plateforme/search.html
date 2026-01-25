@@ -4,74 +4,123 @@
   <meta charset="UTF-8">
   <title>Explore | Institution Search</title>
   <style>
-    :root { --primary: #0288d1; --bg: #f4f7f6; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; }
+    :root { --primary: #0288d1; --bg: #f4f7f6; --text: #2c3e50; --accent: #3498db; --danger: #c62828; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 80px; color: var(--text); }
 
-    /* Search Header */
-    .search-header {
-      background: white; padding: 20px; sticky: top; top: 0; z-index: 100;
+    /* 🏛️ Search Header */
+    .header-container {
+      background: white; padding: 20px; position: sticky; top: 0; z-index: 100;
       box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .search-bar {
-      background: #eee; border-radius: 12px; padding: 12px;
+      background: #f1f3f4; border-radius: 12px; padding: 12px;
       display: flex; align-items: center; gap: 10px;
     }
-    .search-bar input { border: none; background: transparent; width: 100%; outline: none; }
+    .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 15px; }
 
-    /* Feed Cards */
+    /* 🏛️ Profile Cards */
     .feed-container { padding: 15px; max-width: 600px; margin: auto; }
-    .post-card {
-      background: white; border-radius: 15px; padding: 15px; margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    .avatar { width: 40px; height: 40px; border-radius: 50%; background: #ddd; }
-
-    .institution-badge {
-      background: #e3f2fd; color: var(--primary);
-      font-size: 10px; padding: 4px 8px; border-radius: 5px; font-weight: 600;
+    .profile-card {
+      background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #eee;
     }
 
-    .action-buttons {
-      display: flex; gap: 20px; border-top: 1px solid #eee;
-      padding-top: 10px; margin-top: 10px; color: #666; font-size: 14px;
+    .label-style {
+      display: block; font-size: 10px; font-weight: 800; color: #999;
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
     }
+
+    .field-box {
+      padding: 12px; background: #f9f9f9; border-radius: 10px;
+      border-left: 4px solid var(--accent); margin-bottom: 15px; font-size: 15px; font-weight: 500;
+    }
+
+    .name-header { font-size: 22px; font-weight: 700; color: var(--primary); margin: 0 0 20px 0; }
+
+    .sign-box { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 20px; }
+    .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
+
+    #loader { text-align: center; padding: 50px; color: var(--primary); font-weight: 600; }
   </style>
 </head>
 <body>
 
-<div class="search-header">
+<div class="header-container">
   <div class="search-bar">
     <span>🔍</span>
-    <input type="text" placeholder="Search institutions, teachers, or students..." id="globalSearch">
+    <input type="text" placeholder="Search name, role, or expertise..." id="globalSearch">
   </div>
 </div>
 
-<div class="feed-container" id="feed">
-  <div class="post-card">
-    <div class="post-header">
-      <div class="avatar"></div>
-      <div>
-        <div style="font-weight: 600; font-size: 14px;">Dr. Sarah Smith</div>
-        <div class="institution-badge">ADMIN @ CITY COLLEGE</div>
-      </div>
-    </div>
-    <p style="font-size: 14px;">Welcome to our new digital campus! We are now accepting applications for the 2026 session. 🏛️</p>
-    <div class="action-buttons">
-      <span>❤️ Like</span>
-      <span>💬 Comment</span>
-    </div>
-  </div>
-</div>
-
-<nav class="bottom-nav">...</nav>
+<div id="loader">Accessing Institution Database...</div>
+<div class="feed-container" id="feed"></div>
 
 <script>
-  // Logic to fetch posts and display them
-  async function loadFeed() {
-    const res = await fetch('https://fastapi-teachers.onrender.com/posts');
-    const posts = await res.json();
-    // Render logic here...
+  const API_BASE = "https://fastapi-teachers.onrender.com";
+  let allProfiles = [];
+
+  // 🏛️ Initialize Data
+  window.onload = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/profiles/all`);
+      allProfiles = await res.json();
+      renderProfiles();
+    } catch (e) {
+      document.getElementById('feed').innerHTML = '<div class="sign-box sign-red">Offline: Cannot reach institution server.</div>';
+    } finally {
+      document.getElementById('loader').style.display = 'none';
+    }
+
+    // Live Search Listener
+    document.getElementById('globalSearch').addEventListener('input', (e) => {
+      renderProfiles(e.target.value);
+    });
+  };
+
+  // 🏛️ Render Logic
+  function renderProfiles(searchTerm = "") {
+    const feed = document.getElementById('feed');
+    feed.innerHTML = "";
+
+    const filtered = allProfiles.filter(p => {
+      const s = searchTerm.toLowerCase();
+      const inName = p.full_name.toLowerCase().includes(s);
+      const inBio = (p.short_bio || "").toLowerCase().includes(s);
+      // Also search inside custom details (Role, etc)
+      const inDetails = Object.values(p.custom_details || {}).some(v => v.toLowerCase().includes(s));
+      return inName || inBio || inDetails;
+    });
+
+    if (filtered.length === 0) {
+      feed.innerHTML = `<div class="sign-box sign-red">No records match "${searchTerm}"</div>`;
+      return;
+    }
+
+    filtered.forEach(profile => {
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+
+      // Convert JSON details to "Name Field" boxes
+      let customHtml = '';
+      if (profile.custom_details) {
+        Object.entries(profile.custom_details).forEach(([key, value]) => {
+          if (value) {
+            customHtml += `
+              <span class="label-style">${key}</span>
+              <div class="field-box">${value}</div>
+            `;
+          }
+        });
+      }
+
+      card.innerHTML = `
+        <h3 class="name-header">${profile.full_name}</h3>
+        <span class="label-style">Professional Summary</span>
+        <div class="field-box">${profile.short_bio || '---'}</div>
+        ${customHtml}
+      `;
+      feed.appendChild(card);
+    });
   }
 </script>
 </body>

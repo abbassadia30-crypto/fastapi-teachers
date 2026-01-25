@@ -68,7 +68,7 @@ class User(Base):
     bio = relationship("UserBio", back_populates="user", uselist=False)
     owned_institution = relationship("Institution", back_populates="owner", 
                                      foreign_keys=[Institution.owner_id], uselist=False)
-    # Employment/Enrollment (Where they belong)
+    profile = relationship("Profile", back_populates="owner", uselist=False)
     employed_at = relationship("Institution", foreign_keys=[institution_id])
 
 class Student(Base):
@@ -172,3 +172,12 @@ class UserBio(Base):
 
     # This matches the 'bio' property we just added to User
     user = relationship("User", back_populates="bio")
+
+class Profile(Base):
+    __tablename__ = "profiles"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True)
+    full_name = Column(String, index=True)
+    short_bio = Column(Text)
+    custom_details = Column(JSON)
+    owner = relationship("User", back_populates="profile")
