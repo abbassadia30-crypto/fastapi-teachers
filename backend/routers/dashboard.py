@@ -152,7 +152,7 @@ async def hire_teacher(
         "id": new_teacher.id
     }
 
-@router.get("/teacher-list", response_model=schemas.StaffListResponse)
+@router.get("/teacher-list", response_model=schemas.StaffResponse)
 async def get_teacher_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
