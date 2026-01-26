@@ -40,7 +40,7 @@
 
         async function loadStaff() {
             try {
-                const res = await fetch(`${API}/staff/`);
+                const res = await fetch(`${API}/dashboard/Staff_list`);
                 allStaff = await res.json();
                 render(allStaff);
             } catch (err) { console.error(err); }

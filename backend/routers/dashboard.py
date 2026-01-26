@@ -232,7 +232,7 @@ async def update_teacher(
     db.commit()
     return {"status": "success", "message": "Record updated"}
 
-@router.post("/", response_model=schemas.StaffResponse)
+@router.post("/Hire_staff", response_model=schemas.StaffResponse)
 def hire_staff(
         staff_in: schemas.StaffCreate,
         db: Session = Depends(database.get_db),
@@ -249,7 +249,7 @@ def hire_staff(
     return new_staff
 
 # READ: Get All Staff
-@router.get("/list", response_model=List[schemas.StaffResponse])
+@router.get("/Staff_list", response_model=List[schemas.StaffResponse])
 def get_staff_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
@@ -259,7 +259,7 @@ def get_staff_list(
     ).all()
 
 # UPDATE: Edit Staff Profile
-@router.patch("/{staff_id}")
+@router.patch("/Update_staff{staff_id}")
 def update_staff(
         staff_id: int,
         staff_up: schemas.StaffUpdate,
@@ -282,7 +282,7 @@ def update_staff(
     return {"status": "success", "message": "Staff record updated"}
 
 # DELETE: Remove Staff
-@router.delete("/{staff_id}")
+@router.delete("/delete_staff{staff_id}")
 def remove_staff(
         staff_id: int,
         db: Session = Depends(database.get_db),
