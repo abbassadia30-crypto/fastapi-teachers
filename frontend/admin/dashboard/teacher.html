@@ -213,15 +213,15 @@
         // 🛡️ Data mapping strictly follows StaffBase schema
         const payload = {
             name: document.getElementById('tName').value,
-            designation: document.getElementById('tDesignation').value,
-            phone: document.getElementById('tPhone').value,
+            designation: document.getElementById('tSection').value, // Backend maps this to expertise
+            phone: document.getElementById('tPhone').value || "000-0000",
             salary: parseFloat(document.getElementById('tSalary').value),
             joining_date: new Date().toISOString().split('T')[0],
             extra_details: extraData
         };
 
         try {
-            const res = await fetch(`${API_URL}/dashboard/hire-staff`, {
+            const res = await fetch(`${API_URL}/dashboard/hire-teacher`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

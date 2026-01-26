@@ -120,34 +120,34 @@ async def get_unique_sections(
 
     return [s[0] for s in sections] # Returns a simple list of strings
 
-@router.post("/hire-staff")
-async def hire_staff(
-        data: schemas.StaffCreate,
+@router.post("/hire-teacher")
+async def hire_teacher(
+        data: schemas.TeacherCreate,
         db: Session = Depends(get_db),
         current_user: models.User = Depends(get_current_user)
 ):
     if not current_user.institution_id:
-        raise HTTPException(status_code=400, detail="Institution ID required")
+        raise HTTPException(status_code=400, detail="Institution not identified")
 
-    # Creating the record based on your Staff table
-    new_staff = models.Teacher(
+    # Creating a dedicated Teacher record
+    new_teacher = models.Teacher(
         name=data.name,
-        designation=data.designation,
         phone=data.phone,
         salary=data.salary,
         joining_date=data.joining_date,
+        subject_expertise=data.designation, # Mapping designation to expertise
         extra_details=data.extra_details,
         institution_id=current_user.institution_id
     )
 
-    db.add(new_staff)
+    db.add(new_teacher)
     db.commit()
-    db.refresh(new_staff)
+    db.refresh(new_teacher)
 
     return {
         "status": "success",
-        "message": f"Faculty member {data.name} onboarded.",
-        "id": new_staff.id
+        "message": f"Teacher {data.name} onboarded successfully",
+        "id": new_teacher.id
     }
 
 @router.get("/teacher-list", response_model=schemas.StaffListResponse)

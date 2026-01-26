@@ -88,7 +88,7 @@
     try {
         document.getElementById('loading').style.display = 'flex';
 
-        const response = await fetch(`${API_BASE}/update-role`, {
+        const response = await fetch(`${API_BASE}/institution/update-role`, {
             method: 'GET', // We added this route to the backend above
             headers: { 'Authorization': `Bearer ${token}` }
         });
