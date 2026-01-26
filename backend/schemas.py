@@ -121,6 +121,7 @@ class StaffResponse(StaffBase):
 
     class Config:
         from_attributes = True
+
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
