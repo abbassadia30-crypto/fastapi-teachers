@@ -75,39 +75,49 @@ class Student_update(BaseModel):
 
 # --- Staff Schemas ---
 
-class StaffBase(BaseModel):
+class EmployeeBase(BaseModel):
     name: str
-    designation: str
     phone: str
-    salary: float = Field(..., gt=0) # Ensures salary is always a positive number
-    # If using string for joining_date:
+    salary: float = Field(..., gt=0)
     joining_date: str
     extra_details: Optional[Dict[str, Any]] = {}
+    is_active: bool = True
 
-class StaffCreate(StaffBase):
-    pass
+class TeacherCreate(EmployeeBase):
+    designation: str = "Teacher"
+    subject_expertise: Optional[str] = None # New advanced field
 
-class StaffUpdate(BaseModel):
-    name: Optional[str] = None
-    designation: Optional[str] = None
-    phone: Optional[str] = None
-    salary: Optional[float] = None
-    joining_date: Optional[str] = None # Added for correction flexibility
-    extra_details: Optional[Dict[str, Any]] = None
-    is_active: Optional[bool] = None
-
-class StaffResponse(StaffBase):
+class TeacherResponse(TeacherCreate):
     id: int
     institution_id: int
-    is_active: bool
+    model_config = ConfigDict(from_attributes=True)
 
-    # Updated for Pydantic v2
+class TeacherListResponse(BaseModel):
+    institution_id: int
+    total_teachers: int
+    rows: List[TeacherResponse]
+
+class StaffCreate(EmployeeBase):
+    designation: str # e.g., "Accountant", "Driver"
+    shift_time: Optional[str] = None # Specific for general staff
+
+class StaffResponse(StaffCreate):
+    id: int
+    institution_id: int
     model_config = ConfigDict(from_attributes=True)
 
 class StaffListResponse(BaseModel):
     institution_id: int
-    total_employees: int
+    total_staff: int
     rows: List[StaffResponse]
+
+class EmployeeUpdate(BaseModel):
+    name: Optional[str] = None
+    designation: Optional[str] = None
+    phone: Optional[str] = None
+    salary: Optional[float] = None
+    is_active: Optional[bool] = None
+    extra_details: Optional[Dict[str, Any]] = None
 
 class PaySearchResponse(BaseModel):
     id: int

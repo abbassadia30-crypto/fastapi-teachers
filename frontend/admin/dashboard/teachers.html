@@ -1,192 +1,123 @@
-<!DOCTY<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Directory | Institution</title>
+    <title>Faculty Directory | Institution</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #0288d1;
             --bg: #f4f7f6;
             --text: #2c3e50;
-            --accent: #3498db;
             --success: #2e7d32;
             --danger: #c62828;
-            --dark: #1e293b;
-        }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 50px; }
-
-        /* 🔔 Notification Box (Red/Green Sign Box) */
-        #appNotifier {
-            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
-            text-align: center; color: white; font-weight: 600; z-index: 9999;
-            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        .notifier-show { transform: translateY(100px); }
-
-        .sticky-header {
-            background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;
         }
 
-        .search-box { background: #f1f3f4; border-radius: 10px; padding: 10px 15px; margin: 15px 20px; display: flex; align-items: center; }
-        .search-box input { border: none; background: transparent; width: 100%; outline: none; font-family: inherit; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
 
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 20px; }
+        /* ⬅️ Top-Left Back Button */
+        .back-nav { position: absolute; top: 20px; left: 20px; text-decoration: none; font-size: 24px; color: var(--text); font-weight: 800; z-index: 100; }
 
-        /* Teacher Card */
-        .card {
-            background: white; border-radius: 20px; padding: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
-            transition: all 0.3s ease-in-out; border-left: 6px solid var(--primary);
-            position: relative; overflow: hidden; height: 60px; /* Standard collapsed height */
+        /* Red/Green Sign Box for errors/success */
+        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 1000; }
+        .sign-green { display: block; background: #e8f5e9; color: var(--success); border: 2px solid var(--success); }
+        .sign-red { display: block; background: #ffebee; color: var(--danger); border: 2px solid var(--danger); }
+
+        .header { background: white; padding: 60px 20px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+
+        .teacher-card {
+            background: white; border-radius: 20px; padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary);
+            transition: 0.3s; cursor: pointer;
         }
+        .teacher-card:hover { transform: translateY(-5px); }
 
-        .card.expanded { height: auto; min-height: 250px; border-left-color: var(--accent); }
+        .name { font-size: 18px; font-weight: 800; color: var(--text); display: block; }
+        .subject { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; display: block; }
 
-        .info-row { display: flex; justify-content: space-between; align-items: flex-start; }
-        .name { font-weight: 800; font-size: 17px; color: var(--dark); display: block; }
-        .desig { font-size: 11px; color: var(--primary); font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .label { font-weight: 600; color: #95a5a6; }
+        .value { font-weight: 700; color: var(--text); }
 
-        .details { opacity: 0; transition: 0.3s; pointer-events: none; margin-top: 15px; }
-        .card.expanded .details { opacity: 1; pointer-events: auto; }
-
-        .label-style { font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; margin-top: 12px; display: block; }
-        .value-box { font-size: 13px; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 4px; border: 1px solid #edf2f7; font-weight: 600; }
-
-        .contact-btn {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            background: var(--success); color: white; padding: 12px;
-            border-radius: 10px; text-decoration: none; font-size: 14px; font-weight: 700; margin-top: 20px;
-        }
-
-        .loader { text-align: center; padding: 50px; color: #888; font-weight: 600; }
-        .back-btn { border: none; background: none; font-size: 22px; cursor: pointer; color: var(--dark); }
+        .flexible-area { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; }
     </style>
 </head>
 <body>
 
-<div id="appNotifier"></div>
+<div id="signBox"></div>
+<a href="dashboard.html" class="back-nav">←</a>
 
-<div class="sticky-header">
-    <button onclick="window.history.back()" class="back-btn">←</button>
-    <h2 style="margin:0; font-size:18px;">Institution Faculty</h2>
-    <div style="width:22px;"></div>
+<div class="header">
+    <h2 style="margin:0; color:var(--primary)">Faculty Management</h2>
+    <p style="color:#7f8c8d; font-size:14px;">Specialized Teacher Records for the <strong>institution</strong></p>
 </div>
 
-<div class="search-box">
-    <input type="text" id="search" placeholder="Search name, phone, or expertise..." oninput="renderTeachers()">
+<div class="container" id="facultyGrid">
 </div>
-
-<div id="loader" class="loader">Verifying Staff Credentials...</div>
-<div class="container" id="staffList"></div>
 
 <script>
     const API = "https://fastapi-teachers.onrender.com";
     const token = localStorage.getItem('institutionToken');
-    let allTeachers = [];
 
-    function notify(msg, success = true) {
-        const n = document.getElementById('appNotifier');
-        n.innerText = msg;
-        n.style.background = success ? 'var(--success)' : 'var(--danger)';
-        n.classList.add('notifier-show');
-        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    function showSign(msg, isSuccess) {
+        const box = document.getElementById('signBox');
+        box.innerText = msg;
+        box.className = isSuccess ? "sign-green" : "sign-red";
+        setTimeout(() => box.style.display = 'none', 4000);
     }
 
-    async function loadStaff() {
-        if (!token) {
-            notify("Session expired. Please login.", false);
-            return;
-        }
-
+    async function fetchFaculty() {
         try {
-            const res = await fetch(`${API}/dashboard/staff-list`, {
+            const res = await fetch(`${API}/teachers/all`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            if (!res.ok) throw new Error("Failed to fetch");
-
             const data = await res.json();
 
-            // The backend returns 'rows'. We show all since the route already filters for designation
-            allTeachers = data.rows;
-            renderTeachers();
-        } catch (e) {
-            notify("Sync Error: Check your connection", false);
-        } finally {
-            document.getElementById('loader').style.display = 'none';
-        }
-    }
-
-    function renderTeachers() {
-        const q = document.getElementById('search').value.toLowerCase();
-        const list = document.getElementById('staffList');
-
-        const filtered = allTeachers.filter(t => {
-            const nameMatch = t.name.toLowerCase().includes(q);
-            const phoneMatch = t.phone.includes(q);
-            const extraMatch = t.extra_details ? Object.values(t.extra_details).some(v => String(v).toLowerCase().includes(q)) : false;
-            return nameMatch || phoneMatch || extraMatch;
-        });
-
-        if (filtered.length === 0) {
-            list.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999; margin-top:20px;">No faculty records found matching "${q}"</div>`;
-            return;
-        }
-
-        list.innerHTML = filtered.map(t => {
-            let flexRows = "";
-            if (t.extra_details) {
-                Object.entries(t.extra_details).forEach(([key, val]) => {
-                    flexRows += `
-                        <span class="label-style">${key}</span>
-                        <div class="value-box">${val}</div>
-                    `;
-                });
+            const grid = document.getElementById('facultyGrid');
+            if (data.length === 0) {
+                grid.innerHTML = "<p>No teachers found in the faculty database.</p>";
+                return;
             }
 
-            return `
-                <div class="card" onclick="toggleCard(this)">
-                    <div class="info-row">
-                        <div>
-                            <span class="desig">${t.designation}</span>
-                            <span class="name">${t.name}</span>
+            grid.innerHTML = data.map(t => {
+                let extras = "";
+                if (t.extra_details) {
+                    extras = Object.entries(t.extra_details).map(([k, v]) => `
+                        <div class="detail-row">
+                            <span class="label">${k}</span>
+                            <span class="value">${v}</span>
                         </div>
-                        <div style="text-align:right;">
-                            <span style="font-size:9px; color:#999; font-weight:800; text-transform:uppercase;">Joined</span>
-                            <div style="font-size:11px; font-weight:700; color:var(--dark);">${t.joining_date}</div>
+                    `).join('');
+                }
+
+                return `
+                    <div class="teacher-card">
+                        <span class="subject">${t.subject_expertise || 'General Faculty'}</span>
+                        <span class="name">${t.name}</span>
+
+                        <div class="detail-row" style="margin-top:15px;">
+                            <span class="label">Phone</span>
+                            <span class="value">${t.phone}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="label">Salary</span>
+                            <span class="value">$${t.salary.toLocaleString()}</span>
+                        </div>
+
+                        <div class="flexible-area">
+                            ${extras}
                         </div>
                     </div>
-
-                    <div class="details">
-                        <span class="label-style">Official Phone</span>
-                        <div class="value-box">${t.phone}</div>
-
-                        <span class="label-style">Monthly Salary</span>
-                        <div class="value-box">$${t.salary.toLocaleString()}</div>
-
-                        ${flexRows}
-
-                        <a href="tel:${t.phone}" class="contact-btn" onclick="event.stopPropagation()">
-                             Call Teacher
-                        </a>
-                    </div>
-                </div>
-            `;
-        }).join('');
+                `;
+            }).join('');
+        } catch (err) {
+            showSign("Could not sync with institution server", false);
+        }
     }
 
-    function toggleCard(el) {
-        // Real Developer Logic: Close other cards when one is opened
-        const isExpanded = el.classList.contains('expanded');
-        document.querySelectorAll('.card').forEach(c => c.classList.remove('expanded'));
-        if (!isExpanded) el.classList.add('expanded');
-    }
-
-    window.onload = loadStaff;
+    window.onload = fetchFaculty;
 </script>
 </body>
 </html>

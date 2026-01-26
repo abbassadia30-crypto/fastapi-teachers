@@ -126,11 +126,11 @@ async def hire_staff(
         db: Session = Depends(get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    # Professional check: Ensure the user belongs to an institution
     if not current_user.institution_id:
-        raise HTTPException(status_code=400, detail="User not linked to any institution")
+        raise HTTPException(status_code=400, detail="Institution ID required")
 
-    new_staff = models.Staff(
+    # Creating the record based on your Staff table
+    new_staff = models.Teacher(
         name=data.name,
         designation=data.designation,
         phone=data.phone,
@@ -146,11 +146,11 @@ async def hire_staff(
 
     return {
         "status": "success",
-        "message": f"Staff member {data.name} hired successfully",
-        "staff_id": new_staff.id
+        "message": f"Faculty member {data.name} onboarded.",
+        "id": new_staff.id
     }
 
-@router.get("/staff-list", response_model=schemas.StaffListResponse)
+@router.get("/teacher-list", response_model=schemas.StaffListResponse)
 async def get_teacher_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
@@ -158,18 +158,13 @@ async def get_teacher_list(
     if not current_user.institution_id:
         raise HTTPException(status_code=401, detail="Institution not identified")
 
-    # Change: Fetch ALL staff for this institution first to see if data exists
-    # If you strictly want teachers, keep the ilike, but check your DB content!
-    base_query = db.query(models.Staff).filter(
-        models.Staff.institution_id == current_user.institution_id
-    )
+    # Since models are split, we query the Teacher table directly
+    # No need for .ilike("%teacher%") anymore as this table ONLY has teachers
+    teachers = db.query(models.Teacher).filter(
+        models.Teacher.institution_id == current_user.institution_id
+    ).all()
 
-    # Debugging tip: Print the count to your terminal to see if any data is being found
-    all_staff_count = base_query.count()
-    print(f"DEBUG: Found {all_staff_count} staff members for institution {current_user.institution_id}")
-
-    # If you want to filter by "Teacher" specifically:
-    teachers = base_query.filter(models.Staff.designation.ilike("%teacher%")).all()
+    print(f"DEBUG: Found {len(teachers)} teachers for institution {current_user.institution_id}")
 
     return {
         "institution_id": current_user.institution_id,

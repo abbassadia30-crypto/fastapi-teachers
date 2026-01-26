@@ -27,7 +27,6 @@
             color: var(--text);
         }
 
-        /* ⬅️ Top-Left Back Button */
         .back-nav {
             position: absolute;
             top: 20px;
@@ -80,7 +79,7 @@
 
         input:focus { border-color: var(--primary); background: white; }
 
-        /* 🔴 / 🟢 Status Boxes */
+        /* 🟢 / 🔴 Custom Sign Box */
         #statusBox {
             padding: 15px;
             border-radius: 12px;
@@ -89,17 +88,14 @@
             display: none;
             text-align: center;
         }
-        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); display: block !important; }
-        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); display: block !important; }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1.5px solid var(--success); display: block !important; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1.5px solid var(--danger); display: block !important; }
 
-        /* Dynamic Field Styling */
         .dynamic-field-wrapper {
             display: flex;
             gap: 10px;
             margin-bottom: 12px;
-            animation: fadeIn 0.3s ease;
         }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         .btn-add-field {
             background: #f1f3f4;
@@ -111,9 +107,7 @@
             font-weight: 600;
             cursor: pointer;
             margin-bottom: 20px;
-            transition: 0.2s;
         }
-        .btn-add-field:hover { background: #e2e8f0; border-color: var(--primary); }
 
         .btn-remove {
             background: #fff1f1;
@@ -135,9 +129,7 @@
             font-size: 16px;
             font-weight: 700;
             cursor: pointer;
-            transition: 0.3s;
         }
-        .btn-submit:disabled { background: #ccc; }
     </style>
 </head>
 <body>
@@ -145,33 +137,37 @@
 <a href="dashboard.html" class="back-nav">←</a>
 
 <div class="container">
-    <h2>Teacher Hiring</h2>
-    <p>Onboard new faculty to the <strong>institution</strong>.</p>
+    <h2>Teacher Onboarding</h2>
+    <p>Register a new teacher for this <strong>institution</strong>.</p>
 
     <div id="statusBox"></div>
 
     <form id="hiringForm">
         <div class="form-group">
             <label>Full Name</label>
-            <input type="text" id="tName" placeholder="Enter name" required>
+            <input type="text" id="tName" placeholder="Enter full name" required>
         </div>
 
         <div class="form-group">
-            <label>Assigned Department</label>
-            <input type="text" id="tSection" placeholder="e.g. Mathematics Dept" required>
+            <label>Phone Number</label>
+            <input type="text" id="tPhone" placeholder="e.g. 03001234567" required>
+        </div>
+
+        <div class="form-group">
+            <label>Designation / Subject</label>
+            <input type="text" id="tDesignation" placeholder="e.g. Mathematics Teacher" required>
         </div>
 
         <div class="form-group">
             <label>Monthly Salary</label>
-            <input type="number" id="tSalary" placeholder="Amount" required>
+            <input type="number" id="tSalary" placeholder="Enter amount" required>
         </div>
 
-        <div id="dynamicContainer">
-        </div>
+        <div id="dynamicContainer"></div>
 
         <button type="button" class="btn-add-field" onclick="addField()">+ Add Flexible Field</button>
 
-        <button type="submit" class="btn-submit" id="submitBtn">Save Teacher Profile</button>
+        <button type="submit" class="btn-submit" id="submitBtn">Confirm Hiring</button>
     </form>
 </div>
 
@@ -184,7 +180,7 @@
         const div = document.createElement('div');
         div.className = 'dynamic-field-wrapper';
         div.innerHTML = `
-            <input type="text" placeholder="Field Name (e.g. Experience)" class="field-key" style="flex: 1;">
+            <input type="text" placeholder="Field (e.g. Qualification)" class="field-key" style="flex: 1;">
             <input type="text" placeholder="Value" class="field-value" style="flex: 1.5;">
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
         `;
@@ -195,7 +191,6 @@
         const box = document.getElementById('statusBox');
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
-        box.style.display = "block"; // Ensure it shows
         if(isSuccess) {
             document.getElementById('hiringForm').reset();
             container.innerHTML = "";
@@ -208,7 +203,6 @@
         const btn = document.getElementById('submitBtn');
         btn.disabled = true;
 
-        // Collect flexible fields
         const extraData = {};
         document.querySelectorAll('.dynamic-field-wrapper').forEach(wrapper => {
             const key = wrapper.querySelector('.field-key').value.trim();
@@ -216,14 +210,14 @@
             if (key) extraData[key] = val;
         });
 
-        // 🛡️ FIXED PAYLOAD: Keys now match StaffCreate / StaffBase schemas
+        // 🛡️ Data mapping strictly follows StaffBase schema
         const payload = {
             name: document.getElementById('tName').value,
-            designation: document.getElementById('tSection').value, // Matches schema
-            phone: extraData.Phone || "Not Provided",              // Required by schema
-            salary: parseFloat(document.getElementById('tSalary').value), // Matches schema
-            joining_date: new Date().toISOString().split('T')[0],   // Required by schema (YYYY-MM-DD)
-            extra_details: extraData                                // Matches schema
+            designation: document.getElementById('tDesignation').value,
+            phone: document.getElementById('tPhone').value,
+            salary: parseFloat(document.getElementById('tSalary').value),
+            joining_date: new Date().toISOString().split('T')[0],
+            extra_details: extraData
         };
 
         try {
@@ -239,9 +233,8 @@
             if (res.ok) {
                 showStatus("Teacher record secured successfully!", true);
             } else {
-                const errorData = await res.json();
-                console.error("Validation Error:", errorData);
-                showStatus("Error: Data mismatch or missing fields.", false);
+                const err = await res.json();
+                showStatus(err.detail || "Validation Error: Check your inputs", false);
             }
         } catch (err) {
             showStatus("Server Connection Failed", false);
@@ -250,6 +243,5 @@
         }
     };
 </script>
-
 </body>
 </html>

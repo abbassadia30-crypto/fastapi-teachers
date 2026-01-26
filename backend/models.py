@@ -86,19 +86,19 @@ class Student(Base):
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution = relationship("Institution", back_populates="students")
 
-class Staff(Base):
-    __tablename__ = "staff_records"
+class Teacher(Base):
+    __tablename__ = "teacher_records"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    designation = Column(String) 
+    subject_expertise = Column(String) # Specific to teachers
     phone = Column(String)
     salary = Column(Float)
     joining_date = Column(String)
     is_active = Column(Boolean, default=True)
-    extra_details = Column(JSON, nullable=True)
-    
+    extra_details = Column(JSON, nullable=True) # For those flexible fields
+
     institution_id = Column(Integer, ForeignKey("institutions.id"), index=True)
-    institution = relationship("Institution", back_populates="staff_members")
+    institution = relationship("Institution", back_populates="teachers")
 
 class FeeRecord(Base):
     __tablename__ = "fee_records"
