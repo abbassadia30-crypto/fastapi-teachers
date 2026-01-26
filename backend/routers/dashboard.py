@@ -122,7 +122,7 @@ async def get_unique_sections(
 
 @router.post("/hire-staff")
 async def hire_staff(
-        data: schemas.StaffHiringPayload,
+        data: schemas.StaffCreate,
         db: Session = Depends(get_db),
         current_user: models.User = Depends(get_current_user)
 ):
@@ -148,4 +148,30 @@ async def hire_staff(
         "status": "success",
         "message": f"Staff member {data.name} hired successfully",
         "staff_id": new_staff.id
+    }
+
+@router.get("/staff-list", response_model=schemas.StaffListResponse)
+async def get_teacher_list(
+        db: Session = Depends(database.get_db),
+        current_user: models.User = Depends(database.get_current_user)
+):
+    # 1. Verify the user belongs to an institution
+    if not current_user.institution_id:
+        raise HTTPException(status_code=401, detail="Institution not identified")
+
+    # 2. Query only staff whose designation contains "Teacher"
+    # We use .ilike() for case-insensitive matching (e.g., 'teacher', 'Teacher', 'MATH TEACHER')
+    teacher_query = db.query(models.Staff).filter(
+        models.Staff.institution_id == current_user.institution_id,
+        models.Staff.designation.ilike("%teacher%")
+    )
+
+    teachers = teacher_query.all()
+    total_count = teacher_query.count()
+
+    # 3. Return data matching your StaffListResponse schema
+    return {
+        "institution_id": current_user.institution_id,
+        "total_employees": total_count,
+        "rows": teachers
     }

@@ -133,7 +133,7 @@
             <span>Teacher Hiring</span>
             <div class="count-badge" id="teacher-count">Loading...</div>
         </div>
-        <div class="menu-card" onclick="location.href='teacher-records.html'">
+        <div class="menu-card" onclick="location.href='teachers.html'">
             <div class="icon">👔</div>
             <span>Teacher Records</span>
         </div>
@@ -158,12 +158,6 @@
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
         const token = localStorage.getItem('institutionToken');
-
-        async function checkExistingInstitute() {
-            try{
-                const response = await fetch(``)
-            }
-        }
 
         // Welcome logic
         document.getElementById('admin-welcome').innerText = "Welcome, " + (localStorage.getItem('userName') || "Admin");

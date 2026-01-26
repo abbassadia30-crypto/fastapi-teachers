@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Directory | Institution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --bg: #f4f7f6;
+            --text: #2c3e50;
+            --accent: #3498db;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --dark: #1e293b;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 50px; }
+
+        /* 🔔 Notification */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: 0.4s; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        .sticky-header {
+            background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .search-box { background: #f1f3f4; border-radius: 10px; padding: 10px 15px; margin: 15px 20px; display: flex; align-items: center; }
+        .search-box input { border: none; background: transparent; width: 100%; outline: none; font-family: inherit; }
+
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 0 20px; }
+
+        /* Teacher Card */
+        .card {
+            background: white; border-radius: 20px; padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.3s; border-left: 6px solid var(--primary);
+            position: relative; overflow: hidden; height: 100px;
+        }
+
+        .card.expanded { height: auto; border-left-color: var(--accent); }
+
+        .info-row { display: flex; justify-content: space-between; align-items: flex-start; }
+        .name { font-weight: 800; font-size: 17px; color: var(--dark); display: block; }
+        .desig { font-size: 12px; color: var(--primary); font-weight: 600; text-transform: uppercase; }
+
+        .label-style { font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; margin-top: 15px; display: block; }
+        .value-box { font-size: 14px; background: #f8fafc; padding: 10px; border-radius: 8px; margin-top: 5px; border: 1px solid #edf2f7; }
+
+        .contact-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--success); color: white; padding: 8px 15px;
+            border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600; margin-top: 15px;
+        }
+
+        .loader { text-align: center; padding: 50px; color: #888; }
+        .back-btn { border: none; background: none; font-size: 22px; cursor: pointer; padding: 0; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div class="sticky-header">
+    <button onclick="location.href='dashboard.html'" class="back-btn">←</button>
+    <h2 style="margin:0; font-size:18px;">Faculty Members</h2>
+    <div style="width:22px;"></div> </div>
+
+<div class="search-box">
+    <input type="text" id="search" placeholder="Search by name, subject or phone..." oninput="renderTeachers()">
+</div>
+
+<div id="loader" class="loader">Loading Institution Staff...</div>
+<div class="container" id="staffList"></div>
+
+<script>
+    const API = "https://fastapi-teachers.onrender.com";
+    const token = localStorage.getItem('institutionToken');
+    let allStaff = [];
+
+    function notify(msg, success = true) {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = success ? 'var(--success)' : 'var(--danger)';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    async function loadStaff() {
+        try {
+            // Updated route to match your new staff model/route logic
+            const res = await fetch(`${API}/dashboard/staff-list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+
+            // Logic: Filter to show ONLY teachers based on designation
+            // We search for "teacher" within the designation string
+            allStaff = data.rows.filter(member =>
+                member.designation.toLowerCase().includes('teacher')
+            );
+
+            renderTeachers();
+        } catch (e) {
+            notify("Error connecting to server", false);
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+        }
+    }
+
+    function renderTeachers() {
+        const q = document.getElementById('search').value.toLowerCase();
+        const list = document.getElementById('staffList');
+
+        const filtered = allStaff.filter(t => {
+            const basic = t.name.toLowerCase().includes(q) || t.phone.includes(q);
+            // Also search within flexible extra_details
+            const extra = t.extra_details ? Object.values(t.extra_details).some(v => String(v).toLowerCase().includes(q)) : false;
+            return basic || extra;
+        });
+
+        if (filtered.length === 0) {
+            list.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999;">No teachers found.</div>`;
+            return;
+        }
+
+        list.innerHTML = filtered.map(t => {
+            // Generate rows for the Flexible Fields we added during hiring
+            let flexRows = "";
+            if (t.extra_details) {
+                Object.entries(t.extra_details).forEach(([key, val]) => {
+                    flexRows += `
+                        <span class="label-style">${key}</span>
+                        <div class="value-box">${val}</div>
+                    `;
+                });
+            }
+
+            return `
+                <div class="card" onclick="this.classList.toggle('expanded')">
+                    <div class="info-row">
+                        <div>
+                            <span class="desig">${t.designation}</span>
+                            <span class="name">${t.name}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <span style="font-size:10px; color:#999;">JOINED</span>
+                            <div style="font-size:11px; font-weight:700;">${t.joining_date}</div>
+                        </div>
+                    </div>
+
+                    <div class="details">
+                        <span class="label-style">Contact Number</span>
+                        <div class="value-box">${t.phone}</div>
+
+                        <span class="label-style">Monthly Salary</span>
+                        <div class="value-box">$${t.salary.toLocaleString()}</div>
+
+                        ${flexRows}
+
+                        <a href="tel:${t.phone}" class="contact-btn" onclick="event.stopPropagation()">
+                            📞 Call Teacher
+                        </a>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    window.onload = loadStaff;
+</script>
+</body>
+</html>
