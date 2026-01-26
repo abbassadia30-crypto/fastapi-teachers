@@ -153,7 +153,7 @@ async def hire_staff(
 @router.get("/staff-list", response_model=schemas.StaffListResponse)
 async def get_teacher_list(
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(database.get_current_user)
+        current_user: models.User = Depends(get_current_user)
 ):
     # 1. Verify the user belongs to an institution
     if not current_user.institution_id:
