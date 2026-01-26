@@ -35,43 +35,93 @@
     </div>
 
     <script>
-        const API = "http://10.0.2.2:8000";
-        let allStaff = [];
+        const API = "https://fastapi-teachers.onrender.com";
+        const token = localStorage.getItem('institutionToken');
+        let allFaculty = [];
 
-        async function loadStaff() {
+        // 🟢 FETCH ALL STAFF
+        async function fetchFaculty() {
             try {
-                const res = await fetch(`${API}/dashboard/Staff_list`);
-                allStaff = await res.json();
-                render(allStaff);
-            } catch (err) { console.error(err); }
+                const res = await fetch(`${API}/staff/Staff_list`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await res.json();
+                // Backend returns a direct list []
+                allFaculty = Array.isArray(result) ? result : [];
+                renderGrid(allFaculty);
+            } catch (err) { showSign("Connection to institution server failed", false); }
         }
 
-        function render(data) {
-            const list = document.getElementById('staffList');
-            list.innerHTML = data.map(s => `
-                <div class="card">
-                    <h3>${s.name}</h3>
-                    <p><strong>Role:</strong> ${s.position}</p>
-                    <p><strong>Contact:</strong> ${s.contact}</p>
-                    <div class="actions">
-                        <button type="button" class="btn-del" onclick="deleteStaff(${s.id})">Delete</button>
-                    </div>
-                </div>
-            `).join('');
+        // 🔵 RENDER GRID (Using model-correct keys)
+        function renderGrid(data) {
+            const grid = document.getElementById('facultyGrid');
+            grid.innerHTML = data.length === 0 ? "<p style='grid-column:1/-1; text-align:center;'>No staff records found.</p>" :
+                data.map(t => `
+        <div class="teacher-card">
+            <div class="actions">
+                <button class="btn-action" onclick="zoomTeacher(${t.id})">🔍</button>
+                <button class="btn-action" onclick="openEdit(${t.id})">✏️</button>
+                <button class="btn-action" style="color:red;" onclick="deleteTeacher(${t.id})">🗑️</button>
+            </div>
+            <span class="subject">${t.position}</span>
+            <span class="name">${t.name}</span>
+            <div class="detail-row" style="margin-top:15px;"><span class="label">Phone</span><span class="value">${t.contact || 'N/A'}</span></div>
+            <div class="detail-row"><span class="label">CNIC</span><span class="value">${t.cnic || 'N/A'}</span></div>
+        </div>
+    `).join('');
         }
 
-        function filterStaff() {
-            const q = document.getElementById('search').value.toLowerCase();
-            render(allStaff.filter(s => s.name.toLowerCase().includes(q)));
+        // 🟡 SAVE EDIT
+        async function saveEdit() {
+            const id = document.getElementById('editId').value;
+            const btn = document.getElementById('saveEditBtn');
+            btn.disabled = true;
+
+            const payload = {
+                name: document.getElementById('editName').value,
+                position: document.getElementById('editDesignation').value, // Maps to 'position'
+                contact: document.getElementById('editPhone').value,       // Maps to 'contact'
+                extra_details: {}
+            };
+
+            document.querySelectorAll('.extra-field').forEach(input => {
+                payload.extra_details[input.getAttribute('data-key')] = input.value;
+            });
+
+            try {
+                // Matches the updated /Update_staff/{id} route
+                const res = await fetch(`${API}/staff/Update_staff/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                if(res.ok) {
+                    closeModals();
+                    showSign("Staff record updated successfully!", true);
+                    fetchFaculty();
+                } else {
+                    showSign("Failed to update record", false);
+                }
+            } catch (e) { showSign("Server Error", false); }
+            finally { btn.disabled = false; }
         }
 
-        async function deleteStaff(id) {
-            if(confirm("Delete this staff member?")) {
-                await fetch(`${API}/staff/${id}`, { method: "DELETE" });
-                loadStaff();
-            }
+        // 🔴 EXECUTE DELETE
+        async function executeDelete() {
+            const id = document.getElementById('deleteTargetId').value;
+            try {
+                // Matches the updated /delete_staff/{id} route
+                const res = await fetch(`${API}/staff/delete_staff/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(res.ok) {
+                    closeModals();
+                    showSign("Staff removed from institution", true);
+                    fetchFaculty();
+                }
+            } catch (e) { showSign("Action failed", false); }
         }
-        window.onload = loadStaff;
     </script>
 </body>
 </html>

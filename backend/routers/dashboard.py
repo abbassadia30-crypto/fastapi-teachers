@@ -232,13 +232,13 @@ async def update_teacher(
     db.commit()
     return {"status": "success", "message": "Record updated"}
 
+# 🟢 CREATE
 @router.post("/Hire_staff", response_model=schemas.StaffResponse)
 def hire_staff(
         staff_in: schemas.StaffCreate,
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    # Developer Note: We spread the staff_in data and manually add institution_id
     new_staff = models.Staff(
         **staff_in.model_dump(),
         institution_id=current_user.institution_id
@@ -248,7 +248,7 @@ def hire_staff(
     db.refresh(new_staff)
     return new_staff
 
-# READ: Get All Staff
+# 🔵 READ
 @router.get("/Staff_list", response_model=List[schemas.StaffResponse])
 def get_staff_list(
         db: Session = Depends(database.get_db),
@@ -258,8 +258,8 @@ def get_staff_list(
         models.Staff.institution_id == current_user.institution_id
     ).all()
 
-# UPDATE: Edit Staff Profile
-@router.patch("/Update_staff{staff_id}")
+# 🟡 UPDATE (Added / for path safety)
+@router.patch("/Update_staff/{staff_id}")
 def update_staff(
         staff_id: int,
         staff_up: schemas.StaffUpdate,
@@ -271,18 +271,15 @@ def update_staff(
         models.Staff.institution_id == current_user.institution_id
     )
     target = staff_query.first()
-
     if not target:
-        raise HTTPException(status_code=404, detail="Staff record not found")
+        raise HTTPException(status_code=404, detail="Staff not found")
 
-    # exclude_unset=True prevents overwriting fields with None if they weren't sent
-    update_data = staff_up.model_dump(exclude_unset=True)
-    staff_query.update(update_data)
+    staff_query.update(staff_up.model_dump(exclude_unset=True))
     db.commit()
-    return {"status": "success", "message": "Staff record updated"}
+    return {"status": "success", "message": "Record updated"}
 
-# DELETE: Remove Staff
-@router.delete("/delete_staff{staff_id}")
+# 🔴 DELETE (Added / for path safety)
+@router.delete("/delete_staff/{staff_id}")
 def remove_staff(
         staff_id: int,
         db: Session = Depends(database.get_db),
@@ -292,6 +289,11 @@ def remove_staff(
         models.Staff.id == staff_id,
         models.Staff.institution_id == current_user.institution_id
     ).first()
+    if not staff:
+        raise HTTPException(status_code=404, detail="Staff not found")
+    db.delete(staff)
+    db.commit()
+    return {"status": "success"}
 
     if not staff:
         raise HTTPException(status_code=404, detail="Staff not found")
