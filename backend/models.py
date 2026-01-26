@@ -93,7 +93,7 @@ class Staff(Base):
     designation = Column(String) 
     phone = Column(String)
     salary = Column(Float)
-    joining_date = Column(String) # Format: YYYY-MM-DD
+    joining_date = Column(String)
     is_active = Column(Boolean, default=True)
     extra_details = Column(JSON, nullable=True)
     

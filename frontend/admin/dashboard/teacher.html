@@ -184,7 +184,7 @@
         const div = document.createElement('div');
         div.className = 'dynamic-field-wrapper';
         div.innerHTML = `
-            <input type="text" placeholder="Field Name (e.g. Subject)" class="field-key" style="flex: 1;">
+            <input type="text" placeholder="Field Name (e.g. Experience)" class="field-key" style="flex: 1;">
             <input type="text" placeholder="Value" class="field-value" style="flex: 1.5;">
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
         `;
@@ -195,10 +195,11 @@
         const box = document.getElementById('statusBox');
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
+        box.style.display = "block"; // Ensure it shows
         if(isSuccess) {
             document.getElementById('hiringForm').reset();
             container.innerHTML = "";
-            setTimeout(() => box.style.display = 'none', 5000);
+            setTimeout(() => { box.style.display = 'none'; }, 5000);
         }
     }
 
@@ -215,16 +216,18 @@
             if (key) extraData[key] = val;
         });
 
+        // 🛡️ FIXED PAYLOAD: Keys now match StaffCreate / StaffBase schemas
         const payload = {
             name: document.getElementById('tName').value,
-            section: document.getElementById('tSection').value,
-            father_name: "Staff Member",
-            fee: parseFloat(document.getElementById('tSalary').value),
-            extra_fields: extraData
+            designation: document.getElementById('tSection').value, // Matches schema
+            phone: extraData.Phone || "Not Provided",              // Required by schema
+            salary: parseFloat(document.getElementById('tSalary').value), // Matches schema
+            joining_date: new Date().toISOString().split('T')[0],   // Required by schema (YYYY-MM-DD)
+            extra_details: extraData                                // Matches schema
         };
 
         try {
-            const res = await fetch(`${API_URL}/dashboard/Hiring`, {
+            const res = await fetch(`${API_URL}/dashboard/hire-staff`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -236,7 +239,9 @@
             if (res.ok) {
                 showStatus("Teacher record secured successfully!", true);
             } else {
-                showStatus("Error: Could not save to database.", false);
+                const errorData = await res.json();
+                console.error("Validation Error:", errorData);
+                showStatus("Error: Data mismatch or missing fields.", false);
             }
         } catch (err) {
             showStatus("Server Connection Failed", false);

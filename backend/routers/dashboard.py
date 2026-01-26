@@ -155,23 +155,24 @@ async def get_teacher_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    # 1. Verify the user belongs to an institution
     if not current_user.institution_id:
         raise HTTPException(status_code=401, detail="Institution not identified")
 
-    # 2. Query only staff whose designation contains "Teacher"
-    # We use .ilike() for case-insensitive matching (e.g., 'teacher', 'Teacher', 'MATH TEACHER')
-    teacher_query = db.query(models.Staff).filter(
-        models.Staff.institution_id == current_user.institution_id,
-        models.Staff.designation.ilike("%teacher%")
+    # Change: Fetch ALL staff for this institution first to see if data exists
+    # If you strictly want teachers, keep the ilike, but check your DB content!
+    base_query = db.query(models.Staff).filter(
+        models.Staff.institution_id == current_user.institution_id
     )
 
-    teachers = teacher_query.all()
-    total_count = teacher_query.count()
+    # Debugging tip: Print the count to your terminal to see if any data is being found
+    all_staff_count = base_query.count()
+    print(f"DEBUG: Found {all_staff_count} staff members for institution {current_user.institution_id}")
 
-    # 3. Return data matching your StaffListResponse schema
+    # If you want to filter by "Teacher" specifically:
+    teachers = base_query.filter(models.Staff.designation.ilike("%teacher%")).all()
+
     return {
         "institution_id": current_user.institution_id,
-        "total_employees": total_count,
+        "total_employees": len(teachers),
         "rows": teachers
     }
