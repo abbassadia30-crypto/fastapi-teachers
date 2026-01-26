@@ -6,42 +6,52 @@
     <title>Faculty Directory | Institution</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #0288d1;
-            --bg: #f4f7f6;
-            --text: #2c3e50;
-            --success: #2e7d32;
-            --danger: #c62828;
-        }
+        :root { --primary: #0288d1; --bg: #f4f7f6; --text: #2c3e50; --success: #2e7d32; --danger: #c62828; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
 
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; }
-
-        /* ⬅️ Top-Left Back Button */
+        /* ⬅️ Back Button */
         .back-nav { position: absolute; top: 20px; left: 20px; text-decoration: none; font-size: 24px; color: var(--text); font-weight: 800; z-index: 100; }
 
-        /* Red/Green Sign Box for errors/success */
-        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 1000; }
-        .sign-green { display: block; background: #e8f5e9; color: var(--success); border: 2px solid var(--success); }
-        .sign-red { display: block; background: #ffebee; color: var(--danger); border: 2px solid var(--danger); }
+        /* Sign Box */
+        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 2000; }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 2px solid var(--success); display: block !important; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 2px solid var(--danger); display: block !important; }
 
-        .header { background: white; padding: 60px 20px 20px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-        .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .header { background: white; padding: 60px 20px 30px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        /* Search */
+        .search-container { max-width: 600px; margin: 20px auto 0; position: relative; }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid #edf2f7; outline: none; font-size: 16px; transition: 0.3s; }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 5px 15px rgba(2,136,209,0.1); }
+
+        .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
 
         .teacher-card {
             background: white; border-radius: 20px; padding: 25px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary);
-            transition: 0.3s; cursor: pointer;
+            position: relative; transition: 0.3s;
         }
         .teacher-card:hover { transform: translateY(-5px); }
 
-        .name { font-size: 18px; font-weight: 800; color: var(--text); display: block; }
-        .subject { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 15px; display: block; }
+        .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+        .btn-action { border: none; background: #f8fafc; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .btn-action:hover { background: #edf2f7; }
+
+        .name { font-size: 18px; font-weight: 800; display: block; }
+        .subject { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block; }
 
         .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
         .label { font-weight: 600; color: #95a5a6; }
-        .value { font-weight: 700; color: var(--text); }
+        .value { font-weight: 700; }
 
-        .flexible-area { margin-top: 15px; padding-top: 15px; border-top: 1px dashed #eee; }
+        /* Modal Base */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 1500; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; position: relative; }
+
+        .modal-input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 10px; font-family: inherit; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-confirm { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; background: var(--primary); color: white; }
+        .btn-cancel { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; }
     </style>
 </head>
 <body>
@@ -51,21 +61,46 @@
 
 <div class="header">
     <h2 style="margin:0; color:var(--primary)">Faculty Management</h2>
-    <p style="color:#7f8c8d; font-size:14px;">Specialized Teacher Records for the <strong>institution</strong></p>
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Phone, or CNIC..." onkeyup="filterFaculty()">
+    </div>
 </div>
 
-<div class="container" id="facultyGrid">
+<div class="container" id="facultyGrid"></div>
+
+<div id="zoomModal" class="modal">
+    <div class="modal-content">
+        <h3 id="zoomName" style="margin-top:0;">Teacher Details</h3>
+        <div id="zoomDetails"></div>
+        <button class="btn-cancel" onclick="closeModals()" style="width:100%; margin-top:20px; background:#f1f3f4;">Close</button>
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Edit Faculty Profile</h3>
+        <input type="hidden" id="editId">
+        <label style="font-size:12px; font-weight:800;">Salary</label>
+        <input type="number" id="editSalary" class="modal-input">
+        <label style="font-size:12px; font-weight:800;">Phone</label>
+        <input type="text" id="editPhone" class="modal-input">
+        <div class="modal-btns">
+            <button class="btn-cancel" onclick="closeModals()">Cancel</button>
+            <button class="btn-confirm" onclick="saveEdit()">Save Changes</button>
+        </div>
+    </div>
 </div>
 
 <script>
     const API = "https://fastapi-teachers.onrender.com";
     const token = localStorage.getItem('institutionToken');
+    let allFaculty = [];
 
     function showSign(msg, isSuccess) {
         const box = document.getElementById('signBox');
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
-        setTimeout(() => box.style.display = 'none', 4000);
+        setTimeout(() => box.style.display = 'none', 3000);
     }
 
     async function fetchFaculty() {
@@ -73,52 +108,119 @@
             const res = await fetch(`${API}/dashboard/teacher-list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const result = await res.json(); // This is the wrapper object
-
-            const grid = document.getElementById('facultyGrid');
-
-            // Access 'rows' from the result
-            const teachers = result.rows || [];
-
-            if (teachers.length === 0) {
-                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No teachers found in the faculty database.</p>";
-                return;
-            }
-
-            grid.innerHTML = teachers.map(t => {
-                let extras = "";
-                if (t.extra_details) {
-                    extras = Object.entries(t.extra_details).map(([k, v]) => `
-                    <div class="detail-row">
-                        <span class="label">${k}</span>
-                        <span class="value">${v}</span>
-                    </div>
-                `).join('');
-                }
-
-                return `
-                <div class="teacher-card">
-                    <span class="subject">${t.designation || 'Faculty Member'}</span>
-                    <span class="name">${t.name}</span>
-
-                    <div class="detail-row" style="margin-top:15px;">
-                        <span class="label">Phone</span>
-                        <span class="value">${t.phone}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Salary</span>
-                        <span class="value">${t.salary.toLocaleString()}</span>
-                    </div>
-
-                    <div class="flexible-area">
-                        ${extras}
-                    </div>
-                </div>
-            `;
-            }).join('');
+            const result = await res.json();
+            allFaculty = result.rows || [];
+            renderGrid(allFaculty);
         } catch (err) {
-            showSign("Could not sync with institution server", false);
+            showSign("Sync failed", false);
         }
+    }
+
+    function renderGrid(data) {
+        const grid = document.getElementById('facultyGrid');
+        if (data.length === 0) {
+            grid.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No records match your search.</p>";
+            return;
+        }
+
+        grid.innerHTML = data.map(t => `
+            <div class="teacher-card">
+                <div class="actions">
+                    <button class="btn-action" onclick="zoomTeacher(${t.id})">🔍</button>
+                    <button class="btn-action" onclick="openEdit(${t.id})">✏️</button>
+                    <button class="btn-action" style="color:red;" onclick="deleteTeacher(${t.id})">🗑️</button>
+                </div>
+                <span class="subject">${t.designation || 'General Faculty'}</span>
+                <span class="name">${t.name}</span>
+                <div class="detail-row" style="margin-top:15px;">
+                    <span class="label">Phone</span>
+                    <span class="value">${t.phone}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="label">Salary</span>
+                    <span class="value">PKR ${t.salary.toLocaleString()}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterFaculty() {
+        const query = document.getElementById('searchInput').value.toLowerCase();
+        const filtered = allFaculty.filter(t =>
+            t.name.toLowerCase().includes(query) ||
+            t.phone.includes(query) ||
+            (t.extra_details && JSON.stringify(t.extra_details).toLowerCase().includes(query))
+        );
+        renderGrid(filtered);
+    }
+
+    // --- ZOOM ---
+    function zoomTeacher(id) {
+        const t = allFaculty.find(x => x.id === id);
+        document.getElementById('zoomName').innerText = t.name;
+        let html = `
+            <div class="detail-row"><span class="label">Designation</span><span class="value">${t.designation}</span></div>
+            <div class="detail-row"><span class="label">Phone</span><span class="value">${t.phone}</span></div>
+            <div class="detail-row"><span class="label">Monthly Salary</span><span class="value">${t.salary}</span></div>
+            <div class="detail-row"><span class="label">Joined</span><span class="value">${t.joining_date}</span></div>
+            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
+            <p style="font-size:12px; font-weight:800; color:#95a5a6; margin-bottom:5px;">ADDITIONAL INFO</p>
+        `;
+        if(t.extra_details) {
+            Object.entries(t.extra_details).forEach(([k,v]) => {
+                html += `<div class="detail-row"><span class="label">${k}</span><span class="value">${v}</span></div>`;
+            });
+        }
+        document.getElementById('zoomDetails').innerHTML = html;
+        document.getElementById('zoomModal').style.display = 'flex';
+    }
+
+    // --- EDIT ---
+    function openEdit(id) {
+        const t = allFaculty.find(x => x.id === id);
+        document.getElementById('editId').value = t.id;
+        document.getElementById('editSalary').value = t.salary;
+        document.getElementById('editPhone').value = t.phone;
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    async function saveEdit() {
+        const id = document.getElementById('editId').value;
+        const payload = {
+            salary: parseFloat(document.getElementById('editSalary').value),
+            phone: document.getElementById('editPhone').value
+        };
+
+        const res = await fetch(`${API}/dashboard/teacher/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+
+        if(res.ok) {
+            closeModals();
+            showSign("Profile Updated!", true);
+            fetchFaculty();
+        }
+    }
+
+    // --- DELETE ---
+    async function deleteTeacher(id) {
+        if(!confirm("Are you sure? This teacher will be removed from the institution records.")) return;
+
+        const res = await fetch(`${API}/dashboard/teacher/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if(res.ok) {
+            showSign("Teacher Record Deleted", true);
+            fetchFaculty();
+        }
+    }
+
+    function closeModals() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
     }
 
     window.onload = fetchFaculty;

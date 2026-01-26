@@ -184,3 +184,48 @@ async def get_teacher_list(
         "total_staff": len(rows), # Schema expects 'total_staff', not 'total_employees'
         "rows": rows
     }
+
+# 1. DELETE Teacher
+@router.delete("/teacher/{teacher_id}")
+async def delete_teacher(
+        teacher_id: int,
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user)
+):
+    teacher = db.query(models.Teacher).filter(
+        models.Teacher.id == teacher_id,
+        models.Teacher.institution_id == current_user.institution_id
+    ).first()
+
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher record not found")
+
+    db.delete(teacher)
+    db.commit()
+    return {"status": "success", "message": "Teacher removed"}
+
+# 2. UPDATE Teacher
+@router.patch("/teacher/{teacher_id}")
+async def update_teacher(
+        teacher_id: int,
+        data: schemas.EmployeeUpdate,
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user)
+):
+    teacher = db.query(models.Teacher).filter(
+        models.Teacher.id == teacher_id,
+        models.Teacher.institution_id == current_user.institution_id
+    ).first()
+
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Teacher record not found")
+
+    for key, value in data.model_dump(exclude_unset=True).items():
+        # Map designation back to subject_expertise if updated
+        if key == "designation":
+            setattr(teacher, "subject_expertise", value)
+        else:
+            setattr(teacher, key, value)
+
+    db.commit()
+    return {"status": "success", "message": "Record updated"}
