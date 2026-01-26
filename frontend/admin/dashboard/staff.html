@@ -1,64 +1,156 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8">
-    <title>Hire Staff</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Hiring | Institution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: #e3f2fd; margin: 0; }
-        header { background: #0288d1; color: white; padding: 20px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .container { max-width: 450px; margin: 30px auto; padding: 15px; }
-        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-family: inherit; }
-        button { width: 100%; padding: 14px; margin: 10px 0; border-radius: 8px; border: none; font-family: 'Poppins', sans-serif; font-weight: 600; cursor: pointer; transition: 0.3s; }
-        .btn-primary { background: #29b6f6; color: white; }
-        .btn-primary:hover { background: #0288d1; }
-        .btn-back { background: #78909c; color: white; }
-        .btn-back:hover { background: #546e7a; }
+        :root {
+            --primary: #0288d1;
+            --bg: #f4f7f6;
+            --text: #2c3e50;
+            --success: #2e7d32;
+            --danger: #c62828;
+        }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+
+        .back-nav { position: absolute; top: 20px; left: 20px; text-decoration: none; color: var(--text); font-size: 24px; font-weight: 800; }
+
+        .container { width: 100%; max-width: 500px; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 60px; box-sizing: border-box; }
+
+        /* 🟢 / 🔴 Sign Box */
+        #statusBox { padding: 15px; border-radius: 12px; margin-bottom: 20px; font-weight: 600; display: none; text-align: center; }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1.5px solid var(--success); display: block !important; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1.5px solid var(--danger); display: block !important; }
+
+        .form-group { margin-bottom: 18px; }
+        label { font-size: 11px; font-weight: 800; text-transform: uppercase; color: #95a5a6; display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 14px; border: 1.5px solid #edf2f7; border-radius: 12px; outline: none; box-sizing: border-box; background: #f8fafc; font-family: inherit; }
+
+        .btn-submit { width: 100%; background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .btn-submit:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+        /* Dynamic Field Styles */
+        .dynamic-field-wrapper { display: flex; gap: 10px; margin-bottom: 12px; animation: slideIn 0.2s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-remove { background: #fff1f1; color: var(--danger); border: none; width: 45px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-add-info { width: 100%; background: none; border: 2px dashed #ddd; padding: 12px; border-radius: 12px; margin-bottom: 20px; cursor: pointer; color: #7f8c8d; font-weight: 600; transition: 0.2s; }
+        .btn-add-info:hover { border-color: var(--primary); color: var(--primary); background: #f1f9ff; }
     </style>
 </head>
 <body>
-    <header><h1>👷 Hire Staff</h1></header>
-    <div class="container">
-        <div class="card">
-            <input id="name" placeholder="Staff Name">
-            <input id="position" placeholder="Role/Position">
-            <input id="cnic" placeholder="CNIC Number">
-            <input id="contact" placeholder="Contact Number">
-            <input id="email" type="email" placeholder="Email Address">
-            
-            <button type="button" class="btn-primary" onclick="saveStaff()">Save Staff</button>
-            <button type="button" class="btn-back" onclick="history.back()">Back</button>
+
+<a href="dashboard.html" class="back-nav">←</a>
+
+<div class="container">
+    <h2 style="color:var(--primary); margin:0;">Staff Registration</h2>
+    <p style="color:#7f8c8d; font-size:14px; margin-bottom:25px;">Hire new support staff for the <strong>institution</strong>.</p>
+
+    <div id="statusBox"></div>
+
+    <form id="hiringForm">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="sName" placeholder="Enter full name" required>
         </div>
-    </div>
 
-    <script>
-        const API = "http://10.0.2.2:8000";
+        <div class="form-group">
+            <label>Role / Position</label>
+            <input type="text" id="sPosition" placeholder="e.g. Guard, Driver, Clerk" required>
+        </div>
 
-        async function saveStaff() {
-            const data = {
-                name: document.getElementById('name').value,
-                position: document.getElementById('position').value,
-                cnic: document.getElementById('cnic').value,
-                contact: document.getElementById('contact').value,
-                email: document.getElementById('email').value
-            };
+        <div class="form-group">
+            <label>CNIC Number</label>
+            <input type="text" id="sCNIC" placeholder="00000-0000000-0">
+        </div>
 
-            try {
-                const res = await fetch(`${API}/staff/`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-                if(res.ok) {
-                    alert("Staff Added Successfully ✅");
-                    location.reload();
-                }
-            } catch(err) {
-                alert("Error: " + err.message);
-            }
+        <div class="form-group">
+            <label>Contact Number</label>
+            <input type="text" id="sContact" placeholder="e.g. 03451234567">
+        </div>
+
+        <div id="dynamicContainer"></div>
+        <button type="button" class="btn-add-info" onclick="addField()">+ Add Flexible Information</button>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Confirm Hiring</button>
+    </form>
+</div>
+
+<script>
+    const API_URL = "https://fastapi-teachers.onrender.com";
+    const token = localStorage.getItem('institutionToken');
+
+    // ✅ Dynamic Field Logic: Matches Teacher Onboarding
+    function addField() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-field-wrapper';
+        div.innerHTML = `
+            <input type="text" placeholder="Label (e.g. Address)" class="field-key" style="flex:1;">
+            <input type="text" placeholder="Value" class="field-value" style="flex:1.5;">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
+        `;
+        document.getElementById('dynamicContainer').appendChild(div);
+    }
+
+    function showStatus(msg, isSuccess) {
+        const box = document.getElementById('statusBox');
+        box.innerText = msg;
+        box.className = isSuccess ? "sign-green" : "sign-red";
+        if(isSuccess) {
+            document.getElementById('hiringForm').reset();
+            document.getElementById('dynamicContainer').innerHTML = "";
         }
-    </script>
+    }
+
+    document.getElementById('hiringForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = "Processing...";
+        btn.disabled = true;
+
+        // Collect Dynamic Extra Fields
+        const extraData = {};
+        document.querySelectorAll('.dynamic-field-wrapper').forEach(wrapper => {
+            const k = wrapper.querySelector('.field-key').value.trim();
+            const v = wrapper.querySelector('.field-value').value.trim();
+            if(k) extraData[k] = v;
+        });
+
+        const payload = {
+            name: document.getElementById('sName').value,
+            position: document.getElementById('sPosition').value,
+            cnic: document.getElementById('sCNIC').value,
+            contact: document.getElementById('sContact').value,
+            extra_details: extraData
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/staff/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showStatus("Staff hired successfully!", true);
+                // Optional: Redirect after success
+                // setTimeout(() => { window.location.href = "staff-directory.html"; }, 1500);
+            } else {
+                const err = await res.json();
+                showStatus(err.detail || "Verification failed", false);
+            }
+        } catch (err) {
+            showStatus("Server Connection Failed", false);
+        } finally {
+            btn.innerText = "Confirm Hiring";
+            btn.disabled = false;
+        }
+    };
+</script>
 </body>
 </html>

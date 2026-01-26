@@ -6,52 +6,56 @@
     <title>Faculty Directory | Institution</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --bg: #f4f7f6; --text: #2c3e50; --success: #2e7d32; --danger: #c62828; }
+        :root {
+            --primary: #0288d1;
+            --bg: #f4f7f6;
+            --text: #2c3e50;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --muted: #95a5a6;
+        }
+
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
 
-        /* ⬅️ Back Button */
+        /* Navigation */
         .back-nav { position: absolute; top: 20px; left: 20px; text-decoration: none; font-size: 24px; color: var(--text); font-weight: 800; z-index: 100; }
 
-        /* Sign Box */
-        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 2000; }
+        /* 🟢 / 🔴 Sign Box */
+        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 2000; animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
         .sign-green { background: #e8f5e9; color: var(--success); border: 2px solid var(--success); display: block !important; }
         .sign-red { background: #ffebee; color: var(--danger); border: 2px solid var(--danger); display: block !important; }
 
+        /* Header & Search */
         .header { background: white; padding: 60px 20px 30px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-
-        /* Search */
         .search-container { max-width: 600px; margin: 20px auto 0; position: relative; }
-        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid #edf2f7; outline: none; font-size: 16px; transition: 0.3s; }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid #edf2f7; outline: none; font-size: 16px; transition: 0.3s; box-sizing: border-box; }
         .search-input:focus { border-color: var(--primary); box-shadow: 0 5px 15px rgba(2,136,209,0.1); }
 
-        .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+        /* Grid */
+        .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; max-width: 1400px; margin: auto; }
 
-        .teacher-card {
-            background: white; border-radius: 20px; padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary);
-            position: relative; transition: 0.3s;
-        }
+        .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; transition: 0.3s; }
         .teacher-card:hover { transform: translateY(-5px); }
 
         .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
-        .btn-action { border: none; background: #f8fafc; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 14px; }
-        .btn-action:hover { background: #edf2f7; }
+        .btn-action { border: none; background: #f8fafc; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s; }
 
-        .name { font-size: 18px; font-weight: 800; display: block; }
-        .subject { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block; }
-
+        .name { font-size: 18px; font-weight: 800; display: block; margin-top: 10px; }
+        .subject { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; }
         .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
-        .label { font-weight: 600; color: #95a5a6; }
-        .value { font-weight: 700; }
+        .label { font-weight: 600; color: var(--muted); }
 
-        /* Modal Base */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index: 1500; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 450px; position: relative; }
+        /* Modals */
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); z-index: 1500; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 450px; position: relative; max-height: 85vh; overflow-y: auto; }
 
-        .modal-input { width: 100%; padding: 12px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 10px; font-family: inherit; }
-        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-confirm { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; background: var(--primary); color: white; }
-        .btn-cancel { flex: 1; padding: 12px; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; }
+        .modal-input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #edf2f7; border-radius: 12px; font-family: inherit; box-sizing: border-box; background: #f8fafc; }
+        .modal-btns { display: flex; gap: 12px; position: sticky; bottom: 0; background: white; padding-top: 10px; }
+        .btn-modal { flex: 1; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: inherit; }
+        .btn-confirm { background: var(--primary); color: white; }
+        .btn-cancel { background: #f1f3f4; color: var(--text); }
+        .btn-delete { background: var(--danger); color: white; }
     </style>
 </head>
 <body>
@@ -61,32 +65,58 @@
 
 <div class="header">
     <h2 style="margin:0; color:var(--primary)">Faculty Management</h2>
+    <p style="color:var(--muted); font-size:14px;">Full record management for the <strong>institution</strong></p>
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search Name, Phone, or CNIC..." onkeyup="filterFaculty()">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search by Name, Phone, or CNIC..." onkeyup="filterFaculty()">
     </div>
 </div>
 
 <div class="container" id="facultyGrid"></div>
 
-<div id="zoomModal" class="modal">
+<div id="editModal" class="modal">
     <div class="modal-content">
-        <h3 id="zoomName" style="margin-top:0;">Teacher Details</h3>
-        <div id="zoomDetails"></div>
-        <button class="btn-cancel" onclick="closeModals()" style="width:100%; margin-top:20px; background:#f1f3f4;">Close</button>
+        <h3 style="margin-top:0; color: var(--primary);">Update Faculty Record</h3>
+        <input type="hidden" id="editId">
+
+        <label style="font-size:11px; font-weight:800; color:var(--muted);">FULL NAME</label>
+        <input type="text" id="editName" class="modal-input">
+
+        <label style="font-size:11px; font-weight:800; color:var(--muted);">DESIGNATION / SUBJECT</label>
+        <input type="text" id="editDesignation" class="modal-input">
+
+        <label style="font-size:11px; font-weight:800; color:var(--muted);">CONTACT NUMBER</label>
+        <input type="text" id="editPhone" class="modal-input">
+
+        <label style="font-size:11px; font-weight:800; color:var(--muted);">MONTHLY SALARY (PKR)</label>
+        <input type="number" id="editSalary" class="modal-input">
+
+        <div id="editExtraContainer">
+        </div>
+
+        <div class="modal-btns">
+            <button class="btn-modal btn-cancel" onclick="closeModals()">Cancel</button>
+            <button class="btn-modal btn-confirm" id="saveEditBtn" onclick="saveEdit()">Save Changes</button>
+        </div>
     </div>
 </div>
 
-<div id="editModal" class="modal">
+<div id="zoomModal" class="modal">
     <div class="modal-content">
-        <h3>Edit Faculty Profile</h3>
-        <input type="hidden" id="editId">
-        <label style="font-size:12px; font-weight:800;">Salary</label>
-        <input type="number" id="editSalary" class="modal-input">
-        <label style="font-size:12px; font-weight:800;">Phone</label>
-        <input type="text" id="editPhone" class="modal-input">
-        <div class="modal-btns">
-            <button class="btn-cancel" onclick="closeModals()">Cancel</button>
-            <button class="btn-confirm" onclick="saveEdit()">Save Changes</button>
+        <h3 id="zoomName" style="margin:0 0 15px 0; color:var(--primary)">Teacher Details</h3>
+        <div id="zoomDetails"></div>
+        <button class="btn-modal btn-cancel" onclick="closeModals()" style="width:100%; margin-top:20px;">Close View</button>
+    </div>
+</div>
+
+<div id="deleteModal" class="modal">
+    <div class="modal-content" style="text-align: center;">
+        <div style="font-size: 50px;">⚠️</div>
+        <h3 style="color: var(--danger); margin: 10px 0;">Confirm Removal</h3>
+        <p style="font-size: 14px; color: #7f8c8d;">Remove <strong id="deleteTargetName"></strong> from <strong>institution</strong>?</p>
+        <input type="hidden" id="deleteTargetId">
+        <div class="modal-btns" style="margin-top:20px;">
+            <button class="btn-modal btn-cancel" onclick="closeModals()">Back</button>
+            <button class="btn-modal btn-delete" id="confirmDelBtn" onclick="executeDelete()">Delete</button>
         </div>
     </div>
 </div>
@@ -111,118 +141,114 @@
             const result = await res.json();
             allFaculty = result.rows || [];
             renderGrid(allFaculty);
-        } catch (err) {
-            showSign("Sync failed", false);
-        }
+        } catch (err) { showSign("Sync error", false); }
     }
 
     function renderGrid(data) {
         const grid = document.getElementById('facultyGrid');
-        if (data.length === 0) {
-            grid.innerHTML = "<p style='grid-column:1/-1; text-align:center;'>No records match your search.</p>";
-            return;
-        }
-
-        grid.innerHTML = data.map(t => `
+        grid.innerHTML = data.length === 0 ? "<p style='grid-column:1/-1; text-align:center;'>No records found.</p>" :
+            data.map(t => `
             <div class="teacher-card">
                 <div class="actions">
                     <button class="btn-action" onclick="zoomTeacher(${t.id})">🔍</button>
                     <button class="btn-action" onclick="openEdit(${t.id})">✏️</button>
                     <button class="btn-action" style="color:red;" onclick="deleteTeacher(${t.id})">🗑️</button>
                 </div>
-                <span class="subject">${t.designation || 'General Faculty'}</span>
+                <span class="subject">${t.designation || 'Faculty'}</span>
                 <span class="name">${t.name}</span>
-                <div class="detail-row" style="margin-top:15px;">
-                    <span class="label">Phone</span>
-                    <span class="value">${t.phone}</span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">Salary</span>
-                    <span class="value">PKR ${t.salary.toLocaleString()}</span>
-                </div>
+                <div class="detail-row" style="margin-top:15px;"><span class="label">Phone</span><span class="value">${t.phone}</span></div>
+                <div class="detail-row"><span class="label">Salary</span><span class="value">${t.salary.toLocaleString()} PKR</span></div>
             </div>
         `).join('');
     }
 
     function filterFaculty() {
-        const query = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allFaculty.filter(t =>
-            t.name.toLowerCase().includes(query) ||
-            t.phone.includes(query) ||
-            (t.extra_details && JSON.stringify(t.extra_details).toLowerCase().includes(query))
-        );
-        renderGrid(filtered);
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        renderGrid(allFaculty.filter(t => t.name.toLowerCase().includes(q) || t.phone.includes(q) || (t.extra_details && JSON.stringify(t.extra_details).toLowerCase().includes(q))));
     }
 
-    // --- ZOOM ---
+    // ZOOM
     function zoomTeacher(id) {
         const t = allFaculty.find(x => x.id === id);
         document.getElementById('zoomName').innerText = t.name;
-        let html = `
-            <div class="detail-row"><span class="label">Designation</span><span class="value">${t.designation}</span></div>
-            <div class="detail-row"><span class="label">Phone</span><span class="value">${t.phone}</span></div>
-            <div class="detail-row"><span class="label">Monthly Salary</span><span class="value">${t.salary}</span></div>
-            <div class="detail-row"><span class="label">Joined</span><span class="value">${t.joining_date}</span></div>
-            <hr style="border:0; border-top:1px solid #eee; margin:15px 0;">
-            <p style="font-size:12px; font-weight:800; color:#95a5a6; margin-bottom:5px;">ADDITIONAL INFO</p>
-        `;
-        if(t.extra_details) {
-            Object.entries(t.extra_details).forEach(([k,v]) => {
-                html += `<div class="detail-row"><span class="label">${k}</span><span class="value">${v}</span></div>`;
-            });
-        }
+        let html = `<div class="detail-row"><span class="label">Role</span><span>${t.designation}</span></div><div class="detail-row"><span class="label">Phone</span><span>${t.phone}</span></div><div class="detail-row"><span class="label">Salary</span><span>${t.salary} PKR</span></div><hr style="border:0; border-top:1px dashed #eee; margin:15px 0;">`;
+        if(t.extra_details) Object.entries(t.extra_details).forEach(([k,v]) => html += `<div class="detail-row"><span class="label">${k}</span><span>${v}</span></div>`);
         document.getElementById('zoomDetails').innerHTML = html;
         document.getElementById('zoomModal').style.display = 'flex';
     }
 
-    // --- EDIT ---
+    // --- FULL EDIT LOGIC ---
     function openEdit(id) {
         const t = allFaculty.find(x => x.id === id);
         document.getElementById('editId').value = t.id;
+        document.getElementById('editName').value = t.name;
+        document.getElementById('editDesignation').value = t.designation;
         document.getElementById('editSalary').value = t.salary;
         document.getElementById('editPhone').value = t.phone;
+
+        const extraCont = document.getElementById('editExtraContainer');
+        extraCont.innerHTML = "";
+
+        // Generate inputs for extra flexible fields
+        if (t.extra_details) {
+            Object.entries(t.extra_details).forEach(([key, val]) => {
+                extraCont.innerHTML += `
+                    <label style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase;">${key}</label>
+                    <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}">
+                `;
+            });
+        }
         document.getElementById('editModal').style.display = 'flex';
     }
 
     async function saveEdit() {
         const id = document.getElementById('editId').value;
+        const btn = document.getElementById('saveEditBtn');
+        btn.disabled = true;
+
+        // Gather basic data
         const payload = {
+            name: document.getElementById('editName').value,
+            designation: document.getElementById('editDesignation').value,
             salary: parseFloat(document.getElementById('editSalary').value),
-            phone: document.getElementById('editPhone').value
+            phone: document.getElementById('editPhone').value,
+            extra_details: {}
         };
 
-        const res = await fetch(`${API}/dashboard/teacher/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(payload)
+        // Gather extra dynamic data
+        document.querySelectorAll('.extra-field').forEach(input => {
+            payload.extra_details[input.getAttribute('data-key')] = input.value;
         });
 
-        if(res.ok) {
-            closeModals();
-            showSign("Profile Updated!", true);
-            fetchFaculty();
-        }
+        try {
+            const res = await fetch(`${API}/dashboard/teacher/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) { closeModals(); showSign("Record updated!", true); fetchFaculty(); }
+        } catch (e) { showSign("Update failed", false); }
+        finally { btn.disabled = false; }
     }
 
-    // --- DELETE ---
-    async function deleteTeacher(id) {
-        if(!confirm("Are you sure? This teacher will be removed from the institution records.")) return;
+    // DELETE
+    function deleteTeacher(id) {
+        const t = allFaculty.find(x => x.id === id);
+        document.getElementById('deleteTargetName').innerText = t.name;
+        document.getElementById('deleteTargetId').value = id;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
 
+    async function executeDelete() {
+        const id = document.getElementById('deleteTargetId').value;
         const res = await fetch(`${API}/dashboard/teacher/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
-
-        if(res.ok) {
-            showSign("Teacher Record Deleted", true);
-            fetchFaculty();
-        }
+        if(res.ok) { closeModals(); showSign("Deleted!", true); fetchFaculty(); }
     }
 
-    function closeModals() {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    }
-
+    function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
     window.onload = fetchFaculty;
 </script>
 </body>

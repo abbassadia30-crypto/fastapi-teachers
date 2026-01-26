@@ -97,20 +97,30 @@ class TeacherListResponse(BaseModel):
     total_teachers: int
     rows: List[TeacherResponse]
 
-class StaffCreate(EmployeeBase):
-    designation: str # e.g., "Accountant", "Driver"
-    shift_time: Optional[str] = None # Specific for general staff
+class StaffBase(BaseModel):
+    name: str
+    position: str
+    cnic: Optional[str] = None
+    contact: Optional[str] = None
+    # This handles the { "Label": "Value" } pairs from your dynamic fields
+    extra_details: Optional[Dict[str, str]] = {}
 
-class StaffResponse(StaffCreate):
+class StaffCreate(StaffBase):
+    pass
+
+class StaffUpdate(BaseModel):
+    name: Optional[str] = None
+    position: Optional[str] = None
+    cnic: Optional[str] = None
+    contact: Optional[str] = None
+    extra_details: Optional[Dict[str, str]] = None
+
+class StaffResponse(StaffBase):
     id: int
     institution_id: int
-    model_config = ConfigDict(from_attributes=True)
 
-class StaffListResponse(BaseModel):
-    institution_id: int
-    total_staff: int
-    rows: List[StaffResponse]
-
+    class Config:
+        from_attributes = True
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
@@ -118,6 +128,8 @@ class EmployeeUpdate(BaseModel):
     salary: Optional[float] = None
     is_active: Optional[bool] = None
     extra_details: Optional[Dict[str, Any]] = None
+
+
 
 class PaySearchResponse(BaseModel):
     id: int

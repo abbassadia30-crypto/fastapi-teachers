@@ -124,6 +124,7 @@
 
             if (res.ok) {
                 showStatus("Teacher onboarded successfully!", true);
+                window.location.href = "teachers.html"
             } else {
                 const err = await res.json();
                 showStatus(err.detail || "Error: Data mismatch", false);

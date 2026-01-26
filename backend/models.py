@@ -22,7 +22,7 @@ class Institution(Base):
     description = Column(Text, nullable=True)
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
-    # Added relationship for staff
+    staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
@@ -99,6 +99,24 @@ class Teacher(Base):
 
     institution_id = Column(Integer, ForeignKey("institutions.id"), index=True)
     institution = relationship("Institution", back_populates="teachers")
+
+class Staff(Base):
+    __tablename__ = "staff"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    position = Column(String, nullable=False)
+    cnic = Column(String, nullable=True)
+    contact = Column(String, nullable=True)
+
+    # This is perfect as is
+    extra_details = Column(JSON, nullable=True, default={})
+
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
+
+    # RECOMMENDED ADDITION:
+    # This allows you to access institution details easily: staff.institution.name
+    institution = relationship("Institution", back_populates="staff_members")
 
 class FeeRecord(Base):
     __tablename__ = "fee_records"
