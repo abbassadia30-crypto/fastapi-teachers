@@ -101,7 +101,7 @@
 
             try {
                 // 2. Fetch the newly created institution details
-                const response = await fetch(`${API_BASE}/institution/check-ownership`, {
+                const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,

@@ -70,47 +70,51 @@
 
     async function fetchFaculty() {
         try {
-            const res = await fetch(`${API}/teachers/all`, {
+            const res = await fetch(`${API}/dashboard/teacher-list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await res.json();
+            const result = await res.json(); // This is the wrapper object
 
             const grid = document.getElementById('facultyGrid');
-            if (data.length === 0) {
-                grid.innerHTML = "<p>No teachers found in the faculty database.</p>";
+
+            // Access 'rows' from the result
+            const teachers = result.rows || [];
+
+            if (teachers.length === 0) {
+                grid.innerHTML = "<p style='grid-column: 1/-1; text-align:center;'>No teachers found in the faculty database.</p>";
                 return;
             }
 
-            grid.innerHTML = data.map(t => {
+            grid.innerHTML = teachers.map(t => {
                 let extras = "";
                 if (t.extra_details) {
                     extras = Object.entries(t.extra_details).map(([k, v]) => `
-                        <div class="detail-row">
-                            <span class="label">${k}</span>
-                            <span class="value">${v}</span>
-                        </div>
-                    `).join('');
+                    <div class="detail-row">
+                        <span class="label">${k}</span>
+                        <span class="value">${v}</span>
+                    </div>
+                `).join('');
                 }
 
                 return `
-                    <div class="teacher-card">
-                        <span class="subject">${t.subject_expertise || 'General Faculty'}</span>
-                        <span class="name">${t.name}</span>
+                <div class="teacher-card">
+                    <span class="subject">${t.designation || 'Faculty Member'}</span>
+                    <span class="name">${t.name}</span>
 
-                        <div class="detail-row" style="margin-top:15px;">
-                            <span class="label">Phone</span>
-                            <span class="value">${t.phone}</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="label">Salary</span>
-                            <span class="value">$${t.salary.toLocaleString()}</span>
-                        </div>
-
-                        <div class="flexible-area">
-                            ${extras}
-                        </div>
+                    <div class="detail-row" style="margin-top:15px;">
+                        <span class="label">Phone</span>
+                        <span class="value">${t.phone}</span>
                     </div>
-                `;
+                    <div class="detail-row">
+                        <span class="label">Salary</span>
+                        <span class="value">${t.salary.toLocaleString()}</span>
+                    </div>
+
+                    <div class="flexible-area">
+                        ${extras}
+                    </div>
+                </div>
+            `;
             }).join('');
         } catch (err) {
             showSign("Could not sync with institution server", false);

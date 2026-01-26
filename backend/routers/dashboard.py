@@ -158,16 +158,29 @@ async def get_teacher_list(
     if not current_user.institution_id:
         raise HTTPException(status_code=401, detail="Institution not identified")
 
-    # Since models are split, we query the Teacher table directly
-    # No need for .ilike("%teacher%") anymore as this table ONLY has teachers
     teachers = db.query(models.Teacher).filter(
         models.Teacher.institution_id == current_user.institution_id
     ).all()
 
-    print(f"DEBUG: Found {len(teachers)} teachers for institution {current_user.institution_id}")
+    # We must transform the Teacher object to include 'designation'
+    # so the schema is happy.
+    rows = []
+    for t in teachers:
+        teacher_data = {
+            "id": t.id,
+            "name": t.name,
+            "phone": t.phone,
+            "salary": t.salary,
+            "joining_date": t.joining_date,
+            "extra_details": t.extra_details,
+            "institution_id": t.institution_id,
+            "is_active": t.is_active,
+            "designation": t.subject_expertise  # This maps expertise back to designation
+        }
+        rows.append(teacher_data)
 
     return {
         "institution_id": current_user.institution_id,
-        "total_employees": len(teachers),
-        "rows": teachers
+        "total_staff": len(rows), # Schema expects 'total_staff', not 'total_employees'
+        "rows": rows
     }
