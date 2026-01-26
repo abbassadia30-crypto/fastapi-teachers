@@ -1,10 +1,901 @@
 <!DOCTYPE html>
+
 <html lang="en">
+
 <head>
+
     <meta charset="UTF-8">
-    <title>Title</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Smart Admission - AI Scanner</title>
+
+    <script src="https://unpkg.com/tesseract.js@v4.0.1/dist/tesseract.min.js"></script>
+
+    <style>
+
+        :root {
+
+            --primary: #0ea5e9;
+
+            --primary-dark: #0284c7;
+
+            --secondary: #64748b;
+
+            --bg: #f8fafc;
+
+            --success: #22c55e;
+
+            --danger: #ef4444;
+
+            --glass: rgba(255, 255, 255, 0.9);
+
+        }
+
+
+
+        body {
+
+            font-family: 'Inter', system-ui, sans-serif;
+
+            margin: 0;
+
+            background: var(--bg);
+
+            color: #1e293b;
+
+        }
+
+
+
+        /* ✨ Interactive Header */
+
+        header {
+
+            padding: 15px 25px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            background: var(--glass);
+
+            backdrop-filter: blur(10px);
+
+            border-bottom: 1px solid #e2e8f0;
+
+            position: sticky; top: 0; z-index: 100;
+
+        }
+
+
+
+        /* 🤖 AI Review Queue Bar */
+
+        #reviewQueue {
+
+            background: #ffffff;
+
+            border-bottom: 2px solid var(--primary);
+
+            padding: 10px 20px;
+
+            display: none;
+
+            gap: 10px;
+
+            overflow-x: auto;
+
+            white-space: nowrap;
+
+            box-shadow: inset 0 -2px 5px rgba(0,0,0,0.05);
+
+            scrollbar-width: none;
+
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+        }
+
+
+
+        @keyframes slideDown {
+
+            from { transform: translateY(-100%); opacity: 0; }
+
+            to { transform: translateY(0); opacity: 1; }
+
+        }
+
+
+
+        .student-chip {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            background: #e0f2fe;
+
+            color: var(--primary-dark);
+
+            padding: 8px 15px;
+
+            border-radius: 20px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            border: 1px solid var(--primary);
+
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+        }
+
+
+
+        .student-chip.active {
+
+            background: var(--primary);
+
+            color: white;
+
+            transform: scale(1.05);
+
+            box-shadow: 0 4px 10px rgba(14, 165, 233, 0.3);
+
+        }
+
+
+
+        .student-chip:hover { transform: translateY(-2px); }
+
+
+
+        .form-container { padding: 20px; max-width: 600px; margin: auto; }
+
+        .card {
+
+            background: white;
+
+            border-radius: 24px;
+
+            padding: 30px;
+
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+
+        }
+
+
+
+        .input-group { margin-bottom: 20px; position: relative; }
+
+        label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 8px; color: var(--secondary); text-transform: uppercase; }
+
+
+
+        input, select {
+
+            width: 100%; padding: 14px; border-radius: 12px;
+
+            border: 1px solid #e2e8f0; font-size: 15px; transition: all 0.2s;
+
+            box-sizing: border-box;
+
+        }
+
+
+
+        input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1); }
+
+
+
+        /* 🎇 Animation for New Section Input */
+
+        #customSectionGroup {
+
+            animation: fadeIn 0.3s ease-out;
+
+        }
+
+
+
+        @keyframes fadeIn {
+
+            from { opacity: 0; transform: translateY(-10px); }
+
+            to { opacity: 1; transform: translateY(0); }
+
+        }
+
+
+
+        .scan-btn {
+
+            background: var(--primary); color: white; border: none;
+
+            padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer;
+
+            transition: transform 0.2s;
+
+        }
+
+        .scan-btn:active { transform: scale(0.95); }
+
+
+
+        .submit-btn {
+
+            background: var(--success); color: white; border: none; padding: 18px;
+
+            width: 100%; border-radius: 14px; font-weight: 700; font-size: 16px;
+
+            cursor: pointer; margin-top: 20px; transition: 0.3s;
+
+        }
+
+
+
+        .submit-btn:hover { filter: brightness(1.1); box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4); }
+
+
+
+        .row-item { display: flex; gap: 10px; margin-bottom: 12px; }
+
+        .del-btn { background: #fee2e2; color: var(--danger); border: none; width: 45px; border-radius: 10px; cursor: pointer; }
+
+
+
+        .scanner-overlay {
+
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.9);
+
+            z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white;
+
+        }
+
+
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+    </style>
+
 </head>
+
 <body>
 
+
+
+<header>
+
+    <button onclick="window.history.back()" style="border:none; background:none; cursor:pointer; font-weight:bold;">✕ Close</button>
+
+    <h3 style="margin:0">Admission Portal</h3>
+
+    <button class="scan-btn" onclick="triggerScan()">📷 AI Scan</button>
+
+</header>
+
+
+
+<div id="reviewQueue"></div>
+
+
+
+<input type="file" id="cameraInput" accept="image/*" capture="camera" style="display:none;" onchange="handleImageScan(event)">
+
+
+
+<div id="scanOverlay" class="scanner-overlay">
+
+    <div style="width: 50px; height: 50px; border: 4px solid #334155; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+
+    <p style="margin-top:20px; font-weight:500;">AI is analyzing student data...</p>
+
+</div>
+
+
+
+<div class="form-container">
+
+    <div id="statusBox" style="display:none; padding:15px; border-radius:12px; margin-bottom:15px; font-weight:600; text-align:center;"></div>
+
+
+
+    <div class="card">
+
+        <form id="admissionForm">
+
+            <div class="input-group">
+
+                <label>Student Name</label>
+
+                <input type="text" id="stdName" placeholder="Waiting for scan or manual entry..." required>
+
+            </div>
+
+
+
+            <div class="input-group">
+
+                <label>Father's Name</label>
+
+                <input type="text" id="fatherName" placeholder="Father's name" required>
+
+            </div>
+
+
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+
+                <div class="input-group">
+
+                    <label>Section / Class</label>
+
+                    <select id="sectionSelect" onchange="checkCustom(this)" required></select>
+
+                </div>
+
+                <div class="input-group">
+
+                    <label>Admission Fee</label>
+
+                    <input type="number" id="stdFee" placeholder="0.00" required>
+
+                </div>
+
+            </div>
+
+
+
+            <div class="input-group" id="customSectionGroup" style="display:none;">
+
+                <label>Enter New Section</label>
+
+                <input type="text" id="newSectionInput" placeholder="Type name then select it" style="border-color: var(--primary);">
+
+            </div>
+
+
+
+            <hr style="border:0; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+
+
+
+            <label>Persistent Extra Fields</label>
+
+            <div id="flexibleRows"></div>
+
+            <button type="button" onclick="addNewRow()" style="background:none; border:1px dashed var(--secondary); color:var(--secondary); width:100%; padding:10px; border-radius:10px; cursor:pointer; font-weight:600;">+ Add Data Field</button>
+
+
+
+            <button type="submit" class="submit-btn" id="subBtn">Confirm & Admit Student</button>
+
+            <div id="bulkActions" style="display:none; padding: 10px 20px; background: #f0fdf4; border-bottom: 1px solid #bbf7d0; justify-content: space-between; align-items: center; margin-top: 15px; border-radius: 10px;">
+
+                <span style="font-size: 13px; color: #166534; font-weight: 600;">Multiple students detected.</span>
+
+                <button type="button" onclick="admitAllInQueue()" style="background: #22c55e; color: white; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold;">Admit All Automatically</button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+    const API_URL = "https://fastapi-teachers.onrender.com";
+
+    const token = localStorage.getItem('institutionToken');
+
+    let studentQueue = [];
+
+    let currentQueueIndex = 0;
+
+    // Memory for sections added during this session
+
+    let sessionSections = new Set();
+
+
+
+    window.onload = async () => {
+
+        await loadSections();
+
+        loadSavedRows();
+
+    };
+
+
+
+    function showStatus(msg, type) {
+
+        const box = document.getElementById('statusBox');
+
+        box.innerText = msg;
+
+        box.style.display = 'block';
+
+        box.style.background = type === 'success' ? '#dcfce7' : '#fee2e2';
+
+        box.style.color = type === 'success' ? '#166534' : '#991b1b';
+
+        setTimeout(() => { box.style.display = 'none'; }, 5000);
+
+    }
+
+
+
+    // --- 🏗️ FIXED SECTION LOGIC ---
+
+    async function loadSections(selectedVal = null) {
+
+        const select = document.getElementById('sectionSelect');
+
+        try {
+
+            const res = await fetch(`${API_URL}/dashboard/sections`, {
+
+                headers: { 'Authorization': `Bearer ${token}` }
+
+            });
+
+            let sections = await res.json();
+
+
+
+// Combine API sections with session-saved sections
+
+            const allSections = [...new Set([...sections, ...Array.from(sessionSections)])];
+
+
+
+            select.innerHTML = '<option value="" disabled selected>Choose Section</option>';
+
+            allSections.forEach(sec => {
+
+                const opt = document.createElement('option');
+
+                opt.value = sec;
+
+                opt.textContent = sec;
+
+                select.appendChild(opt);
+
+            });
+
+
+
+            select.innerHTML += `<option value="ADD_NEW" style="color:var(--primary); font-weight:bold;">+ Add New Section</option>`;
+
+
+
+            if(selectedVal) select.value = selectedVal;
+
+        } catch (e) {
+
+            console.error("API error loading sections");
+
+        }
+
+    }
+
+
+
+    function checkCustom(select) {
+
+        const customGroup = document.getElementById('customSectionGroup');
+
+        if (select.value === "ADD_NEW") {
+
+            customGroup.style.display = "block";
+
+            document.getElementById('newSectionInput').focus();
+
+        } else {
+
+            customGroup.style.display = "none";
+
+        }
+
+    }
+
+
+
+    // --- 💾 FIELD MEMORY ---
+
+    function loadSavedRows() {
+
+        const saved = JSON.parse(localStorage.getItem('formLabels') || '["Contact Number", "Address"]');
+
+        const container = document.getElementById('flexibleRows');
+
+        container.innerHTML = '';
+
+        saved.forEach(label => addNewRow(label));
+
+    }
+
+
+
+    function saveCurrentLabels() {
+
+        const labels = Array.from(document.querySelectorAll('.extra-key')).map(input => input.value);
+
+        localStorage.setItem('formLabels', JSON.stringify(labels));
+
+    }
+
+
+
+    function addNewRow(label = "", value = "") {
+
+        const container = document.getElementById('flexibleRows');
+
+        const div = document.createElement('div');
+
+        div.className = "row-item";
+
+        div.innerHTML = `
+
+<input type="text" placeholder="Label" class="extra-key" style="width:40%;" value="${label}" onchange="saveCurrentLabels()">
+
+<input type="text" placeholder="Value" class="extra-val" style="width:50%;" value="${value}">
+
+<button type="button" class="del-btn" onclick="this.parentElement.remove(); saveCurrentLabels();">✕</button>
+
+`;
+
+        container.appendChild(div);
+
+    }
+
+
+
+    // --- 📷 AI SCAN & QUEUE ---
+
+    function triggerScan() { document.getElementById('cameraInput').click(); }
+
+
+
+    async function handleImageScan(event) {
+
+        const file = event.target.files[0];
+
+        if (!file) return;
+
+        document.getElementById('scanOverlay').style.display = 'flex';
+
+
+
+        try {
+
+            const worker = await Tesseract.createWorker();
+
+            await worker.loadLanguage('eng');
+
+            await worker.initialize('eng');
+
+            const { data: { text } } = await worker.recognize(file);
+
+            await worker.terminate();
+
+
+
+            const lines = text.split('\n').filter(l => l.trim().length > 3);
+
+            studentQueue = lines.map(line => {
+
+                const parts = line.split(/[,|-]/);
+
+                return { name: parts[0]?.trim() || "Unknown", father: parts[1]?.trim() || "" };
+
+            });
+
+
+
+            currentQueueIndex = 0;
+
+            updateQueueBar();
+
+        } catch (e) {
+
+            showStatus("AI Scan failed.", "error");
+
+        } finally {
+
+            document.getElementById('scanOverlay').style.display = 'none';
+
+        }
+
+    }
+
+
+
+    function updateQueueBar() {
+
+        const bar = document.getElementById('reviewQueue');
+
+        const bulkBar = document.getElementById('bulkActions');
+
+
+
+        bar.innerHTML = studentQueue.map((s, i) => `
+
+<div class="student-chip ${i === currentQueueIndex ? 'active' : ''}" onclick="fillFromQueue(${i})">
+
+👤 ${s.name} <span onclick="removeFromQueue(event, ${i})" style="margin-left:8px; opacity:0.5;">×</span>
+
+</div>
+
+`).join('');
+
+
+
+        bar.style.display = studentQueue.length ? 'flex' : 'none';
+
+        bulkBar.style.display = studentQueue.length > 1 ? 'flex' : 'none';
+
+
+
+        if(studentQueue.length > 0) fillFromQueue(currentQueueIndex);
+
+    }
+
+
+
+    function fillFromQueue(index) {
+
+        currentQueueIndex = index;
+
+        const s = studentQueue[index];
+
+        document.getElementById('stdName').value = s.name;
+
+        document.getElementById('fatherName').value = s.father;
+
+
+
+// Refresh chips to show active state
+
+        document.querySelectorAll('.student-chip').forEach((chip, i) => {
+
+            chip.classList.toggle('active', i === index);
+
+        });
+
+    }
+
+
+
+    function removeFromQueue(event, index) {
+
+        event.stopPropagation();
+
+        studentQueue.splice(index, 1);
+
+        if(currentQueueIndex >= studentQueue.length) currentQueueIndex = 0;
+
+        updateQueueBar();
+
+    }
+
+
+
+    // --- 🚀 SUBMISSION & MEMORY PERSISTENCE ---
+
+    document.getElementById('admissionForm').onsubmit = async (e) => {
+
+        e.preventDefault();
+
+
+
+        const select = document.getElementById('sectionSelect');
+
+        let section = select.value;
+
+
+
+        if(section === "ADD_NEW") {
+
+            section = document.getElementById('newSectionInput').value.trim();
+
+            if(section) {
+
+                sessionSections.add(section); // Save to session memory
+
+                await loadSections(section); // Reload dropdown to include it
+
+            }
+
+        }
+
+
+
+        if(!section) {
+
+            select.style.borderColor = 'red';
+
+            showStatus("Please select or enter a Section", "error");
+
+            return;
+
+        }
+
+
+
+        const btn = document.getElementById('subBtn');
+
+        btn.disabled = true;
+
+        btn.innerText = "Processing...";
+
+
+
+        const payload = {
+
+            name: document.getElementById('stdName').value,
+
+            father_name: document.getElementById('fatherName').value,
+
+            section: section,
+
+            fee: parseFloat(document.getElementById('stdFee').value || 0),
+
+            extra_fields: getExtraFieldsData()
+
+        };
+
+
+
+        try {
+
+            const res = await fetch(`${API_URL}/dashboard/admit-student`, {
+
+                method: 'POST',
+
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+
+                body: JSON.stringify(payload)
+
+            });
+
+
+
+            if(res.ok) {
+
+                showStatus(`${payload.name} Admitted!`, "success");
+
+                studentQueue.splice(currentQueueIndex, 1);
+
+                if(currentQueueIndex >= studentQueue.length) currentQueueIndex = 0;
+
+
+
+// Clear name/father but keep Fee and Section for the next student
+
+                document.getElementById('stdName').value = "";
+
+                document.getElementById('fatherName').value = "";
+
+                document.getElementById('customSectionGroup').style.display = "none";
+
+
+
+                updateQueueBar();
+
+            }
+
+        } catch (err) {
+
+            showStatus("Network Error.", "error");
+
+        } finally {
+
+            btn.disabled = false;
+
+            btn.innerText = "Confirm & Admit Student";
+
+        }
+
+    };
+
+
+
+    async function admitAllInQueue() {
+
+        const select = document.getElementById('sectionSelect');
+
+        let section = select.value;
+
+        if(section === "ADD_NEW") section = document.getElementById('newSectionInput').value;
+
+
+
+        if(!section) {
+
+            alert("Select a section first for bulk admission.");
+
+            return;
+
+        }
+
+
+
+        if(!confirm(`Admit ${studentQueue.length} students to ${section}?`)) return;
+
+
+
+        for (const student of [...studentQueue]) {
+
+            const payload = {
+
+                name: student.name,
+
+                father_name: student.father,
+
+                section: section,
+
+                fee: parseFloat(document.getElementById('stdFee').value || 0),
+
+                extra_fields: getExtraFieldsData()
+
+            };
+
+            await fetch(`${API_URL}/dashboard/admit-student`, {
+
+                method: 'POST',
+
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+
+                body: JSON.stringify(payload)
+
+            });
+
+        }
+
+
+
+        studentQueue = [];
+
+        updateQueueBar();
+
+        showStatus("All students admitted successfully!", "success");
+
+    }
+
+
+
+    function getExtraFieldsData() {
+
+        const extraData = {};
+
+        document.querySelectorAll('.row-item').forEach(row => {
+
+            const k = row.querySelector('.extra-key').value;
+
+            const v = row.querySelector('.extra-val').value;
+
+            if(k) extraData[k] = v;
+
+        });
+
+        return extraData;
+
+    }
+
+</script>
+
 </body>
+
 </html>

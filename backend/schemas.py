@@ -77,20 +77,22 @@ class Student_update(BaseModel):
 
 class StaffBase(BaseModel):
     name: str
-    designation: str 
+    designation: str
     phone: str
-    salary: float
-    joining_date: str 
+    salary: float = Field(..., gt=0) # Ensures salary is always a positive number
+    # If using string for joining_date:
+    joining_date: str
     extra_details: Optional[Dict[str, Any]] = {}
 
 class StaffCreate(StaffBase):
-    pass 
+    pass
 
 class StaffUpdate(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None
     phone: Optional[str] = None
     salary: Optional[float] = None
+    joining_date: Optional[str] = None # Added for correction flexibility
     extra_details: Optional[Dict[str, Any]] = None
     is_active: Optional[bool] = None
 
@@ -98,6 +100,8 @@ class StaffResponse(StaffBase):
     id: int
     institution_id: int
     is_active: bool
+
+    # Updated for Pydantic v2
     model_config = ConfigDict(from_attributes=True)
 
 class StaffListResponse(BaseModel):

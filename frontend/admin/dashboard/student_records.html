@@ -3,44 +3,191 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sections</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <title>Sections | Institution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --bg: #f0f2f5; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .card {
-            background: white; padding: 25px 15px; border-radius: 15px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
+        :root { --primary: #0288d1; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --success: #2e7d32; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding: 20px; color: var(--text); }
+
+        /* 🔔 Notification Bar */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: transform 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
-        .card:active { transform: scale(0.98); }
-        .icon { font-size: 32px; margin-bottom: 10px; display: block; }
-        h3 { margin: 0; font-size: 16px; color: #333; }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🗑️ Delete Confirm Box (Red Sign Box) */
+        #confirmBox {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; background: #fff; border: 2px solid var(--danger);
+            border-radius: 15px; padding: 20px; z-index: 10000; display: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+
+        .search-container { width: 100%; margin-bottom: 20px; }
+        .search-bar {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;
+            transition: 0.3s;
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+
+        .card {
+            background: white; padding: 20px 10px; border-radius: 15px; text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; border: 1px solid transparent; position: relative;
+        }
+        .card:hover { transform: translateY(-3px); border-color: var(--primary); }
+
+        /* ❌ Small Delete Button on Card */
+        .del-sec-btn {
+            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            background: #fff1f1; color: var(--danger); border: none; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 14px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .del-sec-btn:hover { background: var(--danger); color: white; }
+
+        .icon { font-size: 32px; margin-bottom: 8px; display: block; }
+        h3 { margin: 0; font-size: 15px; color: #333; word-break: break-all; padding: 0 5px; }
+
+        .loader { text-align: center; padding: 40px; color: #666; font-weight: 600; }
+
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-confirm { flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--danger); color: white; font-weight: 600; cursor: pointer; }
+        .btn-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid #ddd; background: white; cursor: pointer; }
     </style>
 </head>
 <body>
-<div class="header">
-    <h2 style="margin:0;">Classes</h2>
-    <button onclick="location.href='admission.html'" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px;">+ New</button>
+
+<div id="appNotifier"></div>
+
+<div id="confirmBox">
+    <p style="margin:0; font-weight: 600; color: var(--danger);">Delete this section?</p>
+    <p style="font-size: 12px; color: #666; margin: 5px 0 15px 0;">This will remove all student records in <strong id="secTarget"></strong>.</p>
+    <div class="btn-row">
+        <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="btn-confirm" id="finalDelBtn">Delete All</button>
+    </div>
 </div>
 
+<div class="header">
+    <h2 style="margin:0;">🏛️ Classes</h2>
+    <div>
+        <button onclick="location.href='dashboard.html'" style="background:#eee; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">Back</button>
+        <button onclick="location.href='admission.html'" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">+ New</button>
+    </div>
+</div>
+
+<div class="search-container">
+    <input type="text" id="classSearch" class="search-bar" placeholder="🔍 Search classes..." oninput="filterClasses()">
+</div>
+
+<div id="loader" class="loader">Syncing Institution Records...</div>
 <div class="grid" id="sectionGrid"></div>
 
 <script>
-    const API_URL = "https://your-backend-url.com";
+    const API_URL = "https://fastapi-teachers.onrender.com";
     const token = localStorage.getItem('institutionToken');
+    let activeSections = [];
+    let allStudents = [];
+
+    function notify(msg, success = true) {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = success ? 'var(--success)' : 'var(--danger)';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
 
     async function load() {
-        const res = await fetch(`${API_URL}/sections`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const sections = await res.json();
-        document.getElementById('sectionGrid').innerHTML = sections.map(sec => `
-                <div class="card" onclick="window.location.href='students_by_section.html?name=${encodeURIComponent(sec)}'">
-                    <span class="icon">📁</span>
-                    <h3>${sec}</h3>
-                </div>
-            `).join('');
+        if (!token) return;
+        try {
+            const res = await fetch(`${API_URL}/dashboard/my_students`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            allStudents = data.students;
+
+            const uniqueSections = [...new Set(allStudents.map(s => s.section))];
+            activeSections = uniqueSections.filter(sec => sec && sec.trim() !== "");
+
+            document.getElementById('loader').style.display = 'none';
+            renderClasses(activeSections);
+        } catch (e) {
+            notify("Connection Error", false);
+        }
     }
+
+    function renderClasses(list) {
+        const grid = document.getElementById('sectionGrid');
+        if (!list || list.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999;">No active classes.</div>`;
+            return;
+        }
+
+        grid.innerHTML = list.map(sec => `
+            <div class="card" onclick="window.location.href='students.html?section=${encodeURIComponent(sec)}'">
+                <button class="del-sec-btn" onclick="askDeleteSection('${sec}', event)">✕</button>
+                <span class="icon">🏫</span>
+                <h3>${sec}</h3>
+            </div>
+        `).join('');
+    }
+
+    function askDeleteSection(sec, e) {
+        e.stopPropagation(); // Prevents navigating to students.html
+        document.getElementById('secTarget').innerText = sec;
+        document.getElementById('confirmBox').style.display = 'block';
+
+        document.getElementById('finalDelBtn').onclick = () => executeBulkDelete(sec);
+    }
+
+    function closeConfirm() {
+        document.getElementById('confirmBox').style.display = 'none';
+    }
+
+    async function executeBulkDelete(sectionName) {
+        const btn = document.getElementById('finalDelBtn');
+        btn.innerText = "Deleting...";
+        btn.disabled = true;
+
+        // Find all students belonging to this section
+        const targets = allStudents.filter(s => s.section === sectionName);
+        let success = 0;
+
+        try {
+            // Delete each student in this section
+            for (let student of targets) {
+                const res = await fetch(`${API_URL}/dashboard/delete_student/${student.id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) success++;
+            }
+
+            notify(`Section deleted: Removed ${success} records`);
+            closeConfirm();
+            load(); // Reload the UI
+        } catch (e) {
+            notify("Error during bulk delete", false);
+        } finally {
+            btn.innerText = "Delete All";
+            btn.disabled = false;
+        }
+    }
+
+    function filterClasses() {
+        const term = document.getElementById('classSearch').value.toLowerCase();
+        const filtered = activeSections.filter(sec => sec.toLowerCase().includes(term));
+        renderClasses(filtered);
+    }
+
     window.onload = load;
 </script>
 </body>

@@ -2,9 +2,249 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Hiring | Institution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --bg: #f4f7f6;
+            --text: #2c3e50;
+            --success: #2e7d32;
+            --danger: #c62828;
+            --accent: #1e293b;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text);
+        }
+
+        /* ⬅️ Top-Left Back Button */
+        .back-nav {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            text-decoration: none;
+            color: var(--text);
+            font-size: 24px;
+            font-weight: 800;
+            z-index: 100;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+            margin-top: 60px;
+        }
+
+        h2 { margin: 0 0 10px 0; color: var(--primary); font-weight: 800; }
+        p { margin: 0 0 25px 0; font-size: 14px; color: #7f8c8d; }
+
+        .form-group { margin-bottom: 18px; position: relative; }
+
+        label {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #95a5a6;
+            display: block;
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1.5px solid #edf2f7;
+            border-radius: 12px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: 0.3s;
+            box-sizing: border-box;
+            background: #f8fafc;
+        }
+
+        input:focus { border-color: var(--primary); background: white; }
+
+        /* 🔴 / 🟢 Status Boxes */
+        #statusBox {
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 600;
+            display: none;
+            text-align: center;
+        }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); display: block !important; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); display: block !important; }
+
+        /* Dynamic Field Styling */
+        .dynamic-field-wrapper {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-add-field {
+            background: #f1f3f4;
+            color: var(--primary);
+            border: 2px dashed #cbd5e1;
+            padding: 12px;
+            width: 100%;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: 0.2s;
+        }
+        .btn-add-field:hover { background: #e2e8f0; border-color: var(--primary); }
+
+        .btn-remove {
+            background: #fff1f1;
+            color: var(--danger);
+            border: none;
+            width: 45px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 800;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-submit:disabled { background: #ccc; }
+    </style>
 </head>
 <body>
+
+<a href="dashboard.html" class="back-nav">←</a>
+
+<div class="container">
+    <h2>Teacher Hiring</h2>
+    <p>Onboard new faculty to the <strong>institution</strong>.</p>
+
+    <div id="statusBox"></div>
+
+    <form id="hiringForm">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="tName" placeholder="Enter name" required>
+        </div>
+
+        <div class="form-group">
+            <label>Assigned Department</label>
+            <input type="text" id="tSection" placeholder="e.g. Mathematics Dept" required>
+        </div>
+
+        <div class="form-group">
+            <label>Monthly Salary</label>
+            <input type="number" id="tSalary" placeholder="Amount" required>
+        </div>
+
+        <div id="dynamicContainer">
+        </div>
+
+        <button type="button" class="btn-add-field" onclick="addField()">+ Add Flexible Field</button>
+
+        <button type="submit" class="btn-submit" id="submitBtn">Save Teacher Profile</button>
+    </form>
+</div>
+
+<script>
+    const API_URL = "https://fastapi-teachers.onrender.com";
+    const token = localStorage.getItem('institutionToken');
+    const container = document.getElementById('dynamicContainer');
+
+    function addField() {
+        const div = document.createElement('div');
+        div.className = 'dynamic-field-wrapper';
+        div.innerHTML = `
+            <input type="text" placeholder="Field Name (e.g. Subject)" class="field-key" style="flex: 1;">
+            <input type="text" placeholder="Value" class="field-value" style="flex: 1.5;">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
+        `;
+        container.appendChild(div);
+    }
+
+    function showStatus(msg, isSuccess) {
+        const box = document.getElementById('statusBox');
+        box.innerText = msg;
+        box.className = isSuccess ? "sign-green" : "sign-red";
+        if(isSuccess) {
+            document.getElementById('hiringForm').reset();
+            container.innerHTML = "";
+            setTimeout(() => box.style.display = 'none', 5000);
+        }
+    }
+
+    document.getElementById('hiringForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+
+        // Collect flexible fields
+        const extraData = {};
+        document.querySelectorAll('.dynamic-field-wrapper').forEach(wrapper => {
+            const key = wrapper.querySelector('.field-key').value.trim();
+            const val = wrapper.querySelector('.field-value').value.trim();
+            if (key) extraData[key] = val;
+        });
+
+        const payload = {
+            name: document.getElementById('tName').value,
+            section: document.getElementById('tSection').value,
+            father_name: "Staff Member",
+            fee: parseFloat(document.getElementById('tSalary').value),
+            extra_fields: extraData
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/dashboard/Hiring`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showStatus("Teacher record secured successfully!", true);
+            } else {
+                showStatus("Error: Could not save to database.", false);
+            }
+        } catch (err) {
+            showStatus("Server Connection Failed", false);
+        } finally {
+            btn.disabled = false;
+        }
+    };
+</script>
 
 </body>
 </html>

@@ -9,6 +9,7 @@ from backend.routers import auth, dashboard, institution, ready, pay, profile
 import logging
 # 🏛️ PEER TIP: This stops passlib from crashing on bcrypt version checks
 logging.getLogger("passlib").setLevel(logging.ERROR)
+os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
 
 models.Base.metadata.create_all(bind=engine)
 

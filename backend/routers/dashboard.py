@@ -119,3 +119,33 @@ async def get_unique_sections(
     ).distinct().all()
 
     return [s[0] for s in sections] # Returns a simple list of strings
+
+@router.post("/hire-staff")
+async def hire_staff(
+        data: schemas.StaffHiringPayload,
+        db: Session = Depends(get_db),
+        current_user: models.User = Depends(get_current_user)
+):
+    # Professional check: Ensure the user belongs to an institution
+    if not current_user.institution_id:
+        raise HTTPException(status_code=400, detail="User not linked to any institution")
+
+    new_staff = models.Staff(
+        name=data.name,
+        designation=data.designation,
+        phone=data.phone,
+        salary=data.salary,
+        joining_date=data.joining_date,
+        extra_details=data.extra_details,
+        institution_id=current_user.institution_id
+    )
+
+    db.add(new_staff)
+    db.commit()
+    db.refresh(new_staff)
+
+    return {
+        "status": "success",
+        "message": f"Staff member {data.name} hired successfully",
+        "staff_id": new_staff.id
+    }
