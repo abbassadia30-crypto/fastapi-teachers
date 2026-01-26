@@ -23,7 +23,7 @@ class Institution(Base):
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
     # Added relationship for staff
-    staff_members = relationship("Staff", back_populates="institution")
+    teachers = relationship("Teacher", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -116,7 +116,7 @@ class FeeRecord(Base):
 class SalaryRecord(Base):
     __tablename__ = "salary_records"
     id = Column(Integer, primary_key=True)
-    staff_id = Column(Integer, ForeignKey("staff_records.id"))
+    teacher_id = Column(Integer, ForeignKey("teacher_records.id"))
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     arrears = Column(Float, default=0.0) 
     total_due = Column(Float)
