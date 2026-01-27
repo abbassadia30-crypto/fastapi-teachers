@@ -205,21 +205,29 @@
 
                 const result = await response.json();
 
+                // Inside handleSignup(event)
                 if (response.ok) {
+                    // Only redirect if the backend confirms mail was sent
                     Notification.show("OTP Sent! Check your email.", "success");
 
-                    // Critical: Storing data natively for the verification screen
                     await AppStorage.set('pendingEmail', email);
                     await AppStorage.set('isPasswordReset', 'false');
 
-                    setTimeout(() => { window.location.href = "verify.html"; }, 2000);
+                    // Add a slightly longer delay to let the user see the success sign
+                    setTimeout(() => {
+                        window.location.href = "verify.html";
+                    }, 2500);
                 } else {
-                    // Handle specific backend error details
-                    Notification.show(result.detail || "Email already registered", "error");
+                    // If the server says OK but result has an error (e.g., SMTP failure)
+                    const result = await response.json();
+                    if (result.status === "email_failed") {
+                        Notification.show("Account created, but OTP failed to send. Try resending.", "error");
+                    } else {
+                        Notification.show(result.detail || "Signup failed", "error");
+                    }
                     btn.disabled = false;
-                    btn.innerText = originalText;
-                }
-            } catch (error) {
+                    btn.innerText = originalText;}
+                } catch (error) {
                 Notification.show("Institution server is unreachable.", "error");
                 btn.disabled = false;
                 btn.innerText = originalText;

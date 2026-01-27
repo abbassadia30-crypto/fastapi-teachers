@@ -14,20 +14,24 @@ router = APIRouter(
 
 @router.patch("/update-role")
 async def update_user_role(
-    payload: schemas.RoleUpdate, 
-    db: Session = Depends(database.get_db),
-    current_user: models.User = Depends(get_current_user) # Added Security
+        payload: schemas.RoleUpdate,
+        db: Session = Depends(database.get_db),
+        current_user: models.User = Depends(get_current_user)
 ):
-    """
-    SECURE: Only the logged-in user can update their own role.
-    We ignore payload.email to prevent users from changing other people's roles.
-    """
+    # Developer Tip: Validate the role string to prevent database pollution
+    if payload.role not in ["admin", "teacher", "student"]:
+        raise HTTPException(status_code=400, detail="Invalid role selection")
+
     current_user.role = payload.role
+    # If this is the first time they set a role, you might want to mark
+    # them as 'fully registered' here.
+
     db.commit()
-    return {"status": "success", "message": f"Role updated to {payload.role}" ,  "role": current_user.role , "email" : current_user.email}
-
-
-# --- Institution Creation (Step 3 of Onboarding) ---
+    return {
+        "status": "success",
+        "role": current_user.role,
+        "email": current_user.email
+    }
 
 @router.post("/setup-workspace")
 async def setup_workspace(
