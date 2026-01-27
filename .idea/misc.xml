@@ -3,7 +3,12 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.11 (app)" />
   </component>
-  <component name="ExternalStorageConfigurationManager" enabled="true" />
+  <component name="FrameworkDetectionExcludesConfiguration">
+    <file type="web" url="file://$PROJECT_DIR$/android" />
+    <file type="web" url="file://$PROJECT_DIR$/node_modules/@capacitor-community/sqlite/android" />
+    <file type="web" url="file://$PROJECT_DIR$/node_modules/@capacitor/android/capacitor" />
+    <file type="web" url="file://$PROJECT_DIR$/node_modules/@capacitor/preferences/android" />
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_25" project-jdk-name="Python 3.11 (app)" project-jdk-type="Python SDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>

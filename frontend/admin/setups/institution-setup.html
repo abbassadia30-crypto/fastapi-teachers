@@ -87,20 +87,29 @@
 
     <div id="final-sign">🏛️ Workspace Ready</div>
 
+    <script src="capacitor.js"></script>
+    <script src="js/storage.js"></script>
+
     <script>
         const API_BASE = "https://fastapi-teachers.onrender.com";
-        const token = localStorage.getItem('institutionToken');
         const sign = document.getElementById('final-sign');
 
         async function initializeSuccessPage() {
-            // 1. Session Guard
+            // 1. Session & Token Guard
+            const token = await AppStorage.get('institutionToken');
+
             if (!token) {
-                window.location.href = "../login.html";
+                // No token? Red sign box and redirect
+                if(sign) {
+                    sign.style.background = "#e53935";
+                    sign.innerText = "❌ Session Missing";
+                }
+                setTimeout(() => window.location.href = "../../index.html", 2000);
                 return;
             }
 
             try {
-                // 2. Fetch the newly created institution details
+                // 2. Ownership Guard: Verify the institution exists in the database
                 const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
                     method: 'GET',
                     headers: {
@@ -113,31 +122,53 @@
                     const data = await response.json();
 
                     if (data.has_institution) {
-                        // 3. Update UI with real Institution data
-                        sign.innerText = `🏛️ ${data.institution_name} Workspace Ready`;
-                        console.log("Institution ID generated:", data.institution_id);
+                        // ✅ SUCCESS: Update UI with real Institution data
+                        if(sign) {
+                            sign.innerText = `🏛️ ${data.institution_name} Workspace Ready`;
+                            sign.style.background = "var(--success)";
+                        }
 
-                        // Store the ID locally for future use in the dashboard
-                        localStorage.setItem('current_institution_id', data.institution_id);
+                        // Native Haptic feedback for a "Job Well Done" feel
+                        if (window.AppHaptics) window.AppHaptics.notification('SUCCESS');
+
+                        // Store details using AppStorage for the real app environment
+                        await AppStorage.set('current_institution_id', data.institution_id);
+                        await AppStorage.set('institution_name', data.institution_name);
+
+                        // Proceed to Dashboard
+                        setTimeout(() => {
+                            window.location.href = "../dashboard/dashboard.html";
+                        }, 3500);
+
+                    } else {
+                        // ❌ NO INSTITUTION GUARD: User slipped through but hasn't created one
+                        if(sign) {
+                            sign.style.background = "#ffa000"; // Warning Orange
+                            sign.innerText = "⚠️ No Workspace Found";
+                        }
+                        setTimeout(() => {
+                            window.location.href = "../setup/setup-required.html";
+                        }, 3000);
                     }
                 } else {
-                    // If the check fails, the setup might not have indexed yet
-                    sign.style.background = "#ef5350";
-                    sign.innerText = "⚠️ Finalizing setup...";
+                    // Server-side issue or 401
+                    if(sign) sign.innerText = "⚠️ Finalizing setup...";
+                    setTimeout(() => window.location.reload(), 5000);
                 }
             } catch (error) {
                 console.error("Initialization error:", error);
-                sign.innerText = "🏛️ Workspace Ready";
-            }
+                // Fallback for offline mode if data was already cached
+                const cachedName = await AppStorage.get('institution_name');
+                if(sign) sign.innerText = cachedName ? `🏛️ ${cachedName} Ready` : "🏛️ Workspace Ready";
 
-            // 4. Final Redirect to Admin Dashboard
-            setTimeout(() => {
-                window.location.href = "../dashboard/dashboard.html";
-            }, 4000);
+                setTimeout(() => {
+                    window.location.href = "../dashboard/dashboard.html";
+                }, 4000);
+            }
         }
 
         // Run the logic on page load
-        initializeSuccessPage();
+        window.onload = initializeSuccessPage;
     </script>
 </body>
 </html>

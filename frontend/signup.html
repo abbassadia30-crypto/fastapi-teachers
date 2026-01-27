@@ -99,97 +99,132 @@
         <p class="footer-text">Already have an account? <a href="index.html">Login</a></p>
     </div>
 
-<script>
-const API_BASE = "https://fastapi-teachers.onrender.com"; 
+    <script src="capacitor.js"></script>
+    <script src="js/storage.js"></script>
 
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
 
+        // --- 1. NOTIFICATION SYSTEM (Sign Box) ---
+        const Notification = {
+            el: document.getElementById('notification-bar'),
+            show(msg, type) {
+                if(!this.el) return;
+                this.el.innerText = msg;
+                // Matches your specific green/red requirement
+                this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
 
+                // Real App UX: Trigger physical vibration
+                if (window.AppHaptics) {
+                    window.AppHaptics.notification(type === 'success' ? 'SUCCESS' : 'ERROR');
+                }
 
-const Notification = {
-    el: document.getElementById('notification-bar'),
-    show(msg, type) {
-        this.el.innerText = msg;
-        this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
-        setTimeout(() => { this.el.className = ''; }, 4000);
-    }
-};
+                setTimeout(() => { this.el.className = ''; }, 4000);
+            }
+        };
 
-function checkStrength(password) {
-    const container = document.getElementById('strengthContainer');
-    const bar = document.getElementById('strengthBar');
-    const label = document.getElementById('strengthLabel');
-    
-    if (password.length === 0) {
-        container.style.display = 'none';
-        label.innerText = '';
-        return;
-    }
+        // --- 2. PASSWORD STRENGTH METER ---
+        function checkStrength(password) {
+            const container = document.getElementById('strengthContainer');
+            const bar = document.getElementById('strengthBar');
+            const label = document.getElementById('strengthLabel');
 
-    container.style.display = 'block';
-    let strength = 0;
-    if (password.length > 7) strength += 25;
-    if (/[A-Z]/.test(password)) strength += 25;
-    if (/[0-9]/.test(password)) strength += 25;
-    if (/[^A-Za-z0-9]/.test(password)) strength += 25;
+            if (!password) {
+                container.style.display = 'none';
+                return;
+            }
 
-    bar.style.width = strength + '%';
-    
-    if (strength <= 25) { bar.style.background = '#e53935'; label.innerText = 'Weak'; label.style.color = '#e53935'; }
-    else if (strength <= 75) { bar.style.background = '#ffa000'; label.innerText = 'Moderate'; label.style.color = '#ffa000'; }
-    else { bar.style.background = '#43a047'; label.innerText = 'Strong'; label.style.color = '#43a047'; }
-}
+            container.style.display = 'block';
+            let strength = 0;
 
-async function handleSignup(event) {
-    event.preventDefault();
-    
-    const btn = document.getElementById('signupBtn');
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
+            // Developer Logic: Use percentages for the bar
+            if (password.length > 7) strength += 25;
+            if (/[A-Z]/.test(password)) strength += 25;
+            if (/[0-9]/.test(password)) strength += 25;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
 
-    if (password !== confirmPassword) {
-        Notification.show("Passwords do not match", "error");
-        return;
-    }
+            bar.style.width = strength + '%';
 
-    // Fix: Add a space between names
-    const fullName = firstName + " " + lastName;
-
-    btn.disabled = true;
-    btn.innerText = "Processing...";
-
-    try {
-        const response = await fetch(`${API_BASE}/auth/signup`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ 
-                name: fullName, // Critical Fix: Changed full_name to name to match backend
-                email: email, 
-                password: password 
-            })
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-            Notification.show("OTP Sent! Check your email.", "success");
-            localStorage.setItem('pendingEmail', email);
-            localStorage.setItem('isPasswordReset', 'false'); 
-            localStorage.setItem('token' , 'true')
-            setTimeout(() => { window.location.href = "verify.html"; }, 2000); 
-        } else {
-            Notification.show(result.detail || "Signup failed", "error");
-            btn.disabled = false;
-            btn.innerText = "Create Account";
+            // Color coding for visual feedback
+            if (strength <= 25) {
+                bar.style.background = '#e53935';
+                label.innerText = 'Weak';
+                label.style.color = '#e53935';
+            } else if (strength <= 75) {
+                bar.style.background = '#ffa000';
+                label.innerText = 'Moderate';
+                label.style.color = '#ffa000';
+            } else {
+                bar.style.background = '#43a047';
+                label.innerText = 'Strong';
+                label.style.color = '#43a047';
+            }
         }
-    } catch (error) {
-        Notification.show("Institution server is unreachable.", "error");
-        btn.disabled = false;
-        btn.innerText = "Create Account";
-    }
-}
-</script>
+
+        // --- 3. SIGNUP HANDLER ---
+        async function handleSignup(event) {
+            event.preventDefault();
+
+            const btn = document.getElementById('signupBtn');
+            const fName = document.getElementById('firstName').value.trim();
+            const lName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            // Security Check
+            if (password !== confirmPassword) {
+                Notification.show("Passwords do not match", "error");
+                return;
+            }
+
+            if (password.length < 8) {
+                Notification.show("Password must be at least 8 characters", "error");
+                return;
+            }
+
+            // Prepare Name for the Institution database
+            const fullName = `${fName} ${lName}`.trim();
+
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Creating Account...";
+
+
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/signup`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: fullName,
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    Notification.show("OTP Sent! Check your email.", "success");
+
+                    // Critical: Storing data natively for the verification screen
+                    await AppStorage.set('pendingEmail', email);
+                    await AppStorage.set('isPasswordReset', 'false');
+
+                    setTimeout(() => { window.location.href = "verify.html"; }, 2000);
+                } else {
+                    // Handle specific backend error details
+                    Notification.show(result.detail || "Email already registered", "error");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                }
+            } catch (error) {
+                Notification.show("Institution server is unreachable.", "error");
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+    </script>
 </body>
 </html>

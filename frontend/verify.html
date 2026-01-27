@@ -48,75 +48,112 @@
         <p style="margin-top: 20px;"><a href="index.html" style="color: #0288d1; text-decoration: none;">Back to Login</a></p>
     </div>
 
-<script>
-    const API_BASE = "https://fastapi-teachers.onrender.com";
-    const email = localStorage.getItem('pendingEmail');
-    const isResetFlow = localStorage.getItem('isPasswordReset') === 'true';
+    <script src="capacitor.js"></script>
+    <script src="js/storage.js"></script>
 
-    function showBar(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-        setTimeout(() => { bar.className = ""; }, 4000);
-    }
+    <script>
+        const API_BASE = "https://fastapi-teachers.onrender.com";
+        let email = null;
+        let isResetFlow = false;
 
-    async function handleVerify() {
-        const otpInput = document.getElementById('otp');
-        const otp = otpInput.value.trim();
-        const btn = document.getElementById('mainBtn');
+        // --- 1. INITIALIZATION ---
+        window.onload = async () => {
+            // Fetch context from Capacitor storage
+            email = await AppStorage.get('pendingEmail');
+            const resetFlag = await AppStorage.get('isPasswordReset');
+            isResetFlow = (resetFlag === 'true');
 
-        if (otp.length < 6) {
-            showBar("Please enter the full 6-digit code", "error");
-            return;
-        }
-
-        btn.disabled = true;
-        btn.innerText = "Connecting to Server...";
-
-        try {
-            // DEVELOPER NOTE: The trailing slash in /verify-otp/ should match your FastAPI router
-            const response = await fetch(`${API_BASE}/auth/verify-action`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: email, otp: otp , action : isResetFlow ? 'reset' : 'signup' })
-            });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                showBar("Identity Confirmed!", "success");
-
-                if (isResetFlow) {
-                    // Logic for Password Recovery
-                    localStorage.setItem('resetEmail', email); 
-                    localStorage.setItem('passwordResetAuthorized', 'true');
-                    localStorage.removeItem('isPasswordReset'); 
-                    localStorage.removeItem('pendingEmail'); 
-                    
-                    setTimeout(() => { window.location.href = "reset-password.html"; }, 1500);
-                } else {
-                    // Logic for New Institution Admin Registration
-                    localStorage.setItem('userEmail', email);
-                    // result.access_token should be returned by backend upon successful OTP
-                    if (result.access_token) {
-                        localStorage.setItem('institutionToken', result.access_token);
-                    }
-                    localStorage.removeItem('pendingEmail');
-                    
-                    setTimeout(() => { window.location.href = "index.html"; }, 1500);
-                }
-            } else {
-                showBar(result.detail || "Invalid OTP. Please try again.", "error");
-                btn.disabled = false;
-                btn.innerText = "Verify & Activate";
-                otpInput.value = ""; // Clear on failure for security
+            if (!email) {
+                showBar("Session lost. Please restart process.", "error");
+                setTimeout(() => { window.location.href = "login.html"; }, 2000);
             }
-        } catch (e) {
-            showBar("Institution server is currently unreachable.", "error");
-            btn.disabled = false;
-            btn.innerText = "Verify & Activate";
+        };
+
+        // --- 2. NOTIFICATION SYSTEM (Sign Box) ---
+        function showBar(msg, type) {
+            const bar = document.getElementById('notification-bar');
+            if(!bar) return;
+
+            bar.innerText = msg;
+            // Applying your required styles
+            bar.style.display = 'block';
+            bar.className = type === 'error' ? 'sign-box bg-red' : 'sign-box bg-green';
+
+            // Native Haptic feedback for professional feel
+            if (window.AppHaptics) {
+                window.AppHaptics.notification(type === 'error' ? 'ERROR' : 'SUCCESS');
+            }
+
+            setTimeout(() => {
+                bar.style.display = 'none';
+                bar.className = "";
+            }, 4000);
         }
-    }
-</script>
+
+        // --- 3. OTP HANDLER ---
+        async function handleVerify() {
+            const otpInput = document.getElementById('otp');
+            const otp = otpInput.value.trim();
+            const btn = document.getElementById('mainBtn');
+
+            if (otp.length < 6) {
+                showBar("Please enter the full 6-digit code", "error");
+                return;
+            }
+
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Verifying...";
+
+
+
+            try {
+                const response = await fetch(`${API_BASE}/auth/verify-action`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        email: email,
+                        otp: otp,
+                        action: isResetFlow ? 'reset' : 'signup'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showBar("Identity Confirmed!", "success");
+
+                    if (isResetFlow) {
+                        // Logic for Password Reset Path
+                        await AppStorage.set('resetEmail', email);
+                        await AppStorage.set('passwordResetAuthorized', 'true');
+                        await AppStorage.remove('isPasswordReset');
+                        await AppStorage.remove('pendingEmail');
+
+                        setTimeout(() => { window.location.href = "reset-password.html"; }, 1500);
+                    } else {
+                        // Logic for New Registration Path
+                        await AppStorage.set('userEmail', email);
+                        if (result.access_token) {
+                            await AppStorage.set('institutionToken', result.access_token);
+                        }
+                        await AppStorage.remove('pendingEmail');
+
+                        // Redirecting to Role selection as per institution flow
+                        setTimeout(() => { window.location.href = "../../roles/role.html"; }, 1500);
+                    }
+                } else {
+                    showBar(result.detail || "Invalid OTP. Please try again.", "error");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                    otpInput.value = ""; // Security: Clear input on failure
+                }
+            } catch (e) {
+                showBar("Institution server is unreachable.", "error");
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,53 @@
+/**
+ * Global Storage Utility for Capacitor Preferences
+ * Handles the bridge between native storage and your JS logic.
+ */
+const { Preferences } = Capacitor.Plugins;
+
+const AppStorage = {
+    // Save data - always converts value to string for Capacitor safety
+    async set(key, value) {
+        try {
+            await Preferences.set({
+                key: key,
+                value: String(value)
+            });
+            return true;
+        } catch (e) {
+            console.error(`Error setting ${key}:`, e);
+            return false;
+        }
+    },
+
+    // Get data - returns the raw string value or null
+    async get(key) {
+        try {
+            const { value } = await Preferences.get({ key: key });
+            return value;
+        } catch (e) {
+            console.error(`Error getting ${key}:`, e);
+            return null;
+        }
+    },
+
+    // Remove a specific key
+    async remove(key) {
+        try {
+            await Preferences.remove({ key: key });
+        } catch (e) {
+            console.error(`Error removing ${key}:`, e);
+        }
+    },
+
+    // Clear all app data (Useful for Logout)
+    async clear() {
+        try {
+            await Preferences.clear();
+        } catch (e) {
+            console.error("Error clearing storage:", e);
+        }
+    }
+};
+
+// Export it for use in other scripts
+window.AppStorage = AppStorage;

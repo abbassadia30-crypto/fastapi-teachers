@@ -91,43 +91,79 @@
 <div id="loader" class="loader">Syncing Institution Records...</div>
 <div class="grid" id="sectionGrid"></div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
-    const token = localStorage.getItem('institutionToken');
+    let authToken = null; // Standardized variable name
     let activeSections = [];
     let allStudents = [];
 
+    // --- 1. INITIALIZATION (Fixes the Top-Level Await) ---
+    window.onload = async () => {
+        authToken = await AppStorage.get('institutionToken');
+
+        if (!authToken) {
+            window.location.href = "login.html";
+            return;
+        }
+
+        await load();
+    };
+
+    // --- 2. NOTIFIER (Red/Green Sign Box) ---
     function notify(msg, success = true) {
         const n = document.getElementById('appNotifier');
+        if(!n) return;
+
         n.innerText = msg;
-        n.style.background = success ? 'var(--success)' : 'var(--danger)';
+        n.style.background = success ? '#43a047' : '#e53935';
         n.classList.add('notifier-show');
+
+        // Native Haptics for physical feedback on your Infinix
+        if (window.AppHaptics) {
+            window.AppHaptics.notification(success ? 'SUCCESS' : 'ERROR');
+        }
+
         setTimeout(() => n.classList.remove('notifier-show'), 3000);
     }
 
+    // --- 3. DATA LOADING ---
     async function load() {
-        if (!token) return;
         try {
             const res = await fetch(`${API_URL}/dashboard/my_students`, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: { 'Authorization': `Bearer ${authToken}` }
             });
-            const data = await res.json();
-            allStudents = data.students;
 
+            if (res.status === 401) {
+                window.location.href = "login.html";
+                return;
+            }
+
+            const data = await res.json();
+            allStudents = data.students || [];
+
+            // Extract unique sections
             const uniqueSections = [...new Set(allStudents.map(s => s.section))];
             activeSections = uniqueSections.filter(sec => sec && sec.trim() !== "");
 
-            document.getElementById('loader').style.display = 'none';
             renderClasses(activeSections);
         } catch (e) {
-            notify("Connection Error", false);
+            notify("Sync Error: Check Connection", false);
+        } finally {
+            const loader = document.getElementById('loader');
+            if(loader) loader.style.display = 'none';
         }
     }
 
+    // --- 4. RENDER GRID ---
     function renderClasses(list) {
         const grid = document.getElementById('sectionGrid');
+        if (!grid) return;
+
         if (!list || list.length === 0) {
-            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999;">No active classes.</div>`;
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999; padding:50px;">No active classes found.</div>`;
             return;
         }
 
@@ -136,59 +172,65 @@
                 <button class="del-sec-btn" onclick="askDeleteSection('${sec}', event)">✕</button>
                 <span class="icon">🏫</span>
                 <h3>${sec}</h3>
+                <p style="font-size:11px; color:#7f8c8d; margin:0;">
+                    ${allStudents.filter(s => s.section === sec).length} Students
+                </p>
             </div>
         `).join('');
     }
 
+    // --- 5. BULK DELETE LOGIC ---
     function askDeleteSection(sec, e) {
         e.stopPropagation(); // Prevents navigating to students.html
-        document.getElementById('secTarget').innerText = sec;
-        document.getElementById('confirmBox').style.display = 'block';
+        const confirmBox = document.getElementById('confirmBox');
+        const targetSpan = document.getElementById('secTarget');
+
+        if(targetSpan) targetSpan.innerText = sec;
+        if(confirmBox) confirmBox.style.display = 'flex'; // Usually flex for centering modals
 
         document.getElementById('finalDelBtn').onclick = () => executeBulkDelete(sec);
     }
 
-    function closeConfirm() {
-        document.getElementById('confirmBox').style.display = 'none';
-    }
-
     async function executeBulkDelete(sectionName) {
         const btn = document.getElementById('finalDelBtn');
-        btn.innerText = "Deleting...";
+        const originalText = btn.innerText;
+        btn.innerText = "Processing...";
         btn.disabled = true;
 
-        // Find all students belonging to this section
         const targets = allStudents.filter(s => s.section === sectionName);
-        let success = 0;
+        let successCount = 0;
 
         try {
-            // Delete each student in this section
+            // Delete sequentially to avoid overwhelming the server
             for (let student of targets) {
                 const res = await fetch(`${API_URL}/dashboard/delete_student/${student.id}`, {
                     method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-                if (res.ok) success++;
+                if (res.ok) successCount++;
             }
 
-            notify(`Section deleted: Removed ${success} records`);
+            notify(`Removed Section: ${sectionName} (${successCount} records)`, true);
             closeConfirm();
-            load(); // Reload the UI
+            await load(); // Full reload to refresh student counts
         } catch (e) {
-            notify("Error during bulk delete", false);
+            notify("Partial failure during bulk delete", false);
         } finally {
-            btn.innerText = "Delete All";
+            btn.innerText = originalText;
             btn.disabled = false;
         }
     }
 
     function filterClasses() {
-        const term = document.getElementById('classSearch').value.toLowerCase();
+        const term = document.getElementById('classSearch').value.toLowerCase().trim();
         const filtered = activeSections.filter(sec => sec.toLowerCase().includes(term));
         renderClasses(filtered);
     }
 
-    window.onload = load;
+    function closeConfirm() {
+        const box = document.getElementById('confirmBox');
+        if(box) box.style.display = 'none';
+    }
 </script>
 </body>
 </html>

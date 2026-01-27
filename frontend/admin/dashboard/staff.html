@@ -78,11 +78,27 @@
     </form>
 </div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
-    const token = localStorage.getItem('institutionToken');
+    let authToken = null; // Changed from 'token' to 'authToken' for consistency
 
-    // ✅ Dynamic Field Logic: Matches Teacher Onboarding
+    // --- 1. INITIALIZATION ---
+    window.onload = async () => {
+        // Safely fetch token from native storage
+        authToken = await AppStorage.get('institutionToken');
+
+        if (!authToken) {
+            // Guard: If no token, the institution staff cannot hire others
+            window.location.replace("login.html");
+            return;
+        }
+        console.log("Onboarding Module Ready");
+    };
+
+    // --- 2. DYNAMIC FIELDS ---
     function addField() {
         const div = document.createElement('div');
         div.className = 'dynamic-field-wrapper';
@@ -94,23 +110,43 @@
         document.getElementById('dynamicContainer').appendChild(div);
     }
 
+    // --- 3. STATUS BOX (Red/Green Sign) ---
     function showStatus(msg, isSuccess) {
         const box = document.getElementById('statusBox');
+        if(!box) return;
+
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
+
+        // Native Haptics for professional feel
+        if (window.AppHaptics) {
+            window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
+        }
+
         if(isSuccess) {
             document.getElementById('hiringForm').reset();
             document.getElementById('dynamicContainer').innerHTML = "";
+            // Optional: Auto-redirect to directory after 2 seconds
+            // setTimeout(() => { window.location.href = "staff-directory.html"; }, 2000);
         }
     }
 
+    // --- 4. FORM SUBMISSION ---
     document.getElementById('hiringForm').onsubmit = async (e) => {
         e.preventDefault();
+
+        // Prevent submission if token hasn't loaded yet
+        if(!authToken) {
+            showStatus("Waiting for session...", false);
+            return;
+        }
+
         const btn = document.getElementById('submitBtn');
-        btn.innerText = "Processing...";
+        const originalText = btn.innerText;
+        btn.innerText = "Registering...";
         btn.disabled = true;
 
-        // Collect Dynamic Extra Fields
+        // Collect Dynamic Extra Fields with Trimming
         const extraData = {};
         document.querySelectorAll('.dynamic-field-wrapper').forEach(wrapper => {
             const k = wrapper.querySelector('.field-key').value.trim();
@@ -119,10 +155,10 @@
         });
 
         const payload = {
-            name: document.getElementById('sName').value,
-            position: document.getElementById('sPosition').value,
-            cnic: document.getElementById('sCNIC').value,
-            contact: document.getElementById('sContact').value,
+            name: document.getElementById('sName').value.trim(),
+            position: document.getElementById('sPosition').value.trim(),
+            cnic: document.getElementById('sCNIC').value.trim(),
+            contact: document.getElementById('sContact').value.trim(),
             extra_details: extraData
         };
 
@@ -131,23 +167,21 @@
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                    "Authorization": `Bearer ${authToken}`
                 },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showStatus("Staff hired successfully!", true);
-                // Optional: Redirect after success
-                // setTimeout(() => { window.location.href = "staff-directory.html"; }, 1500);
+                showStatus("Staff member hired successfully!", true);
             } else {
                 const err = await res.json();
-                showStatus(err.detail || "Verification failed", false);
+                showStatus(err.detail || "Database rejected record", false);
             }
         } catch (err) {
-            showStatus("Server Connection Failed", false);
+            showStatus("Connection Lost: Check internet", false);
         } finally {
-            btn.innerText = "Confirm Hiring";
+            btn.innerText = originalText;
             btn.disabled = false;
         }
     };

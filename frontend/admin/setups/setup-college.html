@@ -49,49 +49,102 @@
     </form>
 </div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    const token = localStorage.getItem('institutionToken');
+    let authToken = null;
 
+    // --- 1. INITIALIZATION ---
+    window.onload = async () => {
+        // Fetching from Capacitor storage instead of localStorage
+        authToken = await AppStorage.get('institutionToken');
+
+        if (!authToken) {
+            showSign("Security Error: No Session", "error");
+            setTimeout(() => { window.location.href = "../../index.html"; }, 2000);
+        }
+    };
+
+    // --- 2. SIGN BOX (Red/Green) ---
     function showSign(msg, type = 'success') {
         const sign = document.getElementById('status-sign');
+        if(!sign) return;
+
         sign.innerText = msg;
-        sign.className = type === 'success' ? 'bg-green' : 'bg-red';
-        if(type === 'error') setTimeout(() => { sign.className = ''; }, 4000);
+        // Apply the requested red/green sign box styles
+        sign.style.display = 'block';
+        sign.style.background = type === 'success' ? '#2e7d32' : '#c62828';
+        sign.style.color = 'white';
+        sign.style.padding = '15px';
+        sign.style.borderRadius = '10px';
+        sign.style.fontWeight = '700';
+        sign.style.textAlign = 'center';
+        sign.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
+
+        // Physical haptic feedback for mobile users
+        if (window.AppHaptics) {
+            window.AppHaptics.notification(type === 'success' ? 'SUCCESS' : 'ERROR');
+        }
+
+        if(type === 'error') {
+            setTimeout(() => { sign.style.display = 'none'; }, 4000);
+        }
     }
 
+    // --- 3. FORM SUBMISSION ---
     document.getElementById('collegeForm').onsubmit = async function(event) {
         event.preventDefault();
-        const btn = event.submitter || event.target.querySelector('button[type="submit"]');
-        btn.disabled = true; btn.innerText = "Registering...";
 
+        if (!authToken) {
+            showSign("Session expired", "error");
+            return;
+        }
+
+        const btn = event.submitter || event.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        // Real app development: Always trim user input
         const payload = {
-            name: document.getElementById('colName').value,
-            code: document.getElementById('colCode').value,
-            dean_name: document.getElementById('dean').value,
-            uni: document.getElementById('university').value,
-            address: document.getElementById('address').value,
-            email: localStorage.getItem('userEmail') || "admin@institution.com"
+            name: document.getElementById('colName').value.trim(),
+            code: document.getElementById('colCode').value.trim(),
+            dean_name: document.getElementById('dean').value.trim(),
+            uni: document.getElementById('university').value.trim(),
+            address: document.getElementById('address').value.trim(),
+            // Securely fetch email from storage
+            email: await AppStorage.get('userEmail') || "admin@institution.com"
         };
+
+
 
         try {
             const res = await fetch(`${API_BASE}/create-college`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showSign("🎓 College Successfully Registered!");
-                setTimeout(() => location.href = "dashboard.html", 2000);
+                showSign("🎓 College Successfully Registered!", "success");
+                // Save name for the success splash screen
+                await AppStorage.set('institution_name', payload.name);
+                setTimeout(() => location.href = "setup-success.html", 2000);
             } else {
                 const err = await res.json();
-                showSign(err.detail || "Registration failed", "error");
-                btn.disabled = false; btn.innerText = "Register College";
+                showSign(err.detail || "Database Error", "error");
+                btn.disabled = false;
+                btn.innerText = originalText;
             }
         } catch (e) {
-            showSign("Network Error", "error");
-            btn.disabled = false; btn.innerText = "Register College";
+            showSign("Connection Failed", "error");
+            btn.disabled = false;
+            btn.innerText = originalText;
         }
     };
 </script>

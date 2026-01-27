@@ -173,34 +173,70 @@
     <button class="next-btn" onclick="proceed()">Continue</button>
 </div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     let selectedValue = "";
 
-    function back(){
-        window.location.href = "no-institution.html"
+    function back() {
+        // Navigating back to the previous gatekeeper page
+        window.location.href = "setup-required.html";
     }
 
     function selectType(val, element) {
         selectedValue = val;
-        document.querySelectorAll('.type-card').forEach(card => card.classList.remove('selected'));
+
+        // Remove selection from all cards
+        document.querySelectorAll('.type-card').forEach(card => {
+            card.classList.remove('selected');
+            card.style.borderColor = 'transparent'; // Visual reset
+        });
+
+        // Highlight selected institution card
         element.classList.add('selected');
+        element.style.borderColor = 'var(--primary)';
+
+        // Native Haptic feedback for tap confirmation
+        if (window.AppHaptics) {
+            window.AppHaptics.impact('LIGHT');
+        }
     }
 
-    function proceed() {
+    async function proceed() {
+        const errorSign = document.getElementById('error-sign');
+
         if (!selectedValue) {
-            const sign = document.getElementById('error-sign');
-            sign.style.display = 'block';
-            setTimeout(() => sign.style.display = 'none', 2000);
+            // 🔴 Use the red sign box instead of alerts
+            errorSign.innerText = "Please select an institution type";
+            errorSign.style.display = 'block';
+            errorSign.className = "sign-red"; // Applying your required styling
+
+            if (window.AppHaptics) window.AppHaptics.notification('ERROR');
+
+            setTimeout(() => {
+                errorSign.style.display = 'none';
+            }, 3000);
             return;
         }
 
-        localStorage.setItem('temp_inst_type', selectedValue);
+        // Save selection to AppStorage (Capacitor Method)
+        await AppStorage.set('temp_inst_type', selectedValue);
 
+        // Routing logic based on institution type
         switch(selectedValue) {
-            case 'school': window.location.href = "setup-formal.html"; break;
-            case 'academy': window.location.href = "setup-academy.html"; break;
-            case 'college': window.location.href = "setup-college.html"; break;
-            default: console.error("Unknown institution type");
+            case 'school':
+                // Redirecting to the formal institution setup
+                window.location.href = "setup-formal.html";
+                break;
+            case 'academy':
+                window.location.href = "setup-academy.html";
+                break;
+            case 'college':
+                window.location.href = "setup-college.html";
+                break;
+            default:
+                console.error("Unknown institution type selected");
         }
     }
 </script>

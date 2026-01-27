@@ -74,38 +74,72 @@
     </form>
 </div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
-    const token = localStorage.getItem('institutionToken');
+    let authToken = null; // We use this globally
 
+    // --- 1. SESSION GUARD (Runs on Load) ---
+    window.onload = async () => {
+        // We wait for the phone to give us the token
+        authToken = await AppStorage.get('institutionToken');
+
+        if (!authToken) {
+            // No token? Boot them back to login immediately
+            window.location.href = "login.html";
+        } else {
+            console.log("Institution Session Verified.");
+        }
+    };
+
+    // --- 2. DYNAMIC FIELDS ---
     function addField() {
         const div = document.createElement('div');
         div.className = 'dynamic-field-wrapper';
-        div.innerHTML = `<input type="text" placeholder="Field" class="field-key" style="flex:1;"><input type="text" placeholder="Value" class="field-value" style="flex:1.5;"><button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>`;
+        div.innerHTML = `
+            <input type="text" placeholder="Field" class="field-key" style="flex:1;">
+            <input type="text" placeholder="Value" class="field-value" style="flex:1.5;">
+            <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
+        `;
         document.getElementById('dynamicContainer').appendChild(div);
     }
 
+    // --- 3. STATUS BOX (Red/Green) ---
     function showStatus(msg, isSuccess) {
         const box = document.getElementById('statusBox');
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
-        if(isSuccess) document.getElementById('hiringForm').reset();
+
+        if(isSuccess) {
+            document.getElementById('hiringForm').reset();
+            // In a real app, we wait a second so they see the green box
+            setTimeout(() => { window.location.href = "teachers.html"; }, 1500);
+        }
     }
 
+    // --- 4. FORM SUBMISSION ---
     document.getElementById('hiringForm').onsubmit = async (e) => {
         e.preventDefault();
+
+        // Safety check: Don't submit if token isn't loaded yet
+        if(!authToken) {
+            showStatus("Session not ready. Please wait.", false);
+            return;
+        }
+
         const btn = document.getElementById('submitBtn');
-        btn.innerText = "Saving...";
+        btn.innerText = "Saving to Database...";
         btn.disabled = true;
 
         const extraData = {};
         document.querySelectorAll('.dynamic-field-wrapper').forEach(w => {
-            const k = w.querySelector('.field-key').value;
-            const v = w.querySelector('.field-value').value;
+            const k = w.querySelector('.field-key').value.trim();
+            const v = w.querySelector('.field-value').value.trim();
             if(k) extraData[k] = v;
         });
 
-        // ✅ FIXED: Using 'tDesignation' instead of 'tSection'
         const payload = {
             name: document.getElementById('tName').value,
             designation: document.getElementById('tDesignation').value,
@@ -118,22 +152,25 @@
         try {
             const res = await fetch(`${API_URL}/dashboard/hire-teacher`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authToken}` // Fixed variable name here
+                },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
                 showStatus("Teacher onboarded successfully!", true);
-                window.location.href = "teachers.html"
             } else {
                 const err = await res.json();
                 showStatus(err.detail || "Error: Data mismatch", false);
+                btn.disabled = false;
+                btn.innerText = "Confirm Hiring";
             }
         } catch (err) {
             showStatus("Server Connection Failed", false);
-        } finally {
-            btn.innerText = "Confirm Hiring";
             btn.disabled = false;
+            btn.innerText = "Confirm Hiring";
         }
     };
 </script>

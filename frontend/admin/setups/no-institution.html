@@ -128,49 +128,62 @@
     <button class="btn-back" onclick="backbutton()" >Back to Role Selection</button>
 </div>
 
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
+
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-
-    async function backbutton(){
-        window.location.href = "../../roles/role.html";
-        localStorage.removeItem('user_role')
-    }
+    let authToken = null;
 
     window.onload = async () => {
-        const token = localStorage.getItem('institutionToken');
+        // Use AppStorage for Capacitor compatibility
+        authToken = await AppStorage.get('institutionToken');
 
-        if (!token) {
+        if (!authToken) {
             showError("No session found. Redirecting...");
             return;
         }
 
         try {
-            // Check if user already has an institution linked to their email
+            // Real app check: Verify if an institution is already linked
             const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Authorization': `Bearer ${authToken}` }
             });
-
-            const data = await response.json();
 
             if (response.status === 401) {
                 showError("Session expired. Please re-login.");
-            } else if (data.has_institution === true) {
-                // Redirect directly to dashboard if they own one
+                return;
+            }
+
+            const data = await response.json();
+            if (data.has_institution === true) {
+                // If they have one, skip setup and go to dashboard
                 window.location.href = "../dashboard/dashboard.html";
+            } else {
+                // Only show the page if no institution is found
+                document.body.style.display = 'flex';
             }
         } catch (err) {
-            console.error("Institution server connection failed:", err);
+            console.error("Connection failed:", err);
+            // On connection fail, still allow them to see the buttons
+            document.body.style.display = 'flex';
         }
     };
+
+    async function backToRole() {
+        await AppStorage.remove('user_role');
+        window.location.href = "../../roles/role.html";
+    }
 
     function showError(msg) {
         const sign = document.getElementById('error-sign');
         sign.innerText = msg;
         sign.style.display = 'block';
+
+        if(window.AppHaptics) {
+            window.AppHaptics.notification('ERROR');
+        }
+
         setTimeout(() => {
             window.location.href = "../../index.html";
         }, 2500);
