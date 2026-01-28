@@ -100,7 +100,7 @@
             }
 
             // 2. Patch Request to Backend
-            // IMPORTANT: Using /auth/update-role to match your backend prefix
+            // Your Python router prefix is "/institution", so the URL is correct
             const response = await fetch(`${API_BASE}/institution/update-role`, {
                 method: 'PATCH',
                 headers: {
@@ -113,7 +113,14 @@
                 })
             });
 
-            const result = await response.json();
+            // 🏛️ REAL APP FIX: Handle potential non-JSON errors
+            let result;
+            const text = await response.text();
+            try {
+                result = JSON.parse(text);
+            } catch (e) {
+                result = { detail: "Server returned an invalid response format." };
+            }
 
             if (response.ok) {
                 // 3. Update Local Storage
@@ -125,17 +132,19 @@
                     if (roleName === 'admin') {
                         window.location.href = "../admin/setups/no-institution.html";
                     } else {
+                        // Correcting teacher/student pathing
                         window.location.href = `../${roleName}/dashboard/dashboard.html`;
                     }
                 }, 1500);
 
             } else {
+                // This shows the actual error from FastAPI (e.g., 401, 400, or 422)
                 showNotify(result.detail || "Update Failed", "error");
             }
 
         } catch (error) {
-            console.error("Connection Error:", error);
-            showNotify("Cannot connect to Institution Server", "error");
+            console.error("Network/Script Error:", error);
+            showNotify("Check Internet or Institution Server", "error");
         } finally {
             loader.style.display = 'none';
         }
