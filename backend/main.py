@@ -27,7 +27,7 @@ app.include_router(profile.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://fastapi-teachers.onrender.com"],  # For production, replace "*" with your app's URL
+    allow_origins=["*"],  # For production, replace "*" with your app's URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -17,9 +17,8 @@ class LoginSchema(BaseModel):
     password: str
 
 class RoleUpdate(BaseModel):
-    email: Optional[EmailStr] = None
     role: str
-
+    email: str | None = None
 class InstitutionBase(BaseModel):
     name: str
     address: Optional[str] = None
