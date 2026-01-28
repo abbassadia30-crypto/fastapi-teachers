@@ -133,11 +133,30 @@
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    let authToken = null;
+
+    // Safety: Hide body until check is done to prevent "flickering"
+    document.body.style.opacity = '0';
+
+    function showError(msg) {
+        const sign = document.getElementById('error-sign');
+        sign.innerText = msg;
+        sign.style.display = 'block';
+
+        // Use standard Capacitor Haptics
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
+        }
+
+        setTimeout(() => { window.location.href = "../../index.html"; }, 2500);
+    }
+
+    async function backbutton() {
+        // Just navigate back, don't wipe storage unless you want them to pick role again
+        window.location.href = "../../roles/role.html";
+    }
 
     window.onload = async () => {
-        // Use AppStorage for Capacitor compatibility
-        authToken = await AppStorage.get('institutionToken');
+        const authToken = await AppStorage.get('institutionToken');
 
         if (!authToken) {
             showError("No session found. Redirecting...");
@@ -145,7 +164,6 @@
         }
 
         try {
-            // Real app check: Verify if an institution is already linked
             const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
@@ -156,38 +174,22 @@
             }
 
             const data = await response.json();
+
             if (data.has_institution === true) {
-                // If they have one, skip setup and go to dashboard
+                // User already has an institution, save name for dashboard UI
+                await AppStorage.set('current_institution_name', data.institution_name);
                 window.location.href = "../dashboard/dashboard.html";
             } else {
-                // Only show the page if no institution is found
-                document.body.style.display = 'flex';
+                // Show the setup content
+                document.body.style.opacity = '1';
+                document.body.style.transition = 'opacity 0.4s ease';
             }
         } catch (err) {
-            console.error("Connection failed:", err);
-            // On connection fail, still allow them to see the buttons
-            document.body.style.display = 'flex';
+            console.error("Network check failed:", err);
+            // On network failure, show the page anyway so they can try offline or re-connect
+            document.body.style.opacity = '1';
         }
     };
-
-    async function backToRole() {
-        await AppStorage.remove('user_role');
-        window.location.href = "../../roles/role.html";
-    }
-
-    function showError(msg) {
-        const sign = document.getElementById('error-sign');
-        sign.innerText = msg;
-        sign.style.display = 'block';
-
-        if(window.AppHaptics) {
-            window.AppHaptics.notification('ERROR');
-        }
-
-        setTimeout(() => {
-            window.location.href = "../../index.html";
-        }, 2500);
-    }
 </script>
 </body>
 </html>

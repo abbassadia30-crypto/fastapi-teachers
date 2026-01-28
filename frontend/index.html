@@ -92,29 +92,35 @@
     // --- 1. INITIALIZATION & SESSION GUARD ---
     window.onload = async () => {
         try {
-            // Check session via native storage
             const token = await AppStorage.get('institutionToken');
             const role = await AppStorage.get('user_role');
+            const instID = await AppStorage.get('institution_id');
             const rememberedEmail = await AppStorage.get('rememberedEmail');
 
-            // Pre-fill email for "Remember Me"
             if (rememberedEmail) {
                 const emailField = document.getElementById('email');
-                const rememberCheck = document.getElementById('remember');
-                if(emailField) emailField.value = rememberedEmail;
-                if(rememberCheck) rememberCheck.checked = true;
+                if(emailField) {
+                    emailField.value = rememberedEmail;
+                    document.getElementById('remember').checked = true;
+                }
             }
 
-            // If already logged in, skip login screen
-            if (token && role && role !== 'unassigned') {
-                routeToDashboard(role);
+            // 🏛️ REAL APP SESSION CHECK
+            if (token) {
+                // Determine if setup is needed or go to dashboard
+                if (role === "admin") {
+                    window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
+                } else if (role === "unassigned") {
+                    window.location.href = "roles/role.html";
+                } else {
+                    window.location.href = `${role}/dashboard/dashboard.html`;
+                }
             } else {
-                // Hide splash/overlay and show login form
                 const overlay = document.getElementById('auth-check-overlay');
                 if(overlay) overlay.style.display = 'none';
             }
         } catch (e) {
-            console.error("Storage Initialization Error:", e);
+            console.error("Storage Error:", e);
             document.getElementById('auth-check-overlay').style.display = 'none';
         }
     };
@@ -125,29 +131,16 @@
         show(msg, type) {
             if(!this.el) return;
             this.el.innerText = msg;
-            // Matches your requirement for green/red sign boxes
             this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
 
-            // Native Haptics for professional feel
-            if (window.AppHaptics) {
-                window.AppHaptics.notification(type === 'success' ? 'SUCCESS' : 'ERROR');
+            if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+                Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
             }
-
             setTimeout(() => { this.el.className = ''; }, 4000);
         }
     };
 
-    // --- 3. DYNAMIC ROUTER ---
-    function routeToDashboard(role) {
-        const paths = {
-            'admin': 'admin/dashboard/dashboard.html',
-            'teacher': 'teacher/dashboard/dashboard.html', // Fixed pathing
-            'student': 'student/dashboard/dashboard.html'
-        };
-        window.location.href = paths[role] || "roles/role.html";
-    }
-
-    // --- 4. LOGIN HANDLER ---
+    // --- 3. LOGIN HANDLER ---
     async function handleLogin(event) {
         event.preventDefault();
         const btn = document.getElementById('loginBtn');
@@ -155,7 +148,7 @@
         const password = document.getElementById('password').value;
         const remember = document.getElementById('remember').checked;
 
-        if(!email || !password) {
+        if (!email || !password) {
             Notification.show("Please fill all fields", "error");
             return;
         }
@@ -167,35 +160,38 @@
         try {
             const response = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, password: password })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({email: email, password: password})
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                // Persistent Storage
-                if (remember) {
-                    await AppStorage.set('rememberedEmail', email);
-                } else {
-                    await AppStorage.remove('rememberedEmail');
-                }
+                // 🏛️ SAVE CORE SESSION DATA
+                if (remember) await AppStorage.set('rememberedEmail', email);
+                else await AppStorage.remove('rememberedEmail');
 
                 await AppStorage.set('userEmail', email);
                 await AppStorage.set('institutionToken', result.access_token);
+                await AppStorage.set('user_role', result.role);
+                await AppStorage.set('institution_id', result.institution_id);
 
-                const role = result.role || "unassigned";
-                await AppStorage.set('user_role', role);
+                Notification.show("Login Successful!", "success");
 
-                // Admin-Specific Workspace Verification
-                if (role === "admin") {
-                    await handleAdminVerification(result.access_token);
-                } else if (role === "unassigned") {
-                    window.location.href = "roles/role.html";
-                } else {
-                    Notification.show("Login Successful!", "success");
-                    setTimeout(() => routeToDashboard(role), 1200);
-                }
+                // 🏛️ EASY-TO-EDIT PATHWAY LOGIC
+                setTimeout(() => {
+                    const role = result.role;
+                    const instID = result.institution_id;
+
+                    if (role === "admin") {
+                        window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
+                    } else if (role === "unassigned") {
+                        window.location.href = "roles/role.html";
+                    } else {
+                        window.location.href = `${role}/dashboard/dashboard.html`;
+                    }
+                }, 1200);
+
             } else {
                 Notification.show(result.detail || "Invalid Credentials", "error");
                 btn.disabled = false;
@@ -205,26 +201,6 @@
             Notification.show("Institution Server Offline", "error");
             btn.disabled = false;
             btn.innerText = originalText;
-        }
-    }
-
-    async function handleAdminVerification(token) {
-        try {
-            const checkRes = await fetch(`${API_BASE}/dashboard/check-ownership`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const checkData = await checkRes.json();
-
-            if (checkData.has_institution) {
-                Notification.show(`Welcome to ${checkData.institution_name}`, "success");
-                setTimeout(() => { window.location.href = "admin/dashboard/dashboard.html"; }, 1500);
-            } else {
-                Notification.show("Setting up your institution...", "success");
-                setTimeout(() => { window.location.href = "admin/setups/no-institution.html"; }, 1500);
-            }
-        } catch (err) {
-            // If check fails, default to setup screen
-            window.location.href = "admin/setups/no-institution.html";
         }
     }
 </script>

@@ -57,14 +57,13 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(String) # Set to None/Null for onboarding later
+    role = Column(String, default="unassigned")# Set to None/Null for onboarding later
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
     has_institution = Column(Boolean, default=False)
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
-    
-    # Ownership (For Admins)
+    institution_id = Column(Integer, ForeignKey("institutions.id") , nullable=True)
+
     bio = relationship("UserBio", back_populates="user", uselist=False)
     owned_institution = relationship("Institution", back_populates="owner", 
                                      foreign_keys=[Institution.owner_id], uselist=False)

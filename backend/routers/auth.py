@@ -114,24 +114,26 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "OTP sent to your email."}
 
-@router.post("/login")
-async def login(credentials: schemas.LoginSchema, db: Session = Depends(get_db)):
+@router.post("/login", response_model=schemas.Token)
+async def login(credentials: schemas.LoginSchema, db: Session = database.SessionLocal()):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
-    
+
     if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
-    
+
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
-    
+
+    # Generate Token
     access_token = create_access_token(data={"sub": user.email})
-    
+
+    # Return structure optimized for your JS logic
     return {
-        "access_token": access_token, 
+        "access_token": access_token,
         "token_type": "bearer",
-        "role" : user.role,
-        "user": user.name, 
-        "institution_id": user.institution_id 
+        "role": user.role or "unassigned",
+        "user": user.name,
+        "institution_id": user.institution_id  # Returns null if not set
     }
 
 @router.post("/forgot-password")

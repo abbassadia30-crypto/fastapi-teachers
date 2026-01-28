@@ -19,11 +19,21 @@ class LoginSchema(BaseModel):
 class RoleUpdate(BaseModel):
     role: str
     email: str | None = None
+
 class InstitutionBase(BaseModel):
     name: str
     address: Optional[str] = None
     email: Optional[EmailStr] = None
     description: Optional[str] = None
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    role: str
+    user: str
+    institution_id: Optional[int] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 class SchoolSchema(InstitutionBase):
     principal_name: str

@@ -18,19 +18,27 @@ async def update_user_role(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    # Developer Tip: Validate the role string to prevent database pollution
+    # Validate allowed roles
     if payload.role not in ["admin", "teacher", "student"]:
         raise HTTPException(status_code=400, detail="Invalid role selection")
 
     current_user.role = payload.role
-    # If this is the first time they set a role, you might want to mark
-    # them as 'fully registered' here.
+
+    # Logic: If they pick admin, ensure they are flagged for the setup pathway
+    if payload.role == "admin":
+        current_user.has_institution = False
+    else:
+        # Teachers/Students are usually invited, so they might not need a 'setup'
+        current_user.has_institution = True
 
     db.commit()
+    db.refresh(current_user) # Important to get updated state
+
     return {
         "status": "success",
         "role": current_user.role,
-        "email": current_user.email
+        "has_institution": current_user.has_institution,
+        "institution_id": current_user.institution_id
     }
 
 @router.post("/setup-workspace")

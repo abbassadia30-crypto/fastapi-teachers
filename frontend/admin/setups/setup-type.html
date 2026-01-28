@@ -3,70 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <title>Select Workspace Type</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --admin-theme: #e50914; --text-main: #263238; }
+        /* Institution App Professional Theme */
+        :root {
+            --admin-theme: #e50914;
+            --bg-main: #f8f9fa;
+            --text-main: #263238;
+            --card-white: #ffffff;
+        }
 
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
-            background: #f8f9fa;
+            background: var(--bg-main);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
+            color: var(--text-main);
+            overflow: hidden; /* App feel */
         }
 
-        .header { text-align: center; margin-bottom: 30px; }
-        .header h1 { font-size: 22px; color: var(--text-main); margin: 0; }
-        .header p { font-size: 14px; color: #666; }
+        /* Red/Green Sign Box - Absolute UI */
+        #sign-box {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 350px;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            z-index: 2000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            animation: slideDown 0.4s ease;
+        }
+        .bg-red { background: #e53935; display: block !important; }
+        .bg-green { background: #43a047; display: block !important; }
+
+        @keyframes slideDown {
+            from { top: -60px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
+
+        .header { text-align: center; margin-bottom: 35px; width: 90%; }
+        .header h1 { font-size: 24px; margin: 0; font-weight: 600; }
+        .header p { font-size: 14px; color: #666; margin-top: 5px; }
 
         .selection-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 15px;
             width: 90%;
             max-width: 400px;
         }
 
         .type-card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
+            background: var(--card-white);
+            padding: 22px;
+            border-radius: 18px;
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 18px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             border: 2px solid transparent;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
         }
 
-        .type-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            border-color: #ddd;
-        }
-
-        .type-card:hover .icon-box {
-            background: var(--admin-theme);
-            color: white;
-            transform: scale(1.1);
-        }
-
+        /* Selection Feedback */
         .type-card.selected {
             border-color: var(--admin-theme);
             background: #fff5f5;
-            box-shadow: 0 0 0 2px var(--admin-theme);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 9, 20, 0.1);
         }
 
         .icon-box {
             width: 60px;
             height: 60px;
-            border-radius: 12px;
-            background: #f0f2f5;
+            border-radius: 14px;
+            background: #f1f3f5;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -74,68 +98,43 @@
             transition: 0.3s;
         }
 
-        .info h3 { margin: 0; font-size: 16px; color: var(--text-main); }
-        .info p { margin: 5px 0 0; font-size: 12px; color: #777; }
+        .type-card.selected .icon-box {
+            background: var(--admin-theme);
+            color: white;
+        }
 
-        /* --- NEW BUTTON ROW STYLES --- */
+        .info h3 { margin: 0; font-size: 16px; font-weight: 600; }
+        .info p { margin: 4px 0 0; font-size: 12px; color: #777; line-height: 1.4; }
+
         .button-row {
             display: flex;
             gap: 12px;
-            margin-top: 40px;
+            margin-top: 45px;
             width: 90%;
             max-width: 400px;
         }
 
-        .next-btn {
-            flex: 2; /* Takes more space */
-            background: var(--admin-theme);
-            color: white;
+        .btn-action {
+            padding: 18px;
+            border-radius: 14px;
+            font-weight: 600;
+            font-family: 'Poppins', sans-serif;
             border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 16px;
             cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+            transition: 0.2s;
+            font-size: 15px;
         }
 
-        .btn-back {
-            flex: 1; /* Smaller back button */
-            background: #f0f0f0;
-            color: #555;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: 0.3s;
-        }
+        .btn-back { flex: 1; background: #eaedf0; color: #4b5563; }
+        .next-btn { flex: 2; background: var(--admin-theme); color: white; }
 
-        .next-btn:hover { background: #b20710; transform: translateY(-2px); }
-        .btn-back:hover { background: #e0e0e0; color: #333; }
-
-        #error-sign {
-            display: none;
-            position: fixed;
-            top: 20px;
-            background: #ef5350;
-            color: white;
-            padding: 12px 25px;
-            border-radius: 10px;
-            z-index: 100;
-            font-weight: 600;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        /* Active state for Capacitor touch */
+        .btn-action:active { transform: scale(0.96); opacity: 0.9; }
     </style>
 </head>
 <body>
 
-<div id="error-sign">Please select a type to continue</div>
+<div id="sign-box"></div>
 
 <div class="header">
     <h1>Institution Setup</h1>
@@ -143,11 +142,11 @@
 </div>
 
 <div class="selection-grid">
-    <div class="type-card" onclick="selectType('school', this)">
+    <div class="type-card" onclick="selectType('institution', this)">
         <div class="icon-box">🏫</div>
         <div class="info">
             <h3>Formal Institution</h3>
-            <p>Registered School or High School.</p>
+            <p>Registered K-12 or High School.</p>
         </div>
     </div>
 
@@ -155,7 +154,7 @@
         <div class="icon-box">✍️</div>
         <div class="info">
             <h3>Coaching / Academy</h3>
-            <p>Tuition center or Skill development lab.</p>
+            <p>Tuition center or private lab.</p>
         </div>
     </div>
 
@@ -163,80 +162,84 @@
         <div class="icon-box">🎓</div>
         <div class="info">
             <h3>College / Higher Ed</h3>
-            <p>Intermediate or Degree College.</p>
+            <p>Intermediate or Degree college.</p>
         </div>
     </div>
 </div>
 
 <div class="button-row">
-    <button class="btn-back" onclick=back()>← Back</button>
-    <button class="next-btn" onclick="proceed()">Continue</button>
+    <button class="btn-action btn-back" onclick="back()">← Back</button>
+    <button class="btn-action next-btn" onclick="proceed()">Continue</button>
 </div>
 
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
+    // 🏛️ CENTRAL PATH CONFIGURATION (Edit these whenever your files move)
+    const PATHWAY = {
+        institution: "setup-formal.html",
+        academy:     "setup-academy.html",
+        college:   "setup-college.html",
+        back:      "no-institution.html"
+    };
+
     let selectedValue = "";
 
+    // Red/Green Sign Box Utility
+    function showSign(msg, type = 'error') {
+        const box = document.getElementById('sign-box');
+        if(!box) return;
+        box.innerText = msg;
+        box.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => { box.className = ''; }, 3000);
+    }
+
+    // Easy-to-edit Back Navigation
     function back() {
-        // Navigating back to the previous gatekeeper page
-        window.location.href = "setup-required.html";
+        window.location.href = PATHWAY.back;
     }
 
     function selectType(val, element) {
         selectedValue = val;
-
-        // Remove selection from all cards
-        document.querySelectorAll('.type-card').forEach(card => {
-            card.classList.remove('selected');
-            card.style.borderColor = 'transparent'; // Visual reset
-        });
-
-        // Highlight selected institution card
+        document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
         element.classList.add('selected');
-        element.style.borderColor = 'var(--primary)';
 
-        // Native Haptic feedback for tap confirmation
-        if (window.AppHaptics) {
-            window.AppHaptics.impact('LIGHT');
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
         }
     }
 
     async function proceed() {
-        const errorSign = document.getElementById('error-sign');
-
         if (!selectedValue) {
-            // 🔴 Use the red sign box instead of alerts
-            errorSign.innerText = "Please select an institution type";
-            errorSign.style.display = 'block';
-            errorSign.className = "sign-red"; // Applying your required styling
-
-            if (window.AppHaptics) window.AppHaptics.notification('ERROR');
-
-            setTimeout(() => {
-                errorSign.style.display = 'none';
-            }, 3000);
+            showSign("Please select an institution type");
             return;
         }
 
-        // Save selection to AppStorage (Capacitor Method)
-        await AppStorage.set('temp_inst_type', selectedValue);
+        try {
+            // Save selection logic
+            if (typeof AppStorage !== 'undefined') {
+                await AppStorage.set('temp_inst_type', selectedValue);
+            }
 
-        // Routing logic based on institution type
-        switch(selectedValue) {
-            case 'school':
-                // Redirecting to the formal institution setup
-                window.location.href = "setup-formal.html";
-                break;
-            case 'academy':
-                window.location.href = "setup-academy.html";
-                break;
-            case 'college':
-                window.location.href = "setup-college.html";
-                break;
-            default:
-                console.error("Unknown institution type selected");
+            showSign("Selection Saved", "success");
+
+            // 🏛️ DYNAMIC REDIRECT LOGIC
+            // Using a simple lookup makes it easy to manage pathways
+            const targetPage = PATHWAY[selectedValue];
+
+            setTimeout(() => {
+                if (targetPage) {
+                    window.location.href = targetPage;
+                } else {
+                    showSign("Pathway not configured", "error");
+                }
+            }, 800);
+
+        } catch (error) {
+            console.error("Navigation Error:", error);
+            // Fallback: Try manual redirect if logic fails
+            window.location.href = PATHWAY[selectedValue];
         }
     }
 </script>

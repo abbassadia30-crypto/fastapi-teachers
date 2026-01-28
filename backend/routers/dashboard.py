@@ -90,23 +90,27 @@ async def check_institution_ownership(
         current_user: models.User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
-    # If the boolean flag is False, we don't even need to query the Institutions table
-    if not current_user.has_institution:
+    # Quick exit for users who haven't started setup
+    if not current_user.has_institution or current_user.institution_id is None:
         return {
             "has_institution": False,
             "redirect": "/admin/setups/no-institution.html"
         }
 
-    # If True, get the details for the frontend
+    # Verify the institution exists in the DB
     institution = db.query(models.Institution).filter(
-        models.Institution.owner_id == current_user.id
+        models.Institution.id == current_user.institution_id
     ).first()
+
+    if not institution:
+        # Data integrity fallback: if ID exists but record is gone
+        return {"has_institution": False, "redirect": "/admin/setups/no-institution.html"}
 
     return {
         "has_institution": True,
-        "institution_name": institution.name if institution else "My Institution",
-        "institution_type": institution.type if institution else "school",
-        "redirect": "/admin/dashboard.html"
+        "institution_name": institution.name,
+        "institution_type": institution.type,
+        "redirect": "/admin/dashboard/dashboard.html"
     }
 
 @router.get("/sections")

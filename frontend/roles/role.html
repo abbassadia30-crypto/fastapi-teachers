@@ -6,42 +6,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Institution App Standard Styles */
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #141414; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; overflow: hidden; }
         h1 { font-weight: 400; font-size: 26px; margin-bottom: 40px; }
 
         .profile-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-        .profile-card { text-align: center; cursor: pointer; transition: 0.3s transform ease; width: 100px; }
-        .profile-card:active { transform: scale(0.9); }
+        .profile-card { text-align: center; cursor: pointer; transition: 0.3s; width: 100px; }
+
+        /* Interactive feel */
+        .profile-card:active { transform: scale(0.9); opacity: 0.7; }
 
         .icon-box { width: 90px; height: 90px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 45px; margin-bottom: 10px; transition: 0.3s; }
-        .student { background: #e50914; } /* Red Sign Box Color Style */
+        .student { background: #e50914; }
         .teacher { background: #2b5de4; }
         .admin { background: #e87d0d; }
 
         .name { color: #b3b3b3; font-size: 14px; font-weight: 600; }
 
-        /* Red/Green Sign Box Notifications */
+        /* Red/Green Sign Box */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 3000; font-weight: 600;
         }
-        .bg-green { top: 20px !important; background: #43a047; border: 1px solid #1b5e20; }
-        .bg-red { top: 20px !important; background: #e53935; border: 1px solid #b71c1c; }
+        .bg-green { top: 20px !important; background: #43a047; }
+        .bg-red { top: 20px !important; background: #e53935; }
 
-        /* Loading Overlay */
         .loading-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9); z-index: 2000; justify-content: center;
             align-items: center; flex-direction: column;
         }
-        .spinner {
-            width: 40px; height: 40px; border: 4px solid #333; border-top: 4px solid #fff;
-            border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 15px;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -49,8 +44,7 @@
 <div id="notification-bar"></div>
 
 <div id="loading" class="loading-overlay">
-    <div class="spinner"></div>
-    <div style="font-size: 14px; letter-spacing: 1px;">Configuring Profile...</div>
+    <div style="font-size: 14px; letter-spacing: 1px;">Synchronizing Profile...</div>
 </div>
 
 <h1>Who is using?</h1>
@@ -70,8 +64,8 @@
     </div>
 </div>
 
-<script src="../capacitor.js"></script>
-<script src="../js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
@@ -80,7 +74,10 @@
         const bar = document.getElementById('notification-bar');
         bar.innerText = msg;
         bar.className = type === 'success' ? 'bg-green' : 'bg-red';
-        if (window.AppHaptics) window.AppHaptics.notification(type.toUpperCase());
+
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        }
         setTimeout(() => { bar.className = ''; }, 3500);
     }
 
@@ -89,66 +86,46 @@
         loader.style.display = 'flex';
 
         try {
-            // 1. Get Authentication Data
             const token = await AppStorage.get('institutionToken');
-            const email = await AppStorage.get('userEmail');
 
-            if (!token) {
-                showNotify("Session Lost. Please Log in.", "error");
-                setTimeout(() => { window.location.href = "../index.html"; }, 1500);
-                return;
-            }
-
-            // 2. Patch Request to Backend
-            // Your Python router prefix is "/institution", so the URL is correct
             const response = await fetch(`${API_BASE}/institution/update-role`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    email: email,
-                    role: roleName
-                })
+                body: JSON.stringify({ role: roleName })
             });
 
-            // 🏛️ REAL APP FIX: Handle potential non-JSON errors
-            let result;
-            const text = await response.text();
-            try {
-                result = JSON.parse(text);
-            } catch (e) {
-                result = { detail: "Server returned an invalid response format." };
-            }
+            const result = await response.json();
 
             if (response.ok) {
-                // 3. Update Local Storage
                 await AppStorage.set('user_role', roleName);
-                showNotify(`Profile set as ${roleName}`, "success");
+                showNotify(`Profile synchronized as ${roleName}`, "success");
 
-                // 4. Redirect
+                // 🏛️ EASY-TO-EDIT REDIRECT LOGIC
                 setTimeout(() => {
                     if (roleName === 'admin') {
                         window.location.href = "../admin/setups/no-institution.html";
                     } else {
-                        // Correcting teacher/student pathing
                         window.location.href = `../${roleName}/dashboard/dashboard.html`;
                     }
-                }, 1500);
+                }, 1200);
 
             } else {
-                // This shows the actual error from FastAPI (e.g., 401, 400, or 422)
-                showNotify(result.detail || "Update Failed", "error");
+                showNotify(result.detail || "Selection failed", "error");
             }
-
         } catch (error) {
-            console.error("Network/Script Error:", error);
-            showNotify("Check Internet or Institution Server", "error");
+            showNotify("Connection Error", "error");
         } finally {
             loader.style.display = 'none';
         }
     }
+
+    window.onload = async () => {
+        const token = await AppStorage.get('institutionToken');
+        if (!token) window.location.href = "../../index.html";
+    };
 </script>
 </body>
 </html>
