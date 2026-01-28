@@ -5,6 +5,19 @@
     <title>Admin Portal - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="../../js/storage.js"></script>
+    <script>
+        (async () => {
+            // 🏛️ Real App Guard: Check session before rendering body
+            const token = await AppStorage.get('institutionToken');
+            const role = await AppStorage.get('user_role');
+
+            if (!token || !role || role === 'null' || role === 'unassigned') {
+                // Redirect to login if session data is missing or corrupted
+                window.location.href = "../../index.html";
+            }
+        })();
+    </script>
     <style>
         :root {
             --primary: #0288d1;

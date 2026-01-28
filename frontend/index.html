@@ -167,31 +167,32 @@
             const result = await response.json();
 
             if (response.ok) {
-                // 🏛️ SAVE CORE SESSION DATA
-                if (remember) await AppStorage.set('rememberedEmail', email);
-                else await AppStorage.remove('rememberedEmail');
+                const result = await response.json();
 
-                await AppStorage.set('userEmail', email);
+                // 🏛️ MUST AWAIT EVERYTHING BEFORE REDIRECTING
                 await AppStorage.set('institutionToken', result.access_token);
                 await AppStorage.set('user_role', result.role);
                 await AppStorage.set('institution_id', result.institution_id);
 
+                const role = result.role; // Use the local variable, not the storage yet
+                const instID = result.institution_id;
+
                 Notification.show("Login Successful!", "success");
 
-                // 🏛️ EASY-TO-EDIT PATHWAY LOGIC
                 setTimeout(() => {
-                    const role = result.role;
-                    const instID = result.institution_id;
+                    // Ensure role is not null/undefined
+                    if (!role || role === "unassigned") {
+                        window.location.href = "roles/role.html";
+                        return;
+                    }
 
                     if (role === "admin") {
                         window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
-                    } else if (role === "unassigned") {
-                        window.location.href = "roles/role.html";
                     } else {
+                        // Standardizing the path
                         window.location.href = `${role}/dashboard/dashboard.html`;
                     }
                 }, 1200);
-
             } else {
                 Notification.show(result.detail || "Invalid Credentials", "error");
                 btn.disabled = false;
