@@ -115,7 +115,10 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     return {"status": "success", "message": "OTP sent to your email."}
 
 @router.post("/login", response_model=schemas.Token)
-async def login(credentials: schemas.LoginSchema, db: Session = database.SessionLocal()):
+async def login(
+        credentials: schemas.LoginSchema,
+        db: Session = Depends(database.get_db) # Ensure this is a FastAPI Depends
+):
     user = db.query(models.User).filter(models.User.email == credentials.email).first()
 
     if not user or not verify_password(credentials.password, user.password):
