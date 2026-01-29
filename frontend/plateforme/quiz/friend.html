@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Friend Quizzes | Institution</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --primary: #0288d1; --bg: #000000; --success: #2e7d32; --text-main: #ffffff; }
+    body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text-main); overflow: hidden; }
+    .top-nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; padding: 40px 20px 15px; z-index: 1000; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); gap: 15px; }
+    .nav-tab { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.6); cursor: pointer; position: relative; text-decoration: none; }
+    .nav-tab.active { color: #fff; font-size: 17px; }
+    .nav-tab.active::after { content: ''; position: absolute; bottom: -5px; left: 25%; width: 50%; height: 3px; background: var(--primary); border-radius: 2px; }
+    .quiz-scroll { height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; }
+    .quiz-scroll::-webkit-scrollbar { display: none; }
+    .quiz-card { height: 100vh; width: 100%; scroll-snap-align: start; position: relative; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 20px 120px; box-sizing: border-box; background-size: cover; background-position: center; }
+    .card-overlay { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(0,0,0,0.9) 10%, transparent 50%); }
+    .play-btn { position: relative; z-index: 5; background: white; color: black; border: none; padding: 15px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; }
+    #sign-box { display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 80%; padding: 12px; border-radius: 10px; text-align: center; z-index: 2000; font-weight: 600; }
+    .sign-green { background: var(--success); color: white; }
+    .floating-dash {
+      position: fixed; bottom: 30px; right: 20px;
+      background: linear-gradient(135deg, var(--primary), #01579b);
+      color: white; padding: 12px 20px; border-radius: 50px;
+      text-decoration: none; font-weight: 700; font-size: 13px;
+      box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4); z-index: 2000;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .floating-dash:active { transform: scale(0.95); }
+  </style>
+</head>
+<body>
+<div class="top-nav">
+  <a href="global.html" class="nav-tab">For You</a>
+  <a href="friend.html" class="nav-tab active">Friends</a>
+  <a href="institute.html" class="nav-tab">Institution</a>
+  <a href="rank.html" class="nav-tab">Rank</a>
+</div>
+<div class="quiz-scroll">
+  <div class="quiz-card" style="background-image:url('https://images.unsplash.com/photo-1523240682765-e70e8b713e2e?q=80&w=1000')">
+    <div class="card-overlay"></div>
+    <div style="position:relative; z-index:2;">
+      <h2 style="font-size:32px; margin:0;">Ali's Math Duel</h2>
+      <p>Ali challenged you to a 5-minute Trigonometry battle!</p>
+      <button class="play-btn" style="background: #e91e63; color: white;" onclick="showNotify('Accepting Duel...', 'success')">Accept Duel</button>
+      <div id="sign-box"></div>
+      <a href="../search.html" class="floating-dash">🔍 Explore</a>
+    </div>
+  </div>
+</div>
+</body>
+<script>
+  function showNotify(msg, type) {
+    const box = document.getElementById('sign-box');
+    box.innerText = msg;
+    box.className = type === 'success' ? 'sign-green' : 'sign-red';
+    box.style.display = 'block';
+    setTimeout(() => box.style.display = 'none', 3000);
+  }
+</script>
+
+</body>
+</html>

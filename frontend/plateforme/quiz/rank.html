@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rankings | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0288d1; --bg: #000000; --text: #ffffff; }
+        body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); }
+        .top-nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; align-items: center; padding: 40px 20px 15px; z-index: 1000; background: rgba(0,0,0,0.8); gap: 15px; }
+        .nav-tab { font-size: 15px; font-weight: 600; color: rgba(255,255,255,0.6); text-decoration: none; position: relative; }
+        .nav-tab.active { color: #fff; font-size: 17px; }
+        .nav-tab.active::after { content: ''; position: absolute; bottom: -5px; left: 25%; width: 50%; height: 3px; background: var(--primary); border-radius: 2px; }
+        .rank-container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: linear-gradient(135deg, #0d47a1, #000); padding: 20px; text-align: center; }
+        .performance-meter { width: 180px; height: 180px; border-radius: 50%; border: 8px solid var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(2, 136, 209, 0.4); margin-bottom: 25px; }
+        .floating-dash {
+            position: fixed; bottom: 30px; right: 20px;
+            background: linear-gradient(135deg, var(--primary), #01579b);
+            color: white; padding: 12px 20px; border-radius: 50px;
+            text-decoration: none; font-weight: 700; font-size: 13px;
+            box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4); z-index: 2000;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .floating-dash:active { transform: scale(0.95); }
+        .rank-badge { background: var(--primary); padding: 5px 20px; border-radius: 20px; font-weight: 700; margin-top: 15px; }
+        .stat-row { width: 100%; max-width: 300px; display: flex; justify-content: space-between; margin-top: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <a href="global.html" class="nav-tab">For You</a>
+    <a href="friend.html" class="nav-tab">Friends</a>
+    <a href="institute.html" class="nav-tab">Institution</a>
+    <a href="rank.html" class="nav-tab active">Rank</a>
+</div>
+<div class="rank-container">
+    <div class="performance-meter">
+        <span style="font-size: 48px; font-weight: 800;">84%</span>
+        <span style="font-size: 12px; opacity: 0.8;">ACCURACY</span>
+    </div>
+    <h1 style="margin: 0;">Rank: #412</h1>
+    <p style="color: var(--primary); font-weight: 600;">Scholar Level 4</p>
+    <div class="rank-badge">🏆 Institution Topper</div>
+    <div class="stat-row"><span>Total Quizzes</span><span>142</span></div>
+    <div class="stat-row"><span>Points Earned</span><span>12,400</span></div>
+</div>
+<a href="../search.html" class="floating-dash">🔍 Explore</a>
+</body>
+</html>

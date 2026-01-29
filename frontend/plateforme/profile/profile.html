@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Management Profile | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --bg: #000000;
+            --card-bg: #121212;
+            --text: #ffffff;
+            --accent: #00bcd4;
+            --success: #2e7d32;
+        }
+
+        body {
+            margin: 0; padding: 0; font-family: 'Poppins', sans-serif;
+            background: var(--bg); color: var(--text); padding-bottom: 120px;
+        }
+
+        /* 👤 Profile Header */
+        .profile-header {
+            background: linear-gradient(to bottom, var(--primary), var(--bg));
+            padding: 60px 20px 30px; text-align: center;
+        }
+        .profile-img {
+            width: 100px; height: 100px; border-radius: 50%;
+            border: 3px solid var(--bg); object-fit: cover;
+            box-shadow: 0 0 15px rgba(2, 136, 209, 0.4);
+        }
+        .user-name { font-size: 20px; font-weight: 600; margin: 12px 0 4px; }
+        .user-role { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+
+        /* 📊 Stats Section */
+        .stats-row {
+            display: flex; justify-content: space-around; padding: 0 20px; margin-top: -15px;
+        }
+        .stat-card {
+            background: var(--card-bg); padding: 12px; border-radius: 12px;
+            text-align: center; min-width: 80px; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .stat-num { display: block; font-size: 16px; font-weight: 700; color: var(--primary); }
+        .stat-lab { font-size: 9px; color: #777; text-transform: uppercase; }
+
+        /* 🛠️ Menu List */
+        .menu-list { padding: 25px 20px; }
+        .menu-label { font-size: 10px; color: #444; font-weight: 800; text-transform: uppercase; margin: 20px 0 10px 5px; display: block; }
+
+        .btn-item {
+            background: var(--card-bg); display: flex; align-items: center;
+            padding: 16px; border-radius: 15px; margin-bottom: 8px;
+            text-decoration: none; color: white; border: 1px solid rgba(255,255,255,0.03);
+            transition: 0.2s;
+        }
+        .btn-item:active { transform: scale(0.98); background: #1a1a1a; }
+        .btn-icon { font-size: 18px; margin-right: 15px; width: 25px; text-align: center; }
+        .btn-text { flex: 1; font-size: 14px; font-weight: 500; }
+
+        /* 🔍 Search Platform Floating Button */
+        .floating-search {
+            position: fixed; bottom: 30px; right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white; padding: 12px 22px; border-radius: 50px;
+            text-decoration: none; font-weight: 700; font-size: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5); z-index: 1000;
+        }
+
+        /* Red/Green Sign Box */
+        #sign-box {
+            display: none; position: fixed; top: 25px; left: 50%;
+            transform: translateX(-50%); width: 85%; padding: 12px;
+            border-radius: 10px; text-align: center; font-weight: 600; z-index: 2000;
+        }
+        .sign-green { background: var(--success); color: white; }
+    </style>
+</head>
+<body>
+
+<div id="sign-box"></div>
+
+<div class="profile-header">
+    <img src="https://i.pravatar.cc/150?u=manager" class="profile-img" alt="Manager">
+    <div class="user-name">Institution Manager</div>
+    <div class="user-role">Management Portal</div>
+</div>
+
+<div class="stats-row">
+    <div class="stat-card"><span class="stat-num">84%</span><span class="stat-lab">Accuracy</span></div>
+    <div class="stat-card"><span class="stat-num">1.2k</span><span class="stat-lab">Peers</span></div>
+    <div class="stat-card"><span class="stat-num">#12</span><span class="stat-lab">Rank</span></div>
+</div>
+
+<div class="menu-list">
+    <span class="menu-label">Communication & Social</span>
+    <a href="../inbox/inbox_friends.html" class="btn-item">
+        <span class="btn-icon">📥</span>
+        <span class="btn-text">Inbox</span>
+    </a>
+    <a href="../activity/activity.html" class="btn-item">
+        <span class="btn-icon">🔥</span>
+        <span class="btn-text">My Activities</span>
+    </a>
+
+    <span class="menu-label">Institution Data</span>
+    <a href="../directory/my_directory.html" class="btn-item">
+        <span class="btn-icon">📁</span>
+        <span class="btn-text">My Directory</span>
+    </a>
+    <a href="../quiz/quiz_rank.html" class="btn-item">
+        <span class="btn-icon">📊</span>
+        <span class="btn-text">Performance Meter</span>
+    </a>
+
+    <span class="menu-label">Security</span>
+    <a href="#" class="btn-item" onclick="showNotify('Accessing Secure Settings...', 'success')">
+        <span class="btn-icon">🔒</span>
+        <span class="btn-text">Privacy & Security</span>
+    </a>
+</div>
+
+<a href="../search.html" class="floating-search">🔍 Search Platform</a>
+
+<script>
+    function showNotify(msg, type) {
+        const box = document.getElementById('sign-box');
+        box.innerText = msg;
+        box.className = 'sign-green';
+        box.style.display = 'block';
+
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
+        }
+        setTimeout(() => box.style.display = 'none', 3000);
+    }
+</script>
+
+</body>
+</html>

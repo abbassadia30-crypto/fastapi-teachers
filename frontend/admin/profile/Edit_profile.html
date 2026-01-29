@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Institution Settings</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text: #263238;
+            --primary: #0288d1;
+            --danger: #d8000c;
+            --success: #27ae60;
+            --border: #eceff1;
+            --security-color: #455a64;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 80px; }
+
+        .app-header {
+            position: sticky; top: 0; background: var(--card); padding: 15px 20px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05); z-index: 1000;
+        }
+        .back-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--primary); display: flex; align-items: center; }
+
+        .container { padding: 20px; max-width: 500px; margin: 0 auto; }
+        .section-card { background: var(--card); border-radius: 15px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+
+        h2 { font-size: 13px; margin-top: 0; color: #90a4ae; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
+
+        /* Identity Output Styles */
+        .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .info-label { font-size: 11px; font-weight: 600; color: #b0bec5; text-transform: uppercase; }
+        .info-value { font-size: 14px; font-weight: 600; color: var(--text); }
+        .change-link { font-size: 12px; color: var(--primary); font-weight: 600; cursor: pointer; }
+
+        .edit-field { display: none; margin-top: 10px; }
+        input { width: 100%; padding: 10px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; margin-bottom: 5px; }
+
+        /* The Ten Switches */
+        .toggle-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border); }
+        .toggle-row:last-child { border-bottom: none; }
+        .toggle-label { font-size: 14px; color: #455a64; font-weight: 500; }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Security & Signs */
+        .security-btn { background: var(--security-color); color: white; border: none; width: 100%; padding: 16px; border-radius: 12px; font-weight: 600; margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        #sign-box { display: none; margin: 15px 0; padding: 12px; border-radius: 8px; font-size: 13px; text-align: center; font-weight: 600; }
+        .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
+        .sign-green { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); }
+
+        meter { width: 100%; height: 15px; border-radius: 10px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <button class="back-btn" onclick="backbutton()">←</button>
+    <h1 style="font-size: 18px; margin: 0;">Settings</h1>
+</div>
+
+<div class="container">
+    <div id="sign-box"></div>
+
+    <div class="section-card">
+        <h2>Identity</h2>
+        <div class="info-row">
+            <div>
+                <div class="info-label">Current Name</div>
+                <div class="info-value" id="display-name">Admin User</div>
+                <div id="edit-name" class="edit-field">
+                    <input type="text" id="name-input" placeholder="Enter new name">
+                    <button class="change-link" style="border:none; background:none;" onclick="updateField('name')">Save</button>
+                </div>
+            </div>
+            <span class="change-link" onclick="toggleEdit('edit-name')">Change</span>
+        </div>
+
+        <div class="info-row">
+            <div>
+                <div class="info-label">Phone Link</div>
+                <div class="info-value" id="display-phone">Not Set</div>
+                <div id="edit-phone" class="edit-field">
+                    <input type="tel" id="phone-input" placeholder="+123...">
+                    <button class="change-link" style="border:none; background:none;" onclick="updateField('phone')">Save</button>
+                </div>
+            </div>
+            <span class="change-link" onclick="toggleEdit('edit-phone')">Link</span>
+        </div>
+    </div>
+
+    <div class="section-card">
+        <h2>Workspace Controls</h2>
+        <div class="toggle-row"><span class="toggle-label">Enable Cloud Sync</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Push Notifications</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Dark Mode Interface</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Auto-Backup Records</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Staff Message Broadcast</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Biometric Login</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Student Entry Logs</span><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Fee Deadline Alerts</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Public Institution Page</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Experimental AI Tools</span><label class="switch"><input type="checkbox"><span class="slider"></span></label></div>
+    </div>
+
+    <div class="section-card">
+        <h2>Resource Usage</h2>
+        <meter id="storage-meter" min="0" max="1024" value="128"></meter>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600;">
+            <span id="storage-text">128 MB Used</span>
+            <span>Plan: 1 GB</span>
+        </div>
+    </div>
+
+    <button class="security-btn" onclick="location.href='security.html'">
+        🛡️ Manage Security & Privacy
+    </button>
+</div>
+
+<script src="../../js/storage.js"></script>
+<script>
+    function backbutton() { window.location.href = "profile.html"; }
+
+    function toggleEdit(id) {
+        const el = document.getElementById(id);
+        el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function showSign(msg, type) {
+        const box = document.getElementById('sign-box');
+        box.innerText = msg;
+        box.style.display = 'block';
+        box.className = type === 'success' ? 'sign-green' : 'sign-red';
+        setTimeout(() => box.style.display = 'none', 3000);
+    }
+
+    async function updateField(type) {
+        const inputId = type === 'name' ? 'name-input' : 'phone-input';
+        const displayId = type === 'name' ? 'display-name' : 'display-phone';
+        const val = document.getElementById(inputId).value;
+
+        if(!val) return showSign("Field cannot be empty", "error");
+
+        // Simulating Backend Success
+        if(type === 'name') await AppStorage.set('userName', val);
+        document.getElementById(displayId).innerText = val;
+        showSign("Updated successfully!", "success");
+        toggleEdit(type === 'name' ? 'edit-name' : 'edit-phone');
+    }
+
+    window.onload = async () => {
+        const name = await AppStorage.get('userName');
+        if(name) document.getElementById('display-name').innerText = name;
+    };
+</script>
+</body>
+</html>

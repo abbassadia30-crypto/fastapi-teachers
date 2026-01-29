@@ -178,7 +178,7 @@
         <span class="arrow">></span>
     </div>
 
-    <div class="list-item" onclick="showNotify('Add your history', 'green')">
+    <div class="list-item" onclick=go()>
         <div class="list-info">
             <span class="list-icon">🎓</span>
             <span class="list-text">Work & Education History</span>
@@ -232,13 +232,7 @@
     }
 
     function editProfile() {
-        const newName = prompt("Update your full name:", userName);
-        if(newName) {
-            localStorage.setItem('userName', newName);
-            document.getElementById('display-name').innerText = newName;
-            document.getElementById('pfp-initial').innerText = newName.charAt(0).toUpperCase();
-            showNotify("Profile updated!", "success");
-        }
+    window.location.href ="Edit_profile.html"
     }
 
     function handleLogout() {
@@ -262,7 +256,9 @@
         window.location.href = "Bio.html"
     }
 
-
+async function go(){
+        window.location.href = "history.html"
+}
 </script>
 </body>
 </html>

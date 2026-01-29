@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+    :root { --primary: #0288d1; --bg: #000000; --glass: rgba(255, 255, 255, 0.05); --text: #ffffff; --success: #2e7d32; }
+    body { margin: 0; padding: 0; font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--text); overflow-x: hidden; }
+
+    /* 📑 TikTok Style Navigation */
+    .top-nav { position: fixed; top: 0; left: 0; right: 0; display: flex; justify-content: center; padding: 45px 10px 15px; background: rgba(0,0,0,0.95); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.1); gap: 20px; }
+    .nav-tab { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.5); text-decoration: none; position: relative; }
+    .nav-tab.active { color: #fff; }
+    .nav-tab.active::after { content: ''; position: absolute; bottom: -8px; left: 0; width: 100%; height: 2px; background: var(--primary); }
+
+    .list-container { padding: 110px 15px 120px; }
+    .chat-item { display: flex; align-items: center; padding: 15px; background: var(--glass); border-radius: 15px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+    .chat-item:active { transform: scale(0.98); background: rgba(255,255,255,0.1); }
+    .avatar { width: 55px; height: 55px; border-radius: 50%; margin-right: 15px; border: 2px solid var(--primary); object-fit: cover; }
+    .chat-info { flex: 1; }
+    .chat-info h4 { margin: 0; font-size: 15px; font-weight: 600; }
+    .chat-info p { margin: 4px 0 0; font-size: 12px; color: #888; }
+
+    /* 🔍 Updated Search Platform Button */
+    .floating-search {
+    position: fixed; bottom: 30px; right: 20px;
+    background: linear-gradient(135deg, var(--primary), #00bcd4);
+    color: white; padding: 12px 25px; border-radius: 50px;
+    text-decoration: none; font-weight: 700; font-size: 13px;
+    box-shadow: 0 4px 20px rgba(2, 136, 209, 0.5); z-index: 2000;
+    display: flex; align-items: center; gap: 8px;
+    }
+
+    #sign-box { display: none; position: fixed; top: 100px; left: 50%; transform: translateX(-50%); width: 85%; padding: 14px; border-radius: 12px; text-align: center; z-index: 3000; font-weight: 600; }
+    .sign-green { background: var(--success); color: white; }
+    </style>
+</head>
+<body>
+<div class="top-nav">
+    <a href="friends.html" class="nav-tab">Friends</a>
+    <a href="verified.html" class="nav-tab">Verified Peers</a>
+    <a href="request.html" class="nav-tab active">Requests</a>
+</div>
+
+<div class="list-container">
+    <div class="chat-item">
+        <img src="https://i.pravatar.cc/150?u=zain" class="avatar">
+        <div class="chat-info"><h4>Zain Malik</h4><p>From CS Department</p></div>
+        <div style="display:flex; gap:10px;">
+            <button onclick="showNotify('Accepted!', 'success')" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:8px; font-weight:bold;">Accept</button>
+        </div>
+    </div>
+</div>
+
+<a href="../search.html" class="floating-search">🔍 Explore</a>
+</body>
+</html>

@@ -3,85 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <title>Document Center - Institution</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script>
-        if (!localStorage.getItem('userEmail')) { window.location.replace("../index.html"); }
+        // Real app check using stored email
+        if (!localStorage.getItem('userEmail')) {
+            window.location.replace("../index.html");
+        }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; }
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --bg: #f0f2f5;
+            --accent: #ff9800;
+        }
+
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
-        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600; }
-        .bg-red { background: #ef5350; top: 20px !important; }
-        .bg-green { background: #66bb6a; top: 20px !important; }
-        header { padding: 30px 20px 10px; text-align: center; background: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; }
-        .doc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        .doc-card { background: white; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); cursor: pointer; }
-        .doc-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2); border-color: var(--primary); }
-        .icon { font-size: 32px; margin-bottom: 10px; background: #e3f2fd; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 15px; }
-        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95); height: 70px; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; z-index: 1000; }
+
+        /* 🏛️ Red/Green Sign Box Notification */
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .bg-red { background: #ef5350; top: 20px !important; border: 1px solid #d32f2f; }
+        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #388e3c; }
+
+        header { padding: 30px 20px 10px; text-align: center; background: white; border-bottom-left-radius: 30px; border-bottom-right-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        h1 { margin: 0; font-size: 22px; color: var(--secondary); }
+        header p { margin: 5px 0 0; font-size: 13px; color: #78909c; }
+
+        .doc-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;
+            padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 120px;
+        }
+
+        .doc-card {
+            background: white; border-radius: 20px; padding: 20px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-decoration: none; color: var(--secondary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; border: 1px solid transparent;
+        }
+        .doc-card:active { transform: scale(0.92); background: #fafafa; }
+
+        .icon {
+            font-size: 32px; margin-bottom: 10px; background: #e3f2fd;
+            width: 60px; height: 60px; display: flex; align-items: center;
+            justify-content: center; border-radius: 15px; color: var(--primary);
+        }
+
+        .doc-card span { font-size: 12px; font-weight: 600; text-align: center; }
+
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
+            backdrop-filter: blur(10px); height: 70px; border-radius: 25px;
+            display: flex; justify-content: space-around; align-items: center; z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+        }
         .nav-item { color: #b0bec5; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 10px; }
         .nav-item.active { color: white; }
+        .nav-item i { font-style: normal; font-size: 20px; margin-bottom: 4px; }
     </style>
 </head>
 <body>
-    <div id="notification-bar"></div>
-    <header><h1>Document Center</h1><p>Academic & Notices</p></header>
-    
-    <div class="doc-grid">
-        <div class="doc-card" onclick="showNotify('Syllabus Archive Opening...', 'success')">
-            <div class="icon">📚</div><span>Syllabus</span>
-        </div>
-        <div class="doc-card" onclick="showNotify('Datesheet loading...', 'success')">
-            <div class="icon">📅</div><span>Datesheet</span>
-        </div>
-        <div class="doc-card" onclick="showNotify('Holiday & Event Notices', 'success')">
-            <div class="icon">📢</div><span>Notices</span>
-        </div>
-        <div class="doc-card" onclick="showNotify('Generating Fee Vouchers...', 'success')">
-            <div class="icon">💳</div><span>Fee Voucher</span>
-        </div>
+<div id="notification-bar"></div>
+<header><h1>Document Center</h1><p>Institution Management</p></header>
 
-        <div class="doc-card" onclick="startScan()">
-            <div class="icon">📷</div><span>Scan Docs</span>
-        </div>
-        <div class="doc-card" onclick="showNotify('Accessing saved files...', 'success')">
-            <div class="icon">📁</div><span>My Files</span>
-        </div>
-
-        <div class="doc-card" onclick="changeLanguage()">
-            <div class="icon">🌐</div><span>Translate</span>
-        </div>
-        <div class="doc-card" onclick="window.print()">
-            <div class="icon">🖨️</div><span>Print Docs</span>
-        </div>
+<div class="doc-grid">
+    <div class="doc-card" onclick="showNotify('Syllabus Archive Opening...', 'success')">
+        <div class="icon">📚</div><span>Syllabus</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Datesheet loading...', 'success')">
+        <div class="icon">📅</div><span>Datesheet</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Holiday & Event Notices', 'success')">
+        <div class="icon">📢</div><span>Notices</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Generating Fee Vouchers...', 'success')">
+        <div class="icon">💳</div><span>Fee Voucher</span>
     </div>
 
-    <nav class="bottom-nav">
-        <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
-        <a href="../chat/chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
-        <a href="../document/documents.html" class="nav-item active"><i>📄</i><span>Docs</span></a>
-        <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
-    </nav>
+    <div class="doc-card" onclick="startScan()">
+        <div class="icon">📷</div><span>Scan Docs</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Accessing saved files...', 'success')">
+        <div class="icon">📁</div><span>My Files</span>
+    </div>
 
-    <script>
-        function showNotify(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            bar.innerText = msg;
-            bar.className = type === 'success' ? 'bg-green' : 'bg-red';
-            setTimeout(() => bar.className = '', 3000);
+    <div class="doc-card" onclick="showNotify('Opening Marksheet Creator...', 'success')">
+        <div class="icon">📊</div><span>Create Marksheet</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Loading Test Status (Pending & Taken)', 'success')">
+        <div class="icon">📝</div><span>Test Status</span>
+    </div>
+
+    <div class="doc-card" onclick="showNotify('Student Attendance Portal', 'success')">
+        <div class="icon">👨‍🎓</div><span>Student Attendance</span>
+    </div>
+    <div class="doc-card" onclick="showNotify('Teacher Attendance Portal', 'success')">
+        <div class="icon">👨‍🏫</div><span>Teacher Attendance</span>
+    </div>
+
+    <div class="doc-card" onclick="changeLanguage()">
+        <div class="icon">🌐</div><span>Translate</span>
+    </div>
+    <div class="doc-card" onclick="window.print()">
+        <div class="icon">🖨️</div><span>Print Docs</span>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+    <a href="../chat/chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
+    <a href="documents.html" class="nav-item active"><i>📄</i><span>Docs</span></a>
+    <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
+</nav>
+
+<script>
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+
+        // Capacitor Haptic Feedback for Real App Feel
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
         }
 
-        // Developer Tip: In a real app, use the Web Camera API for scanning
-        function startScan() {
-            showNotify('Initializing camera for scanning...', 'success');
-            // Logic for camera access would go here
-        }
+        setTimeout(() => {
+            bar.className = '';
+        }, 3000);
+    }
 
-        function changeLanguage() {
-            showNotify('Select language for document translation...', 'success');
-            // Logic for language selection modal would go here
-        }
-    </script>
+    function startScan() {
+        showNotify('Initializing camera for scanning...', 'success');
+    }
+
+    function changeLanguage() {
+        showNotify('Select language for document translation...', 'success');
+    }
+</script>
 </body>
 </html>

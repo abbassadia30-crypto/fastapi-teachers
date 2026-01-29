@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Work Experience - Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #121212;
+            --card: #1e1e1e;
+            --text: #ffffff;
+            --primary: #e50914; /* Red Sign Box Primary */
+            --border: #333;
+        }
+
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; color: var(--text); }
+
+        /* Sticky Header */
+        .app-header {
+            position: sticky; top: 0; background: var(--card); padding: 15px 20px;
+            display: flex; align-items: center; gap: 15px;
+            border-bottom: 1px solid var(--border); z-index: 1000;
+        }
+        .back-btn { background: none; border: none; font-size: 24px; color: var(--text); cursor: pointer; }
+
+        .container { padding: 20px; max-width: 600px; margin: 0 auto; }
+
+        .form-section { background: var(--card); padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        label { display: block; font-size: 12px; color: #aaa; margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
+
+        input, textarea {
+            width: 100%; background: #2a2a2a; border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; color: white; font-family: inherit;
+            margin-bottom: 20px; box-sizing: border-box;
+        }
+
+        textarea { height: 120px; resize: none; }
+
+        /* Motto Selection */
+        .motto-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .motto-chip {
+            padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border);
+            font-size: 13px; cursor: pointer; transition: 0.3s; background: #2a2a2a;
+        }
+        .motto-chip.active { background: var(--primary); border-color: var(--primary); }
+
+        /* Sign Box Notification */
+        #notification {
+            display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            width: 85%; padding: 15px; border-radius: 10px; text-align: center;
+            font-weight: 600; z-index: 2000;
+        }
+        .bg-green { background: #2e7d32; border: 1px solid #1b5e20; color: white; }
+        .bg-red { background: #d32f2f; border: 1px solid #b71c1c; color: white; }
+
+        .save-btn {
+            width: 100%; background: var(--primary); color: white; border: none;
+            padding: 16px; border-radius: 12px; font-weight: 600; font-size: 16px;
+            cursor: pointer; box-shadow: 0 4px 15px rgba(229, 9, 20, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+<div id="notification"></div>
+
+<div class="app-header">
+    <button class="back-btn" onclick=back()>←</button>
+    <h1 style="font-size: 18px; margin: 0;">Experience & History</h1>
+</div>
+
+<div class="container">
+    <div class="form-section">
+        <label>Professional Title</label>
+        <input type="text" id="work-title" placeholder="e.g. Senior Administrator">
+
+        <label>Work History & Experience</label>
+        <textarea id="work-history" placeholder="Describe your previous roles and achievements..."></textarea>
+    </div>
+
+    <div class="form-section">
+        <label>Professional Mottos</label>
+        <div class="motto-grid">
+            <div class="motto-chip" onclick="toggleMotto(this)">Education First</div>
+            <div class="motto-chip" onclick="toggleMotto(this)">Lead by Example</div>
+            <div class="motto-chip" onclick="toggleMotto(this)">Innovation in Learning</div>
+            <div class="motto-chip" onclick="toggleMotto(this)">Student Growth</div>
+            <div class="motto-chip" onclick="toggleMotto(this)">Integrity Above All</div>
+            <div class="motto-chip" onclick="toggleMotto(this)">Consistency is Key</div>
+        </div>
+        <input type="text" id="custom-motto" placeholder="Or type a custom motto..." style="margin-top: 15px;">
+    </div>
+
+    <button class="save-btn" onclick="saveExperience()">Save Experience</button>
+</div>
+
+<script src="../../js/storage.js"></script>
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+        bar.style.display = 'block';
+
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        }
+        setTimeout(() => bar.style.display = 'none', 3000);
+    }
+
+    function toggleMotto(element) {
+        element.classList.toggle('active');
+    }
+
+    async function saveExperience() {
+        const title = document.getElementById('work-title').value;
+        const history = document.getElementById('work-history').value;
+        const customMotto = document.getElementById('custom-motto').value;
+
+        const selectedMottos = Array.from(document.querySelectorAll('.motto-chip.active'))
+            .map(chip => chip.innerText);
+
+        if (customMotto) selectedMottos.push(customMotto);
+
+        const token = await AppStorage.get('institutionToken');
+
+        try {
+            const response = await fetch(`${API_BASE}/profile/experience`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: title,
+                    history: history,
+                    mottos: selectedMottos
+                })
+            });
+
+            if (response.ok) {
+                showNotify("Experience saved successfully!", "success");
+                // Optional: redirect back after delay
+                setTimeout(() => history.back(), 2000);
+            } else {
+                showNotify("Failed to save data.", "error");
+            }
+        } catch (e) {
+            showNotify("Connection Error", "error");
+        }
+    }
+
+    async function back(){
+        window.location.href = "profile.html"
+    }
+</script>
+</body>
+</html>

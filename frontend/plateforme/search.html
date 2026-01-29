@@ -2,168 +2,201 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Explore | Institution Search</title>
+  <title>Explore | Institution Ecosystem</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    /* CSS defined in head per institution standards */
-    :root { --primary: #0288d1; --bg: #f4f7f6; --text: #2c3e50; --accent: #3498db; --danger: #c62828; }
-    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 100px; color: var(--text); }
-
-    .header-container {
-      background: white; padding: 20px; position: sticky; top: 0; z-index: 100;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .header-controls { display: flex; gap: 10px; align-items: center; max-width: 600px; margin: auto; }
-
-    .sort-select {
-      background: #f1f3f4; border: none; padding: 12px; border-radius: 12px;
-      font-family: inherit; font-size: 14px; color: var(--text); outline: none; cursor: pointer;
+    :root {
+      --primary: #0288d1;
+      --bg: #f4f7f6;
+      --text: #2c3e50;
+      --accent: #3498db;
+      --danger: #c62828;
+      --nav-bg: #ffffff;
+      --glass: rgba(255, 255, 255, 0.9);
     }
 
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 120px; color: var(--text); overflow-x: hidden; }
+
+    /* 📸 WhatsApp Style Status Bar */
+    .status-container {
+      display: flex; gap: 15px; padding: 15px; background: white;
+      overflow-x: auto; white-space: nowrap; border-bottom: 1px solid #eee;
+      scrollbar-width: none; /* Hide scrollbar for clean app look */
+    }
+    .status-container::-webkit-scrollbar { display: none; }
+
+    .status-item { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+    .status-circle {
+      width: 60px; height: 60px; border-radius: 50%; border: 2px solid var(--primary);
+      padding: 3px; cursor: pointer; transition: 0.3s;
+    }
+    .status-circle img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+    .status-label { font-size: 10px; margin-top: 6px; font-weight: 600; color: #555; }
+
+    /* 🔍 Header & Search */
+    .header-container { background: white; padding: 15px 20px; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
     .search-bar {
-      background: #f1f3f4; border-radius: 12px; padding: 12px;
-      display: flex; align-items: center; gap: 10px; flex: 1;
+      background: #f1f3f4; border-radius: 12px; padding: 10px 15px;
+      display: flex; align-items: center; gap: 10px; max-width: 600px; margin: auto;
     }
-    .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 15px; }
+    .search-bar input { border: none; background: transparent; width: 100%; outline: none; font-size: 14px; }
 
-    .feed-container { padding: 15px; max-width: 600px; margin: auto; min-height: 200px; }
+    /* 🏷️ Navigation Tabs */
+    .tab-nav { display: flex; overflow-x: auto; background: white; padding: 10px 15px; gap: 15px; border-bottom: 1px solid #eee; }
+    .tab-btn {
+      border: none; background: #f1f3f4; font-weight: 600; color: #7f8c8d;
+      padding: 8px 18px; border-radius: 20px; font-size: 12px; white-space: nowrap; cursor: pointer;
+    }
+    .tab-btn.active { background: var(--primary); color: white; }
+
+    /* 🃏 Cards & Feed */
+    .feed-container { padding: 15px; max-width: 600px; margin: auto; }
     .profile-card {
-      background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px;
+      background: white; border-radius: 20px; padding: 20px; margin-bottom: 15px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.04); border: 1px solid #eee;
     }
+    .label-style { display: block; font-size: 10px; font-weight: 800; color: #999; text-transform: uppercase; margin-bottom: 4px; }
+    .field-box { padding: 10px; background: #f9f9f9; border-radius: 10px; border-left: 4px solid var(--accent); margin-bottom: 10px; font-size: 14px; }
 
-    .label-style {
-      display: block; font-size: 10px; font-weight: 800; color: #999;
-      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
-    }
-
-    .field-box {
-      padding: 12px; background: #f9f9f9; border-radius: 10px;
-      border-left: 4px solid var(--accent); margin-bottom: 15px; font-size: 15px; font-weight: 500;
-    }
-
-    .name-header { font-size: 22px; font-weight: 700; color: var(--primary); margin: 0 0 20px 0; }
-
+    /* 🏠 The Dashboard Button (Remaining as requested) */
     .back-dash {
-      position: fixed; bottom: 20px; right: 20px;
+      position: fixed; bottom: 100px; right: 20px;
       background: var(--primary); color: white; border: none;
-      padding: 15px 25px; border-radius: 50px; font-weight: 700;
+      padding: 12px 20px; border-radius: 50px; font-weight: 700;
       box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4);
-      cursor: pointer; text-decoration: none; z-index: 1000;
+      cursor: pointer; text-decoration: none; z-index: 1001; font-size: 13px;
     }
 
-    /* Red/Green Sign boxes per user method */
-    .sign-box { padding: 15px; border-radius: 8px; text-align: center; font-weight: bold; margin-top: 20px; }
-    .sign-red { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
-    .sign-green { background: #e8f5e9; color: #2e7d32; border: 1px solid #2e7d32; }
+    /* ⚓ Bottom Navigation with Inbox & Center Post */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 75px;
+      background: var(--glass); backdrop-filter: blur(10px);
+      display: flex; justify-content: space-around; align-items: center;
+      border-top: 1px solid #ddd; z-index: 1000; padding: 0 10px;
+    }
+    .nav-item { text-decoration: none; color: #7f8c8d; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 600; }
+    .nav-item.active { color: var(--primary); }
 
-    #loader { text-align: center; padding: 50px; color: var(--primary); font-weight: 600; }
+    /* TikTok Style Center Button */
+    .center-btn {
+      background: linear-gradient(45deg, #121212, #333); /* Dark TikTok aesthetic */
+      width: 50px; height: 50px; border-radius: 15px; display: flex;
+      align-items: center; justify-content: center; transform: translateY(-15px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3); border: 3px solid white;
+    }
+
+    /* Red/Green Sign Box */
+    #sign-box {
+      display: none; position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+      width: 80%; padding: 12px; border-radius: 10px; text-align: center; font-weight: 600; z-index: 2000;
+    }
+    .sign-red { background: #d32f2f; color: white; }
+    .sign-green { background: #2e7d32; color: white; }
   </style>
 </head>
 <body>
 
-<div class="header-container">
-  <div class="header-controls">
-    <select id="sortOpt" class="sort-select">
-      <option value="newest">Newest</option>
-      <option value="az">A-Z</option>
-      <option value="za">Z-A</option>
-    </select>
+<div id="sign-box"></div>
 
-    <div class="search-bar">
-      <span>🔍</span>
-      <input type="text" placeholder="Search name, role, or expertise..." id="globalSearch">
+<div class="status-container">
+  <div class="status-item">
+    <div class="status-circle" style="border: 2px dashed #999;" onclick="showNotify('Status Update opened', 'success')">
+      <img src="https://img.icons8.com/ios-glyphs/90/plus-math.png" alt="Add" style="padding:10px; filter: grayscale(1);">
     </div>
+    <div class="status-label">My Status</div>
+  </div>
+  <div class="status-item">
+    <div class="status-circle"><img src="https://i.pravatar.cc/150?u=admin" alt=""></div>
+    <div class="status-label">Institution</div>
+  </div>
+  <div class="status-item">
+    <div class="status-circle" style="border-color: #e91e63;"><img src="https://i.pravatar.cc/150?u=dept" alt=""></div>
+    <div class="status-label">Activity</div>
   </div>
 </div>
 
-<div id="loader">Connecting to Institution Database...</div>
-<div id="status-msg"></div>
-<div class="feed-container" id="feed"></div>
+<div class="header-container">
+  <div class="search-bar">
+    <span>🔍</span>
+    <input type="text" placeholder="Search users or institutions..." id="globalSearch">
+  </div>
+</div>
+
+<div class="tab-nav">
+  <button class="tab-btn active" id="tab-user" onclick="switchTab('user')">User Search</button>
+  <button class="tab-btn" id="tab-inst" onclick="switchTab('inst')">Institution Search</button>
+  <button class="tab-btn" onclick="location.href='../friends/friends.html'">Friends List</button>
+  <button class="tab-btn" onclick="location.href='../activity/activity.html'">Recent Activity</button>
+</div>
+
+<div class="feed-container" id="feed">
+  <div class="profile-card">
+    <h3 style="margin:0 0 10px 0; color:var(--primary);">Connecting...</h3>
+    <span class="label-style">System Message</span>
+    <div class="field-box">Fetching latest directory records from the institution server...</div>
+  </div>
+</div>
 
 <button class="back-dash" onclick="window.location.href='../admin/dashboard/dashboard.html'">🏠 Dashboard</button>
 
+<nav class="bottom-nav">
+  <a href="quiz/global.html" class="nav-item"><i>🏆</i><span>Quiz</span></a>
+  <a href="inbox/friends.html" class="nav-item"><i>📥</i><span>Inbox</span></a>
+
+  <a href="post/create.html" class="center-btn">
+    <span style="color:white; font-size:24px; font-weight:bold;">+</span>
+  </a>
+
+  <a href="search.html" class="nav-item active"><i>🔍</i><span>Explore</span></a>
+  <a href="profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
+</nav>
+
 <script>
-  const API_BASE = "https://fastapi-teachers.onrender.com";
-  let allProfiles = [];
+  function showNotify(msg, type) {
+    const box = document.getElementById('sign-box');
+    box.innerText = msg;
+    box.className = type === 'success' ? 'sign-green' : 'sign-red';
+    box.style.display = 'block';
 
-  window.onload = async () => {
-    try {
-      const res = await fetch(`${API_BASE}/profile/profiles/all`);
-      if(!res.ok) throw new Error("Server Error");
-
-      allProfiles = await res.json();
-      renderProfiles();
-    } catch (e) {
-      document.getElementById('status-msg').innerHTML =
-              '<div class="sign-box sign-red">Offline: Cannot reach institution server. Check your connection.</div>';
-    } finally {
-      document.getElementById('loader').style.display = 'none';
+    if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+      Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
     }
-
-    document.getElementById('globalSearch').addEventListener('input', () => renderProfiles());
-    document.getElementById('sortOpt').addEventListener('change', () => renderProfiles());
-  };
-
-  function renderProfiles() {
-    const searchTerm = document.getElementById('globalSearch').value.toLowerCase();
-    const sortType = document.getElementById('sortOpt').value;
-    const feed = document.getElementById('feed');
-    feed.innerHTML = "";
-
-    // Deep copy to avoid mutating original list during sort
-    let filtered = [...allProfiles].filter(p => {
-      const name = (p.full_name || "").toLowerCase();
-      const bio = (p.short_bio || "").toLowerCase();
-
-      // Safe check for custom_details
-      let detailsMatch = false;
-      if (p.custom_details && typeof p.custom_details === 'object') {
-        detailsMatch = Object.values(p.custom_details).some(v =>
-                String(v).toLowerCase().includes(searchTerm)
-        );
-      }
-
-      return name.includes(searchTerm) || bio.includes(searchTerm) || detailsMatch;
-    });
-
-    // Sorting Logic
-    if (sortType === "az") {
-      filtered.sort((a, b) => a.full_name.localeCompare(b.full_name));
-    } else if (sortType === "za") {
-      filtered.sort((a, b) => b.full_name.localeCompare(a.full_name));
-    }
-    // "newest" is default if the backend returns ordered by ID desc
-
-    if (filtered.length === 0) {
-      feed.innerHTML = `<div class="sign-box sign-red">No records match "${searchTerm}"</div>`;
-      return;
-    }
-
-    filtered.forEach(profile => {
-      const card = document.createElement('div');
-      card.className = 'profile-card';
-
-      let customHtml = '';
-      if (profile.custom_details && typeof profile.custom_details === 'object') {
-        Object.entries(profile.custom_details).forEach(([key, value]) => {
-          if (value) {
-            customHtml += `
-              <span class="label-style">${key.replace(/_/g, ' ')}</span>
-              <div class="field-box">${value}</div>
-            `;
-          }
-        });
-      }
-
-      card.innerHTML = `
-        <h3 class="name-header">${profile.full_name}</h3>
-        <span class="label-style">Professional Summary</span>
-        <div class="field-box">${profile.short_bio || 'No bio provided.'}</div>
-        ${customHtml}
-      `;
-      feed.appendChild(card);
-    });
+    setTimeout(() => box.style.display = 'none', 3000);
   }
+
+  function switchTab(type) {
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tab-' + type).classList.add('active');
+
+    const feed = document.getElementById('feed');
+    if(type === 'inst') {
+      feed.innerHTML = `
+            <div class="profile-card">
+                <h3 style="color:var(--primary);">Global Institution Search</h3>
+                <span class="label-style">Filter</span>
+                <div class="field-box">Search by ID, Location, or Name</div>
+            </div>`;
+    } else {
+      feed.innerHTML = `
+            <div class="profile-card">
+                <h3 style="color:var(--primary);">User & Peer Search</h3>
+                <span class="label-style">Category</span>
+                <div class="field-box">Teachers, Students, and Admins</div>
+            </div>`;
+    }
+  }
+
+  // Capacitor orientation and UI lock (Recommended for Real Apps)
+  window.addEventListener('resize', () => {
+    if(document.activeElement.tagName === 'INPUT') {
+      document.querySelector('.bottom-nav').style.display = 'none';
+      document.querySelector('.back-dash').style.display = 'none';
+    } else {
+      document.querySelector('.bottom-nav').style.display = 'flex';
+      document.querySelector('.back-dash').style.display = 'block';
+    }
+  });
 </script>
 </body>
 </html>
