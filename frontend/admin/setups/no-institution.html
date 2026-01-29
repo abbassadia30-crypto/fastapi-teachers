@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Setup Required - InstitutionManager</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* Institution App Branding */
+        /* All CSS in Head as requested */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -16,6 +16,9 @@
             justify-content: center;
             height: 100vh;
             color: #333;
+            /* Initially hidden to check ownership silently */
+            opacity: 0;
+            transition: opacity 0.4s ease;
         }
 
         .setup-card {
@@ -24,9 +27,9 @@
             border-radius: 16px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.05);
             max-width: 450px;
+            width: 90%;
             text-align: center;
             border-top: 6px solid #e50914;
-            position: relative;
         }
 
         .icon-circle {
@@ -42,48 +45,39 @@
             margin: 0 auto 20px;
         }
 
-        h1 { font-size: 24px; margin-bottom: 10px; color: #1a1a1a; }
-        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
+        h1 { font-size: 24px; margin: 0 0 10px; color: #1a1a1a; }
+        p { color: #666; line-height: 1.6; margin-bottom: 30px; font-size: 14px; }
 
-        .btn-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
 
         .btn-setup {
             background: #e50914;
             color: white;
-            padding: 14px 28px;
+            padding: 14px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
             text-decoration: none;
             display: block;
+            transition: 0.3s;
         }
 
-        .btn-setup:hover { background: #b20710; transform: translateY(-2px); }
-
-        /* Search Button Style */
         .btn-search {
             background: #2b5de4;
             color: white;
-            padding: 14px 28px;
+            padding: 14px;
             border: none;
             border-radius: 8px;
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.3s;
             text-decoration: none;
             display: block;
+            transition: 0.3s;
         }
-        .btn-search:hover { background: #1a3fb1; transform: translateY(-2px); }
 
-        /* Back Button */
         .btn-back {
             margin-top: 20px;
             background: transparent;
@@ -92,71 +86,77 @@
             font-size: 14px;
             cursor: pointer;
             text-decoration: underline;
-            transition: 0.3s;
         }
-        .btn-back:hover { color: #333; }
 
-        /* Red Sign Box for errors */
+        /* Red Sign Box for errors (Replaces alerts) */
         #error-sign {
             display: none;
             position: fixed;
             top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #e53935;
             color: white;
             padding: 12px 24px;
             border-radius: 8px;
             font-weight: bold;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 1000;
+            z-index: 2000;
+            width: 80%;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-<div id="error-sign">Session expired. Please re-login.</div>
+<div id="error-sign"></div>
 
 <div class="setup-card" id="card-content">
     <div class="icon-circle">🏛️</div>
     <h1>Workspace Required</h1>
-    <p>Welcome, Admin. To start managing your institution, you need to either create a new workspace or search for an existing one on the platform.</p>
+    <p>Welcome, Admin. To start managing your <b>institution</b>, you need to either create a new workspace or search for an existing one on the platform.</p>
 
     <div class="btn-group">
         <a href="setup-type.html" class="btn-setup">Create New Institution</a>
-        <a href="search-institution.html" class="btn-search">Search Platform</a>
+        <a href="../../plateforme/search.html" class="btn-search">Search Platform</a>
     </div>
 
-    <button class="btn-back" onclick="backbutton()" >Back to Role Selection</button>
+    <button class="btn-back" onclick="backbutton()">Back to Role Selection</button>
 </div>
 
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-
-    // Safety: Hide body until check is done to prevent "flickering"
-    document.body.style.opacity = '0';
 
     function showError(msg) {
         const sign = document.getElementById('error-sign');
         sign.innerText = msg;
         sign.style.display = 'block';
 
-        // Use standard Capacitor Haptics
+        // Ensure user can see something if a critical error occurs
+        document.body.style.opacity = '1';
+
         if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
             Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
         }
 
+        // Auto-redirect after error as per your original logic
         setTimeout(() => { window.location.href = "../../index.html"; }, 2500);
     }
 
     async function backbutton() {
-        // Just navigate back, don't wipe storage unless you want them to pick role again
         window.location.href = "../../roles/role.html";
     }
 
     window.onload = async () => {
-        const authToken = await AppStorage.get('institutionToken');
+        let authToken;
+        try {
+            authToken = await AppStorage.get('institutionToken');
+        } catch (e) {
+            console.error("Storage error");
+        }
 
         if (!authToken) {
             showError("No session found. Redirecting...");
@@ -165,7 +165,11 @@
 
         try {
             const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             if (response.status === 401) {
@@ -176,17 +180,16 @@
             const data = await response.json();
 
             if (data.has_institution === true) {
-                // User already has an institution, save name for dashboard UI
+                // User owns an institution -> Save name and go to dashboard
                 await AppStorage.set('current_institution_name', data.institution_name);
                 window.location.href = "../dashboard/dashboard.html";
             } else {
-                // Show the setup content
+                // User has no institution -> Reveal setup options
                 document.body.style.opacity = '1';
-                document.body.style.transition = 'opacity 0.4s ease';
             }
         } catch (err) {
             console.error("Network check failed:", err);
-            // On network failure, show the page anyway so they can try offline or re-connect
+            // On network failure, show page so they can try manual buttons/search
             document.body.style.opacity = '1';
         }
     };
