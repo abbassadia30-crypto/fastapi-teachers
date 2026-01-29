@@ -108,7 +108,7 @@
             if (token) {
                 // Redirect logic based on role and institution status
                 if (role === "admin") {
-                    window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/setup.html";
+                    window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
                 } else if (!role || role === "unassigned") {
                     window.location.href = "roles/role.html";
                 } else {
