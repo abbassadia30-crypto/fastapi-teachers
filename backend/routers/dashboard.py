@@ -246,8 +246,8 @@ def hire_staff(
     db.refresh(new_staff)
     return new_staff
 
-# 🔵 READ
-@router.get("/Staff_list", response_model=schemas.StaffListResponse) # Use the wrapper schema
+# 🔵 READ - Optimized with the Wrapper Schema
+@router.get("/Staff_list", response_model=schemas.StaffListResponse)
 def get_staff_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
@@ -262,8 +262,8 @@ def get_staff_list(
         "rows": staff_members
     }
 
-# 🟡 UPDATE (Added / for path safety)
-@router.patch("/Update_staff/{staff_id}")
+# 🟡 UPDATE - Fixed Path and Logic
+@router.patch("/update_staff/{staff_id}") # Changed to lowercase 'u' for consistency
 def update_staff(
         staff_id: int,
         staff_up: schemas.StaffUpdate,
@@ -274,15 +274,17 @@ def update_staff(
         models.Staff.id == staff_id,
         models.Staff.institution_id == current_user.institution_id
     )
+
     target = staff_query.first()
     if not target:
-        raise HTTPException(status_code=404, detail="Staff not found")
+        raise HTTPException(status_code=404, detail="Staff record not found in institution")
 
+    # update() is efficient for multiple fields
     staff_query.update(staff_up.model_dump(exclude_unset=True))
     db.commit()
     return {"status": "success", "message": "Record updated"}
 
-# 🔴 DELETE (Added / for path safety)
+# 🔴 DELETE - Fixed the double return and floating logic
 @router.delete("/delete_staff/{staff_id}")
 def remove_staff(
         staff_id: int,
@@ -293,15 +295,10 @@ def remove_staff(
         models.Staff.id == staff_id,
         models.Staff.institution_id == current_user.institution_id
     ).first()
-    if not staff:
-        raise HTTPException(status_code=404, detail="Staff not found")
-    db.delete(staff)
-    db.commit()
-    return {"status": "success"}
 
     if not staff:
-        raise HTTPException(status_code=404, detail="Staff not found")
+        raise HTTPException(status_code=404, detail="Staff member not found")
 
     db.delete(staff)
     db.commit()
-    return {"status": "success", "message": "Staff record deleted"}
+    return {"status": "success", "message": "Staff record deleted successfully"}

@@ -111,7 +111,6 @@ class StaffBase(BaseModel):
     position: str
     cnic: Optional[str] = None
     contact: Optional[str] = None
-    # This handles the { "Label": "Value" } pairs from your dynamic fields
     extra_details: Optional[Dict[str, str]] = {}
 
 class StaffCreate(StaffBase):
@@ -128,14 +127,16 @@ class StaffResponse(StaffBase):
     id: int
     institution_id: int
 
-    class Config:
-        from_attributes = True
+    # Pydantic v2 standard for from_orm
+    model_config = ConfigDict(from_attributes=True)
 
-# Add this to your schemas.py
 class StaffListResponse(BaseModel):
     institution_id: int
     total_staff: int
     rows: List[StaffResponse]
+
+    # Adding this prevents validation errors when passing SQLAlchemy objects
+    model_config = ConfigDict(from_attributes=True)
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
