@@ -196,3 +196,7 @@ class ProfileOut(BaseModel):
     class Config:
         from_attributes = True
 
+class VaultUpload(BaseModel):
+    name: str
+    doc_type: str
+    content: List[Dict[str, Any]] # Stores the nested Books/Chapters

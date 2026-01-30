@@ -2,259 +2,156 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Syllabus Architect Console</title>
+    <title>Syllabus Architect</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #0288d1;
-            --secondary: #263238;
-            --bg: #f0f2f5;
-            --success: #66bb6a;
-            --danger: #ef5350;
-        }
+        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; --success: #2e7d32; --danger: #d32f2f; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 100px; }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0; background: var(--bg);
-            display: flex; flex-direction: column; height: 100vh;
-        }
+        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 90%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 2000; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .sign-red { background: var(--danger); }
+        .sign-green { background: var(--success); }
 
-        /* Red/Green Sign Box */
-        #notification-bar {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
-        }
-        .bg-red { background: var(--danger); top: 20px !important; border: 1px solid #b71c1c; }
-        .bg-green { background: var(--success); top: 20px !important; border: 1px solid #2e7d32; }
+        header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .main-container { padding: 20px; }
 
-        header {
-            background: white; padding: 25px 20px;
-            display: flex; align-items: center; justify-content: space-between;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; }
 
-        .main-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 100px; }
+        .tag-input-container { border: 2px solid #eee; border-radius: 12px; padding: 10px; margin: 10px 0; display: flex; flex-wrap: wrap; gap: 8px; background: #fafafa; }
+        .tag { background: var(--secondary); color: white; padding: 5px 12px; border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+        .tag span { cursor: pointer; }
 
-        /* Multi-Target Input Section */
-        .architect-card {
-            background: white; border-radius: 20px; padding: 25px;
-            margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-        }
+        input { border: none; outline: none; background: transparent; font-family: inherit; width: 100%; }
+        .book-section { background: white; border-radius: 15px; border: 1px solid #ddd; overflow: hidden; margin-bottom: 15px; }
+        .book-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #eee; display: flex; gap: 10px; }
+        .chapter-row { padding: 15px; border-bottom: 1px solid #f0f0f0; position: relative; }
+        .topic-pill { background: #e3f2fd; color: var(--primary); padding: 5px 12px; border-radius: 15px; font-size: 11px; display: inline-block; margin: 4px; font-weight: 600; }
 
-        label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; }
-
-        .tag-input-container {
-            border: 2px solid #eee; border-radius: 12px; padding: 10px;
-            margin: 10px 0 20px; display: flex; flex-wrap: wrap; gap: 8px;
-            background: #fafafa;
-        }
-
-        .tag {
-            background: var(--secondary); color: white; padding: 5px 12px;
-            border-radius: 8px; font-size: 12px; display: flex; align-items: center; gap: 8px;
-        }
-
-        .tag span { cursor: pointer; font-weight: 800; }
-
-        input.ghost-input {
-            border: none; background: transparent; outline: none;
-            flex: 1; min-width: 150px; font-family: inherit; font-size: 14px;
-        }
-
-        /* Hierarchy UI */
-        .book-section {
-            background: white; border-radius: 20px; padding: 0;
-            margin-bottom: 20px; overflow: hidden; border: 1px solid #e0e0e0;
-        }
-
-        .book-header {
-            background: #f8f9fa; padding: 15px 20px;
-            border-bottom: 1px solid #eee; display: flex; justify-content: space-between;
-        }
-
-        .chapter-row {
-            padding: 20px; border-bottom: 1px solid #f0f0f0;
-        }
-
-        .topic-pill {
-            background: #e3f2fd; color: var(--primary);
-            padding: 8px 15px; border-radius: 20px; font-size: 12px;
-            display: inline-block; margin: 5px 5px 0 0; font-weight: 600;
-        }
-
-        .chapter-row {
-            padding: 20px;
-            border-bottom: 1px solid #f0f0f0;
-            position: relative; /* For positioning the remove button */
-        }
-
-        .remove-chapter-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: var(--danger);
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            text-transform: uppercase;
-            opacity: 0.6;
-        }
-
-        .remove-chapter-btn:hover {
-            opacity: 1;
-        }
-
-        /* Added a subtle hover effect to rows to show they are manageable */
-        .chapter-row:hover {
-            background: #fafafa;
-        }
-
-        .btn-add {
-            background: none; border: 2px dashed #ccc; color: #999;
-            width: 100%; padding: 12px; border-radius: 12px;
-            margin-top: 10px; font-weight: 600; cursor: pointer;
-        }
-
-        .publish-footer {
-            position: fixed; bottom: 0; width: 100%; background: white;
-            padding: 20px; border-top: 1px solid #eee; display: flex; gap: 10px;
-        }
-
-        .btn-main {
-            background: var(--primary); color: white; border: none;
-            flex: 1; padding: 15px; border-radius: 15px; font-weight: 700;
-            box-shadow: 0 4px 15px rgba(2, 136, 209, 0.3);
-        }
+        .btn-main { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 15px; font-weight: 700; box-shadow: 0 4px 15px rgba(2, 136, 209, 0.4); }
+        .add-btn { width: 100%; padding: 12px; border: 2px dashed #ccc; background: none; color: #888; border-radius: 12px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<div id="notification-bar"></div>
+<div id="sign-box"></div>
 
 <header>
-    <div onclick="history.back()" style="font-size:24px;">✕</div>
-    <h2 style="margin:0; font-size:18px;">Syllabus Architect</h2>
+    <div onclick="history.back()">✕</div>
+    <h2 style="margin:0; font-size:16px;">Syllabus Architect</h2>
     <div style="width:24px;"></div>
 </header>
 
 <div class="main-container">
-    <div class="architect-card">
-        <label>Architect Targets</label>
+    <div class="card">
+        <label>Targets (e.g. Class 10, Physics)</label>
         <div class="tag-input-container" id="tag-box">
-            <input type="text" class="ghost-input" id="target-input" placeholder="Type Class, Book, or 'Global'...">
+            <input type="text" id="target-input" placeholder="Type and press Enter..." enterkeyhint="done">
         </div>
-        <p style="font-size: 10px; color: #888; margin: 0;">Type and press Enter. The system will auto-map to Classes/Books.</p>
     </div>
 
     <div id="syllabus-content">
         <div class="book-section">
             <div class="book-header">
-                <input type="text" placeholder="Entry Title (e.g. Physics Vol. 1)" style="border:none; background:transparent; font-weight:600; outline:none; width:80%;">
-                <span style="color:var(--danger)" onclick="this.closest('.book-section').remove()">✕</span>
+                <input type="text" placeholder="Entry Title (e.g. Textbook Vol 1)" style="font-weight:700;">
             </div>
             <div class="chapter-row">
-                <input type="text" placeholder="Chapter Name (e.g. Motion)" style="width:100%; border:none; border-bottom:1px solid #eee; margin-bottom:10px; outline:none; font-size:14px;">
-                <div class="topic-list">
-                </div>
-                <input type="text" placeholder="+ Add Topic & Press Enter" style="font-size:12px; border:none; color:var(--primary); outline:none;" onkeydown="handleTopicEntry(event, this)">
+                <input type="text" placeholder="Chapter Name" style="border-bottom:1px solid #eee; margin-bottom:8px;">
+                <div class="topic-list"></div>
+                <input type="text" placeholder="+ Add Topic & Press Enter" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary);">
             </div>
-            <button class="btn-add" style="border:none; color:var(--primary); background:#f0f7ff; border-radius:0;" onclick="addChapter(this)">+ Add Chapter</button>
+            <button class="add-btn" style="border:none; color:var(--primary); background:#e3f2fd; border-radius:0;" onclick="addChapter(this)">+ Add Chapter</button>
         </div>
     </div>
 
-    <button class="btn-add" onclick="addEntry()">+ Add New Book or Section</button>
+    <button class="add-btn" onclick="addBook()">+ Add New Book/Section</button>
 </div>
 
-<div class="publish-footer">
-    <button class="btn-main" onclick="publishArchitect()">Deploy Syllabus to Institution</button>
-</div>
+<button class="btn-main" onclick="publishSyllabus()">Deploy to Institution Vault</button>
 
-<script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
-
 <script>
-    const targetInput = document.getElementById('target-input');
-    const tagBox = document.getElementById('tag-box');
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
-    // Handle Tags (Classes/Books/Global)
-    targetInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && targetInput.value.trim() !== "") {
+    function showNotify(msg, type) {
+        const box = document.getElementById('sign-box');
+        box.innerText = msg;
+        box.className = type === 'success' ? 'sign-green' : 'sign-red';
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 3000);
+    }
+
+    // Handle Targets
+    document.getElementById('target-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && e.target.value.trim() !== "") {
             const tag = document.createElement('div');
             tag.className = 'tag';
-            tag.innerHTML = `${targetInput.value} <span onclick="this.parentElement.remove()">✕</span>`;
-            tagBox.insertBefore(tag, targetInput);
-            targetInput.value = "";
+            tag.innerHTML = `${e.target.value} <span onclick="this.parentElement.remove()">✕</span>`;
+            document.getElementById('tag-box').insertBefore(tag, e.target);
+            e.target.value = "";
         }
     });
 
-    function handleTopicEntry(e, input) {
+    function addTopic(e, input) {
         if (e.key === 'Enter' && input.value.trim() !== "") {
             const pill = document.createElement('div');
             pill.className = 'topic-pill';
-            pill.innerHTML = `${input.value} <span style="margin-left:5px; opacity:0.5;" onclick="this.parentElement.remove()">✕</span>`;
+            pill.innerHTML = `${input.value} <span onclick="this.parentElement.remove()">✕</span>`;
             input.previousElementSibling.appendChild(pill);
             input.value = "";
         }
     }
 
     function addChapter(btn) {
-        const row = document.createElement('div');
-        row.className = 'chapter-row';
-        row.innerHTML = `
-            <div class="remove-chapter-btn" onclick="removeChapter(this)">Remove Chapter</div>
-            <input type="text" placeholder="Chapter Name" style="width:90%; border:none; border-bottom:1px solid #eee; margin-bottom:10px; outline:none; font-size:14px;">
-            <div class="topic-list"></div>
-            <input type="text" placeholder="+ Add Topic & Press Enter" style="font-size:12px; border:none; color:var(--primary); outline:none;" onkeydown="handleTopicEntry(event, this)">
-        `;
-        btn.before(row);
+        const div = document.createElement('div');
+        div.className = 'chapter-row';
+        div.innerHTML = `<input type="text" placeholder="Chapter Name" style="border-bottom:1px solid #eee; margin-bottom:8px;">
+                         <div class="topic-list"></div>
+                         <input type="text" placeholder="+ Add Topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary);">`;
+        btn.before(div);
     }
 
-    function removeChapter(btn) {
-        // Simple confirmation via Sign Box instead of a browser alert
-        const row = btn.closest('.chapter-row');
-        row.style.opacity = '0.5';
-        row.style.pointerEvents = 'none';
-
-        // Use your Green/Red sign box requirement
-        showNotify("Chapter removed", "error");
-
-        setTimeout(() => {
-            row.remove();
-        }, 300);
-    }
-
-    function addEntry() {
+    function addBook() {
         const container = document.getElementById('syllabus-content');
         const section = document.createElement('div');
         section.className = 'book-section';
-        section.innerHTML = `
-            <div class="book-header">
-                <input type="text" placeholder="Entry Title" style="border:none; background:transparent; font-weight:600; outline:none; width:80%;">
-                <span style="color:var(--danger)" onclick="this.closest('.book-section').remove()">✕</span>
-            </div>
-            <div class="chapter-row">
-                <input type="text" placeholder="Chapter Name" style="width:100%; border:none; border-bottom:1px solid #eee; margin-bottom:10px; outline:none; font-size:14px;">
-                <div class="topic-list"></div>
-                <input type="text" placeholder="+ Add Topic & Press Enter" style="font-size:12px; border:none; color:var(--primary); outline:none;" onkeydown="handleTopicEntry(event, this)">
-            </div>
-            <button class="btn-add" style="border:none; color:var(--primary); background:#f0f7ff; border-radius:0;" onclick="addChapter(this)">+ Add Chapter</button>
-        `;
+        section.innerHTML = `<div class="book-header"><input type="text" placeholder="Entry Title" style="font-weight:700;"></div>
+                             <div class="chapter-row"><input type="text" placeholder="Chapter Name" style="border-bottom:1px solid #eee;">
+                             <div class="topic-list"></div><input type="text" placeholder="+ Add Topic" onkeydown="addTopic(event, this)"></div>
+                             <button class="add-btn" style="border:none; color:var(--primary); background:#e3f2fd;" onclick="addChapter(this)">+ Add Chapter</button>`;
         container.appendChild(section);
     }
 
-    function showNotify(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-        setTimeout(() => bar.className = "", 3000);
-    }
+    async function publishSyllabus() {
+        const token = await AppStorage.get('institutionToken');
+        const targets = Array.from(document.querySelectorAll('.tag')).map(t => t.innerText.replace('✕', '').trim());
 
-    async function publishArchitect() {
-        showNotify("Architect deploying...", "success");
-        // Logic to gather all tags and structure goes here
-        // Then POST to FastAPI
+        const books = Array.from(document.querySelectorAll('.book-section')).map(b => ({
+            title: b.querySelector('.book-header input').value || "Untitled",
+            chapters: Array.from(b.querySelectorAll('.chapter-row')).map(c => ({
+                chapter_name: c.querySelector('input').value || "Untitled",
+                topics: Array.from(c.querySelectorAll('.topic-pill')).map(p => p.innerText.replace('✕', '').trim())
+            }))
+        }));
+
+        const payload = {
+            name: `Syllabus: ${targets.join(', ')}`,
+            doc_type: "syllabus",
+            content: books
+        };
+
+        try {
+            const res = await fetch(`${API_BASE}/vault/upload`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) {
+                showNotify("Deployed to Vault!", "success");
+                setTimeout(() => history.back(), 2000);
+            }
+        } catch (e) { showNotify("Connection Error", "error"); }
     }
 </script>
 </body>
