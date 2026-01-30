@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Institution Directory</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --bg: #f4f7f6;
+            --danger: #ef5350;
+            --success: #66bb6a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg);
+            display: flex; flex-direction: column;
+            height: 100vh;
+        }
+
+        /* Red/Green Sign Box */
+        #status-sign {
+            display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            color: white; padding: 12px 25px; border-radius: 10px; font-weight: 600; z-index: 3000;
+        }
+
+        header {
+            background: white; padding: 25px 20px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .back-btn { font-size: 24px; cursor: pointer; color: var(--secondary); text-decoration: none; }
+        header h1 { font-size: 20px; margin: 0; color: var(--secondary); }
+
+        /* Summary Grid */
+        .directory-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 15px; padding: 20px;
+        }
+
+        .dir-card {
+            background: white; padding: 20px; border-radius: 18px;
+            text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            cursor: pointer; transition: 0.3s; border: 1px solid #eee;
+        }
+        .dir-card:active { transform: scale(0.96); }
+        .dir-card i { font-size: 28px; display: block; margin-bottom: 8px; }
+        .dir-card b { font-size: 18px; color: var(--secondary); }
+        .dir-card span { display: block; font-size: 12px; color: #888; margin-top: 4px; }
+
+        /* Action List (Recent Activity / Blocked) */
+        .action-list { padding: 0 20px; }
+        .action-item {
+            background: white; padding: 15px; border-radius: 15px;
+            margin-bottom: 10px; display: flex; align-items: center;
+            justify-content: space-between; cursor: pointer;
+        }
+        .action-label { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; color: var(--secondary); }
+        .count-badge { background: #eee; padding: 2px 10px; border-radius: 10px; font-size: 11px; }
+        .danger-text { color: var(--danger); }
+
+
+    </style>
+</head>
+<body>
+
+<div id="status-sign"></div>
+
+<header>
+    <a href="profile.html" class="back-btn">←</a>
+    <h1>Institution Directory</h1>
+</header>
+
+<div class="directory-grid">
+    <div class="dir-card" onclick="openDept('admins')">
+        <i>👑</i><b id="count-admins">0</b><span>Admins</span>
+    </div>
+    <div class="dir-card" onclick="openDept('teachers')">
+        <i>👔</i><b id="count-teachers">0</b><span>Teachers</span>
+    </div>
+    <div class="dir-card" onclick="openDept('students')">
+        <i>🎓</i><b id="count-students">0</b><span>Students</span>
+    </div>
+    <div class="dir-card" onclick="location.href='staff-list.html'">
+        <i>🛠️</i><b id="count-staff">0</b><span>Staff</span>
+    </div>
+</div>
+
+<div class="action-list">
+    <div class="action-item" onclick="location.href='activity-log.html'">
+        <div class="action-label">🕒 Recent Activity (Join/Leave)</div>
+        <span class="arrow">></span>
+    </div>
+
+    <div class="action-item" onclick="location.href='blocked-users.html'">
+        <div class="action-label danger-text">🚫 Blocked Users</div>
+        <b class="count-badge" id="count-blocked">0</b>
+    </div>
+</div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+
+    function showSign(msg, type) {
+        const sign = document.getElementById('status-sign');
+        sign.innerText = msg;
+        sign.style.display = 'block';
+        sign.style.background = type === 'success' ? '#66bb6a' : '#ef5350';
+        setTimeout(() => sign.style.display = 'none', 3000);
+    }
+
+    async function loadDirectoryStats() {
+        const token = await AppStorage.get('institutionToken');
+
+        try {
+            const res = await fetch(`${API_BASE}/institution/directory/stats`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('count-admins').innerText = data.admins || 0;
+                document.getElementById('count-teachers').innerText = data.teachers || 0;
+                document.getElementById('count-students').innerText = data.students || 0;
+                document.getElementById('count-staff').innerText = data.staff || 0;
+                document.getElementById('count-blocked').innerText = data.blocked || 0;
+            }
+        } catch (e) {
+            console.error("Stats failed", e);
+            showSign("Offline: Showing cached data", "error");
+        }
+    }
+
+    function openDept(role) {
+        // Save choice and go to the generic list page
+        AppStorage.set('viewing_role', role);
+        location.href = 'user-list.html';
+    }
+
+    window.onload = loadDirectoryStats;
+</script>
+</body>
+</html>

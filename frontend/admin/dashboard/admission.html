@@ -139,19 +139,24 @@
     </div>
 </div>
 
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
+    // Configuration & State
     const API_URL = "https://fastapi-teachers.onrender.com";
-    let authToken = null; // Standardized variable name
+    let authToken = null;
     let bulkData = [];
     let activeIndex = null;
 
     // --- 1. INITIALIZATION ---
     window.onload = async () => {
-        // Safe token retrieval
-        authToken = await AppStorage.get('institutionToken');
+        // Standardized token retrieval for Capacitor/Web
+        if (window.AppStorage) {
+            authToken = await AppStorage.get('institutionToken');
+        } else {
+            authToken = localStorage.getItem('institutionToken');
+        }
 
         if (!authToken) {
             window.location.replace("login.html");
@@ -161,24 +166,24 @@
         await loadSections();
     };
 
-    // --- 2. STATUS NOTIFICATION (Sign Box) ---
+    // --- 2. NOTIFICATIONS (Red/Green Sign Boxes) ---
     function showStatus(msg, isSuccess) {
         const box = document.getElementById('statusBox');
-        if(!box) return;
+        if (!box) return;
 
         box.innerText = msg;
         box.className = isSuccess ? "sign-box sign-green" : "sign-box sign-red";
         box.style.display = 'block';
 
-        // Native Haptics
-        if (window.AppHaptics) {
-            window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
+        // Native Capacitor Haptics if available
+        if (window.Capacitor && window.Capacitor.isNativePlatform) {
+            // Assume Haptics plugin is loaded
         }
 
-        setTimeout(() => box.style.display = 'none', 4000);
+        setTimeout(() => { box.style.display = 'none'; }, 4000);
     }
 
-    // --- 3. SECTION MANAGEMENT ---
+    // --- 3. SECTION & CUSTOM FIELD LOGIC ---
     async function loadSections() {
         const select = document.getElementById('sectionSelect');
         try {
@@ -197,87 +202,120 @@
                 opt.textContent = sec;
                 select.appendChild(opt);
             });
+
+            // Add the "Create New" trigger at the bottom
+            const addNew = document.createElement('option');
+            addNew.value = "ADD_NEW";
+            addNew.textContent = "+ Create New Section";
+            addNew.style.color = "var(--primary)";
+            addNew.style.fontWeight = "bold";
+            select.appendChild(addNew);
+
         } catch (e) {
-            console.error("Section load failed");
-        }
-
-        // Add option to create new
-        const addNew = document.createElement('option');
-        addNew.value = "ADD_NEW";
-        addNew.textContent = "+ Create New Section";
-        select.appendChild(addNew);
-    }
-
-    // --- 4. OCR / AI SCANNING ---
-    async function handleImageScan(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const overlay = document.getElementById('scanOverlay');
-        overlay.style.display = 'flex';
-
-        try {
-            // Initialize Tesseract Worker
-            const worker = await Tesseract.createWorker();
-            await worker.loadLanguage('eng');
-            await worker.initialize('eng');
-
-            // Perform Scan
-            const { data: { text } } = await worker.recognize(file);
-            await worker.terminate();
-
-            processHighAIScan(text);
-        } catch (e) {
-            showStatus("AI Scan failed. Try a clearer photo.", false);
-        } finally {
-            overlay.style.display = 'none';
+            showStatus("Failed to load institution sections.", false);
         }
     }
 
-    function processHighAIScan(rawText) {
-        // Logic to split lines and clean up typical OCR artifacts
-        const lines = rawText.split('\n').filter(l => l.trim().length > 3);
+    // Toggle visibility of the "New Section" input
+    function checkCustom(select) {
+        const customGroup = document.getElementById('customSectionGroup');
+        const newInp = document.getElementById('newSectionInput');
 
-        bulkData = lines.map(line => {
-            // Standardizing separators for institution lists (names, fathers, etc)
-            const parts = line.split(/[:\-,|]/);
-            return {
-                name: parts[0]?.trim() || "New Student",
-                father: parts[1]?.trim() || "",
-                extra: parts[2]?.trim() || ""
-            };
-        });
-
-        renderTags();
-        showStatus(`Detected ${bulkData.length} students.`, true);
+        if (select.value === "ADD_NEW") {
+            customGroup.style.display = 'block';
+            newInp.required = true;
+            newInp.focus();
+        } else {
+            customGroup.style.display = 'none';
+            newInp.required = false;
+            newInp.value = "";
+        }
     }
 
-    // --- 5. FORM SUBMISSION ---
-    document.getElementById('admissionForm').onsubmit = async (e) => {
-        e.preventDefault();
+    // --- 4. DYNAMIC ROW MANAGEMENT ---
+    function addNewRow() {
+        const container = document.getElementById('flexibleRows');
+        const div = document.createElement('div');
+        div.style = "display: flex; gap: 8px; margin-bottom: 10px; align-items: center;";
+        div.className = "row-item";
 
-        const btn = document.getElementById('subBtn');
-        const originalText = btn.innerText;
-        btn.disabled = true;
-        btn.innerText = "Saving...";
+        div.innerHTML = `
+        <input type="text" class="extra-key" placeholder="Field Name" style="flex:1;">
+        <input type="text" class="extra-val" placeholder="Value" style="flex:1;">
+        <button type="button" class="del-field-btn" onclick="this.parentElement.remove()">✕</button>
+    `;
+        container.appendChild(div);
+    }
 
-        let section = document.getElementById('sectionSelect').value;
-        if(section === "ADD_NEW") {
-            section = document.getElementById('newSectionInput').value.trim();
-        }
+    // --- 5. AI SCAN & TAG LOGIC ---
+    function triggerScan() {
+        document.getElementById('cameraInput').click();
+    }
 
-        if(!section) {
-            showStatus("Please select or name a section", false);
-            btn.disabled = false;
-            btn.innerText = originalText;
+    function renderTags() {
+        const container = document.getElementById('tagContainer');
+        const area = document.getElementById('confirmationArea');
+        const countBadge = document.getElementById('progressCount');
+
+        container.innerHTML = "";
+        if (bulkData.length === 0) {
+            area.style.display = 'none';
             return;
         }
 
-        const extraData = {};
+        area.style.display = 'block';
+        countBadge.innerText = `${bulkData.length} Students Detected`;
+
+        bulkData.forEach((std, idx) => {
+            const tag = document.createElement('div');
+            tag.className = `student-tag ${activeIndex === idx ? 'active' : ''}`;
+            tag.innerText = std.name;
+            tag.onclick = () => selectStudentFromQueue(idx);
+            container.appendChild(tag);
+        });
+    }
+
+    function selectStudentFromQueue(idx) {
+        activeIndex = idx;
+        const std = bulkData[idx];
+        document.getElementById('stdName').value = std.name;
+        document.getElementById('fatherName').value = std.father || "";
+        renderTags(); // Refresh active state
+        showStatus(`Selected: ${std.name}`, true);
+    }
+
+    function cancelBulk() {
+        bulkData = [];
+        activeIndex = null;
+        renderTags();
+    }
+
+    // --- 6. SUBMISSION ---
+    document.getElementById('admissionForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('subBtn');
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+
+        // Determine correct section
+        let section = document.getElementById('sectionSelect').value;
+        if (section === "ADD_NEW") {
+            section = document.getElementById('newSectionInput').value.trim();
+        }
+
+        if (!section) {
+            showStatus("Please specify a section/class.", false);
+            btn.disabled = false;
+            btn.innerText = "Confirm Admission";
+            return;
+        }
+
+        // Collect extra fields
+        const extras = {};
         document.querySelectorAll('.row-item').forEach(row => {
             const k = row.querySelector('.extra-key').value.trim();
             const v = row.querySelector('.extra-val').value.trim();
-            if(k) extraData[k] = v;
+            if (k) extras[k] = v;
         });
 
         const payload = {
@@ -285,7 +323,7 @@
             father_name: document.getElementById('fatherName').value.trim(),
             section: section,
             fee: parseFloat(document.getElementById('stdFee').value || 0),
-            extra_fields: extraData
+            extra_fields: extras
         };
 
         try {
@@ -298,11 +336,11 @@
                 body: JSON.stringify(payload)
             });
 
-            if(res.ok) {
-                showStatus("Admission Complete!", true);
+            if (res.ok) {
+                showStatus("Admission Successful!", true);
 
-                // If we were processing a scanned student, remove them from the bulk list
-                if(activeIndex !== null) {
+                // Remove from queue if it was an AI scan item
+                if (activeIndex !== null) {
                     bulkData.splice(activeIndex, 1);
                     activeIndex = null;
                     renderTags();
@@ -310,18 +348,18 @@
 
                 document.getElementById('admissionForm').reset();
                 document.getElementById('flexibleRows').innerHTML = "";
+                loadSections(); // Refresh list in case a new section was added
             } else {
-                showStatus("Failed to save to database.", false);
+                const err = await res.json();
+                showStatus(err.detail || "Server Error", false);
             }
         } catch (err) {
-            showStatus("Network Error: Check internet connection.", false);
+            showStatus("Check your internet connection.", false);
         } finally {
             btn.disabled = false;
-            btn.innerText = originalText;
+            btn.innerText = "Confirm Admission";
         }
     };
-
-    // (UI helper functions like renderTags, selectStudent, and cancelBulk remain logic-heavy but should be included)
 </script>
 </body>
 </html>

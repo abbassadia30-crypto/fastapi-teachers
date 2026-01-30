@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Attendance | Institution Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1565c0; /* Blue for Corporate/Staff management */
+            --secondary: #263238;
+            --bg: #f8fafc;
+            --present: #4caf50;
+            --absent: #f44336;
+            --late: #ff9800;
+        }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--absent); top: 20px !important; }
+        .bg-green { background: var(--primary); top: 20px !important; }
+
+        header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+
+        .category-bar {
+            display: flex; background: #eee; margin: 15px 20px; border-radius: 12px; padding: 4px;
+        }
+        .cat-btn {
+            flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; transition: 0.3s; color: #666;
+        }
+        .cat-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .main-container { flex: 1; overflow-y: auto; padding: 0 20px 120px 20px; }
+
+        .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        label { font-size: 10px; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; }
+
+        input, select {
+            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit;
+        }
+
+        /* Attendance Card */
+        .staff-card {
+            background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px;
+            border: 1px solid #eee; display: flex; flex-direction: column; gap: 10px;
+        }
+        .staff-top { display: flex; justify-content: space-between; align-items: center; }
+        .staff-info { display: flex; flex-direction: column; }
+        .staff-name { font-weight: 700; font-size: 14px; color: var(--secondary); }
+        .staff-dept { font-size: 10px; color: #78909c; font-weight: 600; }
+
+        .role-selector {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px;
+        }
+        .role-chip {
+            padding: 6px; text-align: center; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; background: #fff; border: 1px solid #cbd5e1;
+        }
+        .role-chip.active { background: var(--secondary); color: white; border-color: var(--secondary); }
+
+        .status-group { display: flex; gap: 8px; margin-top: 5px; }
+        .status-btn {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center;
+        }
+        .status-btn.p.active { background: var(--present); color: white; border-color: var(--present); }
+        .status-btn.a.active { background: var(--absent); color: white; border-color: var(--absent); }
+        .status-btn.l.active { background: var(--late); color: white; border-color: var(--late); }
+
+        .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
+        .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<header>
+    <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
+    <h2 style="margin:0; font-size:16px; font-weight:800;">Staff Attendance</h2>
+    <div style="width:24px;"></div>
+</header>
+
+<div class="category-bar">
+    <button class="cat-btn active" onclick="setStaffType('teacher', this)">TEACHERS</button>
+    <button class="cat-btn" onclick="setStaffType('admin-staff', this)">OFFICE STAFF</button>
+</div>
+
+<div class="main-container">
+    <div class="config-card">
+        <label>Attendance Date</label>
+        <input type="date" id="att-date" value="2026-01-29">
+
+        <div id="teacher-config">
+            <label>General Shift / Session</label>
+            <select>
+                <option>Morning Session</option>
+                <option>Evening Session</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="staff-list-container">
+    </div>
+</div>
+
+<div class="publish-footer">
+    <button class="btn-main" onclick="saveAttendance()">Submit Attendance</button>
+</div>
+
+<script>
+    let currentStaffType = 'teacher';
+
+    // Simulated Staff Records from DB
+    const staffDB = {
+        'teacher': [
+            { id: 'T001', name: 'Prof. Shakeel Ahmed', dept: 'Mathematics' },
+            { id: 'T002', name: 'Ms. Hina Parvez', dept: 'Physics' },
+            { id: 'T003', name: 'Mr. David Wilson', dept: 'English' }
+        ],
+        'admin-staff': [
+            { id: 'S501', name: 'Irfan Malik', dept: 'Accountant' },
+            { id: 'S502', name: 'Zeeshan Ali', dept: 'IT Admin' }
+        ]
+    };
+
+    function setStaffType(type, el) {
+        currentStaffType = type;
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('teacher-config').style.display = type === 'teacher' ? 'block' : 'none';
+        renderStaff();
+    }
+
+    function renderStaff() {
+        const container = document.getElementById('staff-list-container');
+        container.innerHTML = '';
+
+        staffDB[currentStaffType].forEach(person => {
+            const isTeacher = currentStaffType === 'teacher';
+            container.innerHTML += `
+                <div class="staff-card">
+                    <div class="staff-top">
+                        <div class="staff-info">
+                            <span class="staff-name">${person.name}</span>
+                            <span class="staff-dept">ID: ${person.id} | ${person.dept}</span>
+                        </div>
+                    </div>
+
+                    ${isTeacher ? `
+                    <div class="role-selector">
+                        <div class="role-chip active" onclick="setRole(this)">CLASS TEACHER</div>
+                        <div class="role-chip" onclick="setRole(this)">INVEGILATER</div>
+                    </div>
+                    ` : ''}
+
+                    <div class="status-group">
+                        <div class="status-btn p active" onclick="setStatus(this)">PRESENT</div>
+                        <div class="status-btn a" onclick="setStatus(this)">ABSENT</div>
+                        <div class="status-btn l" onclick="setStatus(this)">LATE</div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function setRole(el) {
+        el.parentElement.querySelectorAll('.role-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function setStatus(el) {
+        el.parentElement.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+    }
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => bar.className = "", 3000);
+    }
+
+    function saveAttendance() {
+        showNotify("Staff attendance saved to records.", "green");
+        // Logic: Push to staff_attendance table with Role & Status
+    }
+
+    // Initial load
+    renderStaff();
+</script>
+</body>
+</html>

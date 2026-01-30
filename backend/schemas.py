@@ -131,6 +131,12 @@ class StaffResponse(StaffBase):
     class Config:
         from_attributes = True
 
+# Add this to your schemas.py
+class StaffListResponse(BaseModel):
+    institution_id: int
+    total_staff: int
+    rows: List[StaffResponse]
+
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
     designation: Optional[str] = None

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Datesheet Architect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --bg: #f4f7f9;
+            --success: #66bb6a;
+            --danger: #ef5350;
+            --border: #d1d9e0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg);
+            display: flex; flex-direction: column; height: 100vh;
+        }
+
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--danger); top: 20px !important; border: 1px solid #b71c1c; }
+        .bg-green { background: var(--success); top: 20px !important; border: 1px solid #2e7d32; }
+
+        header {
+            background: white; padding: 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .main-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; }
+
+        .architect-card {
+            background: white; border-radius: 20px; padding: 20px;
+            margin-bottom: 20px; border: 1px solid var(--border);
+        }
+
+        label { font-size: 10px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        input, select {
+            width: 100%; padding: 12px; margin: 5px 0 15px;
+            border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box;
+            font-family: inherit; font-size: 14px; background: #fff;
+        }
+
+        /* The Exam Entry Card */
+        .exam-entry {
+            background: white; border-radius: 15px; padding: 15px;
+            margin-bottom: 15px; border: 1px solid #e0e6ed;
+            position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .entry-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+
+        .day-badge {
+            background: var(--secondary); color: white;
+            padding: 2px 10px; border-radius: 5px; font-size: 10px; font-weight: 600;
+        }
+
+        .grid-layout { display: grid; grid-template-columns: 1.2fr 1fr; gap: 10px; }
+
+        .btn-add {
+            background: white; color: var(--primary); border: 2px dashed var(--primary);
+            width: 100%; padding: 12px; border-radius: 12px;
+            font-weight: 600; cursor: pointer; margin-top: 10px;
+        }
+
+        .publish-footer {
+            position: fixed; bottom: 0; width: 100%; background: white;
+            padding: 15px 20px; border-top: 1px solid #eee; display: flex; gap: 10px; box-sizing: border-box;
+        }
+
+        .btn-main {
+            background: var(--primary); color: white; border: none;
+            flex: 1; padding: 15px; border-radius: 12px; font-weight: 700;
+        }
+
+        .remove-icon { color: var(--danger); font-size: 18px; cursor: pointer; padding: 5px; }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<header>
+    <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
+    <h2 style="margin:0; font-size:16px; font-weight:800;">Datesheet Architect</h2>
+    <div style="width:24px;"></div>
+</header>
+
+<div class="main-container">
+    <div class="architect-card">
+        <label>Datesheet Title</label>
+        <input type="text" id="ds-title" placeholder="e.g. Mid-Term Exams March 2026">
+
+        <label>Class/Section</label>
+        <input type="text" id="ds-target" placeholder="e.g. BS Computer Science - 4th Sem">
+    </div>
+
+    <div id="exam-list">
+        <div class="exam-entry">
+            <div class="entry-header">
+                <label style="color:var(--secondary)">Subject Details</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="day-badge" id="day-display-0">Pick Date</span>
+                    <span class="remove-icon" onclick="removeEntry(this)">✕</span>
+                </div>
+            </div>
+
+            <input type="text" class="subject-name" placeholder="Subject Name (e.g. Data Structures)">
+
+            <div class="grid-layout">
+                <div>
+                    <label>Paper Date</label>
+                    <input type="date" class="paper-date" onchange="updateDay(this)">
+                </div>
+                <div>
+                    <label>Paper Time</label>
+                    <input type="time" class="paper-time">
+                </div>
+            </div>
+
+            <div class="grid-layout">
+                <div>
+                    <label>Duration (Mins)</label>
+                    <input type="number" class="paper-duration" placeholder="180">
+                </div>
+                <div>
+                    <label>Venue/Room</label>
+                    <input type="text" class="paper-venue" placeholder="Hall 01">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn-add" onclick="addNewEntry()">+ Add Another Subject</button>
+</div>
+
+<div class="publish-footer">
+    <button class="btn-main" onclick="publishDatesheet()">Deploy Datesheet</button>
+</div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
+<script>
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => bar.className = "", 3000);
+    }
+
+    function updateDay(input) {
+        const dateValue = new Date(input.value);
+        const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+        const dayBadge = input.closest('.exam-entry').querySelector('.day-badge');
+
+        if (!isNaN(dateValue.getTime())) {
+            dayBadge.innerText = days[dateValue.getDay()];
+            dayBadge.style.background = "#0288d1";
+        }
+    }
+
+    function addNewEntry() {
+        const container = document.getElementById('exam-list');
+        const entry = document.createElement('div');
+        entry.className = 'exam-entry';
+        entry.innerHTML = `
+            <div class="entry-header">
+                <label style="color:var(--secondary)">Subject Details</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span class="day-badge">Pick Date</span>
+                    <span class="remove-icon" onclick="removeEntry(this)">✕</span>
+                </div>
+            </div>
+            <input type="text" class="subject-name" placeholder="Subject Name">
+            <div class="grid-layout">
+                <div><label>Paper Date</label><input type="date" class="paper-date" onchange="updateDay(this)"></div>
+                <div><label>Paper Time</label><input type="time" class="paper-time"></div>
+            </div>
+            <div class="grid-layout">
+                <div><label>Duration</label><input type="number" class="paper-duration" placeholder="Mins"></div>
+                <div><label>Venue</label><input type="text" class="paper-venue" placeholder="Room..."></div>
+            </div>
+        `;
+        container.appendChild(entry);
+    }
+
+    function removeEntry(btn) {
+        btn.closest('.exam-entry').remove();
+        showNotify("Subject removed", "error");
+    }
+
+    async function publishDatesheet() {
+        const title = document.getElementById('ds-title').value;
+        if(!title) return showNotify("Title is required", "error");
+
+        showNotify("Deploying to Students...", "success");
+        // Logic to push JSON to FastAPI
+    }
+</script>
+</body>
+</html>

@@ -50,7 +50,7 @@
         .search-box { background: #f1f3f4; border-radius: 10px; padding: 10px 15px; margin-top: 10px; display: flex; align-items: center; }
         .search-box input { border: none; background: transparent; width: 100%; outline: none; font-family: inherit; }
 
-        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; transition: all 0.3s; }
+        .container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; padding: 20px; }
 
         .card {
             background: white; border-radius: 15px; padding: 15px; border-top: 5px solid var(--primary);
@@ -66,13 +66,15 @@
             z-index: 10;
         }
 
+        .details { display: none; margin-top: 10px; }
+        .card.expanded .details { display: block; }
+
         .name { font-weight: 700; color: var(--primary); font-size: 15px; }
         .label-style { font-size: 9px; font-weight: 800; color: #999; text-transform: uppercase; margin-top: 15px; display: block; }
         .value-box { font-size: 13px; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-top: 4px; border: 1px solid #eee; word-break: break-all; }
 
         .actions { display: flex; gap: 10px; margin-top: 20px; }
         .btn { flex: 1; border: none; padding: 12px; border-radius: 10px; font-size: 12px; font-weight: 600; cursor: pointer; color: white; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
         .btn-edit { background: var(--accent); }
         .btn-del { background: var(--danger); }
         .btn-save { background: var(--success); width: 100%; padding: 15px; margin-top: 10px; font-size: 16px; }
@@ -102,7 +104,7 @@
         <label class="label-style">Fee Amount</label>
         <input type="number" id="editFee">
         <div id="editExtraFields"></div>
-        <button class="btn btn-save" onclick="saveEdit()">Save Records</button>
+        <button id="saveEditBtn" class="btn btn-save" onclick="saveEdit()">Save Records</button>
         <button onclick="closeEdit()" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:#777;">Back</button>
     </div>
 </div>
@@ -120,98 +122,65 @@
 <div id="loader" class="loader">Accessing Institution Database...</div>
 <div class="container" id="list"></div>
 
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 <script>
     const API = "https://fastapi-teachers.onrender.com";
-    let authToken = null; // Renamed for clarity and scope
+    let authToken = null;
     const params = new URLSearchParams(window.location.search);
     const targetSection = params.get('section');
 
     let students = [];
     let editId = null;
 
-    // --- 1. INITIALIZATION ---
     window.onload = async () => {
-        // Fetch token from native storage safely
         authToken = await AppStorage.get('institutionToken');
-
         if (!authToken) {
             window.location.href = "login.html";
             return;
         }
-
-        // Start loading data
         await load();
     };
 
-    // --- 2. NOTIFICATION SYSTEM (Red/Green Box) ---
     function notify(msg, success = true) {
         const n = document.getElementById('appNotifier');
         if(!n) return;
-
         n.innerText = msg;
-        // Using your style preference for red/green sign boxes
-        n.style.background = success ? '#43a047' : '#e53935';
+        n.style.background = success ? '#2e7d32' : '#c62828';
         n.classList.add('notifier-show');
-
-        // Native Haptics for a real app feel
-        if (window.AppHaptics) {
-            window.AppHaptics.notification(success ? 'SUCCESS' : 'ERROR');
-        }
-
+        if (window.AppHaptics) window.AppHaptics.notification(success ? 'SUCCESS' : 'ERROR');
         setTimeout(() => n.classList.remove('notifier-show'), 3000);
     }
 
-    // --- 3. DATA LOADING ---
     async function load() {
-        if (!targetSection) {
-            notify("No section specified", false);
-            return;
-        }
-
+        if (!targetSection) return notify("No section specified", false);
         document.getElementById('sectionTitle').innerText = targetSection;
 
         try {
             const res = await fetch(`${API}/dashboard/my_students`, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
-
-            if (res.status === 401) {
-                window.location.href = "login.html";
-                return;
-            }
+            if (res.status === 401) return window.location.href = "login.html";
 
             const data = await res.json();
-            // Ensure data.students exists before filtering
-            const rawList = data.students || [];
+            const rawList = data.students || data || [];
             students = rawList.filter(s => s.section === targetSection);
             render();
         } catch (e) {
             notify("Sync Failed: Check Connection", false);
         } finally {
-            const loader = document.getElementById('loader');
-            if(loader) loader.style.display = 'none';
+            document.getElementById('loader').style.display = 'none';
         }
     }
 
-    // --- 4. UI RENDERING ---
     function render() {
         const q = document.getElementById('search').value.toLowerCase().trim();
         const container = document.getElementById('list');
 
-        const filtered = students.filter(s => {
-            const nameMatch = s.name.toLowerCase().includes(q);
-            const fatherMatch = (s.father_name || "").toLowerCase().includes(q);
-
-            let extraMatch = false;
-            if (s.extra_fields) {
-                extraMatch = Object.values(s.extra_fields).some(val =>
-                    String(val).toLowerCase().includes(q)
-                );
-            }
-            return nameMatch || fatherMatch || extraMatch;
-        });
+        const filtered = students.filter(s =>
+            s.name.toLowerCase().includes(q) ||
+            (s.father_name || "").toLowerCase().includes(q)
+        );
 
         if (filtered.length === 0) {
             container.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999; padding:40px;">No records match your query</div>`;
@@ -222,10 +191,7 @@
             let extraRows = "";
             if (s.extra_fields) {
                 Object.entries(s.extra_fields).forEach(([key, val]) => {
-                    extraRows += `
-                        <span class="label-style">${key.replace(/_/g, ' ')}</span>
-                        <div class="value-box">${val || 'N/A'}</div>
-                    `;
+                    extraRows += `<span class="label-style">${key.replace(/_/g, ' ')}</span><div class="value-box">${val || 'N/A'}</div>`;
                 });
             }
 
@@ -244,12 +210,50 @@
                             <button class="btn btn-del" onclick="handleDeleteClick('${s.id}', event)">Delete</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }).join('');
     }
 
-    // --- 5. CRUD OPERATIONS ---
+    // --- UI HELPERS ---
+    function toggleSingleCard(card) {
+        const isExpanded = card.classList.contains('expanded');
+        document.querySelectorAll('.card').forEach(c => c.classList.remove('expanded'));
+        if (!isExpanded) card.classList.add('expanded');
+    }
+
+    function handleEditClick(id, event) {
+        event.stopPropagation();
+        editId = id;
+        const s = students.find(std => std.id == id);
+        if(!s) return;
+
+        document.getElementById('editName').value = s.name;
+        document.getElementById('editFather').value = s.father_name || "";
+        document.getElementById('editFee').value = s.fee || 0;
+
+        const extraArea = document.getElementById('editExtraFields');
+        extraArea.innerHTML = "";
+        if(s.extra_fields) {
+            Object.entries(s.extra_fields).forEach(([key, val]) => {
+                extraArea.innerHTML += `<label class="label-style">${key}</label><input type="text" class="edit-extra-input" data-key="${key}" value="${val}">`;
+            });
+        }
+        document.getElementById('editOverlay').style.display = 'flex';
+    }
+
+    function closeEdit() { document.getElementById('editOverlay').style.display = 'none'; }
+
+    function handleDeleteClick(id, event) {
+        event.stopPropagation();
+        const s = students.find(std => std.id == id);
+        document.getElementById('delName').innerText = s.name;
+        document.getElementById('confirmDelBtn').onclick = () => executeDelete(id);
+        document.getElementById('deleteConfirmBar').classList.add('active');
+    }
+
+    function cancelDelete() { document.getElementById('deleteConfirmBar').classList.remove('active'); }
+
+    // --- API OPERATIONS ---
     async function executeDelete(id) {
         try {
             const res = await fetch(`${API}/dashboard/delete_student/${id}`, {
@@ -260,19 +264,14 @@
                 notify("Record Removed", true);
                 students = students.filter(s => s.id != id);
                 render();
-            } else {
-                notify("Could not delete record", false);
             }
-        } catch (e) {
-            notify("Delete failed: Server Error", false);
-        } finally {
-            cancelDelete();
-        }
+        } catch (e) { notify("Delete failed", false); }
+        cancelDelete();
     }
 
     async function saveEdit() {
-        const btn = document.getElementById('saveEditBtn'); // Assuming this ID exists
-        if(btn) btn.disabled = true;
+        const btn = document.getElementById('saveEditBtn');
+        btn.disabled = true;
 
         const extraFields = {};
         document.querySelectorAll('.edit-extra-input').forEach(input => {
@@ -282,35 +281,27 @@
         const body = {
             name: document.getElementById('editName').value.trim(),
             father_name: document.getElementById('editFather').value.trim(),
+            section: targetSection,
             fee: parseFloat(document.getElementById('editFee').value) || 0,
             extra_fields: extraFields
         };
 
         try {
-            const res = await fetch(`${API}/dashboard/update_student/${editId}`, {
+            // Updated to match your Python route: /edit_student/
+            const res = await fetch(`${API}/dashboard/edit_student/${editId}`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify(body)
             });
 
             if (res.ok) {
-                notify("Institution Records Updated", true);
+                notify("Records Updated", true);
                 closeEdit();
                 await load();
-            } else {
-                notify("Update failed: Check data", false);
-            }
-        } catch (e) {
-            notify("Network error", false);
-        } finally {
-            if(btn) btn.disabled = false;
-        }
+            } else { notify("Update failed", false); }
+        } catch (e) { notify("Network error", false); }
+        btn.disabled = false;
     }
-
-    // (Remaining UI helper functions toggleSingleCard, closeEdit, etc. stay the same)
 </script>
 </body>
 </html>

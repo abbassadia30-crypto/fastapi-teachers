@@ -9,7 +9,7 @@
         :root { --primary: #0288d1; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --success: #2e7d32; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding: 20px; color: var(--text); }
 
-        /* 🔔 Notification Bar */
+        /* 🔔 Notification Bar (Green/Red Sign Box) */
         #appNotifier {
             position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
             text-align: center; color: white; font-weight: 600; z-index: 9999;
@@ -18,49 +18,48 @@
         }
         .notifier-show { transform: translateY(100px); }
 
-        /* 🗑️ Delete Confirm Box (Red Sign Box) */
+        /* 🗑️ Delete Confirm Box (Red Sign Box Overlay) */
         #confirmBox {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; background: #fff; border: 2px solid var(--danger);
-            border-radius: 15px; padding: 20px; z-index: 10000; display: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 10000; display: none;
+            align-items: center; justify-content: center; backdrop-filter: blur(4px);
+        }
+        .confirm-card {
+            background: #fff; width: 90%; max-width: 350px; padding: 25px;
+            border-radius: 20px; border-top: 5px solid var(--danger);
+            text-align: center; box-shadow: 0 15px 50px rgba(0,0,0,0.3);
         }
 
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
         .search-container { width: 100%; margin-bottom: 20px; }
         .search-bar {
             width: 100%; padding: 12px 15px; border-radius: 12px; border: 1.5px solid #ddd;
             font-family: inherit; font-size: 14px; outline: none; box-sizing: border-box;
-            transition: 0.3s;
         }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
 
         .card {
-            background: white; padding: 20px 10px; border-radius: 15px; text-align: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05); cursor: pointer;
-            transition: 0.2s; border: 1px solid transparent; position: relative;
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 1px solid transparent;
         }
         .card:hover { transform: translateY(-3px); border-color: var(--primary); }
 
-        /* ❌ Small Delete Button on Card */
         .del-sec-btn {
-            position: absolute; top: 8px; right: 8px; width: 28px; height: 28px;
+            position: absolute; top: 10px; right: 10px; width: 26px; height: 26px;
             background: #fff1f1; color: var(--danger); border: none; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-size: 14px;
-            cursor: pointer; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; font-size: 12px;
+            cursor: pointer; z-index: 5;
         }
-        .del-sec-btn:hover { background: var(--danger); color: white; }
 
-        .icon { font-size: 32px; margin-bottom: 8px; display: block; }
-        h3 { margin: 0; font-size: 15px; color: #333; word-break: break-all; padding: 0 5px; }
+        .icon { font-size: 35px; margin-bottom: 10px; display: block; }
+        h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--dark); }
 
-        .loader { text-align: center; padding: 40px; color: #666; font-weight: 600; }
-
-        .btn-row { display: flex; gap: 10px; margin-top: 15px; }
-        .btn-confirm { flex: 1; padding: 10px; border-radius: 8px; border: none; background: var(--danger); color: white; font-weight: 600; cursor: pointer; }
-        .btn-cancel { flex: 1; padding: 10px; border-radius: 8px; border: 1.5px solid #ddd; background: white; cursor: pointer; }
+        .loader { text-align: center; padding: 50px; color: #888; font-weight: 600; }
+        .btn-confirm { background: var(--danger); color: white; border: none; padding: 12px; border-radius: 10px; flex: 1; font-weight: 600; cursor: pointer; }
+        .btn-cancel { background: #eee; color: #333; border: none; padding: 12px; border-radius: 10px; flex: 1; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -68,168 +67,152 @@
 <div id="appNotifier"></div>
 
 <div id="confirmBox">
-    <p style="margin:0; font-weight: 600; color: var(--danger);">Delete this section?</p>
-    <p style="font-size: 12px; color: #666; margin: 5px 0 15px 0;">This will remove all student records in <strong id="secTarget"></strong>.</p>
-    <div class="btn-row">
-        <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
-        <button class="btn-confirm" id="finalDelBtn">Delete All</button>
+    <div class="confirm-card">
+        <p style="margin:0; font-weight: 800; color: var(--danger); font-size: 18px;">Delete Class?</p>
+        <p style="font-size: 13px; color: #666; margin: 10px 0 20px 0;">Removing <strong id="secTarget" style="color:var(--text);"></strong> will delete all student data within it.</p>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-cancel" onclick="closeConfirm()">Wait, Back</button>
+            <button class="btn-confirm" id="finalDelBtn">Delete All</button>
+        </div>
     </div>
 </div>
 
 <div class="header">
-    <h2 style="margin:0;">🏛️ Classes</h2>
-    <div>
-        <button onclick="location.href='dashboard.html'" style="background:#eee; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">Back</button>
-        <button onclick="location.href='admission.html'" style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:8px; cursor:pointer; font-weight:600;">+ New</button>
+    <h2 style="margin:0; font-weight: 800;">🏛️ Institution</h2>
+    <div style="display:flex; gap:8px;">
+        <button onclick="location.href='dashboard.html'" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px; font-weight:600;">Back</button>
+        <button onclick="location.href='admission.html'" style="background:var(--primary); color:white; border:none; padding:8px 12px; border-radius:10px; font-weight:600;">+ New</button>
     </div>
 </div>
 
 <div class="search-container">
-    <input type="text" id="classSearch" class="search-bar" placeholder="🔍 Search classes..." oninput="filterClasses()">
+    <input type="text" id="classSearch" class="search-bar" placeholder="🔍 Find a section..." oninput="filterClasses()">
 </div>
 
-<div id="loader" class="loader">Syncing Institution Records...</div>
+<div id="loader" class="loader">Refreshing Records...</div>
 <div class="grid" id="sectionGrid"></div>
 
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
-    let authToken = null; // Standardized variable name
+    let authToken = null;
     let activeSections = [];
     let allStudents = [];
 
-    // --- 1. INITIALIZATION (Fixes the Top-Level Await) ---
+    // --- 1. INITIALIZATION ---
     window.onload = async () => {
-        authToken = await AppStorage.get('institutionToken');
-
-        if (!authToken) {
-            window.location.href = "login.html";
-            return;
+        // Safe check for Capacitor Storage
+        if (window.AppStorage) {
+            authToken = await AppStorage.get('institutionToken');
+        } else {
+            authToken = localStorage.getItem('institutionToken');
         }
 
+        if (!authToken) {
+            window.location.replace("../../index.html");
+            return;
+        }
         await load();
     };
 
-    // --- 2. NOTIFIER (Red/Green Sign Box) ---
+    // --- 2. NOTIFIER ---
     function notify(msg, success = true) {
         const n = document.getElementById('appNotifier');
         if(!n) return;
-
         n.innerText = msg;
-        n.style.background = success ? '#43a047' : '#e53935';
+        n.style.background = success ? '#2e7d32' : '#c62828';
         n.classList.add('notifier-show');
-
-        // Native Haptics for physical feedback on your Infinix
-        if (window.AppHaptics) {
-            window.AppHaptics.notification(success ? 'SUCCESS' : 'ERROR');
-        }
-
+        if (window.AppHaptics) window.AppHaptics.notification(success ? 'SUCCESS' : 'ERROR');
         setTimeout(() => n.classList.remove('notifier-show'), 3000);
     }
 
-    // --- 3. DATA LOADING ---
+    // --- 3. LOAD DATA ---
     async function load() {
         try {
             const res = await fetch(`${API_URL}/dashboard/my_students`, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
 
-            if (res.status === 401) {
-                window.location.href = "login.html";
-                return;
-            }
+            if (res.status === 401) window.location.replace("../../index.html");
 
             const data = await res.json();
-            allStudents = data.students || [];
+            allStudents = data.students || data || [];
 
-            // Extract unique sections
-            const uniqueSections = [...new Set(allStudents.map(s => s.section))];
-            activeSections = uniqueSections.filter(sec => sec && sec.trim() !== "");
-
+            // Unique sections only
+            activeSections = [...new Set(allStudents.map(s => s.section))].filter(Boolean);
             renderClasses(activeSections);
         } catch (e) {
-            notify("Sync Error: Check Connection", false);
+            notify("Sync Error", false);
         } finally {
-            const loader = document.getElementById('loader');
-            if(loader) loader.style.display = 'none';
+            document.getElementById('loader').style.display = 'none';
         }
     }
 
-    // --- 4. RENDER GRID ---
+    // --- 4. RENDER ---
     function renderClasses(list) {
         const grid = document.getElementById('sectionGrid');
-        if (!grid) return;
-
-        if (!list || list.length === 0) {
-            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:#999; padding:50px;">No active classes found.</div>`;
+        if (list.length === 0) {
+            grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No sections found.</div>`;
             return;
         }
 
-        grid.innerHTML = list.map(sec => `
-            <div class="card" onclick="window.location.href='students.html?section=${encodeURIComponent(sec)}'">
-                <button class="del-sec-btn" onclick="askDeleteSection('${sec}', event)">✕</button>
-                <span class="icon">🏫</span>
-                <h3>${sec}</h3>
-                <p style="font-size:11px; color:#7f8c8d; margin:0;">
-                    ${allStudents.filter(s => s.section === sec).length} Students
-                </p>
-            </div>
-        `).join('');
+        grid.innerHTML = list.map(sec => {
+            const count = allStudents.filter(s => s.section === sec).length;
+            return `
+                <div class="card" onclick="location.href='students.html?section=${encodeURIComponent(sec)}'">
+                    <button class="del-sec-btn" onclick="askDeleteSection('${sec}', event)">✕</button>
+                    <span class="icon">🏫</span>
+                    <h3>${sec}</h3>
+                    <p style="font-size:11px; color:#777; margin-top:5px;">${count} Students</p>
+                </div>
+            `;
+        }).join('');
     }
 
-    // --- 5. BULK DELETE LOGIC ---
+    // --- 5. DELETE & FILTER ---
     function askDeleteSection(sec, e) {
-        e.stopPropagation(); // Prevents navigating to students.html
-        const confirmBox = document.getElementById('confirmBox');
-        const targetSpan = document.getElementById('secTarget');
-
-        if(targetSpan) targetSpan.innerText = sec;
-        if(confirmBox) confirmBox.style.display = 'flex'; // Usually flex for centering modals
-
+        e.stopPropagation();
+        document.getElementById('secTarget').innerText = sec;
+        document.getElementById('confirmBox').style.display = 'flex';
         document.getElementById('finalDelBtn').onclick = () => executeBulkDelete(sec);
     }
 
-    async function executeBulkDelete(sectionName) {
+    async function executeBulkDelete(secName) {
         const btn = document.getElementById('finalDelBtn');
-        const originalText = btn.innerText;
-        btn.innerText = "Processing...";
         btn.disabled = true;
+        btn.innerText = "Deleting...";
 
-        const targets = allStudents.filter(s => s.section === sectionName);
-        let successCount = 0;
+        const targets = allStudents.filter(s => s.section === secName);
 
         try {
-            // Delete sequentially to avoid overwhelming the server
+            // Sequential delete to maintain server stability
             for (let student of targets) {
-                const res = await fetch(`${API_URL}/dashboard/delete_student/${student.id}`, {
+                await fetch(`${API_URL}/dashboard/delete_student/${student.id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${authToken}` }
                 });
-                if (res.ok) successCount++;
             }
-
-            notify(`Removed Section: ${sectionName} (${successCount} records)`, true);
+            notify(`Deleted ${secName}`, true);
             closeConfirm();
-            await load(); // Full reload to refresh student counts
+            load();
         } catch (e) {
-            notify("Partial failure during bulk delete", false);
+            notify("Bulk Delete Error", false);
         } finally {
-            btn.innerText = originalText;
             btn.disabled = false;
+            btn.innerText = "Delete All";
         }
     }
 
     function filterClasses() {
-        const term = document.getElementById('classSearch').value.toLowerCase().trim();
-        const filtered = activeSections.filter(sec => sec.toLowerCase().includes(term));
+        const q = document.getElementById('classSearch').value.toLowerCase();
+        const filtered = activeSections.filter(s => s.toLowerCase().includes(q));
         renderClasses(filtered);
     }
 
     function closeConfirm() {
-        const box = document.getElementById('confirmBox');
-        if(box) box.style.display = 'none';
+        document.getElementById('confirmBox').style.display = 'none';
     }
 </script>
 </body>

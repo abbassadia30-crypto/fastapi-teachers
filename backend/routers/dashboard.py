@@ -156,38 +156,32 @@ async def hire_teacher(
         "id": new_teacher.id
     }
 
-@router.get("/teacher-list", response_model=schemas.StaffResponse)
+@router.get("/teacher-list", response_model=schemas.TeacherListResponse) # Fixed Schema
 async def get_teacher_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    if not current_user.institution_id:
-        raise HTTPException(status_code=401, detail="Institution not identified")
-
     teachers = db.query(models.Teacher).filter(
         models.Teacher.institution_id == current_user.institution_id
     ).all()
 
-    # We must transform the Teacher object to include 'designation'
-    # so the schema is happy.
     rows = []
     for t in teachers:
-        teacher_data = {
+        rows.append({
             "id": t.id,
             "name": t.name,
             "phone": t.phone,
             "salary": t.salary,
-            "joining_date": t.joining_date,
-            "extra_details": t.extra_details,
+            "joining_date": str(t.joining_date),
+            "extra_details": t.extra_details or {},
             "institution_id": t.institution_id,
             "is_active": t.is_active,
-            "designation": t.subject_expertise  # This maps expertise back to designation
-        }
-        rows.append(teacher_data)
+            "designation": t.subject_expertise # Maps subject back to designation for UI
+        })
 
     return {
         "institution_id": current_user.institution_id,
-        "total_staff": len(rows), # Schema expects 'total_staff', not 'total_employees'
+        "total_teachers": len(rows),
         "rows": rows
     }
 
@@ -253,14 +247,20 @@ def hire_staff(
     return new_staff
 
 # 🔵 READ
-@router.get("/Staff_list", response_model=List[schemas.StaffResponse])
+@router.get("/Staff_list", response_model=schemas.StaffListResponse) # Use the wrapper schema
 def get_staff_list(
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
-    return db.query(models.Staff).filter(
+    staff_members = db.query(models.Staff).filter(
         models.Staff.institution_id == current_user.institution_id
     ).all()
+
+    return {
+        "institution_id": current_user.institution_id,
+        "total_staff": len(staff_members),
+        "rows": staff_members
+    }
 
 # 🟡 UPDATE (Added / for path safety)
 @router.patch("/Update_staff/{staff_id}")

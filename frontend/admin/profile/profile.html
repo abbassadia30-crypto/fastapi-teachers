@@ -3,30 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>User Profile | Institution Portal</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <script>
-        if (!localStorage.getItem('userEmail')) {
-            window.location.replace("../index.html");
-        }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-
-        #current-role-badge {
-            background: #e3f2fd;
-            padding: 2px 8px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 2px;
-        }
         :root {
             --primary: #0288d1;
             --secondary: #263238;
             --accent: #00bcd4;
             --bg: #f0f2f5;
             --danger: #ef5350;
+            --success: #66bb6a;
         }
 
         body {
@@ -36,95 +23,77 @@
             height: 100vh; overflow: hidden;
         }
 
-        /* Notification Bar */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-red { background: var(--danger); top: 20px !important; }
-        .bg-green { background: #66bb6a; top: 20px !important; }
+        .bg-red { background: var(--danger); top: 20px !important; border: 1px solid #b71c1c; }
+        .bg-green { background: var(--success); top: 20px !important; border: 1px solid #2e7d32; }
 
-        /* Professional Header with Edit Icon */
         header {
-            background: white;
-            padding: 40px 20px 30px;
-            text-align: center;
-            border-bottom-left-radius: 30px;
-            border-bottom-right-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            position: relative;
+            background: white; padding: 40px 20px 30px; text-align: center;
+            border-bottom-left-radius: 30px; border-bottom-right-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); position: relative;
         }
 
-        .pfp-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 15px;
-        }
+        .pfp-container { position: relative; width: 100px; height: 100px; margin: 0 auto 15px; }
 
         .profile-pic {
-            width: 100%; height: 100%;
-            background: var(--primary);
-            color: white; font-size: 35px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 50%;
-            border: 4px solid #e3f2fd;
+            width: 100%; height: 100%; background: var(--primary);
+            color: white; font-size: 35px; display: flex;
+            align-items: center; justify-content: center; border-radius: 50%;
+            border: 4px solid #e3f2fd; background-size: cover; background-position: center;
         }
 
         .edit-pfp-icon {
-            position: absolute;
-            bottom: 0; right: 0;
-            background: var(--secondary);
-            color: white;
-            width: 32px; height: 32px;
-            border-radius: 50%;
+            position: absolute; bottom: 0; right: 0;
+            background: var(--secondary); color: white;
+            width: 32px; height: 32px; border-radius: 50%;
             display: flex; align-items: center; justify-content: center;
-            font-size: 14px;
-            border: 3px solid white;
-            cursor: pointer;
+            font-size: 14px; border: 3px solid white; cursor: pointer;
         }
 
         h2 { margin: 0; color: var(--secondary); font-size: 20px; }
         .user-email { color: #888; font-size: 13px; margin-top: 5px; }
 
-        .settings-list {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            padding-bottom: 120px;
+        .settings-list { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 120px; }
+
+        .member-count-card {
+            background: white; border: 1.5px solid #e0e0e0;
+            padding: 18px; border-radius: 20px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 15px;
+            cursor: pointer; transition: 0.3s;
+        }
+        .icon-box {
+            background: #fff3e0; color: #ff9800;
+            width: 45px; height: 45px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center; font-size: 22px;
         }
 
-        /* Search Card Styling */
         .search-platform-card {
             background: linear-gradient(135deg, #0288d1, #00bcd4);
-            color: white !important; width: 100%;
-            padding: 20px; border-radius: 20px;
-            margin: 0 0 25px; display: flex;
-            align-items: center; gap: 15px;
-            box-shadow: 0 8px 20px rgba(0, 188, 212, 0.3);
-            border: none; cursor: pointer; transition: 0.3s;
+            color: white; width: 100%; padding: 20px; border-radius: 20px;
+            margin-bottom: 12px; display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 8px 20px rgba(0, 188, 212, 0.2); border: none;
+            cursor: pointer; transition: 0.3s; text-align: left;
         }
 
         .section-label {
-            font-size: 12px; font-weight: 600; color: #999;
-            text-transform: uppercase; margin: 20px 0 10px 10px;
+            font-size: 11px; font-weight: 700; color: #aaa;
+            text-transform: uppercase; margin: 15px 0 10px 5px; letter-spacing: 1px;
         }
 
         .list-item {
             background: white; padding: 15px 20px;
-            display: flex; align-items: center;
-            justify-content: space-between; border-radius: 15px;
-            margin-bottom: 10px; color: var(--secondary);
+            display: flex; align-items: center; justify-content: space-between;
+            border-radius: 15px; margin-bottom: 10px; color: var(--secondary);
             transition: 0.3s; cursor: pointer;
         }
 
-        .list-item:active { background: #f5f5f5; transform: scale(0.98); }
         .list-info { display: flex; align-items: center; gap: 15px; }
         .list-icon { font-size: 20px; }
         .list-text { font-size: 14px; font-weight: 500; }
-        .arrow { color: #ccc; }
-
         .logout-btn { color: var(--danger) !important; border: 1px solid #ffcdd2; margin-top: 20px; }
 
         .bottom-nav {
@@ -142,70 +111,62 @@
 
 <div id="notification-bar"></div>
 
+<input type="file" id="pfp-input" accept="image/*" style="display: none;" onchange="uploadPhoto(this)">
+
 <header>
     <div class="pfp-container">
-        <div class="profile-pic" id="pfp-initial">A</div>
-        <div class="edit-pfp-icon" onclick="showNotify('Image upload coming soon', 'green')">📷</div>
+        <div class="profile-pic" id="pfp-display">?</div>
+        <div class="edit-pfp-icon" onclick="document.getElementById('pfp-input').click()">📷</div>
     </div>
-    <h2 id="display-name">Loading...</h2>
-    <div class="user-email" id="display-email">email@institution.com</div>
+    <h2 id="display-name">Loading Profile...</h2>
+    <div class="user-email" id="display-email">...</div>
 </header>
 
 <div class="settings-list">
     <button class="search-platform-card" onclick="location.href='../../plateforme/search.html'">
         <div style="background: rgba(255,255,255,0.2); width:40px; height:40px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px;">🔍</div>
-        <div style="text-align:left;">
-            <div style="font-weight:600; font-size:16px;">Search Platform</div>
-            <div style="font-size:11px; opacity:0.8;">Explore users & institutions</div>
+        <div>
+            <div style="font-weight:600; font-size:15px;">Search Platform</div>
+            <div style="font-size:11px; opacity:0.8;">Find institutions & peers</div>
         </div>
     </button>
 
+    <div class="member-count-card" onclick="location.href='directery.html'">
+        <div class="icon-box">👥</div>
+        <div style="text-align: left;">
+            <div style="font-weight:600; font-size:15px; color: var(--secondary);">Institution Directory</div>
+            <div style="font-size:11px; color: #777;">View joined Students, Teachers & Admins</div>
+        </div>
+        <span style="margin-left: auto; color: #ccc;">></span>
+    </div>
+
     <div class="section-label">Public Identity</div>
 
-    <div class="list-item" onclick="editProfile()">
-        <div class="list-info">
-            <span class="list-icon">👤</span>
-            <span class="list-text">Personal Information</span>
-        </div>
-        <span class="arrow">></span>
+    <div class="list-item" onclick="location.href='Edit_profile.html'">
+        <div class="list-info"><span class="list-icon">👤</span><span class="list-text">Personal Information</span></div>
+        <span style="color:#ccc">></span>
     </div>
 
-    <div class="list-item" onclick=location.href='Bio.html'>
-        <div class="list-info" >
-            <span class="list-icon">📝</span>
-            <span class="list-text" onclick=location.href="Bio.html">Professional Bio & Headline</span>
-        </div>
-        <span class="arrow">></span>
+    <div class="list-item" onclick="location.href='Bio.html'">
+        <div class="list-info"><span class="list-icon">📝</span><span class="list-text">Professional Bio</span></div>
+        <span style="color:#ccc">></span>
     </div>
 
-    <div class="list-item" onclick=go()>
-        <div class="list-info">
-            <span class="list-icon">🎓</span>
-            <span class="list-text">Work & Education History</span>
-        </div>
-        <span class="arrow">></span>
-    </div>
+    <div class="section-label">Account</div>
 
-    <div class="section-label">Permissions & Access</div>
-
-    <div class="list-item" onclick=switch_Role()>
+    <div class="list-item" onclick="switch_Role()">
         <div class="list-info">
             <span class="list-icon">🔄</span>
-            <div class="search-text-group">
-                <span class="list-text">Switch User Role</span>
-                <div id="current-role-badge" style="font-size: 10px; color: var(--primary); font-weight: 600; text-transform: uppercase;">
-                    Current: Admin
-                </div>
+            <div>
+                <span class="list-text">Switch User Role</span><br>
+                <span id="current-role-badge" style="font-size: 10px; color: var(--primary); font-weight: 700;">ADMIN</span>
             </div>
         </div>
-        <span class="arrow">></span>
+        <span style="color:#ccc">></span>
     </div>
 
     <div class="list-item logout-btn" onclick="handleLogout()">
-        <div class="list-info">
-            <span class="list-icon">🚪</span>
-            <span class="list-text">Logout Account</span>
-        </div>
+        <div class="list-info"><span class="list-icon">🚪</span><span class="list-text">Logout Account</span></div>
     </div>
 </div>
 
@@ -213,52 +174,95 @@
     <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><br>Home</a>
     <a href="../chat/chat.html" class="nav-item"><i>💬</i><br>Chat</a>
     <a href="../document/documents.html" class="nav-item"><i>📄</i><br>Docs</a>
-    <a href="../profile/profile.html" class="nav-item active"><i>👤</i><br>Profile</a>
+    <a href="profile.html" class="nav-item active"><i>👤</i><br>Profile</a>
 </nav>
 
-<script>
-    const userName = localStorage.getItem('userName') || "User";
-    const userEmail = localStorage.getItem('userEmail') || "email@institution.com";
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
-    document.getElementById('display-name').innerText = userName;
-    document.getElementById('display-email').innerText = userEmail;
-    document.getElementById('pfp-initial').innerText = userName.charAt(0).toUpperCase();
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
     function showNotify(msg, type) {
         const bar = document.getElementById('notification-bar');
         bar.innerText = msg;
         bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+        if(window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        }
         setTimeout(() => bar.className = '', 3000);
     }
 
-    function editProfile() {
-    window.location.href ="Edit_profile.html"
+    window.onload = async () => {
+        const name = await AppStorage.get('userName') || "User";
+        const email = await AppStorage.get('userEmail') || "email@institution.com";
+        const role = await AppStorage.get('user_role') || "Admin";
+        const pfpUrl = await AppStorage.get('userPfp');
+
+        document.getElementById('display-name').innerText = name;
+        document.getElementById('display-email').innerText = email;
+        document.getElementById('current-role-badge').innerText = role.toUpperCase();
+
+        const pfpDiv = document.getElementById('pfp-display');
+        if(pfpUrl && pfpUrl !== 'null') {
+            pfpDiv.innerText = '';
+            pfpDiv.style.backgroundImage = `url('${pfpUrl}')`;
+        } else {
+            pfpDiv.innerText = name.charAt(0).toUpperCase();
+        }
+    };
+
+    // --- UPLOAD LOGIC FOR DIGITAL OCEAN SPACES ---
+    async function uploadPhoto(input) {
+        if (!input.files || !input.files[0]) return;
+
+        const file = input.files[0];
+        const token = await AppStorage.get('institutionToken');
+
+        // 1. Show immediate UI feedback
+        showNotify("Uploading to cloud...", "success");
+
+        const formData = new FormData();
+        formData.append('profile_pic', file);
+
+        try {
+            const response = await fetch(`${API_BASE}/user/upload-pfp`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // 'data.url' will be the DigitalOcean Spaces link from your backend
+                const newUrl = data.url;
+
+                // 2. Update Local Storage and UI
+                await AppStorage.set('userPfp', newUrl);
+                const pfpDiv = document.getElementById('pfp-display');
+                pfpDiv.innerText = '';
+                pfpDiv.style.backgroundImage = `url('${newUrl}')`;
+
+                showNotify("Profile photo updated!", "success");
+            } else {
+                showNotify("Upload failed. Try again.", "red");
+            }
+        } catch (error) {
+            console.error(error);
+            showNotify("Connection error.", "red");
+        }
     }
 
-    function handleLogout() {
+    async function handleLogout() {
         showNotify("Logging out...", "red");
-        setTimeout(() => {
-            localStorage.clear();
-            window.location.replace("../../index.html");
-        }, 1500);
+        await AppStorage.clear();
+        setTimeout(() => { window.location.replace("../../index.html"); }, 1500);
     }
 
-    // Initialize role from storage or default to Admin
-    let currentRole = localStorage.getItem('userRole') || "Admin";
-    document.getElementById('current-role-badge').innerText = `Current: ${currentRole}`;
-
-    function switch_Role() {
-        localStorage.removeItem("user_role")
-     window.location.href = "../../roles/role.html"
+    async function switch_Role() {
+        await AppStorage.remove('user_role');
+        window.location.href = "../../roles/role.html";
     }
-
-    function data(){
-        window.location.href = "Bio.html"
-    }
-
-async function go(){
-        window.location.href = "history.html"
-}
 </script>
 </body>
 </html>

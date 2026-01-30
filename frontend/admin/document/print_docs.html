@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document Print Engine | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; }
+
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--accent); top: 20px !important; }
+        .bg-green { background: #2e7d32; top: 20px !important; }
+
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
+        .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
+
+        /* Vault Selection */
+        .selector-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        label { font-size: 10px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; margin-bottom: 15px; }
+
+        /* Toolbar */
+        .toolbar { display: flex; gap: 10px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
+        .tool-btn { background: #fff; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .tool-btn:active { background: #eee; }
+
+        /* Print Canvas (A4 Simulation) */
+        .print-canvas {
+            background: white; padding: 50px; border: 1px solid #000;
+            min-height: 800px; margin-top: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative; overflow: hidden;
+        }
+
+        /* Editing Features */
+        .editable { outline: none; transition: 0.2s; }
+        .editable:focus { background: #fffde7; border-bottom: 1px dashed var(--primary); }
+
+        .print-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; box-sizing: border-box; }
+        .btn-print { background: var(--primary); color: white; border: none; flex: 2; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .btn-secondary { background: #eee; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        @media print {
+            body { background: white; }
+            .main-container, header, .selector-card, .toolbar, .print-footer { display: none; }
+            .print-canvas { border: none; padding: 0; box-shadow: none; margin: 0; width: 100%; }
+            #notification-bar { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<header>
+    <div onclick="history.back()" style="font-size:24px; cursor:pointer; margin-right:15px;">✕</div>
+    <h2 style="margin:0; font-size:15px; font-weight: 800;">DOC PRINT ENGINE</h2>
+</header>
+
+<div class="main-container">
+    <div class="selector-card">
+        <label>Pick from Central Vault</label>
+        <select id="doc-picker" onchange="loadDocument()">
+            <option value="">-- Select Document --</option>
+            <option value="test">Monthly Test: Computer (10th)</option>
+            <option value="marksheet">Student Marksheet: Ali Khan</option>
+            <option value="syllabus">Syllabus: Mid-Term Biology</option>
+        </select>
+
+        <div class="toolbar">
+            <button class="tool-btn" onclick="toggleEdit()">🔒 Lock/Unlock Editing</button>
+            <button class="tool-btn" onclick="addWatermark()">Add Watermark</button>
+            <button class="tool-btn" onclick="adjustFont(1)">A+</button>
+            <button class="tool-btn" onclick="adjustFont(-1)">A-</button>
+        </div>
+    </div>
+
+    <div class="print-canvas" id="print-area">
+        <div style="text-align: center; color: #ccc; padding-top: 100px;">
+            <h3>SELECT A DOCUMENT TO PREVIEW</h3>
+            <p>Documents loaded here can be edited before printing.</p>
+        </div>
+    </div>
+</div>
+
+<div class="print-footer">
+    <button class="btn-secondary" onclick="saveChanges()">SAVE EDITS</button>
+    <button class="btn-print" onclick="window.print()">PRINT DOCUMENT</button>
+</div>
+
+<script>
+    const docs = {
+        test: `
+            <div style="text-align:center; border:2px solid #000; padding:15px; margin-bottom:20px;">
+                <h1 class="editable" contenteditable="true">INSTITUTION NAME</h1>
+                <p>SUBJECT: COMPUTER • CLASS: 10TH • TIME: 45 MINS</p>
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <span>NAME: ________________</span>
+                    <span>ROLL NO: ________</span>
+                </div>
+            </div>
+            <div class="editable" contenteditable="true">
+                <p><b>Q.1 Choose the correct option: (5 Marks)</b></p>
+                <p>1. CPU stands for ______________.</p>
+                <p>2. RAM is a _________ memory.</p>
+                <p><b>Q.2 Short Questions: (10 Marks)</b></p>
+                <p>1. Define Hardware?</p>
+                <p>2. What is an Operating System?</p>
+            </div>
+        `,
+        marksheet: `
+            <div style="text-align:center;">
+                <h2>STUDENT PROGRESS REPORT</h2>
+                <hr>
+            </div>
+            <table style="width:100%; border-collapse: collapse; margin-top:20px;" border="1">
+                <tr><th style="padding:10px;">Subject</th><th>Total</th><th>Obtained</th></tr>
+                <tr><td style="padding:10px;">English</td><td>100</td><td class="editable" contenteditable="true">85</td></tr>
+                <tr><td style="padding:10px;">Maths</td><td>100</td><td class="editable" contenteditable="true">92</td></tr>
+                <tr><td style="padding:10px;">Science</td><td>100</td><td class="editable" contenteditable="true">78</td></tr>
+            </table>
+            <div style="margin-top:30px;">
+                <p><b>Remarks:</b> <span class="editable" contenteditable="true">Excellent Performance</span></p>
+            </div>
+        `,
+        syllabus: `
+            <div style="text-align:center; background:#eee; padding:10px;">
+                <h2>ACADEMIC SYLLABUS 2026</h2>
+            </div>
+            <h3>Biology - Grade 9</h3>
+            <ul class="editable" contenteditable="true">
+                <li>Chapter 1: Introduction to Biology</li>
+                <li>Chapter 2: Solving a Biological Problem</li>
+                <li>Chapter 3: Biodiversity</li>
+            </ul>
+        `
+    };
+
+    let fontSize = 14;
+
+    function loadDocument() {
+        const val = document.getElementById('doc-picker').value;
+        const area = document.getElementById('print-area');
+        if(docs[val]) {
+            area.innerHTML = docs[val];
+            showNotify("Document Loaded from Central Vault", "green");
+        }
+    }
+
+    function toggleEdit() {
+        const editables = document.querySelectorAll('.editable');
+        const isEditable = editables[0]?.contentEditable === "true";
+        editables.forEach(el => el.contentEditable = !isEditable);
+        showNotify(isEditable ? "Editing Locked" : "Editing Enabled", isEditable ? "error" : "green");
+    }
+
+    function adjustFont(val) {
+        fontSize += val;
+        document.getElementById('print-area').style.fontSize = fontSize + "px";
+    }
+
+    function addWatermark() {
+        const area = document.getElementById('print-area');
+        const wm = document.createElement('div');
+        wm.innerText = "OFFICIAL COPY";
+        wm.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-45deg); font-size:60px; color:rgba(0,0,0,0.05); pointer-events:none; font-weight:900; white-space:nowrap;";
+        area.appendChild(wm);
+        showNotify("Watermark Added", "green");
+    }
+
+    function saveChanges() {
+        showNotify("Edits Saved back to Vault", "green");
+    }
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => bar.className = "", 3000);
+    }
+</script>
+</body>
+</html>
