@@ -130,14 +130,22 @@
 
     window.onload = async () => {
         const token = await AppStorage.get('institutionToken');
+        const cachedName = await AppStorage.get('current_institution_name');
 
         if (!token) {
             window.location.replace("../../index.html");
             return;
         }
 
+        // ⚡ Step 1: Instant Render from Cache
+        if (cachedName) {
+            document.getElementById('institution-display').innerText = cachedName;
+            document.getElementById('admin-welcome').innerText = "Management Overview";
+            document.body.style.display = 'flex';
+        }
+
         try {
-            // 🛡️ DATABASE OWNERSHIP CHECK
+            // 🛡️ Step 2: Background Sync
             const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
                 method: 'GET',
                 headers: {
@@ -148,29 +156,33 @@
 
             if (response.ok) {
                 const data = await response.json();
-
                 if (data.has_institution) {
-                    // ✅ Authorized: Show Page
                     document.getElementById('institution-display').innerText = data.institution_name;
-                    document.getElementById('admin-welcome').innerText = "Management Overview";
-                    document.body.style.display = 'flex';
+                    await AppStorage.set('current_institution_name', data.institution_name);
+
+                    if (!cachedName) {
+                        document.getElementById('admin-welcome').innerText = "Management Overview";
+                        document.body.style.display = 'flex';
+                    }
                 } else {
-                    // ❌ No Institution: Send to Setup Gatekeeper
                     window.location.replace("../setups/no-institution.html");
                 }
-            } else {
-                // Token invalid or expired
+            }
+            else if (response.status === 401) {
+                // 🔴 Step 3: KILL THE LOOP
+                // Clear everything so Login page doesn't redirect back here
+                await AppStorage.remove('institutionToken');
+                await AppStorage.remove('current_institution_name');
+                await AppStorage.remove('user_role');
                 window.location.replace("../../index.html");
             }
         } catch (err) {
-            console.error("Auth System Error:", err);
-            // If server is down, we allow cached entry ONLY if we have saved the name before
-            const cachedName = await AppStorage.get('current_institution_name');
-            if (cachedName) {
-                document.getElementById('institution-display').innerText = cachedName;
+            console.error("Sync Error:", err);
+            // Offline fallback
+            if (!cachedName) {
+                showNotify("Working Offline", "error");
+                document.getElementById('institution-display').innerText = "Offline Admin";
                 document.body.style.display = 'flex';
-            } else {
-                showNotify("Connection Error", "error");
             }
         }
     };

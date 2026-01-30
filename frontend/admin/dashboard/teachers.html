@@ -15,10 +15,10 @@
             --muted: #95a5a6;
         }
 
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); -webkit-tap-highlight-color: transparent; }
 
-        /* 🟢 / 🔴 Sign Box (Notifications) */
-        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 2000; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        /* 🟢 / 🔴 Sign Box */
+        #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 3000; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         @keyframes slideIn { from { transform: translateX(110%); } to { transform: translateX(0); } }
         .sign-green { background: #e8f5e9; color: var(--success); border: 2px solid var(--success); display: block !important; }
         .sign-red { background: #ffebee; color: var(--danger); border: 2px solid var(--danger); display: block !important; }
@@ -26,30 +26,31 @@
         /* Header & Search */
         .header { background: white; padding: 60px 20px 30px; text-align: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: relative; }
         .back-nav { position: absolute; top: 20px; left: 20px; text-decoration: none; font-size: 24px; color: var(--text); font-weight: 800; }
-
         .search-container { max-width: 600px; margin: 20px auto 0; padding: 0 15px; }
-        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid #edf2f7; outline: none; font-size: 16px; transition: 0.3s; box-sizing: border-box; }
-        .search-input:focus { border-color: var(--primary); }
+        .search-input { width: 100%; padding: 15px 25px; border-radius: 30px; border: 2px solid #edf2f7; outline: none; font-size: 16px; transition: 0.3s; box-sizing: border-box; font-family: inherit; }
+        .search-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(2,136,209,0.1); }
 
-        /* Grid & Cards */
+        /* Grid */
         .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: auto; }
-        .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; }
+        .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; transition: transform 0.2s; }
+        .teacher-card:active { transform: scale(0.98); }
 
         .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
-        .btn-action { border: none; background: #f8fafc; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 14px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; }
+        .btn-action { border: none; background: #f8fafc; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 14px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .btn-action:hover { background: #edf2f7; }
 
-        .name { font-size: 18px; font-weight: 800; display: block; margin-top: 10px; color: var(--dark); }
+        .name { font-size: 18px; font-weight: 800; display: block; margin-top: 10px; }
         .subject { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; display: block; letter-spacing: 1px; }
         .detail-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 4px; }
         .label { font-weight: 600; color: var(--muted); }
 
         /* Modals */
-        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0, 0, 0, 0.6); z-index: 1500; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-        .modal-content { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; }
-        .modal-input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #edf2f7; border-radius: 12px; font-family: inherit; box-sizing: border-box; }
+        .modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(15, 23, 42, 0.7); z-index: 1500; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+        .modal-content { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .modal-input { width: 100%; padding: 12px; margin: 5px 0 15px 0; border: 1.5px solid #edf2f7; border-radius: 12px; font-family: inherit; box-sizing: border-box; font-size: 16px; }
 
-        .modal-btns { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-modal { flex: 1; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: inherit; }
+        .modal-btns { display: flex; gap: 12px; margin-top: 20px; position: sticky; bottom: 0; background: white; padding-top: 10px; }
+        .btn-modal { flex: 1; padding: 14px; border: none; border-radius: 12px; cursor: pointer; font-weight: 700; font-family: inherit; font-size: 14px; }
         .btn-confirm { background: var(--primary); color: white; }
         .btn-cancel { background: #f1f3f4; color: var(--text); }
         .btn-delete { background: var(--danger); color: white; }
@@ -62,9 +63,9 @@
 <div class="header">
     <a href="dashboard.html" class="back-nav">←</a>
     <h2 style="margin:0; color:var(--primary)">Faculty Records</h2>
-    <p style="color:var(--muted); font-size:13px; margin-top:5px;">Manage **institution** personnel and payroll</p>
+    <p style="color:var(--muted); font-size:13px; margin-top:5px;">Real-time management for the <strong>institution</strong></p>
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by name, phone, or CNIC..." onkeyup="filterFaculty()">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search name, subject, or phone..." onkeyup="filterFaculty()">
     </div>
 </div>
 
@@ -72,17 +73,23 @@
 
 <div id="editModal" class="modal">
     <div class="modal-content">
-        <h3 style="margin-top:0; color: var(--primary);">Update Record</h3>
+        <h3 style="margin-top:0; color: var(--primary);">Update Faculty</h3>
         <input type="hidden" id="editId">
-        <label class="label">FULL NAME</label>
+
+        <label class="label" style="font-size: 11px;">FULL NAME</label>
         <input type="text" id="editName" class="modal-input">
-        <label class="label">DESIGNATION</label>
+
+        <label class="label" style="font-size: 11px;">DESIGNATION / SUBJECT</label>
         <input type="text" id="editDesignation" class="modal-input">
-        <label class="label">CONTACT</label>
+
+        <label class="label" style="font-size: 11px;">CONTACT NUMBER</label>
         <input type="text" id="editPhone" class="modal-input">
-        <label class="label">SALARY (PKR)</label>
+
+        <label class="label" style="font-size: 11px;">SALARY (PKR)</label>
         <input type="number" id="editSalary" class="modal-input">
+
         <div id="editExtraContainer"></div>
+
         <div class="modal-btns">
             <button class="btn-modal btn-cancel" onclick="closeModals()">Cancel</button>
             <button class="btn-modal btn-confirm" id="saveEditBtn" onclick="saveEdit()">Update</button>
@@ -92,12 +99,13 @@
 
 <div id="deleteModal" class="modal">
     <div class="modal-content" style="text-align: center;">
-        <h3 style="color: var(--danger);">Confirm Removal</h3>
-        <p>Permanently remove <strong id="deleteTargetName"></strong>?</p>
+        <div style="font-size: 50px;">⚠️</div>
+        <h3 style="color: var(--danger); margin: 10px 0;">Confirm Removal</h3>
+        <p>Permanently remove <strong id="deleteTargetName"></strong> from <strong>institution</strong> records?</p>
         <input type="hidden" id="deleteTargetId">
         <div class="modal-btns">
-            <button class="btn-modal btn-cancel" onclick="closeModals()">Back</button>
-            <button class="btn-modal btn-delete" onclick="executeDelete()">Remove Now</button>
+            <button class="btn-modal btn-cancel" onclick="closeModals()">Keep</button>
+            <button class="btn-modal btn-delete" id="confirmDelBtn" onclick="executeDelete()">Remove</button>
         </div>
     </div>
 </div>
@@ -129,32 +137,37 @@
             const res = await fetch(`${API}/dashboard/teacher-list`, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
-            const result = await res.json();
+            if (res.status === 401) window.location.href = "login.html";
 
-            // Correctly target the 'rows' array from the new schema
-            allFaculty = result.rows || [];
+            const result = await res.json();
+            // Handle the StaffListResponse schema which uses the 'rows' key
+            allFaculty = result.rows || result || [];
             renderGrid(allFaculty);
         } catch (err) {
-            showSign("Sync failed", false);
+            showSign("Sync Error: Institution Offline", false);
         }
     }
 
     function renderGrid(data) {
         const grid = document.getElementById('facultyGrid');
+        if (data.length === 0) {
+            grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--muted);">No faculty records found.</div>`;
+            return;
+        }
         grid.innerHTML = data.map(t => `
             <div class="teacher-card">
                 <div class="actions">
-                    <button class="btn-action" onclick="openEdit(${t.id})">✏️</button>
-                    <button class="btn-action" style="color:var(--danger);" onclick="deleteTeacher(${t.id}, '${t.name}')">🗑️</button>
+                    <button class="btn-action" onclick="openEdit(${t.id})" title="Edit">✏️</button>
+                    <button class="btn-action" style="color:var(--danger);" onclick="deleteTeacher(${t.id}, '${t.name}')" title="Delete">🗑️</button>
                 </div>
-                <span class="subject">${t.designation || 'Staff'}</span>
+                <span class="subject">${t.designation || 'Faculty Member'}</span>
                 <span class="name">${t.name}</span>
                 <div class="detail-row" style="margin-top:15px;">
                     <span class="label">Contact</span>
-                    <span class="value">${t.phone}</span>
+                    <span class="value">${t.phone || 'N/A'}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="label">Monthly</span>
+                    <span class="label">Monthly Salary</span>
                     <span class="value">${Number(t.salary).toLocaleString()} PKR</span>
                 </div>
             </div>
@@ -162,8 +175,12 @@
     }
 
     function filterFaculty() {
-        const q = document.getElementById('searchInput').value.toLowerCase();
-        const filtered = allFaculty.filter(t => t.name.toLowerCase().includes(q) || t.phone.includes(q));
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        const filtered = allFaculty.filter(t =>
+            t.name.toLowerCase().includes(q) ||
+            (t.designation && t.designation.toLowerCase().includes(q)) ||
+            t.phone.includes(q)
+        );
         renderGrid(filtered);
     }
 
@@ -181,7 +198,7 @@
         if(t.extra_details) {
             Object.entries(t.extra_details).forEach(([key, val]) => {
                 extraDiv.innerHTML += `
-                    <label class="label">${key.toUpperCase()}</label>
+                    <label class="label" style="font-size: 11px;">${key.replace('_', ' ').toUpperCase()}</label>
                     <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}">`;
             });
         }
@@ -192,6 +209,7 @@
         const id = document.getElementById('editId').value;
         const btn = document.getElementById('saveEditBtn');
         btn.disabled = true;
+        btn.innerText = "Syncing...";
 
         const extras = {};
         document.querySelectorAll('.extra-field').forEach(inp => {
@@ -209,16 +227,22 @@
         try {
             const res = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
                 body: JSON.stringify(body)
             });
             if(res.ok) {
-                showSign("Record updated", true);
+                showSign("Record updated successfully", true);
                 closeModals();
-                fetchFaculty();
+                await fetchFaculty();
+            } else {
+                showSign("Update failed: Check data", false);
             }
-        } catch (e) { showSign("Server error", false); }
+        } catch (e) { showSign("Server connection lost", false); }
         btn.disabled = false;
+        btn.innerText = "Update";
     }
 
     function deleteTeacher(id, name) {
@@ -229,21 +253,29 @@
 
     async function executeDelete() {
         const id = document.getElementById('deleteTargetId').value;
+        const btn = document.getElementById('confirmDelBtn');
+        btn.disabled = true;
         try {
             const res = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             if(res.ok) {
-                showSign("Staff removed", true);
+                showSign("Staff removed from system", true);
                 closeModals();
-                fetchFaculty();
+                await fetchFaculty();
             }
-        } catch (e) { showSign("Delete failed", false); }
+        } catch (e) { showSign("Deletion failed", false); }
+        btn.disabled = false;
     }
 
     function closeModals() {
         document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    }
+
+    // Close modal on background click
+    window.onclick = function(event) {
+        if (event.target.className === 'modal') closeModals();
     }
 </script>
 </body>

@@ -49,5 +49,24 @@ const AppStorage = {
     }
 };
 
+async function hardResetApp() {
+    // 1. Clear all local keys
+    await AppStorage.remove('institutionToken');
+    await AppStorage.remove('current_institution_name');
+    await AppStorage.remove('cached_staff_list');
+    // ... add any other keys you use
+
+    // 2. Clear Capacitor Preferences entirely
+    if (window.Capacitor) {
+        // This is the "Nuclear Option" for storage
+        await AppStorage.clear();
+    }
+
+    // 3. Send back to the very beginning
+    window.location.replace("../../index.html");
+}
+
+window.hardResetApp = hardResetApp;
+
 // Export it for use in other scripts
 window.AppStorage = AppStorage;

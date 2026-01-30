@@ -246,7 +246,7 @@
         });
 
         try {
-            const res = await fetch(`${API}/dashboard/Update_staff/${id}`, {
+            const res = await fetch(`${API}/dashboard/update_staff/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify(payload)

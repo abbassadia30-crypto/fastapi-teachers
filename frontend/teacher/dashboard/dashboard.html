@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teacher Portal - Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teacher-primary: #43a047;
+            --secondary: #263238;
+            --accent: #ffb300;
+            --bg: #f8faf9;
+            --danger: #ef5350;
+            --success: #66bb6a;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg);
+            display: none; flex-direction: column;
+            height: 100vh; overflow: hidden;
+        }
+
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--danger); top: 20px !important; }
+        .bg-green { background: var(--success); top: 20px !important; }
+
+        /* Logout styling */
+        .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
+        .logout-btn {
+            background: #ffebee; color: var(--danger); border: none;
+            padding: 8px 12px; border-radius: 10px; font-weight: 600;
+            font-size: 12px; cursor: pointer; transition: 0.2s;
+        }
+        .logout-btn:active { transform: scale(0.9); }
+
+        header { padding: 40px 20px 20px; text-align: left; }
+        h1 { color: var(--secondary); margin: 0; font-size: 22px; font-weight: 800; }
+        p { color: #888; font-size: 14px; margin-top: 4px; }
+
+        .teacher-grid {
+            display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 15px; padding: 20px; flex: 1;
+            overflow-y: auto; padding-bottom: 100px;
+        }
+
+        .menu-card {
+            background: white; border-radius: 24px; padding: 25px 15px;
+            display: flex; flex-direction: column; align-items: center;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: 0.3s;
+            cursor: pointer; border: 1px solid rgba(0,0,0,0.02);
+        }
+        .menu-card:active { transform: scale(0.96); background: #f1f8e9; }
+
+        .icon {
+            font-size: 28px; margin-bottom: 12px; background: #e8f5e9;
+            width: 55px; height: 55px; display: flex;
+            align-items: center; justify-content: center; border-radius: 18px;
+            color: var(--teacher-primary);
+        }
+
+        .menu-card span { font-size: 13px; font-weight: 600; color: var(--secondary); }
+        .section-label { padding: 0 25px; font-size: 12px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 500px; background: rgba(38, 50, 56, 0.96);
+            backdrop-filter: blur(10px); height: 75px; border-radius: 28px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000;
+        }
+
+        .nav-item {
+            color: #90a4ae; text-decoration: none; display: flex;
+            flex-direction: column; align-items: center; font-size: 11px;
+            transition: 0.3s;
+        }
+        .nav-item.active { color: #fff; transform: translateY(-3px); }
+        .nav-item i { font-size: 22px; margin-bottom: 4px; font-style: normal; }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<header>
+    <div class="header-top">
+        <p id="teacher-name-label" style="margin:0;">Welcome back,</p>
+        <button class="logout-btn" onclick="handleLogout()">Logout</button>
+    </div>
+    <h1 id="teacher-display">Teacher</h1>
+    <p id="institution-name-display" style="color: var(--teacher-primary); font-weight: 600;">Loading Institution...</p>
+</header>
+
+<div class="section-label">Classroom</div>
+<div class="teacher-grid">
+    <div class="menu-card" onclick="location.href='attendance.html'">
+        <div class="icon">📅</div><span>Attendance</span>
+    </div>
+    <div class="menu-card" onclick="location.href='grading.html'">
+        <div class="icon">📊</div><span>Exam Marks</span>
+    </div>
+    <div class="menu-card" onclick="location.href='timetable.html'">
+        <div class="icon">⏰</div><span>Timetable</span>
+    </div>
+    <div class="menu-card" onclick="location.href='quiz_management.html'">
+        <div class="icon">💡</div><span>Create Quiz</span>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="dashboard.html" class="nav-item active"><i>🏠</i><span>Home</span></a>
+    <a href="../../chat/chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
+    <a href="../../document/documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
+    <a href="../../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
+</nav>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+
+    // --- Logout Function ---
+    async function handleLogout() {
+        if (!confirm("Are you sure you want to logout?")) return;
+
+        // Clear only auth and session data, keep persistent preferences if any
+        await AppStorage.remove('institutionToken');
+        await AppStorage.remove('user_role');
+        await AppStorage.remove('user_full_name');
+        await AppStorage.remove('current_institution_name');
+
+        // Redirect to main login page
+        window.location.replace("../../index.html");
+    }
+
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        }
+        setTimeout(() => { bar.className = ""; }, 3000);
+    }
+
+    window.onload = async () => {
+        const token = await AppStorage.get('institutionToken');
+        const cachedTeacher = await AppStorage.get('user_full_name');
+        const cachedInst = await AppStorage.get('current_institution_name');
+
+        if (!token) {
+            window.location.replace("../../index.html");
+            return;
+        }
+
+        if (cachedTeacher) {
+            document.getElementById('teacher-display').innerText = cachedTeacher;
+            document.getElementById('institution-name-display').innerText = cachedInst || "Institution Staff";
+            document.body.style.display = 'flex';
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/teacher/profile`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                document.getElementById('teacher-display').innerText = data.full_name;
+                document.getElementById('institution-name-display').innerText = data.institution_name;
+
+                await AppStorage.set('user_full_name', data.full_name);
+                await AppStorage.set('current_institution_name', data.institution_name);
+                document.body.style.display = 'flex';
+            }
+            else if (response.status === 401) {
+                await handleLogout();
+            }
+            else {
+                document.body.style.display = 'flex';
+            }
+        } catch (err) {
+            console.error("Teacher Sync Error:", err);
+            if (!cachedTeacher) {
+                document.getElementById('teacher-display').innerText = "Teacher (Offline)";
+                document.body.style.display = 'flex';
+                showNotify("Working Offline", "error");
+            }
+        }
+    };
+</script>
+</body>
+</html>

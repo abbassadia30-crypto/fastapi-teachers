@@ -98,25 +98,20 @@
             const rememberedEmail = await AppStorage.get('rememberedEmail');
 
             if (rememberedEmail) {
-                const emailField = document.getElementById('email');
-                if(emailField) {
-                    emailField.value = rememberedEmail;
-                    document.getElementById('remember').checked = true;
-                }
+                document.getElementById('email').value = rememberedEmail;
+                document.getElementById('remember').checked = true;
             }
 
-            if (token) {
-                // Redirect logic based on role and institution status
+            // Only redirect if a token exists AND we know where the user belongs
+            if (token && role && role !== "unassigned") {
                 if (role === "admin") {
                     window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
-                } else if (!role || role === "unassigned") {
-                    window.location.href = "roles/role.html";
                 } else {
                     window.location.href = `${role}/dashboard/dashboard.html`;
                 }
             } else {
-                const overlay = document.getElementById('auth-check-overlay');
-                if(overlay) overlay.style.display = 'none';
+                // ⚡ NO TOKEN/REINSTALL: Hide overlay immediately
+                document.getElementById('auth-check-overlay').style.display = 'none';
             }
         } catch (e) {
             console.error("Storage Error:", e);
@@ -124,23 +119,19 @@
         }
     };
 
-    // --- 2. NOTIFICATION SYSTEM ---
     const Notification = {
         el: document.getElementById('notification-bar'),
         show(msg, type) {
             if(!this.el) return;
             this.el.innerText = msg;
             this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
-
             if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-                // Use Capacitor Haptics for professional feedback
                 Capacitor.Plugins.Haptics.notification({ type: type === 'success' ? 'SUCCESS' : 'ERROR' });
             }
             setTimeout(() => { this.el.className = ''; }, 4000);
         }
     };
 
-    // --- 3. LOGIN HANDLER ---
     async function handleLogin(event) {
         event.preventDefault();
         const btn = document.getElementById('loginBtn');
@@ -149,57 +140,36 @@
         const remember = document.getElementById('remember').checked;
 
         btn.disabled = true;
-        const originalText = btn.innerText;
         btn.innerText = "Authenticating...";
 
         try {
             const response = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({email: email, password: password})
+                body: JSON.stringify({email, password})
             });
 
-            // READ JSON ONLY ONCE
             const result = await response.json();
 
             if (response.ok) {
-                // Save session data
                 await AppStorage.set('institutionToken', result.access_token);
                 await AppStorage.set('user_role', result.role || "unassigned");
                 await AppStorage.set('institution_id', result.institution_id || null);
 
-                if (remember) {
-                    await AppStorage.set('rememberedEmail', email);
-                } else {
-                    await AppStorage.remove('rememberedEmail');
-                }
+                if (remember) await AppStorage.set('rememberedEmail', email);
+                else await AppStorage.remove('rememberedEmail');
 
                 Notification.show("Login Successful!", "success");
-
-                setTimeout(() => {
-                    const role = result.role;
-                    const instID = result.institution_id;
-
-                    if (!role || role === "unassigned") {
-                        window.location.href = "roles/role.html";
-                    } else if (role === "admin") {
-                        // Pointing to your new setup.html if no institution exists
-                        window.location.href = instID ? "admin/dashboard/dashboard.html" : "admin/setups/no-institution.html";
-                    } else {
-                        window.location.href = `${role}/dashboard/dashboard.html`;
-                    }
-                }, 1500);
+                setTimeout(() => { window.location.reload(); }, 1000);
             } else {
-                // Show specific error from FastAPI (like "Incorrect Password")
                 Notification.show(result.detail || "Invalid Credentials", "error");
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerText = "Login";
             }
         } catch (error) {
-            console.error("Fetch Error:", error);
-            Notification.show("Connection Error: Server Unreachable", "error");
+            Notification.show("Server Unreachable", "error");
             btn.disabled = false;
-            btn.innerText = originalText;
+            btn.innerText = "Login";
         }
     }
 </script>
