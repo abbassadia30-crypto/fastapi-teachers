@@ -50,7 +50,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # 🏛️ This now works because credentials_exception is in scope
         raise credentials_exception
 
-    user = db.query(login.User).filter(login.User.email == email).first()
+    user = db.query(User).filter(login.User.email == email).first()
     if user is None:
         raise credentials_exception
 
