@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.database import engine, Base
 from backend import models
-from backend.routers import auth, dashboard, institution, ready, pay, profile, document
+from backend.routers import auth, dashboard, institution, ready, profile, document
 import logging
 # 🏛️ PEER TIP: This stops passlib from crashing on bcrypt version checks
 logging.getLogger("passlib").setLevel(logging.ERROR)
@@ -22,7 +22,6 @@ app.include_router(auth.router)
 app.include_router(institution.router)
 app.include_router(dashboard.router)
 app.include_router(ready.router)
-app.include_router(pay.router)
 app.include_router(profile.router)
 app.include_router(document.router)
 
