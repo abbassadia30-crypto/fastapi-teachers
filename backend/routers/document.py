@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from backend.routers.auth import get_current_user
 from .. import models, schemas, database
 from backend.database import get_db
-from ..models import Institution, VaultDocument, User
+from ..models import Institution, Syllabus, User
 from ..schemas import VaultUpload
 
 router = APIRouter(
@@ -15,7 +15,7 @@ router = APIRouter(
 
 @router.post("/vault/upload")
 async def upload_to_vault(
-        data: VaultUpload,
+        data: Syllabus,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
@@ -24,7 +24,7 @@ async def upload_to_vault(
     if not inst:
         raise HTTPException(status_code=404, detail="Institution not found")
 
-    new_doc = VaultDocument(
+    new_doc = Syllabus(
         institution_ref=inst.institution_id, # Linking to the hex UUID
         name=data.name,
         doc_type=data.doc_type,
