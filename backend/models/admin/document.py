@@ -1,13 +1,12 @@
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
-
 class Base(DeclarativeBase):
     pass
 
 
 class Syllabus(Base):
-    __tablename__ = "institution_vault"
+    __tablename__ = "Syllabus"
     id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
     name = Column(String, nullable=False) # e.g., "Physics Syllabus - Grade 10"
