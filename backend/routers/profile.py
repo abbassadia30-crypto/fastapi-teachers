@@ -5,12 +5,12 @@ from pydantic import BaseModel
 from sqlalchemy.orm.attributes import flag_modified
 
 from backend.routers import auth
-from backend import database, schemas
+from backend import database
 from .auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import User
 from backend.models.admin.profile import UserBio, Profile
-from backend.schemas import ProfileOut
+from backend.schemas.admin.profile import ProfileOut, ProfileUpdate
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
@@ -60,7 +60,7 @@ def update_bio(
         db.rollback()
         raise HTTPException(status_code=500, detail="Could not save to database")
 
-@router.get("/me", response_model=schemas.ProfileOut)
+@router.get("/me", response_model=ProfileOut)
 async def get_my_profile(
         current_user: User = Depends(auth.get_current_user),
         db: Session = Depends(get_db)
@@ -74,7 +74,7 @@ async def get_my_profile(
 # 🏛️ POST: Update/Create My Profile (Private)
 @router.post("/update")
 async def update_profile(
-        data: schemas.ProfileUpdate,
+        data: ProfileUpdate,
         current_user: User = Depends(auth.get_current_user),
         db: Session = Depends(get_db)
 ):

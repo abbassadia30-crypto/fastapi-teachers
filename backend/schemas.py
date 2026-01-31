@@ -35,17 +35,4 @@ class HistoricalRecordExport(BaseModel):
     # We use List[Dict] so we can dump the entire row for the CSV/Phone storage
     records: List[Dict[str, Any]]
 
-class ProfileUpdate(BaseModel):
-    full_name: str
-    short_bio: Optional[str] = None
-    custom_details: Optional[Dict[str, str]] = None
-
-# 🏛️ What the Backend sends to the Explore Page
-class ProfileOut(BaseModel):
-    full_name: str
-    short_bio: Optional[str]
-    custom_details: Optional[Dict[str, str]]
-
-    class Config:
-        from_attributes = True
 
