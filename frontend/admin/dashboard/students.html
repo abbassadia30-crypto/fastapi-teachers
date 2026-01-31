@@ -15,6 +15,21 @@
             --danger: #c62828;
             --dark: #1e293b;
         }
+
+        .flex-row-btn {
+            width: 100%;
+            background: #e3f2fd;
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .flex-row-btn:active { transform: scale(0.98); }
+
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; color: var(--text); padding-bottom: 80px; overflow-x: hidden; }
 
         #appNotifier {
@@ -104,6 +119,7 @@
         <label class="label-style">Fee Amount</label>
         <input type="number" id="editFee">
         <div id="editExtraFields"></div>
+        <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field</button>
         <button id="saveEditBtn" class="btn btn-save" onclick="saveEdit()">Save Records</button>
         <button onclick="closeEdit()" style="width:100%; background:none; border:none; margin-top:10px; cursor:pointer; color:#777;">Back</button>
     </div>
@@ -141,6 +157,23 @@
         }
         await load();
     };
+
+    function addNewRow() {
+        // Corrected ID to match your HTML: 'editExtraFields'
+        const container = document.getElementById('editExtraFields');
+        const div = document.createElement('div');
+        div.style = "display: flex; gap: 8px; margin-bottom: 10px; align-items: center;";
+        div.className = "dynamic-row"; // Class for identification
+
+        div.innerHTML = `
+        <input type="text" class="extra-key" placeholder="Field Name" style="flex:1; margin:0; font-size:12px;">
+        <input type="text" class="extra-val" placeholder="Value" style="flex:1; margin:0; font-size:12px;">
+        <button type="button" onclick="this.parentElement.remove()"
+            style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer; padding:5px;">✕</button>
+    `;
+        container.appendChild(div);
+    }
+
 
     function notify(msg, success = true) {
         const n = document.getElementById('appNotifier');
@@ -274,8 +307,20 @@
         btn.disabled = true;
 
         const extraFields = {};
+
+        // 1. Grab existing extra fields (those already in the database)
         document.querySelectorAll('.edit-extra-input').forEach(input => {
-            extraFields[input.getAttribute('data-key')] = input.value.trim();
+            const key = input.getAttribute('data-key');
+            if(key) extraFields[key] = input.value.trim();
+        });
+
+        // 2. Grab newly added rows from addNewRow()
+        document.querySelectorAll('.dynamic-row').forEach(row => {
+            const key = row.querySelector('.extra-key').value.trim();
+            const val = row.querySelector('.extra-val').value.trim();
+            if (key) {
+                extraFields[key] = val;
+            }
         });
 
         const body = {
@@ -287,20 +332,28 @@
         };
 
         try {
-            // Updated to match your Python route: /edit_student/
             const res = await fetch(`${API}/dashboard/edit_student/${editId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
                 body: JSON.stringify(body)
             });
 
             if (res.ok) {
                 notify("Records Updated", true);
                 closeEdit();
-                await load();
-            } else { notify("Update failed", false); }
-        } catch (e) { notify("Network error", false); }
-        btn.disabled = false;
+                await load(); // Refresh the list
+            } else {
+                const err = await res.json();
+                notify(err.detail || "Update failed", false);
+            }
+        } catch (e) {
+            notify("Network error", false);
+        } finally {
+            btn.disabled = false;
+        }
     }
 </script>
 </body>
