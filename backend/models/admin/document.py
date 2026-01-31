@@ -1,7 +1,4 @@
-import uuid
-from sqlalchemy import Text
-
-from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
 
