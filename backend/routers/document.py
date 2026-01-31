@@ -1,12 +1,9 @@
-from typing import List
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.routers.auth import get_current_user
-from .. import models, schemas, database
 from backend.database import get_db
-from ..models import Institution, Syllabus, User
-from ..schemas import VaultUpload
+from ..models.admin.document import Syllabus
+from ..models.admin.institution import Institution, User
 
 router = APIRouter(
     prefix="/document",

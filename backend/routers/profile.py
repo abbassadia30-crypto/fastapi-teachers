@@ -5,9 +5,11 @@ from pydantic import BaseModel
 from sqlalchemy.orm.attributes import flag_modified
 
 from . import auth
-from .. import models, database, schemas
+from .. import database, schemas
 from .auth import get_current_user
 from ..database import get_db
+from ..models.admin.institution import User
+from ..models.admin.profile import UserBio, Profile
 from ..schemas import ProfileOut
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
@@ -20,10 +22,10 @@ class BioUpdate(BaseModel):
 
 @router.get("/me")
 def get_my_bio(
-        current_user: models.User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
-    bio = db.query(models.UserBio).filter(models.UserBio.user_id == current_user.id).first()
+    bio = db.query(UserBio).filter(UserBio.user_id == current_user.id).first()
     if not bio:
         return {"full_name": "", "short_bio": "", "custom_details": {}}
     return bio
@@ -32,10 +34,10 @@ def get_my_bio(
 @router.post("/update")
 def update_bio(
         bio_data: BioUpdate,
-        current_user: models.User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
-    db_bio = db.query(models.UserBio).filter(models.UserBio.user_id == current_user.id).first()
+    db_bio = db.query(UserBio).filter(UserBio.user_id == current_user.id).first()
 
     if db_bio:
         db_bio.full_name = bio_data.full_name
@@ -43,7 +45,7 @@ def update_bio(
         db_bio.custom_details = bio_data.custom_details
         flag_modified(db_bio, "custom_details")
     else:
-        db_bio = models.UserBio(
+        db_bio = UserBio(
             full_name=bio_data.full_name,
             short_bio=bio_data.short_bio,
             custom_details=bio_data.custom_details,
@@ -60,10 +62,10 @@ def update_bio(
 
 @router.get("/me", response_model=schemas.ProfileOut)
 async def get_my_profile(
-        current_user: models.User = Depends(auth.get_current_user),
+        current_user: User = Depends(auth.get_current_user),
         db: Session = Depends(get_db)
 ):
-    profile = db.query(models.Profile).filter(models.Profile.user_id == current_user.id).first()
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
     if not profile:
         # Return empty structure if not created yet
         return {"full_name": "", "short_bio": "", "custom_details": {}}
@@ -73,10 +75,10 @@ async def get_my_profile(
 @router.post("/update")
 async def update_profile(
         data: schemas.ProfileUpdate,
-        current_user: models.User = Depends(auth.get_current_user),
+        current_user: User = Depends(auth.get_current_user),
         db: Session = Depends(get_db)
 ):
-    profile = db.query(models.Profile).filter(models.Profile.user_id == current_user.id).first()
+    profile = db.query(Profile).filter(Profile.user_id == current_user.id).first()
 
     if profile:
         profile.full_name = data.full_name
@@ -84,7 +86,7 @@ async def update_profile(
         profile.custom_details = data.custom_details
         db.add(profile)
     else:
-        new_profile = models.Profile(**data.dict(), user_id=current_user.id)
+        new_profile = Profile(**data.dict(), user_id=current_user.id)
         db.add(new_profile)
 
     db.commit()
@@ -94,7 +96,7 @@ async def update_profile(
 @router.get("/profiles/all", response_model=list[ProfileOut])
 def get_all_profiles(db: Session = Depends(get_db)):
     # Order by ID descending so "Newest" works logically on the frontend
-    profiles = db.query(models.Profile).order_by(models.Profile.id.desc()).all()
+    profiles = db.query(Profile).order_by(Profile.id.desc()).all()
 
     # Do NOT return a comma; return only the profiles list
     return profiles

@@ -1,10 +1,13 @@
-from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.routers.auth import get_current_user
-from .. import models, schemas, database
+from .. import database
 from backend.database import get_db
+from ..models.admin.dashboard import Student , Staff , Teacher
+from ..models.admin.institution import User, Institution
+from ..schemas.admin.dashboard import AdmissionPayload, Student_update, TeacherCreate, TeacherListResponse, StaffCreate, \
+    StaffResponse, StaffListResponse, EmployeeUpdate, StaffUpdate
 
 router = APIRouter(
     prefix="/dashboard",
@@ -13,12 +16,12 @@ router = APIRouter(
 
 @router.post("/admit-student")
 async def admit_student(
-    data: schemas.AdmissionPayload,
+    data: AdmissionPayload,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
 
-    new_student = models.Student(
+    new_student = Student(
         **data.dict(),
         institution_id=current_user.institution_id,
         admitted_by=current_user.email
@@ -30,14 +33,14 @@ async def admit_student(
 @router.put("/edit_student/{student_id}")
 async def edit_student(
     student_id: int, 
-    data: schemas.Student_update, 
+    data: Student_update,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user) # Security Added
+    current_user: User = Depends(get_current_user) # Security Added
 ):
     # Filter by ID AND institution_id to ensure ownership
-    student = db.query(models.Student).filter(
-        models.Student.id == student_id,
-        models.Student.institution_id == current_user.institution_id
+    student = db.query(Student).filter(
+        Student.id == student_id,
+        Student.institution_id == current_user.institution_id
     ).first()
 
     if not student:
@@ -56,11 +59,11 @@ async def edit_student(
 async def delete_student(
     student_id: int, 
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user) # Security Added
+    current_user: User = Depends(get_current_user) # Security Added
 ):
-    student = db.query(models.Student).filter(
-        models.Student.id == student_id,
-        models.Student.institution_id == current_user.institution_id
+    student = db.query(Student).filter(
+        Student.id == student_id,
+        Student.institution_id == current_user.institution_id
     ).first()
 
     if not student:
@@ -73,11 +76,11 @@ async def delete_student(
 @router.get("/my_students")
 async def get_students(
     db: Session = Depends(get_db), 
-    current_user: models.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
-    students = db.query(models.Student).filter(
-        models.Student.institution_id == current_user.institution_id,
-        models.Student.is_active == True
+    students = db.query(Student).filter(
+        Student.institution_id == current_user.institution_id,
+        Student.is_active == True
     ).all()
 
     return {
@@ -87,7 +90,7 @@ async def get_students(
 
 @router.get("/check-ownership")
 async def check_institution_ownership(
-        current_user: models.User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user),
         db: Session = Depends(database.get_db)
 ):
     # Quick exit for users who haven't started setup
@@ -98,8 +101,8 @@ async def check_institution_ownership(
         }
 
     # Verify the institution exists in the DB
-    institution = db.query(models.Institution).filter(
-        models.Institution.id == current_user.institution_id
+    institution = db.query(Institution).filter(
+        Institution.id == current_user.institution_id
     ).first()
 
     if not institution:
@@ -116,27 +119,27 @@ async def check_institution_ownership(
 @router.get("/sections")
 async def get_unique_sections(
         db: Session = Depends(get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     # This query gets distinct section names for the logged-in user's institution
-    sections = db.query(models.Student.section).filter(
-        models.Student.institution_id == current_user.institution_id,
-        models.Student.is_active == True
+    sections = db.query(Student.section).filter(
+        Student.institution_id == current_user.institution_id,
+        Student.is_active == True
     ).distinct().all()
 
     return [s[0] for s in sections] # Returns a simple list of strings
 
 @router.post("/hire-teacher")
 async def hire_teacher(
-        data: schemas.TeacherCreate,
+        data: TeacherCreate,
         db: Session = Depends(get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     if not current_user.institution_id:
         raise HTTPException(status_code=400, detail="Institution not identified")
 
     # Creating a dedicated Teacher record
-    new_teacher = models.Teacher(
+    new_teacher = Teacher(
         name=data.name,
         phone=data.phone,
         salary=data.salary,
@@ -156,13 +159,13 @@ async def hire_teacher(
         "id": new_teacher.id
     }
 
-@router.get("/teacher-list", response_model=schemas.TeacherListResponse) # Fixed Schema
+@router.get("/teacher-list", response_model=TeacherListResponse) # Fixed Schema
 async def get_teacher_list(
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    teachers = db.query(models.Teacher).filter(
-        models.Teacher.institution_id == current_user.institution_id
+    teachers = db.query(Teacher).filter(
+        Teacher.institution_id == current_user.institution_id
     ).all()
 
     rows = []
@@ -190,11 +193,11 @@ async def get_teacher_list(
 async def delete_teacher(
         teacher_id: int,
         db: Session = Depends(get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(models.Teacher).filter(
-        models.Teacher.id == teacher_id,
-        models.Teacher.institution_id == current_user.institution_id
+    teacher = db.query(Teacher).filter(
+        Teacher.id == teacher_id,
+        Teacher.institution_id == current_user.institution_id
     ).first()
 
     if not teacher:
@@ -208,13 +211,13 @@ async def delete_teacher(
 @router.patch("/teacher/{teacher_id}")
 async def update_teacher(
         teacher_id: int,
-        data: schemas.EmployeeUpdate,
+        data: EmployeeUpdate,
         db: Session = Depends(get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(models.Teacher).filter(
-        models.Teacher.id == teacher_id,
-        models.Teacher.institution_id == current_user.institution_id
+    teacher = db.query(Teacher).filter(
+        Teacher.id == teacher_id,
+        Teacher.institution_id == current_user.institution_id
     ).first()
 
     if not teacher:
@@ -231,13 +234,13 @@ async def update_teacher(
     return {"status": "success", "message": "Record updated"}
 
 # 🟢 CREATE
-@router.post("/Hire_staff", response_model=schemas.StaffResponse)
+@router.post("/Hire_staff", response_model=StaffResponse)
 def hire_staff(
-        staff_in: schemas.StaffCreate,
+        staff_in: StaffCreate,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    new_staff = models.Staff(
+    new_staff = Staff(
         **staff_in.model_dump(),
         institution_id=current_user.institution_id
     )
@@ -247,13 +250,13 @@ def hire_staff(
     return new_staff
 
 # 🔵 READ - Optimized with the Wrapper Schema
-@router.get("/Staff_list", response_model=schemas.StaffListResponse)
+@router.get("/Staff_list", response_model=StaffListResponse)
 def get_staff_list(
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    staff_members = db.query(models.Staff).filter(
-        models.Staff.institution_id == current_user.institution_id
+    staff_members = db.query(Staff).filter(
+        Staff.institution_id == current_user.institution_id
     ).all()
 
     return {
@@ -266,13 +269,13 @@ def get_staff_list(
 @router.patch("/update_staff/{staff_id}") # Changed to lowercase 'u' for consistency
 def update_staff(
         staff_id: int,
-        staff_up: schemas.StaffUpdate,
+        staff_up: StaffUpdate,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    staff_query = db.query(models.Staff).filter(
-        models.Staff.id == staff_id,
-        models.Staff.institution_id == current_user.institution_id
+    staff_query = db.query(Staff).filter(
+        Staff.id == staff_id,
+        Staff.institution_id == current_user.institution_id
     )
 
     target = staff_query.first()
@@ -289,11 +292,11 @@ def update_staff(
 def remove_staff(
         staff_id: int,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    staff = db.query(models.Staff).filter(
-        models.Staff.id == staff_id,
-        models.Staff.institution_id == current_user.institution_id
+    staff = db.query(Staff).filter(
+        Staff.id == staff_id,
+        Staff.institution_id == current_user.institution_id
     ).first()
 
     if not staff:

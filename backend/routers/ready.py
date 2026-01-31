@@ -1,28 +1,25 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Body  ,status
+from fastapi import APIRouter, Depends, HTTPException,status
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
-from typing import List
-import csv
-import io
-from fastapi.responses import StreamingResponse
-from .. import models, schemas, database
+from .. import database
 from .auth import get_current_user
+from ..models.admin.institution import Institution, User, School, Academy, College
+from ..schemas.admin.institution import SchoolSchema, AcademySchema, CollegeSchema
 
 router = APIRouter(prefix="/ready", tags=["Institution creation"])
 
 @router.post("/create-school", status_code=status.HTTP_201_CREATED)
 async def create_school(
-        payload: schemas.SchoolSchema,
+        payload: SchoolSchema,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     # 1. Validation
-    existing = db.query(models.Institution).filter(models.Institution.owner_id == current_user.id).first()
+    existing = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
     if existing:
         raise HTTPException(status_code=400, detail="User already owns an institution.")
 
     # 2. Map payload to School Model
-    new_school = models.School(
+    new_school = School(
         owner_id=current_user.id,
         name=payload.name,
         description=payload.description,
@@ -53,18 +50,18 @@ async def create_school(
 
 @router.post("/create-academy", status_code=status.HTTP_201_CREATED)
 async def create_academy(
-        payload: schemas.AcademySchema,
+        payload: AcademySchema,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     # 1. Ownership Guard
-    existing = db.query(models.Institution).filter(models.Institution.owner_id == current_user.id).first()
+    existing = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
     if existing:
         raise HTTPException(status_code=400, detail="User already owns an active institution.")
 
     # 2. Create the Academy
     # SQLAlchemy uses "polymorphic_identity": "academy" to map this to the academies table
-    new_academy = models.Academy(
+    new_academy = Academy(
         owner_id=current_user.id,
         name=payload.name,
         type="academy",
@@ -94,12 +91,12 @@ async def create_academy(
 
 @router.post("/create-college", status_code=status.HTTP_201_CREATED)
 async def create_college(
-        payload: schemas.CollegeSchema,
+        payload: CollegeSchema,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     # 1. Security: Check if this email already owns an institution
-    existing = db.query(models.Institution).filter(models.Institution.owner_id == current_user.id).first()
+    existing = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -107,7 +104,7 @@ async def create_college(
         )
 
     # 2. Instantiate the College polymorphic model
-    new_college = models.College(
+    new_college = College(
         owner_id=current_user.id,
         name=payload.name,
         type="college", # Matches polymorphic_identity

@@ -28,3 +28,5 @@ class Token(BaseModel):
     institution_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+

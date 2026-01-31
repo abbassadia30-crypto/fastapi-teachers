@@ -3,17 +3,15 @@ import random
 import resend
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, status
 from sqlalchemy.orm import Session
 from jose import JWTError, jwt
 from dotenv import load_dotenv
 from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
-
-# Import local modules correctly
-# Ensure 'models', 'schemas', and 'database' are in the same directory or adjust paths
-from .. import models, schemas, database
+from .. import database
 from backend.database import get_db
+from ..schemas.user.login import UserCreate , LoginSchema , Token
+from ..models.admin.institution import User
 
 load_dotenv()
 
@@ -52,7 +50,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # 🏛️ This now works because credentials_exception is in scope
         raise credentials_exception
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(login.User).filter(login.User.email == email).first()
     if user is None:
         raise credentials_exception
 
@@ -83,8 +81,8 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
 # --- Routes ---
 
 @router.post("/signup")
-async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    existing_user = db.query(models.User).filter(models.User.email == str(user.email)).first()
+async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == str(user.email)).first()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
     hashed_pwd = hash_password(user.password)
 
@@ -97,7 +95,7 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
         target_name = existing_user.name
     else:
         # FIXED: Handling missing institution_id safely
-        new_user = models.User(
+        new_user = User(
             name=user.name,
             email=str(user.email), # FIXED: Convert EmailStr to str
             password=hashed_pwd,
@@ -114,12 +112,12 @@ async def signup(user: schemas.UserCreate, background_tasks: BackgroundTasks, db
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "OTP sent to your email."}
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=Token)
 async def login(
-        credentials: schemas.LoginSchema,
+        credentials: LoginSchema,
         db: Session = Depends(database.get_db) # Ensure this is a FastAPI Depends
 ):
-    user = db.query(models.User).filter(models.User.email == credentials.email).first()
+    user = db.query(User).filter(User.email == credentials.email).first()
 
     if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
@@ -142,7 +140,7 @@ async def login(
 @router.post("/forgot-password")
 async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(database.get_db)):
     email = payload.get("email")
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(User).filter(User.email == email).first()
     if not user:
         raise HTTPException(status_code=404, detail="Email not found")
 
@@ -155,7 +153,7 @@ async def forgot_password(payload: dict = Body(...), background_tasks: Backgroun
 
 @router.post("/reset-password")
 async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(database.get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
+    user = db.query(User).filter(User.email == payload.get("email")).first()
     if not user or user.otp_code != payload.get("otp"):
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
@@ -169,7 +167,7 @@ async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)
     otp_received = payload.get("otp")
     action = payload.get("action") # 'signup' or 'reset'
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    user = db.query(User).filter(User.email == email).first()
 
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import schemas, models, database  # Use relative imports for core files
+from .. import database  # Use relative imports for core files
 from ..dependencies import get_current_user
-from backend.database import SessionLocal , engine
+from ..models.admin.institution import User, School, Academy, College
+from ..schemas.user.login import RoleUpdate
 
 router = APIRouter(
     prefix="/institution",
@@ -14,9 +15,9 @@ router = APIRouter(
 
 @router.patch("/update-role")
 async def update_user_role(
-        payload: schemas.RoleUpdate,
+        payload: RoleUpdate,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     # Validate allowed roles
     if payload.role not in ["admin", "teacher", "student"]:
@@ -45,7 +46,7 @@ async def update_user_role(
 async def setup_workspace(
     payload: dict = Body(...), 
     db: Session = Depends(database.get_db), # Fixed reference to database
-    current_user: models.User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user)
 ):
     # 1. Validation: Only 'admin' role should be creating institutions
     if current_user.role != "admin":
@@ -60,7 +61,7 @@ async def setup_workspace(
     # 3. Polymorphic Creation logic
     try:
         if inst_type == "school":
-            new_inst = models.School(
+            new_inst = School(
                 owner_id=current_user.id,
                 name=payload.get("name"),
                 principal_name=payload.get("principal_name"),
@@ -69,7 +70,7 @@ async def setup_workspace(
                 email=payload.get("email")
             )
         elif inst_type == "academy":
-            new_inst = models.Academy(
+            new_inst = Academy(
                 owner_id=current_user.id,
                 name=payload.get("name"),
                 edu_type=payload.get("edu_type"),
@@ -78,7 +79,7 @@ async def setup_workspace(
                 email=payload.get("email")
             )
         elif inst_type == "college":
-            new_inst = models.College(
+            new_inst = College(
                 owner_id=current_user.id,
                 name=payload.get("name"),
                 dean_name=payload.get("dean_name"),
