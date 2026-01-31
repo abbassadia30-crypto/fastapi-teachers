@@ -1,13 +1,7 @@
-import uuid
 from sqlalchemy import Text
-
-from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, DeclarativeBase
-from sqlalchemy.sql import func
-
-class Base(DeclarativeBase):
-    pass
-
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey
+from sqlalchemy.orm import relationship
+from backend.models.base import Base
 
 class UserBio(Base):
     __tablename__ = "user_bios"

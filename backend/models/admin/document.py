@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
-class Base(DeclarativeBase):
-    pass
+from backend.models.base import Base
 
 
 class Syllabus(Base):
