@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
-from .. import database  # Use relative imports for core files
-from ..dependencies import get_current_user
-from ..models.admin.institution import User, School, Academy, College
-from ..schemas.user.login import RoleUpdate
+from backend import database  # Use relative imports for core files
+from backend.dependencies import get_current_user
+from backend.models.admin.institution import User, School, Academy, College
+from backend.schemas.User.login import RoleUpdate
 
 router = APIRouter(
     prefix="/institution",

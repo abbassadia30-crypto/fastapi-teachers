@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 from .. import database
 from backend.database import get_db
-from ..schemas.user.login import UserCreate , LoginSchema , Token
-from ..models.admin.institution import User
+from backend.schemas.User.login import UserCreate , LoginSchema , Token
+from backend.models.admin.institution import User
 
 load_dotenv()
 

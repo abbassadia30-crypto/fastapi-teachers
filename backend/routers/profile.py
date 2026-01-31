@@ -4,13 +4,13 @@ from typing import Dict, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm.attributes import flag_modified
 
-from . import auth
-from .. import database, schemas
+from backend.routers import auth
+from backend import database, schemas
 from .auth import get_current_user
-from ..database import get_db
-from ..models.admin.institution import User
-from ..models.admin.profile import UserBio, Profile
-from ..schemas import ProfileOut
+from backend.database import get_db
+from backend.models.admin.institution import User
+from backend.models.admin.profile import UserBio, Profile
+from backend.schemas import ProfileOut
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
