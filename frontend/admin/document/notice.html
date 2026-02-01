@@ -50,7 +50,6 @@
       box-sizing: border-box; font-family: inherit; font-size: 15px; transition: 0.3s;
     }
 
-    /* Mic Button - Positioned dynamically via JS */
     .mic-btn {
       position: absolute; top: 12px;
       font-size: 20px; cursor: pointer; opacity: 0.5;
@@ -125,16 +124,15 @@
     ar: { header: "مهندس الإشعارات", lblTitle: "عنوان الإشعار", lblMsg: "رسالة مفصلة", lblPre: "معاينة مباشرة", phTitle: "أدخل العنوان...", phMsg: "اكتب الرسالة...", btn: "بث الإشعار", dir: "rtl" }
   };
 
+  // Switch Language Logic
   function switchLang(lang) {
     currentLang = lang;
     const data = languages[lang];
 
-    // Update Chips
     document.querySelectorAll('.lang-chip').forEach(chip => {
       chip.classList.toggle('active', chip.innerText.toLowerCase().includes(lang) || (lang === 'en' && chip.innerText === 'English'));
     });
 
-    // Update Text Content
     document.getElementById('header-title').innerText = data.header;
     document.getElementById('lbl-title').innerText = data.lblTitle;
     document.getElementById('lbl-msg').innerText = data.lblMsg;
@@ -143,7 +141,6 @@
     document.getElementById('notice-desc').placeholder = data.phMsg;
     document.getElementById('btn-publish').innerText = data.btn;
 
-    // Update Layout and Mic Positioning
     const inputArea = document.getElementById('input-area');
     const previewCard = document.getElementById('preview-card');
     const mics = document.querySelectorAll('.mic-btn');
@@ -152,43 +149,73 @@
     previewCard.className = `preview-box ${data.dir}`;
 
     mics.forEach(mic => {
-      if (data.dir === 'rtl') {
-        mic.style.right = 'auto';
-        mic.style.left = '12px';
-      } else {
-        mic.style.left = 'auto';
-        mic.style.right = '12px';
-      }
+      mic.style.right = (data.dir === 'rtl') ? 'auto' : '12px';
+      mic.style.left = (data.dir === 'rtl') ? '12px' : 'auto';
     });
-
     updatePreview();
   }
 
-  function listen(targetId) {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) return showNotify("Mic not supported", "error");
+  // 🎙️ Unified Listen Function (Works for Web & Native)
+  async function listen(targetId) {
+    const input = document.getElementById(targetId);
+    const micBtn = window.event.currentTarget;
+    const langMap = { en: 'en-US', ur: 'ur-PK', ar: 'ar-SA' };
 
-    const recognition = new SpeechRecognition();
-    const langMap = { 'en': 'en-US', 'ur': 'ur-PK', 'ar': 'ar-SA' };
+    // --- CAPACITOR NATIVE LOGIC ---
+    if (window.Capacitor && Capacitor.isNativePlatform()) {
+      try {
+        const { SpeechRecognition } = Capacitor.Plugins;
+        const perms = await SpeechRecognition.requestPermissions();
 
+        if (perms.speechRecognition !== 'granted') {
+          return showNotify("Permission Denied", "error");
+        }
+
+        const result = await SpeechRecognition.start({
+          language: langMap[currentLang],
+          partialResults: false,
+          popup: true // Shows the native Google/Siri listener UI
+        });
+
+        if (result.matches && result.matches.length > 0) {
+          input.value += (input.value ? ' ' : '') + result.matches[0];
+          updatePreview();
+        }
+        return;
+      } catch (e) {
+        console.error("Native Mic Error", e);
+      }
+    }
+
+    // --- WEB BROWSER LOGIC (Fallback) ---
+    const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!WebSpeech) return showNotify("Mic not supported", "error");
+
+    const recognition = new WebSpeech();
     recognition.lang = langMap[currentLang];
-    const micIcon = event.currentTarget;
+    recognition.continuous = false;
+    recognition.interimResults = false;
 
     recognition.onstart = () => {
-      micIcon.style.color = "var(--danger)";
-      micIcon.style.opacity = "1";
+      micBtn.style.color = "var(--danger)";
+      micBtn.style.opacity = "1";
       showNotify("Listening...", "success");
     };
 
-    recognition.onresult = (event) => {
-      const text = event.results[0][0].transcript;
-      document.getElementById(targetId).value += text;
+    recognition.onresult = (e) => {
+      // FIX: Correctly extract transcript from nested result object
+      const transcript = e.results[0][0].transcript;
+      input.value += (input.value ? ' ' : '') + transcript;
       updatePreview();
     };
 
-    recognition.onerror = () => showNotify("Mic Error", "error");
+    recognition.onerror = (err) => {
+      console.error("Speech Error:", err.error);
+      showNotify("Mic Error: " + err.error, "error");
+    };
+
     recognition.onend = () => {
-      micIcon.style.color = "inherit";
+      micBtn.style.color = "inherit";
       micIcon.style.opacity = "0.5";
     };
 
@@ -196,10 +223,10 @@
   }
 
   function updatePreview() {
-    const title = document.getElementById('notice-title').value;
-    const desc = document.getElementById('notice-desc').value;
-    document.getElementById('pre-title').innerText = title || languages[currentLang].lblTitle;
-    document.getElementById('pre-desc').innerText = desc || languages[currentLang].phMsg;
+    document.getElementById('pre-title').innerText =
+            document.getElementById('notice-title').value || languages[currentLang].lblTitle;
+    document.getElementById('pre-desc').innerText =
+            document.getElementById('notice-desc').value || languages[currentLang].phMsg;
   }
 
   function showNotify(msg, type) {
@@ -217,15 +244,13 @@
     if (!title || !message) return showNotify("All fields required", "error");
 
     btn.disabled = true;
-    btn.innerText = "...";
+    btn.innerText = "Broadcasting...";
 
     try {
       const res = await AppStorage.get("institutionToken");
       const token = (res && typeof res === 'object') ? res.value : res;
 
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${API_BASE}/document/notice/publish`, {
+      const response = await fetch(`${API_BASE}/document/publish`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -235,11 +260,11 @@
       });
 
       if (response.ok) {
-        showNotify("Notice Published!", "success");
+        showNotify("Notice Published Successfully!", "success");
         setTimeout(() => history.back(), 1500);
       } else {
         const err = await response.json();
-        showNotify(err.detail || "Error", "error");
+        showNotify(err.detail || "Server Error", "error");
       }
     } catch (err) {
       showNotify("Connection Failed", "error");
@@ -249,5 +274,6 @@
     }
   }
 </script>
+
 </body>
 </html>

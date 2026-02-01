@@ -4,6 +4,7 @@
     <bytecodeTargetLevel>
       <module name="android.app" target="17" />
       <module name="android.capacitor-android" target="17" />
+      <module name="android.capacitor-community-speech-recognition" target="17" />
       <module name="android.capacitor-community-sqlite" target="17" />
       <module name="android.capacitor-cordova-android-plugins" target="17" />
       <module name="android.capacitor-preferences" target="17" />

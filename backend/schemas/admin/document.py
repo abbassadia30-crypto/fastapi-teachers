@@ -4,6 +4,9 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
 
+from backend.models.admin.document import VoucherMode
+
+
 class VaultUpload(BaseModel):
     name: str
     doc_type: str
@@ -63,19 +66,14 @@ class NoticeResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class FeeHead(BaseModel):
+class HeadCreate(BaseModel):
     name: str
     amount: float
 
-class FinanceTemplateCreate(BaseModel):
+class VoucherBulkCreate(BaseModel):
     target_group: str
     billing_month: str
-    mode: str
-    issue_date: str
+    mode: VoucherMode
+    issue_date: str # Will be converted to date object
     due_date: str
-    heads: List[FeeHead]
-
-class FinanceResponse(BaseModel):
-    status: str
-    template_id: int
-    vouchers_generated: int
+    heads: List[HeadCreate]

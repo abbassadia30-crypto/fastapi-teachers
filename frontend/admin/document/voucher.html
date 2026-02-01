@@ -139,13 +139,13 @@
 
 <script>
     let mode = 'student';
+    const API_URL = "https://fastapi-teachers.onrender.com";
 
     function setMode(newMode) {
         mode = newMode;
         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + newMode).classList.add('active');
 
-        // Update UI Text for Staff/Student context
         document.getElementById('header-title').innerText = mode === 'student' ? 'Fee Voucher Architect' : 'Staff Payroll Architect';
         document.getElementById('v-tag').innerText = mode === 'student' ? 'FEE CHALLAN' : 'PAY SLIP';
         document.getElementById('lbl-target').innerText = mode === 'student' ? 'Target Class / Section' : 'Department / Group';
@@ -162,7 +162,7 @@
         const div = document.createElement('div');
         div.className = 'fee-item-row';
         div.innerHTML = `
-            <input type="text" placeholder="Head Name" class="h-name" oninput="updatePreview()">
+            <input type="text" placeholder="${mode === 'student' ? 'Tuition Fee' : 'Basic Salary'}" class="h-name" oninput="updatePreview()">
             <input type="number" placeholder="Amount" class="h-amount" oninput="updatePreview()">
             <div class="remove-btn" onclick="this.parentElement.remove(); updatePreview();">✕</div>
         `;
@@ -177,13 +177,14 @@
         const hAmounts = document.querySelectorAll('.h-amount');
         const list = document.getElementById('pre-items');
         list.innerHTML = '';
-        let total = 0;
 
+        let total = 0;
         hNames.forEach((n, i) => {
             const amt = parseFloat(hAmounts[i].value) || 0;
             total += amt;
             list.innerHTML += `<div class="v-row"><span>${n.value || 'Item'}</span><span>${amt.toLocaleString()}</span></div>`;
         });
+
         document.getElementById('pre-total').innerText = total.toLocaleString() + " PKR";
     }
 
@@ -197,35 +198,45 @@
     async function processBulk() {
         const heads = [];
         document.querySelectorAll('.fee-item-row').forEach(row => {
-            const name = row.querySelector('.h-name').value;
-            const amt = row.querySelector('.h-amount').value;
-            if(name && amt) heads.push({ name: name, amount: parseFloat(amt) });
+            const name = row.querySelector('.h-name').value.trim();
+            const amt = row.querySelector('.h-amount').value.trim();
+            if (name && amt) heads.push({ name, amount: parseFloat(amt) });
         });
 
-        if(heads.length === 0) return showNotify("Add at least one head", "error");
+        if (heads.length === 0) return showNotify("Add at least one head", "error");
 
-        const payload = {
-            target_group: document.getElementById('target-group').value,
-            billing_month: document.getElementById('billing-month').value,
-            mode: mode,
-            issue_date: document.getElementById('issue-date').value,
-            due_date: document.getElementById('due-date').value,
-            heads: heads
-        };
+        // Get input values
+        const target_group = document.getElementById('target-group').value;
+        const billing_month = document.getElementById('billing-month').value;
+        const issue_date = document.getElementById('issue-date').value;
+        const due_date = document.getElementById('due-date').value;
+
+        if(!billing_month || !issue_date || !due_date) return showNotify("Fill all dates", "error");
+
+        const payload = { target_group, billing_month, mode, issue_date, due_date, heads };
 
         try {
+            // REAL APP FIX: Use Capacitor Storage
+            const result = await AppStorage.get("institutionToken");
+            const token = (result && typeof result === 'object') ? result.value : result;
+
+            if (!token) return showNotify("Session Expired", "error");
+
             const res = await fetch(`${API_URL}/finance/process-bulk`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('institutionToken')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(payload)
             });
 
-            if(res.ok) {
-                showNotify("Success! Individual vouchers generated.", "green");
+            if (res.ok) {
+                showNotify("Structure Saved Successfully!", "green");
                 setTimeout(() => location.reload(), 2000);
+            } else {
+                const err = await res.json();
+                showNotify(err.detail || "Processing failed", "error");
             }
         } catch (err) {
             showNotify("Network Error", "error");

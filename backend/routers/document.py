@@ -1,15 +1,17 @@
 import uuid
+from datetime import datetime
 
 from fastapi import  status
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.models.admin.document import Syllabus, DateSheet, Notice, FinanceTemplate, Transaction
+from backend.models.admin.document import Syllabus, DateSheet, Notice, FinanceTemplate, Transaction, Voucher, \
+    VoucherHead
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse, FinanceTemplateCreate
+    NoticeCreate, NoticeResponse, FinanceTemplateCreate, VoucherBulkCreate
 
 router = APIRouter(
     prefix="/document",
@@ -144,3 +146,44 @@ async def process_bulk_finance(
 
     db.commit()
     return {"status": "success", "vouchers_generated": len(recipients)}
+
+@router.post("/process-bulk")
+async def process_bulk_vouchers(
+        payload: VoucherBulkCreate,
+        db: Session = Depends(get_db),
+        current_user = Depends(get_current_user)
+):
+    try:
+        # Calculate total
+        total_payable = sum(h.amount for h in payload.heads)
+
+        # 1. Create the Main Voucher
+        new_voucher = Voucher(
+            institution_id=current_user.institution_id,
+            target_group=payload.target_group,
+            billing_month=payload.billing_month,
+            mode=payload.mode,
+            issue_date=datetime.strptime(payload.issue_date, '%Y-%m-%d').date(),
+            due_date=datetime.strptime(payload.due_date, '%Y-%m-%d').date(),
+            total_amount=total_payable
+        )
+
+        db.add(new_voucher)
+        db.flush() # Get the voucher.id before committing
+
+        # 2. Add the Heads
+        for h in payload.heads:
+            head_entry = VoucherHead(
+                voucher_id=new_voucher.id,
+                institution_id=current_user.institution_id,
+                name=h.name,
+                amount=h.amount
+            )
+            db.add(head_entry)
+
+        db.commit()
+        return {"status": "success", "voucher_id": new_voucher.id}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
