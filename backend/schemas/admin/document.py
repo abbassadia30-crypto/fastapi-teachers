@@ -66,8 +66,8 @@ class NoticeResponse(BaseModel):
     class Config:
         from_attributes = True
 
-    from pydantic import BaseModel
-from typing import List, Dict, Optional
+from pydantic import BaseModel
+from typing import List
 
 class FeeHead(BaseModel):
     name: str
