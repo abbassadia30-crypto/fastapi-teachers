@@ -1,10 +1,9 @@
 import uuid
-from sqlalchemy import Text
-
-from sqlalchemy import Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
-from sqlalchemy.orm import relationship, DeclarativeBase
-from sqlalchemy.sql import func
+from sqlalchemy import Text, Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
+from sqlalchemy.orm import relationship
 from backend.models.base import Base
+# Correct: Import the related model to resolve the relationship
+from backend.models.admin.document import Syllabus
 
 class Institution(Base):
     __tablename__ = "institutions"
@@ -24,7 +23,6 @@ class Institution(Base):
     staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
 
-    # 🏛️ PEER TIP: Ensure "Syllabus" matches the CLASS name in syllabus.py exactly
     syllabi = relationship("Syllabus", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
@@ -59,7 +57,7 @@ class User(Base):
     name = Column(String, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(String, default="unassigned")# Set to None/Null for onboarding later
+    role = Column(String, default="unassigned")
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)

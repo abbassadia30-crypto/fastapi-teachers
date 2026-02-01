@@ -3,6 +3,8 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
 from sqlalchemy.orm import relationship
 from backend.database import Base
+# Correct: Import the related model to resolve the relationship
+from backend.models.admin.institution import Institution
 
 class Syllabus(Base):
     __tablename__ = "Syllabus"
