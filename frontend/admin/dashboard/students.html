@@ -158,22 +158,21 @@
         await load();
     };
 
+    // --- 1. DYNAMIC ROW MANAGEMENT (New Rows) ---
     function addNewRow() {
-        // Corrected ID to match your HTML: 'editExtraFields'
         const container = document.getElementById('editExtraFields');
         const div = document.createElement('div');
         div.style = "display: flex; gap: 8px; margin-bottom: 10px; align-items: center;";
-        div.className = "dynamic-row"; // Class for identification
+        div.className = "dynamic-row";
 
         div.innerHTML = `
-        <input type="text" class="extra-key" placeholder="Field Name" style="flex:1; margin:0; font-size:12px;">
-        <input type="text" class="extra-val" placeholder="Value" style="flex:1; margin:0; font-size:12px;">
-        <button type="button" onclick="this.parentElement.remove()"
-            style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer; padding:5px;">✕</button>
-    `;
+            <input type="text" class="extra-key" placeholder="Field Name" style="flex:1; margin:0; font-size:12px;">
+            <input type="text" class="extra-val" placeholder="Value" style="flex:1; margin:0; font-size:12px;">
+            <button type="button" onclick="this.parentElement.remove()"
+                style="background:#fff1f0; border:1px solid #ffa39e; color:#f5222d; padding:5px 10px; border-radius:8px; cursor:pointer;">✕</button>
+        `;
         container.appendChild(div);
     }
-
 
     function notify(msg, success = true) {
         const n = document.getElementById('appNotifier');
@@ -247,13 +246,13 @@
         }).join('');
     }
 
-    // --- UI HELPERS ---
     function toggleSingleCard(card) {
         const isExpanded = card.classList.contains('expanded');
         document.querySelectorAll('.card').forEach(c => c.classList.remove('expanded'));
         if (!isExpanded) card.classList.add('expanded');
     }
 
+    // --- 2. UPDATED EDIT HANDLER (With Delete for Existing Rows) ---
     function handleEditClick(id, event) {
         event.stopPropagation();
         editId = id;
@@ -266,9 +265,21 @@
 
         const extraArea = document.getElementById('editExtraFields');
         extraArea.innerHTML = "";
+
         if(s.extra_fields) {
             Object.entries(s.extra_fields).forEach(([key, val]) => {
-                extraArea.innerHTML += `<label class="label-style">${key}</label><input type="text" class="edit-extra-input" data-key="${key}" value="${val}">`;
+                // Wrap existing fields in a div so they can be removed too
+                const div = document.createElement('div');
+                div.style = "display: flex; gap: 8px; margin-bottom: 10px; align-items: center;";
+                div.innerHTML = `
+                    <div style="flex:1">
+                        <label class="label-style" style="margin-top:0">${key}</label>
+                        <input type="text" class="edit-extra-input" data-key="${key}" value="${val}" style="width:100%; margin:0;">
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()"
+                        style="background:none; border:none; color:var(--danger); font-weight:bold; cursor:pointer; margin-top:15px;">✕</button>
+                `;
+                extraArea.appendChild(div);
             });
         }
         document.getElementById('editOverlay').style.display = 'flex';
@@ -286,7 +297,6 @@
 
     function cancelDelete() { document.getElementById('deleteConfirmBar').classList.remove('active'); }
 
-    // --- API OPERATIONS ---
     async function executeDelete(id) {
         try {
             const res = await fetch(`${API}/dashboard/delete_student/${id}`, {
@@ -308,19 +318,17 @@
 
         const extraFields = {};
 
-        // 1. Grab existing extra fields (those already in the database)
+        // 1. Grab existing fields that haven't been deleted
         document.querySelectorAll('.edit-extra-input').forEach(input => {
             const key = input.getAttribute('data-key');
             if(key) extraFields[key] = input.value.trim();
         });
 
-        // 2. Grab newly added rows from addNewRow()
+        // 2. Grab new dynamic fields
         document.querySelectorAll('.dynamic-row').forEach(row => {
             const key = row.querySelector('.extra-key').value.trim();
             const val = row.querySelector('.extra-val').value.trim();
-            if (key) {
-                extraFields[key] = val;
-            }
+            if (key) extraFields[key] = val;
         });
 
         const body = {
@@ -342,12 +350,11 @@
             });
 
             if (res.ok) {
-                notify("Records Updated", true);
+                notify("Institution Records Updated", true);
                 closeEdit();
-                await load(); // Refresh the list
+                await load();
             } else {
-                const err = await res.json();
-                notify(err.detail || "Update failed", false);
+                notify("Update failed", false);
             }
         } catch (e) {
             notify("Network error", false);

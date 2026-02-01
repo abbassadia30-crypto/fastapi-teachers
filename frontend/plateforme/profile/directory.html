@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Directory | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0288d1; --bg: #000; --card: #121212; --text: #fff; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Poppins', sans-serif; }
+
+        .search-container { padding: 20px; background: var(--card); position: sticky; top: 0; }
+        .search-bar {
+            width: 100%; padding: 12px 15px; border-radius: 12px; border: none;
+            background: #222; color: white; box-sizing: border-box; outline: none;
+        }
+
+        .list-container { padding: 20px; }
+        .person-card {
+            display: flex; align-items: center; padding: 15px;
+            background: var(--card); border-radius: 18px; margin-bottom: 10px;
+        }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; background: var(--primary); margin-right: 15px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+        .info { flex: 1; }
+        .name { display: block; font-size: 14px; font-weight: 600; }
+        .role-tag { font-size: 10px; color: #00bcd4; font-weight: 700; text-transform: uppercase; }
+        .call-btn { padding: 8px; color: var(--primary); font-size: 18px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<div class="search-container">
+    <div onclick="history.back()" style="margin-bottom: 15px; font-size: 20px;">⇠ Back</div>
+    <input type="text" class="search-bar" placeholder="Search students, staff, or faculty..." onkeyup="filterList(this.value)">
+</div>
+
+<div class="list-container" id="directory-list">
+    <div class="person-card">
+        <div class="avatar">AS</div>
+        <div class="info">
+            <span class="name">Ahmed Sheikh</span>
+            <span class="role-tag">Grade 10 - Student</span>
+        </div>
+        <a href="tel:+123" class="call-btn">📞</a>
+    </div>
+</div>
+
+<script>
+    function filterList(val) {
+        // Logic to filter visible cards
+    }
+</script>
+</body>
+</html>

@@ -10,7 +10,7 @@ from .admin.institution import Institution, School, Academy, College, User
 from .admin.profile import UserBio, Profile
 
 # 4. Load the Vault/Syllabus
-from .admin.document import Syllabus
+from .admin.document import Syllabus , VaultFile
 
 # 5. Load the Management models
 from .admin.dashboard import Student, Staff, Teacher

@@ -89,7 +89,10 @@
         <input type="number" id="editSalary" class="modal-input">
 
         <div id="editExtraContainer"></div>
-
+        <button type="button" onclick="addNewFacultyRow()"
+                style="width:100%; background:#f0f7ff; color:var(--primary); border:1.5px dashed var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:12px; margin-bottom:15px; cursor:pointer;">
+            + Add Custom Information
+        </button>
         <div class="modal-btns">
             <button class="btn-modal btn-cancel" onclick="closeModals()">Cancel</button>
             <button class="btn-modal btn-confirm" id="saveEditBtn" onclick="saveEdit()">Update</button>
@@ -123,15 +126,24 @@
         await fetchFaculty();
     };
 
+    // --- 1. NOTIFICATION SYSTEM ---
     function showSign(msg, isSuccess) {
         const box = document.getElementById('signBox');
+        if(!box) return;
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
         box.style.display = 'block';
-        if (window.AppHaptics) window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
-        setTimeout(() => box.style.display = 'none', 3000);
+
+        if (window.AppHaptics) {
+            window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
+        }
+
+        setTimeout(() => {
+            box.style.display = 'none';
+        }, 3000);
     }
 
+    // --- 2. DATA FETCHING ---
     async function fetchFaculty() {
         try {
             const res = await fetch(`${API}/dashboard/teacher-list`, {
@@ -140,7 +152,7 @@
             if (res.status === 401) window.location.href = "login.html";
 
             const result = await res.json();
-            // Handle the StaffListResponse schema which uses the 'rows' key
+            // Handle the StaffListResponse schema (rows key)
             allFaculty = result.rows || result || [];
             renderGrid(allFaculty);
         } catch (err) {
@@ -148,6 +160,7 @@
         }
     }
 
+    // --- 3. UI RENDERING ---
     function renderGrid(data) {
         const grid = document.getElementById('facultyGrid');
         if (data.length === 0) {
@@ -179,14 +192,16 @@
         const filtered = allFaculty.filter(t =>
             t.name.toLowerCase().includes(q) ||
             (t.designation && t.designation.toLowerCase().includes(q)) ||
-            t.phone.includes(q)
+            (t.phone && t.phone.includes(q))
         );
         renderGrid(filtered);
     }
 
+    // --- 4. MODAL MANAGEMENT (Fixed Cancel logic) ---
     function openEdit(id) {
         const t = allFaculty.find(x => x.id === id);
         if(!t) return;
+
         document.getElementById('editId').value = id;
         document.getElementById('editName').value = t.name;
         document.getElementById('editDesignation').value = t.designation || "";
@@ -195,37 +210,95 @@
 
         const extraDiv = document.getElementById('editExtraContainer');
         extraDiv.innerHTML = "";
+
         if(t.extra_details) {
             Object.entries(t.extra_details).forEach(([key, val]) => {
                 extraDiv.innerHTML += `
-                    <label class="label" style="font-size: 11px;">${key.replace('_', ' ').toUpperCase()}</label>
-                    <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}">`;
+            <div class="existing-field-group" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;">
+                <div style="flex:1">
+                    <label class="label" style="font-size: 11px;">${key.replace(/_/g, ' ').toUpperCase()}</label>
+                    <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}" style="margin:0;">
+                </div>
+                <button type="button" onclick="this.parentElement.remove()"
+                    style="background:#f5f5f5; border:1px solid #d9d9d9; color:#595959; padding:8px 12px; border-radius:8px; cursor:pointer; margin-bottom:5px; height:42px;">
+                    ✕
+                </button>
+            </div>`;
             });
         }
         document.getElementById('editModal').style.display = 'flex';
     }
 
+    function closeModals() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    // Close on background click only
+    window.onclick = function(event) {
+        if (event.target.className === 'modal') {
+            closeModals();
+        }
+    };
+
+    // --- 5. DYNAMIC ROWS ---
+    function addNewFacultyRow() {
+        const container = document.getElementById('editExtraContainer');
+        const div = document.createElement('div');
+        div.className = "dynamic-faculty-row";
+        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
+
+        div.innerHTML = `
+        <div style="flex:1">
+            <label class="label" style="font-size: 9px;">FIELD NAME</label>
+            <input type="text" class="modal-input new-key" placeholder="e.g. Shift" style="margin:0; font-size:13px;">
+        </div>
+        <div style="flex:1">
+            <label class="label" style="font-size: 9px;">VALUE</label>
+            <input type="text" class="modal-input new-val" placeholder="e.g. Evening" style="margin:0; font-size:13px;">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()"
+            style="background:#fff1f0; border:1px solid #ffa39e; color:#f5222d; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:14px; margin-bottom:5px; height:42px;">
+            ✕
+        </button>
+    `;
+        container.appendChild(div);
+    }
+
+    // --- 6. API OPERATIONS (Fixed "Connection Error" bug) ---
     async function saveEdit() {
         const id = document.getElementById('editId').value;
         const btn = document.getElementById('saveEditBtn');
+
+        if (btn.disabled) return;
         btn.disabled = true;
         btn.innerText = "Syncing...";
 
         const extras = {};
+
+        // Collect existing fields
         document.querySelectorAll('.extra-field').forEach(inp => {
-            extras[inp.getAttribute('data-key')] = inp.value;
+            const key = inp.getAttribute('data-key');
+            if(key) extras[key] = inp.value.trim();
+        });
+
+        // Collect new dynamic fields
+        document.querySelectorAll('.dynamic-faculty-row').forEach(row => {
+            const key = row.querySelector('.new-key').value.trim();
+            const val = row.querySelector('.new-val').value.trim();
+            if (key) extras[key] = val;
         });
 
         const body = {
-            name: document.getElementById('editName').value,
-            designation: document.getElementById('editDesignation').value,
-            salary: parseFloat(document.getElementById('editSalary').value),
-            phone: document.getElementById('editPhone').value,
+            name: document.getElementById('editName').value.trim(),
+            designation: document.getElementById('editDesignation').value.trim(),
+            salary: parseFloat(document.getElementById('editSalary').value) || 0,
+            phone: document.getElementById('editPhone').value.trim(),
             extra_details: extras
         };
 
         try {
-            const res = await fetch(`${API}/dashboard/teacher/${id}`, {
+            const response = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -233,16 +306,23 @@
                 },
                 body: JSON.stringify(body)
             });
-            if(res.ok) {
-                showSign("Record updated successfully", true);
+
+            if (response.ok) {
+                showSign("Faculty record updated in vault", true);
                 closeModals();
-                await fetchFaculty();
+                // Beat delay for DB consistency on Render
+                setTimeout(() => fetchFaculty(), 600);
             } else {
-                showSign("Update failed: Check data", false);
+                const errorData = await response.json().catch(() => ({}));
+                showSign(errorData.detail || "Update failed", false);
             }
-        } catch (e) { showSign("Server connection lost", false); }
-        btn.disabled = false;
-        btn.innerText = "Update";
+        } catch (e) {
+            console.error("Save error:", e);
+            showSign("Network unstable: Check connection", false);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Update";
+        }
     }
 
     function deleteTeacher(id, name) {
@@ -254,6 +334,8 @@
     async function executeDelete() {
         const id = document.getElementById('deleteTargetId').value;
         const btn = document.getElementById('confirmDelBtn');
+        if (btn.disabled) return;
+
         btn.disabled = true;
         try {
             const res = await fetch(`${API}/dashboard/teacher/${id}`, {
@@ -261,21 +343,15 @@
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             if(res.ok) {
-                showSign("Staff removed from system", true);
+                showSign("Staff removed from institution", true);
                 closeModals();
                 await fetchFaculty();
             }
-        } catch (e) { showSign("Deletion failed", false); }
-        btn.disabled = false;
-    }
-
-    function closeModals() {
-        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
-    }
-
-    // Close modal on background click
-    window.onclick = function(event) {
-        if (event.target.className === 'modal') closeModals();
+        } catch (e) {
+            showSign("Deletion failed", false);
+        } finally {
+            btn.disabled = false;
+        }
     }
 </script>
 </body>

@@ -127,12 +127,16 @@
         const box = document.getElementById('signBox');
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
+        box.style.display = 'block';
 
         if (window.AppHaptics) {
             window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
         }
 
-        setTimeout(() => { box.className = ''; box.innerText = ''; }, 3000);
+        setTimeout(() => {
+            box.style.display = 'none';
+            box.className = '';
+        }, 3000);
     }
 
     async function fetchStaff() {
@@ -144,19 +148,14 @@
             if (res.status === 401) window.location.replace("../index.html");
 
             const result = await res.json();
-
-            // This is the CRITICAL fix:
-            // If your backend returns { rows: [...] }, we use result.rows.
-            // If it returns a direct array [...], we use result.
             allStaff = result.rows || result || [];
-
             renderGrid(allStaff);
         } catch (err) {
             showSign("Institution server sync failed", false);
         }
     }
 
-    // --- Enhanced renderGrid with conditional extra details ---
+    // --- UI RENDERING ---
     function renderGrid(data) {
         const grid = document.getElementById('staffList');
         if (!data || data.length === 0) {
@@ -192,6 +191,28 @@
         ));
     }
 
+    // --- DYNAMIC ROW LOGIC ---
+    function addStaffExtraRow() {
+        const container = document.getElementById('extraEditFields');
+        const div = document.createElement('div');
+        div.className = "dynamic-staff-row";
+        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: center;";
+
+        div.innerHTML = `
+            <div style="flex:1">
+                <label class="modal-label" style="font-size: 9px;">Field Name</label>
+                <input type="text" class="modal-input new-key" placeholder="e.g. Salary" style="margin:0; font-size:14px;">
+            </div>
+            <div style="flex:1">
+                <label class="modal-label" style="font-size: 9px;">Value</label>
+                <input type="text" class="modal-input new-val" placeholder="e.g. 25000" style="margin:0; font-size:14px;">
+            </div>
+            <button type="button" onclick="this.parentElement.remove()"
+                style="background:#ffebee; border:none; color:var(--danger); margin-top:15px; cursor:pointer; font-size:18px; padding:5px; border-radius:50%; width:30px; height:30px;">✕</button>
+        `;
+        container.appendChild(div);
+    }
+
     // --- MODAL & CRUD LOGIC ---
 
     function zoomStaff(id) {
@@ -212,18 +233,36 @@
         document.getElementById('editId').value = s.id;
         document.getElementById('editName').value = s.name;
         document.getElementById('editPosition').value = s.position;
-        document.getElementById('editContact').value = s.contact;
+        document.getElementById('editContact').value = s.contact || s.phone || "";
 
         const extraDiv = document.getElementById('extraEditFields');
         extraDiv.innerHTML = "";
+
         if (s.extra_details) {
             Object.entries(s.extra_details).forEach(([k, v]) => {
                 extraDiv.innerHTML += `
-                    <label class="modal-label">${k}</label>
-                    <input class="modal-input extra-field" data-key="${k}" value="${v}">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div style="flex:1">
+                            <label class="modal-label">${k}</label>
+                            <input class="modal-input existing-extra" data-key="${k}" value="${v}">
+                        </div>
+                        <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:var(--danger); cursor:pointer; margin-top:10px;">🗑️</button>
+                    </div>
                 `;
             });
         }
+
+        // Ensure the "+ Add Row" button exists if not in HTML
+        if (!document.getElementById('addRowBtn')) {
+            const btn = document.createElement('button');
+            btn.id = "addRowBtn";
+            btn.innerText = "+ Add Custom Field";
+            btn.type = "button";
+            btn.style = "width:100%; padding:10px; margin-bottom:15px; border:1px dashed var(--primary); background:none; color:var(--primary); border-radius:10px; cursor:pointer; font-weight:600;";
+            btn.onclick = addStaffExtraRow;
+            extraDiv.after(btn);
+        }
+
         document.getElementById('editModal').style.display = 'flex';
     }
 
@@ -231,19 +270,29 @@
         const id = document.getElementById('editId').value;
         const btn = document.getElementById('saveEditBtn');
         const originalText = btn.innerText;
-        btn.innerText = "Saving...";
+        btn.innerText = "Syncing...";
         btn.disabled = true;
+
+        const extras = {};
+
+        // 1. Collect remaining existing extra fields
+        document.querySelectorAll('.existing-extra').forEach(i => {
+            extras[i.getAttribute('data-key')] = i.value.trim();
+        });
+
+        // 2. Collect newly added dynamic rows
+        document.querySelectorAll('.dynamic-staff-row').forEach(row => {
+            const k = row.querySelector('.new-key').value.trim();
+            const v = row.querySelector('.new-val').value.trim();
+            if(k) extras[k] = v;
+        });
 
         const payload = {
             name: document.getElementById('editName').value.trim(),
             position: document.getElementById('editPosition').value.trim(),
             contact: document.getElementById('editContact').value.trim(),
-            extra_details: {}
+            extra_details: extras
         };
-
-        document.querySelectorAll('.extra-field').forEach(i => {
-            payload.extra_details[i.getAttribute('data-key')] = i.value.trim();
-        });
 
         try {
             const res = await fetch(`${API}/dashboard/update_staff/${id}`, {
@@ -252,11 +301,13 @@
                 body: JSON.stringify(payload)
             });
             if(res.ok) {
-                showSign("Record updated successfully!", true);
+                showSign("Profile synced successfully!", true);
                 closeModals();
                 await fetchStaff();
+            } else {
+                showSign("Update rejected by server", false);
             }
-        } catch (e) { showSign("Update failed", false); }
+        } catch (e) { showSign("Connection to institution lost", false); }
         finally {
             btn.innerText = originalText;
             btn.disabled = false;
@@ -281,7 +332,7 @@
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             if(res.ok) {
-                showSign("Staff removed from institution", true);
+                showSign("Staff removed from records", true);
                 closeModals();
                 await fetchStaff();
             }
@@ -292,10 +343,14 @@
         }
     }
 
-    function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+    function closeModals() {
+        document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        const addBtn = document.getElementById('addRowBtn');
+        if(addBtn) addBtn.remove(); // Remove button to prevent duplication on next open
+    }
 
     window.onclick = function(event) {
-        if (event.target.className === 'modal') closeModals();
+        if (event.target.classList.contains('modal')) closeModals();
     }
 </script>
 </body>

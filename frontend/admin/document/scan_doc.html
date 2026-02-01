@@ -156,21 +156,47 @@
         }
     }
 
-    function saveToDB() {
+    async function saveToDB() {
         const docName = document.getElementById('doc-name').value;
+        const docCat = document.getElementById('doc-cat').value;
+        const ocrText = document.getElementById('extracted-text').innerText;
+        const token = localStorage.getItem('institutionToken');
+
         if(!docName) return showNotify("Please name the document", "error");
+        if(ocrText === "Processing image..." || !ocrText) return showNotify("OCR not ready", "error");
 
-        showNotify("Document Saved to DB", "green");
-        setTimeout(() => location.reload(), 2000);
+        const btn = document.querySelector('.btn-save');
+        btn.disabled = true;
+        btn.innerText = "Uploading to Vault...";
+
+        const payload = {
+            name: docName,
+            doc_type: docCat,
+            content: ocrText
+        };
+
+        try {
+            const res = await fetch("https://fastapi-teachers.onrender.com/document/vault/upload", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                showNotify("Document Saved to Institution Vault", "green");
+                setTimeout(() => location.href = "vault.html", 1500);
+            } else {
+                showNotify("Upload Failed. Check Login.", "error");
+                btn.disabled = false;
+            }
+        } catch (err) {
+            showNotify("Server Connection Error", "error");
+            btn.disabled = false;
+        }
     }
-
-    function showNotify(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-        setTimeout(() => bar.className = "", 3000);
-    }
-
     initCamera();
 </script>
 </body>

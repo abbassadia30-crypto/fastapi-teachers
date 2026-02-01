@@ -195,21 +195,41 @@
     }
 
     async function processBulk() {
-        const target = document.getElementById('target-group').value;
-        const month = document.getElementById('billing-month').value;
+        const heads = [];
+        document.querySelectorAll('.fee-item-row').forEach(row => {
+            const name = row.querySelector('.h-name').value;
+            const amt = row.querySelector('.h-amount').value;
+            if(name && amt) heads.push({ name: name, amount: parseFloat(amt) });
+        });
 
-        if(!month) return showNotify("Please select a billing month", "error");
+        if(heads.length === 0) return showNotify("Add at least one head", "error");
 
-        showNotify("Template saved. Injecting names for " + target + "...", "green");
+        const payload = {
+            target_group: document.getElementById('target-group').value,
+            billing_month: document.getElementById('billing-month').value,
+            mode: mode,
+            issue_date: document.getElementById('issue-date').value,
+            due_date: document.getElementById('due-date').value,
+            heads: heads
+        };
 
-        // Logical Step:
-        // 1. Save the structure (Heads + Amounts) to 'fee_templates'
-        // 2. Script fetches all user_ids in the 'target' group.
-        // 3. Script creates a personalized entry for each user in 'user_vouchers'
+        try {
+            const res = await fetch(`${API_URL}/finance/process-bulk`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('institutionToken')}`
+                },
+                body: JSON.stringify(payload)
+            });
 
-        setTimeout(() => {
-            showNotify("Success! Individual vouchers sent to all members.", "green");
-        }, 2000);
+            if(res.ok) {
+                showNotify("Success! Individual vouchers generated.", "green");
+                setTimeout(() => location.reload(), 2000);
+            }
+        } catch (err) {
+            showNotify("Network Error", "error");
+        }
     }
 </script>
 </body>

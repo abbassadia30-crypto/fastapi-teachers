@@ -118,94 +118,57 @@
 </div>
 
 <script>
-  // Professional Localization Dictionary
-  const languages = {
-    en: {
-      titleLbl: "Notice Title", msgLbl: "Detailed Message",
-      titlePh: "Enter Title...", descPh: "Type message here...",
-      preTitle: "Notice Title", preDesc: "Content will appear here...",
-      btn: "Broadcast Notice", dir: "ltr", mic: "en-US"
-    },
-    ur: {
-      titleLbl: "نوٹس کا عنوان", msgLbl: "تفصیلی پیغام",
-      titlePh: "عنوان درج کریں...", descPh: "پیغام یہاں لکھیں...",
-      preTitle: "نوٹس کا عنوان", preDesc: "مواد یہاں ظاہر ہوگا...",
-      btn: "نوٹس جاری کریں", dir: "rtl", mic: "ur-PK"
-    },
-    ar: {
-      titleLbl: "عنوان الإشعار", msgLbl: "رسالة مفصلة",
-      titlePh: "أدخل العنوان...", descPh: "اكتب الرسالة هنا...",
-      preTitle: "عنوان الإشعار", preDesc: "سيظهر المحتوى هنا...",
-      btn: "بث الإشعار", dir: "rtl", mic: "ar-SA"
+  const API_BASE = "https://fastapi-teachers.onrender.com";
+
+  async function publish() {
+    const title = document.getElementById("notice-title").value.trim();
+    const message = document.getElementById("notice-desc").value.trim();
+
+    if (!title || !message) {
+      showNotify("Title and message are required", "error");
+      return;
     }
-  };
 
-  let currentLang = 'en';
+    const btn = document.getElementById("btn-publish");
+    btn.disabled = true;
+    btn.innerText = "Broadcasting...";
 
-  function switchLang(code) {
-    currentLang = code;
-    const config = languages[code];
+    try {
+      const token = await AppStorage.get("institutionToken");
 
-    // Update active UI state
-    document.querySelectorAll('.lang-chip').forEach(c => c.classList.remove('active'));
-    event.target.classList.add('active');
+      if (!token) {
+        showNotify("Session expired. Login again.", "error");
+        return;
+      }
 
-    // Update Labels and Placeholders
-    document.getElementById('lbl-title').innerText = config.titleLbl;
-    document.getElementById('lbl-msg').innerText = config.msgLbl;
-    document.getElementById('btn-publish').innerText = config.btn;
+      const response = await fetch(`${API_BASE}/document/notice/publish`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: title,
+          message: message,
+          language: currentLang
+        })
+      });
 
-    const titleInput = document.getElementById('notice-title');
-    const descInput = document.getElementById('notice-desc');
-    titleInput.placeholder = config.titlePh;
-    descInput.placeholder = config.descPh;
+      const result = await response.json();
 
-    // Update Layout Direction & Fonts
-    const main = [titleInput, descInput, document.getElementById('preview-card')];
-    main.forEach(el => {
-      el.className = (config.dir === 'rtl') ? el.className.replace('ltr-layout', '') + ' rtl-layout' : el.className.replace('rtl-layout', '') + ' ltr-layout';
-    });
+      if (response.ok) {
+        showNotify("Notice Published Successfully!", "success");
+        setTimeout(() => history.back(), 1500);
+      } else {
+        showNotify(result.detail || "Publish failed", "error");
+      }
 
-    updatePreview();
-  }
-
-  function updatePreview() {
-    const config = languages[currentLang];
-    const t = document.getElementById('notice-title').value;
-    const d = document.getElementById('notice-desc').value;
-
-    document.getElementById('pre-title').innerText = t || config.preTitle;
-    document.getElementById('pre-desc').innerText = d || config.preDesc;
-  }
-
-  function listen(id) {
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = languages[currentLang].mic;
-    const icon = event.target;
-
-    recognition.onstart = () => {
-      icon.classList.add('mic-active');
-      showNotify("Listening (" + currentLang.toUpperCase() + ")...", "success");
-    };
-
-    recognition.onresult = (e) => {
-      document.getElementById(id).value += e.results[0][0].transcript;
-      updatePreview();
-    };
-
-    recognition.onend = () => icon.classList.remove('mic-active');
-    recognition.start();
-  }
-
-  function showNotify(msg, type) {
-    const bar = document.getElementById('notification-bar');
-    bar.innerText = msg;
-    bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-    setTimeout(() => bar.className = "", 3000);
-  }
-
-  function publish() {
-    showNotify("Notice Published Successfully!", "success");
+    } catch (err) {
+      showNotify("Network error", "error");
+    } finally {
+      btn.disabled = false;
+      btn.innerText = languages[currentLang].btn;
+    }
   }
 </script>
 </body>
