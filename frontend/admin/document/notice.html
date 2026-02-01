@@ -117,53 +117,63 @@
 
 <script>
   let currentLang = 'en';
+  // 🎙️ Speech Recognition Setup
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let recognition;
+
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+  }
+
+  function listen(targetId) {
+    if (!recognition) {
+      return showNotify("Speech recognition not supported in this browser", "error");
+    }
+
+    const micBtn = event.currentTarget;
+
+    // Map internal lang to BCP 47 tags for accurate mic picking
+    const langMap = { 'en': 'en-US', 'ur': 'ur-PK', 'ar': 'ar-SA' };
+    recognition.lang = langMap[currentLang];
+
+    recognition.onstart = () => {
+      micBtn.style.opacity = "1";
+      micBtn.style.color = "var(--danger)";
+      showNotify("Listening... Speak now", "success");
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      const inputField = document.getElementById(targetId);
+      inputField.value += transcript;
+      updatePreview();
+      micBtn.style.opacity = "0.5";
+      micBtn.style.color = "inherit";
+    };
+
+    recognition.onerror = () => {
+      micBtn.style.opacity = "0.5";
+      micBtn.style.color = "inherit";
+      showNotify("Microphone error or timed out", "error");
+    };
+
+    recognition.start();
+  }
 
   const languages = {
-    en: {
-      header: "Notice Architect",
-      lblTitle: "Notice Title",
-      lblMsg: "Detailed Message",
-      lblPre: "Live Preview",
-      phTitle: "Enter Title...",
-      phMsg: "Type message...",
-      btn: "Broadcast Notice",
-      dir: "ltr"
-    },
-    ur: {
-      header: "نوٹس آرکیٹیکٹ",
-      lblTitle: "نوٹس کا عنوان",
-      lblMsg: "تفصیلی پیغام",
-      lblPre: "لائیو پریویو",
-      phTitle: "عنوان درج کریں...",
-      phMsg: "پیغام لکھیں...",
-      btn: "نوٹس جاری کریں",
-      dir: "rtl"
-    },
-    ar: {
-      header: "مهندس الإشعارات",
-      lblTitle: "عنوان الإشعار",
-      lblMsg: "رسالة مفصلة",
-      lblPre: "معاينة مباشرة",
-      phTitle: "أدخل العنوان...",
-      phMsg: "اكتب الرسالة...",
-      btn: "بث الإشعار",
-      dir: "rtl"
-    }
+    en: { header: "Notice Architect", lblTitle: "Notice Title", lblMsg: "Detailed Message", lblPre: "Live Preview", phTitle: "Enter Title...", phMsg: "Type message...", btn: "Broadcast Notice", dir: "ltr" },
+    ur: { header: "نوٹس آرکیٹیکٹ", lblTitle: "نوٹس کا عنوان", lblMsg: "تفصیلی پیغام", lblPre: "لائیو پریویو", phTitle: "عنوان درج کریں...", phMsg: "پیغام لکھیں...", btn: "نوٹس جاری کریں", dir: "rtl" },
+    ar: { header: "مهندس الإشعارات", lblTitle: "عنوان الإشعار", lblMsg: "رسالة مفصلة", lblPre: "معاينة مباشرة", phTitle: "أدخل العنوان...", phMsg: "اكتب الرسالة...", btn: "بث الإشعار", dir: "rtl" }
   };
 
   function switchLang(lang) {
     currentLang = lang;
     const data = languages[lang];
-
-    // Update Chips
     document.querySelectorAll('.lang-chip').forEach(chip => {
-      chip.classList.remove('active');
-      if(chip.innerText.toLowerCase().includes(lang) || (lang === 'en' && chip.innerText === 'English')) {
-        chip.classList.add('active');
-      }
+      chip.classList.toggle('active', chip.innerText.toLowerCase().includes(lang) || (lang === 'en' && chip.innerText === 'English'));
     });
-
-    // Update Labels & Placeholders
     document.getElementById('header-title').innerText = data.header;
     document.getElementById('lbl-title').innerText = data.lblTitle;
     document.getElementById('lbl-msg').innerText = data.lblMsg;
@@ -172,25 +182,16 @@
     document.getElementById('notice-desc').placeholder = data.phMsg;
     document.getElementById('btn-publish').innerText = data.btn;
 
-    // Update Layout Direction
     const inputArea = document.getElementById('input-area');
     const previewCard = document.getElementById('preview-card');
-
-    if(data.dir === 'rtl') {
-      inputArea.className = "config-card rtl";
-      previewCard.className = "preview-box rtl";
-    } else {
-      inputArea.className = "config-card ltr";
-      previewCard.className = "preview-box ltr";
-    }
-
+    inputArea.className = `config-card ${data.dir}`;
+    previewCard.className = `preview-box ${data.dir}`;
     updatePreview();
   }
 
   function updatePreview() {
     const title = document.getElementById('notice-title').value;
     const desc = document.getElementById('notice-desc').value;
-
     document.getElementById('pre-title').innerText = title || languages[currentLang].lblTitle;
     document.getElementById('pre-desc').innerText = desc || languages[currentLang].phMsg;
   }
@@ -207,28 +208,28 @@
   async function publish() {
     const title = document.getElementById("notice-title").value.trim();
     const message = document.getElementById("notice-desc").value.trim();
-
-    if (!title || !message) {
-      showNotify("All fields are required", "error");
-      return;
-    }
-
     const btn = document.getElementById("btn-publish");
+
+    if (!title || !message) return showNotify("All fields are required", "error");
+
     btn.disabled = true;
-    btn.innerText = "...";
+    btn.innerText = "Connecting...";
 
     try {
-      // Accessing Capacitor storage properly as requested
+      // 🚨 REAL APP FIX: Capacitor Storage retrieval
       const result = await AppStorage.get("institutionToken");
-      const token = (typeof result === 'object' && result !== null) ? result.value : result;
+      const token = (result && typeof result === 'object') ? result.value : result;
 
       if (!token) {
-        showNotify("Session expired", "error");
-        return;
+        btn.disabled = false;
+        btn.innerText = languages[currentLang].btn;
+        return showNotify("Session missing. Please login.", "error");
       }
 
+      // 🚨 NETWORK FIX: Added explicit headers and mode
       const response = await fetch(`${API_BASE}/document/notice/publish`, {
         method: "POST",
+        mode: "cors",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
@@ -241,14 +242,15 @@
       });
 
       if (response.ok) {
-        showNotify("Notice Broadcasted!", "success");
+        showNotify("Notice Broadcasted Successfully!", "success");
         setTimeout(() => history.back(), 1500);
       } else {
         const err = await response.json();
-        showNotify(err.detail || "Failed", "error");
+        showNotify(err.detail || "Server rejected request", "error");
       }
     } catch (err) {
-      showNotify("Network Error", "error");
+      console.error("Fetch Error:", err);
+      showNotify("Network Error: Check Internet or CORS", "error");
     } finally {
       btn.disabled = false;
       btn.innerText = languages[currentLang].btn;
