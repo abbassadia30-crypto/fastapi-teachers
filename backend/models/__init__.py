@@ -14,3 +14,5 @@ from .admin.document import Syllabus , DateSheet , Notice , Transaction , Financ
 
 # 5. Load the Management models
 from .admin.dashboard import Student, Staff, Teacher
+
+__all__ = ["Base", "User", "Institution", "Syllabus"]
