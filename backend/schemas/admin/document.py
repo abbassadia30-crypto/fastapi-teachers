@@ -45,7 +45,7 @@ class DateSheetResponse(BaseModel):
     title: str
     target: str
     exams: List[ExamEntry]
-    created_at: str
+    created_at: datetime  # <--- Change 'str' to 'datetime'
 
     class Config:
         from_attributes = True
