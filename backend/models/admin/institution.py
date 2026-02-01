@@ -2,8 +2,6 @@ import uuid
 from sqlalchemy import Text, Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from backend.models.base import Base
-# Correct: Import the related model to resolve the relationship
-from backend.models.admin.document import Syllabus
 
 class Institution(Base):
     __tablename__ = "institutions"
