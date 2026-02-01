@@ -10,7 +10,7 @@ from .admin.institution import Institution, School, Academy, College, User
 from .admin.profile import UserBio, Profile
 
 # 4. Load the Vault/Syllabus
-from .admin.document import Syllabus , DateSheet , Notice , VoucherMode
+from .admin.document import Syllabus , DateSheet , Notice , Transaction , FinanceTemplate
 
 # 5. Load the Management models
 from .admin.dashboard import Student, Staff, Teacher

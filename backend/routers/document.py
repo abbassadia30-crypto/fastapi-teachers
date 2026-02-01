@@ -5,13 +5,12 @@ from fastapi import  status
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from backend.models.admin.document import Syllabus, DateSheet, Notice, FinanceTemplate, Transaction, Voucher, \
-    VoucherHead
+from backend.models.admin.document import Syllabus, DateSheet, Notice, FinanceTemplate, Transaction
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse, FinanceTemplateCreate, VoucherBulkCreate
+    NoticeCreate, NoticeResponse, VoucherBulkCreate, FinanceTemplateCreate
 
 router = APIRouter(
     prefix="/document",
@@ -107,83 +106,74 @@ def list_notices(
 
 @router.post("/process-bulk")
 async def process_bulk_finance(
-        data: FinanceTemplateCreate,
+        payload: FinanceTemplateCreate,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Save the Template
-    total = sum(item.amount for item in data.heads)
-    new_temp = FinanceTemplate(
-        institution_id=current_user.institution_id,
-        target_group=data.target_group,
-        billing_month=data.billing_month,
-        mode=data.mode,
-        structure=[h.dict() for h in data.heads],
-        total_amount=total,
-        issue_date=data.issue_date,
-        due_date=data.due_date
-    )
-    db.add(new_temp)
-    db.flush() # Get the ID before committing
-
-    # 2. Find all students in this group (Filtering by Section)
-    # Note: In a real app, 'target_group' would match a 'Section' column in your Student model
-    recipients = db.query(User).filter(
-        User.institution_id == current_user.institution_id,
-        User.role == data.mode # "student" or "staff"
-    ).all()
-
-    # 3. Generate Individual Vouchers
-    for person in recipients:
-        voucher = Transaction(
-            institution_id=current_user.institution_id,
-            user_id=person.id,
-            template_id=new_temp.id,
-            amount=total,
-            voucher_no=f"V-{uuid.uuid4().hex[:6].upper()}"
-        )
-        db.add(voucher)
-
-    db.commit()
-    return {"status": "success", "vouchers_generated": len(recipients)}
-
-@router.post("/process-bulk")
-async def process_bulk_vouchers(
-        payload: VoucherBulkCreate,
-        db: Session = Depends(get_db),
-        current_user = Depends(get_current_user)
-):
     try:
-        # Calculate total
+        # 1. Calculate Total and Save the Master Template
         total_payable = sum(h.amount for h in payload.heads)
 
-        # 1. Create the Main Voucher
-        new_voucher = Voucher(
+        new_template = FinanceTemplate(
             institution_id=current_user.institution_id,
             target_group=payload.target_group,
             billing_month=payload.billing_month,
             mode=payload.mode,
-            issue_date=datetime.strptime(payload.issue_date, '%Y-%m-%d').date(),
-            due_date=datetime.strptime(payload.due_date, '%Y-%m-%d').date(),
-            total_amount=total_payable
+            structure=[h.dict() for h in payload.heads], # Storing as JSON
+            total_amount=total_payable,
+            issue_date=payload.issue_date,
+            due_date=payload.due_date
         )
 
-        db.add(new_voucher)
-        db.flush() # Get the voucher.id before committing
+        db.add(new_template)
+        db.flush()  # Extract template ID for the transactions
 
-        # 2. Add the Heads
-        for h in payload.heads:
-            head_entry = VoucherHead(
-                voucher_id=new_voucher.id,
+        # 2. Identify Recipients
+        # Real App Logic: Filtering by institution, role, and the specific group (Class/Section)
+        query = db.query(User).filter(
+            User.institution_id == current_user.institution_id,
+            User.role == payload.mode
+        )
+
+        # If target_group is specified (e.g., 'Grade 10-A'), filter by it
+        # Assuming your User model has a 'target_group' or 'section' column
+        if payload.target_group and payload.target_group != "All":
+            query = query.filter(User.target_group == payload.target_group)
+
+        recipients = query.all()
+
+        if not recipients:
+            db.rollback()
+            raise HTTPException(status_code=404, detail="No users found in the selected target group.")
+
+        # 3. Mass Generate Individual Transactions (Vouchers)
+        vouchers_to_create = []
+        for person in recipients:
+            # Generate a unique, professional voucher number
+            unique_ref = f"INV-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}"
+
+            voucher = Transaction(
                 institution_id=current_user.institution_id,
-                name=h.name,
-                amount=h.amount
+                user_id=person.id,
+                template_id=new_template.id,
+                amount=total_payable,
+                status="unpaid",
+                voucher_no=unique_ref
             )
-            db.add(head_entry)
+            vouchers_to_create.append(voucher)
 
+        # Bulk insert for high performance
+        db.add_all(vouchers_to_create)
         db.commit()
-        return {"status": "success", "voucher_id": new_voucher.id}
+
+        return {
+            "status": "success",
+            "template_id": new_template.id,
+            "vouchers_generated": len(vouchers_to_create)
+        }
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
+        print(f"Finance Error: {str(e)}") # Log for the developer
+        raise HTTPException(status_code=500, detail="Failed to process bulk vouchers.")
+
