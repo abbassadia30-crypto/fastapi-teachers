@@ -1,4 +1,6 @@
 import uuid
+
+from docutils.nodes import status
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -61,59 +63,43 @@ def create_datesheet(
     return new_ds
 
 
-# 🔵 LIST (Institution Scoped)
-@router.get("/my", response_model=list[DateSheetResponse])
-def list_datesheets(
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    return db.query(DateSheet).filter(
-        DateSheet.institution_id == current_user.institution_id,
-        DateSheet.is_active == True
-    ).order_by(DateSheet.created_at.desc()).all()
-
-
-# 🔴 SOFT DELETE
-@router.delete("/{datesheet_id}")
-def delete_datesheet(
-        datesheet_id: int,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    ds = db.query(DateSheet).filter(
-        DateSheet.id == datesheet_id,
-        DateSheet.institution_id == current_user.institution_id
-    ).first()
-
-    if not ds:
-        raise HTTPException(status_code=404, detail="Datesheet not found")
-
-    ds.is_active = False
-    db.commit()
-    return {"status": "success", "message": "Datesheet removed"}
-
 @router.post("/publish", response_model=NoticeResponse)
 def publish_notice(
         payload: NoticeCreate,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    # 1. Security Check: Multi-tenancy enforcement
     if not current_user.institution_id:
-        raise HTTPException(status_code=400, detail="Institution not found")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access Denied: You are not linked to an institution."
+        )
 
-    notice = Notice(
-        institution_id=current_user.institution_id,
-        title=payload.title,
-        message=payload.message,
-        language=payload.language,
-        created_by=current_user.email
-    )
+    # 2. Try-Except block to handle database integrity
+    try:
+        new_notice = Notice(
+            institution_id=current_user.institution_id, # Verified from JWT Token
+            title=payload.title,
+            message=payload.message,
+            language=payload.language,
+            created_by=current_user.email,
+            is_active=True
+        )
 
-    db.add(notice)
-    db.commit()
-    db.refresh(notice)
-    return notice
+        db.add(new_notice)
+        db.commit()
+        db.refresh(new_notice)
 
+        return new_notice
+
+    except Exception as e:
+        db.rollback() # Crucial: prevents DB from locking up on error
+        print(f"CRITICAL DATABASE ERROR: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to publish notice. Database synchronization error."
+        )
 
 @router.get("/my", response_model=list[NoticeResponse])
 def list_notices(

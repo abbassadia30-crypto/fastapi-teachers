@@ -1,9 +1,8 @@
 from pydantic import ConfigDict
 from typing import Dict, Any
 from pydantic import BaseModel
-from datetime import datetime , date
+from datetime import datetime
 from typing import Optional, List
-
 
 class VaultUpload(BaseModel):
     name: str
@@ -51,22 +50,20 @@ class DateSheetResponse(BaseModel):
         from_attributes = True
 
 class NoticeCreate(BaseModel):
-    title: str
-    message: str
-    language: str = "en"
+    class NoticeCreate(BaseModel):
+        title: str
+        message: str
+        language: str = "en"
 
 class NoticeResponse(BaseModel):
     id: int
     title: str
     message: str
     language: str
-    created_at: str
+    created_at: datetime
 
-    class Config:
-        from_attributes = True
-
-from pydantic import BaseModel
-from typing import List
+    # For Pydantic V2 use model_config
+    model_config = ConfigDict(from_attributes=True)
 
 class FeeHead(BaseModel):
     name: str

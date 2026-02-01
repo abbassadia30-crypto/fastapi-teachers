@@ -22,7 +22,7 @@ class DateSheet(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    institution_id = Column(String, index=True, nullable=False)
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
 
     title = Column(String, nullable=False)
     target = Column(String, nullable=False)  # Class / Section / Program
@@ -38,7 +38,7 @@ class Notice(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    institution_id = Column(Integer, index=True, nullable=False)
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
 
     title = Column(String, nullable=False)
     message = Column(String, nullable=False)

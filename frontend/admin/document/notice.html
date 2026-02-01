@@ -58,17 +58,15 @@
       position: absolute; right: 12px; top: 12px;
       font-size: 20px; cursor: pointer; opacity: 0.5;
     }
-    .mic-active { color: var(--danger); opacity: 1; animation: pulse 1s infinite; }
 
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-    /* Dynamic Text Direction Classes */
-    .rtl-layout { direction: rtl; text-align: right; font-family: 'Noto Nastaliq Urdu', serif; }
-    .ltr-layout { direction: ltr; text-align: left; font-family: 'Poppins', sans-serif; }
+    /* Layout Helpers */
+    .rtl { direction: rtl; text-align: right; font-family: 'Noto Nastaliq Urdu', serif; }
+    .ltr { direction: ltr; text-align: left; font-family: 'Poppins', sans-serif; }
 
     .preview-box {
       background: #fff; border-radius: 20px; padding: 25px;
       border-top: 10px solid var(--primary); box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+      min-height: 100px;
     }
 
     .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
@@ -87,12 +85,12 @@
 
 <header>
   <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-  <h2 style="margin:0; font-size:16px; font-weight:800;">Notice Architect</h2>
+  <h2 id="header-title" style="margin:0; font-size:16px; font-weight:800;">Notice Architect</h2>
   <div style="width:24px;"></div>
 </header>
 
 <div class="main-container">
-  <div class="config-card">
+  <div class="config-card" id="input-area">
     <label id="lbl-title">Notice Title</label>
     <div class="input-group">
       <input type="text" id="notice-title" placeholder="Enter Title..." oninput="updatePreview()">
@@ -106,7 +104,7 @@
     </div>
   </div>
 
-  <label>Live Preview</label>
+  <label id="lbl-preview">Live Preview</label>
   <div class="preview-box" id="preview-card">
     <h3 id="pre-title" style="margin:0 0 10px;">Notice Title</h3>
     <p id="pre-desc" style="margin:0; font-size:14px; color:#555; line-height:1.6;">Content will appear here...</p>
@@ -118,6 +116,92 @@
 </div>
 
 <script>
+  let currentLang = 'en';
+
+  const languages = {
+    en: {
+      header: "Notice Architect",
+      lblTitle: "Notice Title",
+      lblMsg: "Detailed Message",
+      lblPre: "Live Preview",
+      phTitle: "Enter Title...",
+      phMsg: "Type message...",
+      btn: "Broadcast Notice",
+      dir: "ltr"
+    },
+    ur: {
+      header: "نوٹس آرکیٹیکٹ",
+      lblTitle: "نوٹس کا عنوان",
+      lblMsg: "تفصیلی پیغام",
+      lblPre: "لائیو پریویو",
+      phTitle: "عنوان درج کریں...",
+      phMsg: "پیغام لکھیں...",
+      btn: "نوٹس جاری کریں",
+      dir: "rtl"
+    },
+    ar: {
+      header: "مهندس الإشعارات",
+      lblTitle: "عنوان الإشعار",
+      lblMsg: "رسالة مفصلة",
+      lblPre: "معاينة مباشرة",
+      phTitle: "أدخل العنوان...",
+      phMsg: "اكتب الرسالة...",
+      btn: "بث الإشعار",
+      dir: "rtl"
+    }
+  };
+
+  function switchLang(lang) {
+    currentLang = lang;
+    const data = languages[lang];
+
+    // Update Chips
+    document.querySelectorAll('.lang-chip').forEach(chip => {
+      chip.classList.remove('active');
+      if(chip.innerText.toLowerCase().includes(lang) || (lang === 'en' && chip.innerText === 'English')) {
+        chip.classList.add('active');
+      }
+    });
+
+    // Update Labels & Placeholders
+    document.getElementById('header-title').innerText = data.header;
+    document.getElementById('lbl-title').innerText = data.lblTitle;
+    document.getElementById('lbl-msg').innerText = data.lblMsg;
+    document.getElementById('lbl-preview').innerText = data.lblPre;
+    document.getElementById('notice-title').placeholder = data.phTitle;
+    document.getElementById('notice-desc').placeholder = data.phMsg;
+    document.getElementById('btn-publish').innerText = data.btn;
+
+    // Update Layout Direction
+    const inputArea = document.getElementById('input-area');
+    const previewCard = document.getElementById('preview-card');
+
+    if(data.dir === 'rtl') {
+      inputArea.className = "config-card rtl";
+      previewCard.className = "preview-box rtl";
+    } else {
+      inputArea.className = "config-card ltr";
+      previewCard.className = "preview-box ltr";
+    }
+
+    updatePreview();
+  }
+
+  function updatePreview() {
+    const title = document.getElementById('notice-title').value;
+    const desc = document.getElementById('notice-desc').value;
+
+    document.getElementById('pre-title').innerText = title || languages[currentLang].lblTitle;
+    document.getElementById('pre-desc').innerText = desc || languages[currentLang].phMsg;
+  }
+
+  function showNotify(msg, type) {
+    const bar = document.getElementById('notification-bar');
+    bar.innerText = msg;
+    bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+    setTimeout(() => bar.className = "", 3000);
+  }
+
   const API_BASE = "https://fastapi-teachers.onrender.com";
 
   async function publish() {
@@ -125,19 +209,21 @@
     const message = document.getElementById("notice-desc").value.trim();
 
     if (!title || !message) {
-      showNotify("Title and message are required", "error");
+      showNotify("All fields are required", "error");
       return;
     }
 
     const btn = document.getElementById("btn-publish");
     btn.disabled = true;
-    btn.innerText = "Broadcasting...";
+    btn.innerText = "...";
 
     try {
-      const token = await AppStorage.get("institutionToken");
+      // Accessing Capacitor storage properly as requested
+      const result = await AppStorage.get("institutionToken");
+      const token = (typeof result === 'object' && result !== null) ? result.value : result;
 
       if (!token) {
-        showNotify("Session expired. Login again.", "error");
+        showNotify("Session expired", "error");
         return;
       }
 
@@ -154,17 +240,15 @@
         })
       });
 
-      const result = await response.json();
-
       if (response.ok) {
-        showNotify("Notice Published Successfully!", "success");
+        showNotify("Notice Broadcasted!", "success");
         setTimeout(() => history.back(), 1500);
       } else {
-        showNotify(result.detail || "Publish failed", "error");
+        const err = await response.json();
+        showNotify(err.detail || "Failed", "error");
       }
-
     } catch (err) {
-      showNotify("Network error", "error");
+      showNotify("Network Error", "error");
     } finally {
       btn.disabled = false;
       btn.innerText = languages[currentLang].btn;
