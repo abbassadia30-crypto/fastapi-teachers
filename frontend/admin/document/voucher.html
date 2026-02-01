@@ -136,9 +136,12 @@
 <div class="publish-footer">
     <button class="btn-main" onclick="processBulk()">Save Structure & Generate All</button>
 </div>
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
     let mode = 'student';
+    // Ensure this matches your FastAPI mount point
     const API_URL = "https://fastapi-teachers.onrender.com";
 
     function setMode(newMode) {
@@ -153,7 +156,9 @@
         document.getElementById('lbl-total').innerText = mode === 'student' ? 'TOTAL PAYABLE' : 'NET SALARY';
         document.getElementById('lbl-date-type').innerText = mode === 'student' ? 'Due Date' : 'Pay Date';
         document.getElementById('pre-date-lbl').innerText = mode === 'student' ? 'Due Date:' : 'Pay Date:';
-        document.querySelector('.btn-main').innerText = mode === 'student' ? 'Save & Send to Students' : 'Save & Process Payroll';
+
+        const mainBtn = document.querySelector('.btn-main');
+        mainBtn.innerText = mode === 'student' ? 'Save & Send to Students' : 'Save & Process Payroll';
 
         updatePreview();
     }
@@ -180,9 +185,12 @@
 
         let total = 0;
         hNames.forEach((n, i) => {
+            const val = n.value.trim();
             const amt = parseFloat(hAmounts[i].value) || 0;
-            total += amt;
-            list.innerHTML += `<div class="v-row"><span>${n.value || 'Item'}</span><span>${amt.toLocaleString()}</span></div>`;
+            if (val || amt > 0) {
+                total += amt;
+                list.innerHTML += `<div class="v-row"><span>${val || 'Item'}</span><span>${amt.toLocaleString()}</span></div>`;
+            }
         });
 
         document.getElementById('pre-total').innerText = total.toLocaleString() + " PKR";
@@ -196,7 +204,9 @@
     }
 
     async function processBulk() {
+        const btn = document.querySelector('.btn-main');
         const heads = [];
+
         document.querySelectorAll('.fee-item-row').forEach(row => {
             const name = row.querySelector('.h-name').value.trim();
             const amt = row.querySelector('.h-amount').value.trim();
@@ -205,7 +215,6 @@
 
         if (heads.length === 0) return showNotify("Add at least one head", "error");
 
-        // Get input values
         const target_group = document.getElementById('target-group').value;
         const billing_month = document.getElementById('billing-month').value;
         const issue_date = document.getElementById('issue-date').value;
@@ -213,16 +222,31 @@
 
         if(!billing_month || !issue_date || !due_date) return showNotify("Fill all dates", "error");
 
-        const payload = { target_group, billing_month, mode, issue_date, due_date, heads };
+        // Prepare JSON payload for FinanceTemplateCreate schema
+        const payload = {
+            target_group,
+            billing_month,
+            mode,
+            issue_date,
+            due_date,
+            heads
+        };
+
+        btn.disabled = true;
+        btn.innerText = "Processing...";
 
         try {
-            // REAL APP FIX: Use Capacitor Storage
+            // Retrieve token securely via Capacitor Storage
             const result = await AppStorage.get("institutionToken");
             const token = (result && typeof result === 'object') ? result.value : result;
 
-            if (!token) return showNotify("Session Expired", "error");
+            if (!token) {
+                btn.disabled = false;
+                btn.innerText = "Try Again";
+                return showNotify("Session Expired", "error");
+            }
 
-            const res = await fetch(`${API_URL}/finance/process-bulk`, {
+            const res = await fetch(`${API_URL}/document/process-bulk`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -232,14 +256,18 @@
             });
 
             if (res.ok) {
-                showNotify("Structure Saved Successfully!", "green");
+                const data = await res.json();
+                showNotify(`Success! ${data.vouchers_generated} Vouchers Created`, "green");
                 setTimeout(() => location.reload(), 2000);
             } else {
                 const err = await res.json();
                 showNotify(err.detail || "Processing failed", "error");
             }
         } catch (err) {
-            showNotify("Network Error", "error");
+            showNotify("Connection to Server Failed", "error");
+        } finally {
+            btn.disabled = false;
+            setMode(mode); // Reset button text
         }
     }
 </script>

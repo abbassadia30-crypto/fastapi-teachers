@@ -9,8 +9,11 @@ from backend.models.admin.document import VoucherMode
 
 class VaultUpload(BaseModel):
     name: str
+    subject: str
+    targets: List[str]
     doc_type: str
-    content: List[Dict[str, Any]] # Stores the nested Books/Chapters
+    content: List[Dict[str, Any]]
+
     model_config = ConfigDict(from_attributes=True)
 
 class VaultBase(BaseModel):

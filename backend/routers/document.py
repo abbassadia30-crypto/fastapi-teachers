@@ -17,28 +17,35 @@ router = APIRouter(
 
 @router.post("/vault/upload")
 async def upload_to_vault(
-        data: VaultUpload,  # 🌟 CHANGED THIS from Syllabus to VaultUpload
+        data: VaultUpload,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Fetch the institution UUID based on user's institution_id
+    # Find the institution linked to the user
     inst = db.query(Institution).filter(Institution.id == current_user.institution_id).first()
     if not inst:
-        raise HTTPException(status_code=404, detail="Institution staff record not found")
+        raise HTTPException(status_code=404, detail="Institution record not found")
 
-    # Here we use the Model class to create the DB entry
-    # Using 'Syllabus' (Model) to create, while 'data' is 'VaultUpload' (Schema)
+    # Create the syllabus record
     new_doc = Syllabus(
         institution_ref=inst.institution_id,
         name=data.name,
+        subject=data.subject,
+        targets=data.targets,
         doc_type=data.doc_type,
         content=data.content,
         author_name=current_user.name
     )
 
-    db.add(new_doc)
-    db.commit()
-    return {"status": "success"}
+    try:
+        db.add(new_doc)
+        db.commit()
+        db.refresh(new_doc)
+        return {"status": "success", "id": new_doc.id}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
 @router.post("/create", response_model=DateSheetResponse)
 def create_datesheet(
         payload: DateSheetCreate,

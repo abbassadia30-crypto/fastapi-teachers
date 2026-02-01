@@ -11,12 +11,15 @@ class Syllabus(Base):
     __tablename__ = "Syllabus"
     id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
-    name = Column(String, nullable=False) # e.g., "Physics Syllabus - Grade 10"
-    doc_type = Column(String) # syllabus, exam, translate, or scan
+    name = Column(String, nullable=False)
+    subject = Column(String)  # Added to match frontend
+    doc_type = Column(String)
+    targets = Column(JSON)    # Added to store the Tags/Audience
     content = Column(JSON, nullable=False)
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    institution = relationship("Institution")
+
+    institution = relationship("Institution", back_populates="syllabi")
 
 class DateSheet(Base):
     __tablename__ = "datesheets"
