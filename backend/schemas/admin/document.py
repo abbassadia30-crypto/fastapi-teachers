@@ -1,7 +1,7 @@
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict
 from typing import Dict, Any
-from pydantic import BaseModel
 from datetime import datetime
+from pydantic import BaseModel
 from typing import Optional, List
 
 from backend.models.admin.document import VoucherMode
@@ -67,16 +67,21 @@ class NoticeResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 class HeadCreate(BaseModel):
-    name: str = Field(..., example="Tuition Fee")
-    amount: float = Field(..., gt=0, example=5000.0)
+    name: str
+    amount: float
 
-class FinanceTemplateCreate(BaseModel):
-    target_group: str = Field(..., example="Grade 10-A")
-    billing_month: str = Field(..., example="2026-02")
-    mode: VoucherMode  # Uses the Enum: 'student' or 'staff'
-    issue_date: str    # Format: YYYY-MM-DD
-    due_date: str      # Format: YYYY-MM-DD
+class VoucherBulkCreate(BaseModel):
+    target_group: str
+    billing_month: str
+    mode: VoucherMode
+    issue_date: str
+    due_date: str
     heads: List[HeadCreate]
 
-    class Config:
-        from_attributes = True
+class FinanceTemplateCreate(BaseModel):
+    target_group: str
+    billing_month: str
+    mode: VoucherMode
+    issue_date: str
+    due_date: str
+    heads: List[HeadCreate]

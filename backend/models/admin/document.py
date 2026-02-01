@@ -1,10 +1,10 @@
-import enum
 from datetime import datetime
-
-from sqlalchemy import Column, Integer, String, JSON, Float,ForeignKey, DateTime, Boolean
+from sqlalchemy import  Boolean
 from sqlalchemy.orm import relationship
+import enum
+from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, JSON
 from sqlalchemy.sql import func
-from backend.models.base import Base
+from backend.database import Base
 
 
 class Syllabus(Base):
@@ -50,15 +50,19 @@ class Notice(Base):
     created_by = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+class VoucherMode(str, enum.Enum):
+    student = "student"
+    staff = "staff"
+
 class FinanceTemplate(Base):
     __tablename__ = "finance_templates"
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
-    target_group = Column(String)  # e.g., "Grade 10-A"
-    billing_month = Column(String) # e.g., "2026-02"
-    mode = Column(String)          # "student" or "staff"
-    # Stores heads like [{"name": "Tuition", "amount": 5000}]
-    structure = Column(JSON)
+    # Use String if your institution_id is a UUID/String, or Integer if it's an ID
+    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    target_group = Column(String)
+    billing_month = Column(String)
+    mode = Column(String)
+    structure = Column(JSON) # Stores list of heads
     total_amount = Column(Float)
     issue_date = Column(String)
     due_date = Column(String)
@@ -67,15 +71,10 @@ class FinanceTemplate(Base):
 class Transaction(Base):
     __tablename__ = "finance_transactions"
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
-    user_id = Column(Integer, ForeignKey("users.id")) # Link to Student or Staff
+    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
     template_id = Column(Integer, ForeignKey("finance_templates.id"))
     amount = Column(Float)
-    status = Column(String, default="unpaid") # unpaid, paid, partial
+    status = Column(String, default="unpaid")
     paid_at = Column(DateTime, nullable=True)
-    voucher_no = Column(String, unique=True) # e.g., "INV-2026-001"
-
-class VoucherMode(str, enum.Enum):
-    student = "student"
-    staff = "staff"
-
+    voucher_no = Column(String, unique=True)

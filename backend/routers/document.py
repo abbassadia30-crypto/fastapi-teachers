@@ -1,7 +1,5 @@
 import uuid
 from datetime import datetime
-
-from fastapi import  status
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -10,7 +8,7 @@ from backend.routers.auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse, VoucherBulkCreate, FinanceTemplateCreate
+    NoticeCreate, NoticeResponse,  FinanceTemplateCreate
 
 router = APIRouter(
     prefix="/document",
@@ -93,16 +91,6 @@ def publish_notice(
         # This will now print the actual error if it persists
         print(f"DATABASE ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to save notice")
-
-@router.get("/my", response_model=list[NoticeResponse])
-def list_notices(
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    return db.query(Notice).filter(
-        Notice.institution_id == current_user.institution_id,
-        Notice.is_active == True
-    ).order_by(Notice.created_at.desc()).all()
 
 @router.post("/process-bulk")
 async def process_bulk_finance(
