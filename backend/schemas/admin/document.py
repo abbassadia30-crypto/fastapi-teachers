@@ -50,10 +50,9 @@ class DateSheetResponse(BaseModel):
         from_attributes = True
 
 class NoticeCreate(BaseModel):
-    class NoticeCreate(BaseModel):
-        title: str
-        message: str
-        language: str = "en"
+    title: str
+    message: str
+    language: str = "en"
 
 class NoticeResponse(BaseModel):
     id: int
@@ -62,7 +61,6 @@ class NoticeResponse(BaseModel):
     language: str
     created_at: datetime
 
-    # For Pydantic V2 use model_config
     model_config = ConfigDict(from_attributes=True)
 
 class FeeHead(BaseModel):

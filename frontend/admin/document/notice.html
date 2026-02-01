@@ -16,7 +16,6 @@
 
     body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
 
-    /* Professional Language Scroll */
     .lang-container {
       background: white; padding: 12px 20px;
       display: flex; gap: 10px; overflow-x: auto;
@@ -42,24 +41,22 @@
     header { background: white; padding: 25px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 
     .main-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; }
-
     .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e0e0e0; }
-
     label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; margin-bottom: 10px; display: block; }
 
     .input-group { position: relative; margin-bottom: 20px; }
-
     input, textarea {
       width: 100%; padding: 15px; border: 1px solid #ddd; border-radius: 15px;
       box-sizing: border-box; font-family: inherit; font-size: 15px; transition: 0.3s;
     }
 
+    /* Mic Button - Positioned dynamically via JS */
     .mic-btn {
-      position: absolute; right: 12px; top: 12px;
+      position: absolute; top: 12px;
       font-size: 20px; cursor: pointer; opacity: 0.5;
+      transition: all 0.3s ease;
     }
 
-    /* Layout Helpers */
     .rtl { direction: rtl; text-align: right; font-family: 'Noto Nastaliq Urdu', serif; }
     .ltr { direction: ltr; text-align: left; font-family: 'Poppins', sans-serif; }
 
@@ -90,22 +87,22 @@
 </header>
 
 <div class="main-container">
-  <div class="config-card" id="input-area">
+  <div class="config-card ltr" id="input-area">
     <label id="lbl-title">Notice Title</label>
     <div class="input-group">
       <input type="text" id="notice-title" placeholder="Enter Title..." oninput="updatePreview()">
-      <span class="mic-btn" onclick="listen('notice-title')">🎤</span>
+      <span class="mic-btn" style="right: 12px;" onclick="listen('notice-title')">🎤</span>
     </div>
 
     <label id="lbl-msg">Detailed Message</label>
     <div class="input-group">
       <textarea id="notice-desc" rows="4" placeholder="Type message..." oninput="updatePreview()"></textarea>
-      <span class="mic-btn" onclick="listen('notice-desc')">🎤</span>
+      <span class="mic-btn" style="right: 12px;" onclick="listen('notice-desc')">🎤</span>
     </div>
   </div>
 
   <label id="lbl-preview">Live Preview</label>
-  <div class="preview-box" id="preview-card">
+  <div class="preview-box ltr" id="preview-card">
     <h3 id="pre-title" style="margin:0 0 10px;">Notice Title</h3>
     <p id="pre-desc" style="margin:0; font-size:14px; color:#555; line-height:1.6;">Content will appear here...</p>
   </div>
@@ -115,52 +112,12 @@
   <button class="btn-main" id="btn-publish" onclick="publish()">Broadcast Notice</button>
 </div>
 
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
 <script>
   let currentLang = 'en';
-  // 🎙️ Speech Recognition Setup
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  let recognition;
-
-  if (SpeechRecognition) {
-    recognition = new SpeechRecognition();
-    recognition.continuous = false;
-    recognition.interimResults = false;
-  }
-
-  function listen(targetId) {
-    if (!recognition) {
-      return showNotify("Speech recognition not supported in this browser", "error");
-    }
-
-    const micBtn = event.currentTarget;
-
-    // Map internal lang to BCP 47 tags for accurate mic picking
-    const langMap = { 'en': 'en-US', 'ur': 'ur-PK', 'ar': 'ar-SA' };
-    recognition.lang = langMap[currentLang];
-
-    recognition.onstart = () => {
-      micBtn.style.opacity = "1";
-      micBtn.style.color = "var(--danger)";
-      showNotify("Listening... Speak now", "success");
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      const inputField = document.getElementById(targetId);
-      inputField.value += transcript;
-      updatePreview();
-      micBtn.style.opacity = "0.5";
-      micBtn.style.color = "inherit";
-    };
-
-    recognition.onerror = () => {
-      micBtn.style.opacity = "0.5";
-      micBtn.style.color = "inherit";
-      showNotify("Microphone error or timed out", "error");
-    };
-
-    recognition.start();
-  }
+  const API_BASE = "https://fastapi-teachers.onrender.com";
 
   const languages = {
     en: { header: "Notice Architect", lblTitle: "Notice Title", lblMsg: "Detailed Message", lblPre: "Live Preview", phTitle: "Enter Title...", phMsg: "Type message...", btn: "Broadcast Notice", dir: "ltr" },
@@ -171,9 +128,13 @@
   function switchLang(lang) {
     currentLang = lang;
     const data = languages[lang];
+
+    // Update Chips
     document.querySelectorAll('.lang-chip').forEach(chip => {
       chip.classList.toggle('active', chip.innerText.toLowerCase().includes(lang) || (lang === 'en' && chip.innerText === 'English'));
     });
+
+    // Update Text Content
     document.getElementById('header-title').innerText = data.header;
     document.getElementById('lbl-title').innerText = data.lblTitle;
     document.getElementById('lbl-msg').innerText = data.lblMsg;
@@ -182,11 +143,56 @@
     document.getElementById('notice-desc').placeholder = data.phMsg;
     document.getElementById('btn-publish').innerText = data.btn;
 
+    // Update Layout and Mic Positioning
     const inputArea = document.getElementById('input-area');
     const previewCard = document.getElementById('preview-card');
+    const mics = document.querySelectorAll('.mic-btn');
+
     inputArea.className = `config-card ${data.dir}`;
     previewCard.className = `preview-box ${data.dir}`;
+
+    mics.forEach(mic => {
+      if (data.dir === 'rtl') {
+        mic.style.right = 'auto';
+        mic.style.left = '12px';
+      } else {
+        mic.style.left = 'auto';
+        mic.style.right = '12px';
+      }
+    });
+
     updatePreview();
+  }
+
+  function listen(targetId) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return showNotify("Mic not supported", "error");
+
+    const recognition = new SpeechRecognition();
+    const langMap = { 'en': 'en-US', 'ur': 'ur-PK', 'ar': 'ar-SA' };
+
+    recognition.lang = langMap[currentLang];
+    const micIcon = event.currentTarget;
+
+    recognition.onstart = () => {
+      micIcon.style.color = "var(--danger)";
+      micIcon.style.opacity = "1";
+      showNotify("Listening...", "success");
+    };
+
+    recognition.onresult = (event) => {
+      const text = event.results[0][0].transcript;
+      document.getElementById(targetId).value += text;
+      updatePreview();
+    };
+
+    recognition.onerror = () => showNotify("Mic Error", "error");
+    recognition.onend = () => {
+      micIcon.style.color = "inherit";
+      micIcon.style.opacity = "0.5";
+    };
+
+    recognition.start();
   }
 
   function updatePreview() {
@@ -203,54 +209,40 @@
     setTimeout(() => bar.className = "", 3000);
   }
 
-  const API_BASE = "https://fastapi-teachers.onrender.com";
-
   async function publish() {
     const title = document.getElementById("notice-title").value.trim();
     const message = document.getElementById("notice-desc").value.trim();
     const btn = document.getElementById("btn-publish");
 
-    if (!title || !message) return showNotify("All fields are required", "error");
+    if (!title || !message) return showNotify("All fields required", "error");
 
     btn.disabled = true;
-    btn.innerText = "Connecting...";
+    btn.innerText = "...";
 
     try {
-      // 🚨 REAL APP FIX: Capacitor Storage retrieval
-      const result = await AppStorage.get("institutionToken");
-      const token = (result && typeof result === 'object') ? result.value : result;
+      const res = await AppStorage.get("institutionToken");
+      const token = (res && typeof res === 'object') ? res.value : res;
 
-      if (!token) {
-        btn.disabled = false;
-        btn.innerText = languages[currentLang].btn;
-        return showNotify("Session missing. Please login.", "error");
-      }
+      if (!token) throw new Error("No token");
 
-      // 🚨 NETWORK FIX: Added explicit headers and mode
       const response = await fetch(`${API_BASE}/document/notice/publish`, {
         method: "POST",
-        mode: "cors",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({
-          title: title,
-          message: message,
-          language: currentLang
-        })
+        body: JSON.stringify({ title, message, language: currentLang })
       });
 
       if (response.ok) {
-        showNotify("Notice Broadcasted Successfully!", "success");
+        showNotify("Notice Published!", "success");
         setTimeout(() => history.back(), 1500);
       } else {
         const err = await response.json();
-        showNotify(err.detail || "Server rejected request", "error");
+        showNotify(err.detail || "Error", "error");
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      showNotify("Network Error: Check Internet or CORS", "error");
+      showNotify("Connection Failed", "error");
     } finally {
       btn.disabled = false;
       btn.innerText = languages[currentLang].btn;

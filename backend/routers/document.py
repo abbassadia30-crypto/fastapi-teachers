@@ -65,41 +65,33 @@ def create_datesheet(
 
 @router.post("/publish", response_model=NoticeResponse)
 def publish_notice(
-        payload: NoticeCreate,
+        payload: NoticeCreate, # FastAPI automatically validates this
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Security Check: Multi-tenancy enforcement
     if not current_user.institution_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access Denied: You are not linked to an institution."
-        )
+        raise HTTPException(status_code=403, detail="Institution not linked")
 
-    # 2. Try-Except block to handle database integrity
     try:
+        # Use payload.title and payload.message
         new_notice = Notice(
-            institution_id=current_user.institution_id, # Verified from JWT Token
+            institution_ref=current_user.institution_id,
             title=payload.title,
             message=payload.message,
             language=payload.language,
-            created_by=current_user.email,
-            is_active=True
+            created_by=current_user.email
         )
 
         db.add(new_notice)
         db.commit()
         db.refresh(new_notice)
-
         return new_notice
 
     except Exception as e:
-        db.rollback() # Crucial: prevents DB from locking up on error
-        print(f"CRITICAL DATABASE ERROR: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to publish notice. Database synchronization error."
-        )
+        db.rollback()
+        # This will now print the actual error if it persists
+        print(f"DATABASE ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save notice")
 
 @router.get("/my", response_model=list[NoticeResponse])
 def list_notices(
