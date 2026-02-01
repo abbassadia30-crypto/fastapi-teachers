@@ -1,7 +1,8 @@
+import enum
 from datetime import datetime
 
 from sqlalchemy import Column, Integer, String, JSON, Float,ForeignKey, DateTime, Boolean
-from sqlalchemy.orm import relationship, DeclarativeBase
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from backend.models.base import Base
 
@@ -74,4 +75,7 @@ class Transaction(Base):
     paid_at = Column(DateTime, nullable=True)
     voucher_no = Column(String, unique=True) # e.g., "INV-2026-001"
 
+class VoucherMode(str, enum.Enum):
+    student = "student"
+    staff = "staff"
 
