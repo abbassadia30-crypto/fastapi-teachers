@@ -202,7 +202,7 @@
     async function publishDatesheet() {
         const title = document.getElementById('ds-title').value;
         const target = document.getElementById('ds-target').value;
-        const token = localStorage.getItem('institutionToken'); // Ensure this is set during login
+        const token = await AppStorage.get('institutionToken');
 
         if (!title || !target) {
             return showNotify("Title and Target Class are required", "error");
