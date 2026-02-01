@@ -201,10 +201,83 @@
 
     async function publishDatesheet() {
         const title = document.getElementById('ds-title').value;
-        if(!title) return showNotify("Title is required", "error");
+        const target = document.getElementById('ds-target').value;
+        const token = localStorage.getItem('institutionToken'); // Ensure this is set during login
 
-        showNotify("Deploying to Students...", "success");
-        // Logic to push JSON to FastAPI
+        if (!title || !target) {
+            return showNotify("Title and Target Class are required", "error");
+        }
+
+        // 1. Collect all Exam Entries from the dynamic list
+        const examEntries = document.querySelectorAll('.exam-entry');
+        const exams = [];
+
+        examEntries.forEach(entry => {
+            const subject = entry.querySelector('.subject-name').value;
+            const date = entry.querySelector('.paper-date').value;
+            const time = entry.querySelector('.paper-time').value;
+            const duration = entry.querySelector('.paper-duration').value;
+            const venue = entry.querySelector('.paper-venue').value;
+
+            if (subject && date) {
+                exams.push({
+                    subject_name: subject,
+                    date: date,
+                    time: time,
+                    duration_mins: parseInt(duration) || 0,
+                    venue: venue
+                });
+            }
+        });
+
+        if (exams.length === 0) {
+            return showNotify("Add at least one valid subject", "error");
+        }
+
+        // 2. Prepare Payload
+        const payload = {
+            title: title,
+            target: target,
+            exams: exams
+        };
+
+        const btn = document.querySelector('.btn-main');
+        btn.disabled = true;
+        btn.innerText = "Deploying...";
+
+        // 3. API Call to FastAPI
+        try {
+            const response = await fetch("https://fastapi-teachers.onrender.com/document/create", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                showNotify("Datesheet Deployed Successfully!", "success");
+
+                // Haptic Feedback for Capacitor
+                if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+                    Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
+                }
+
+                setTimeout(() => {
+                    window.location.href = "management-dashboard.html";
+                }, 2000);
+            } else {
+                const errData = await response.json();
+                showNotify(`Error: ${errData.detail || 'Upload Failed'}`, "error");
+                btn.disabled = false;
+                btn.innerText = "Deploy Datesheet";
+            }
+        } catch (err) {
+            showNotify("Server Connection Failed", "error");
+            btn.disabled = false;
+            btn.innerText = "Deploy Datesheet";
+        }
     }
 </script>
 </body>

@@ -29,12 +29,11 @@ class VaultResponse(VaultBase):
         from_attributes = True
 
 class ExamEntry(BaseModel):
-    subject: str
-    paper_date: date
-    paper_time: str
-    duration: int
+    subject_name: str
+    date: str
+    time: str
+    duration_mins: int
     venue: str
-    day: Optional[str] = None
 
 class DateSheetCreate(BaseModel):
     title: str
