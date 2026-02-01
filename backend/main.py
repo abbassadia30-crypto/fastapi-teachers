@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import engine
 from backend.models import Base
+from backend.models import User, Institution, Syllabus
 from backend.routers import auth, dashboard, institution, ready, profile, document
 import logging
 # 🏛️ PEER TIP: This stops passlib from crashing on bcrypt version checks

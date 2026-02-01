@@ -18,11 +18,15 @@ class Institution(Base):
     email = Column(String)
     is_active = Column(Boolean, default=True)
     description = Column(Text, nullable=True)
+
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     students = relationship("Student", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
+
+    # 🏛️ PEER TIP: Ensure "Syllabus" matches the CLASS name in syllabus.py exactly
     syllabi = relationship("Syllabus", back_populates="institution")
+
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
 class School(Institution):

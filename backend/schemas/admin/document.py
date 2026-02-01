@@ -14,8 +14,6 @@ class VaultUpload(BaseModel):
     doc_type: str
     content: List[Dict[str, Any]]
 
-    model_config = ConfigDict(from_attributes=True)
-
 class VaultBase(BaseModel):
     name: str
     file_type: str  # 'scan', 'translate', 'exam'

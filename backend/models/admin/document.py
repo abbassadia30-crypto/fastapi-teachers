@@ -1,24 +1,22 @@
-from datetime import datetime
-from sqlalchemy import  Boolean
-from sqlalchemy.orm import relationship
 import enum
-from sqlalchemy import Column, String, Integer, Float, ForeignKey, DateTime, JSON
-from sqlalchemy.sql import func
+from datetime import datetime
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
+from sqlalchemy.orm import relationship
 from backend.database import Base
-
 
 class Syllabus(Base):
     __tablename__ = "Syllabus"
     id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
     name = Column(String, nullable=False)
-    subject = Column(String)  # Added to match frontend
-    doc_type = Column(String)
-    targets = Column(JSON)    # Added to store the Tags/Audience
+    subject = Column(String)  # matches subject-input
+    targets = Column(JSON)    # matches class tags
+    doc_type = Column(String) # 'syllabus'
     content = Column(JSON, nullable=False)
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # This links back to Institution
     institution = relationship("Institution", back_populates="syllabi")
 
 class DateSheet(Base):
