@@ -1,15 +1,24 @@
 import enum
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
+from sqlalchemy.orm import relationship
+
 from backend.database import Base
 
 # backend/models/admin/document.py
 class Syllabus(Base):
-    __tablename__ = "Syllabus"
-    __table_args__ = {'extend_existing': True} # Add this for stability
+    __tablename__ = "syllabi"   # ✅ lowercase, plural
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+
+    # FK must match EXACT type
+    institution_ref = Column(
+        String,
+        ForeignKey("institutions.institution_id"),
+        index=True,
+        nullable=False
+    )
+
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
@@ -17,6 +26,12 @@ class Syllabus(Base):
     content = Column(JSON, nullable=False)
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    institution = relationship(
+        "Institution",
+        primaryjoin="Syllabus.institution_ref == Institution.institution_id",
+        lazy="joined"
+    )
 
 class DateSheet(Base):
     __tablename__ = "datesheets"

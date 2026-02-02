@@ -26,22 +26,27 @@ async def upload_to_vault(
     # Log the ID to debug if the user session is correct
     print(f"Uploading for User ID: {current_user.id}, Inst ID: {current_user.institution_id}")
 
-    inst = db.query(Institution).filter(Institution.id == current_user.institution_id).first()
+    inst = db.query(Institution).filter(
+    Institution.id == current_user.institution_id
+    ).first()
+
     if not inst:
-        raise HTTPException(status_code=404, detail="Institution record not found")
+       raise HTTPException(status_code=404, detail="Institution record not found")
+
 
     # Use getattr to safely get the name if it's missing
     author = getattr(current_user, 'name', 'Unknown Instructor')
 
     new_doc = Syllabus(
-        institution_ref=inst.institution_id,
-        name=data.name,
-        subject=data.subject,
-        targets=data.targets,
-        doc_type=data.doc_type,
-        content=data.content,
-        author_name=author
-    )
+    institution_ref=inst.institution_id,  # STRING UUID
+    name=data.name,
+    subject=data.subject,
+    targets=data.targets,
+    doc_type=data.doc_type,
+    content=data.content,
+    author_name=author
+)
+
 
     try:
         db.add(new_doc)
