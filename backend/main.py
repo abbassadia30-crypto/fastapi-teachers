@@ -11,7 +11,8 @@ from backend.routers import dashboard
 from backend.routers import document
 from backend.routers import profile
 from backend.routers import ready
-# 🏛️ PEER TIP: This stops passlib from crashing on bcrypt version checks
+
+Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
 

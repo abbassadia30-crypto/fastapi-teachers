@@ -8,15 +8,6 @@ import os
 # unless you use a "Render Blueprint" with a Persistent Disk.
 SQLALCHEMY_DATABASE_URL = "sqlite:///./institution.db"
 
-# 🏛️ Professional Developer Fix:
-db_file = "institution.db"
-if os.path.exists(db_file):
-    try:
-        os.remove(db_file)
-        print(f"🏛️ Deleted {db_file} successfully.")
-    except Exception as e:
-        print(f"🏛️ Could not delete file: {e}")
-# We must pass connect_args directly into the engine here.
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
