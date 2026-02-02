@@ -14,6 +14,8 @@ class VaultUpload(BaseModel):
     doc_type: str
     content: List[Dict[str, Any]]
 
+    model_config = ConfigDict(from_attributes=True)
+
 class VaultBase(BaseModel):
     name: str
     file_type: str  # 'scan', 'translate', 'exam'
@@ -23,13 +25,17 @@ class VaultBase(BaseModel):
 class VaultCreate(VaultBase):
     pass
 
-class VaultResponse(VaultBase):
+class VaultResponse(BaseModel):
     id: int
+    name: str
+    subject: str
+    targets: List[str]
+    doc_type: str
     created_at: datetime
-    institution_id: int
+    # We use the institution hex ref for the response to match the model
+    institution_ref: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ExamEntry(BaseModel):
     subject_name: str

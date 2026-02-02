@@ -223,21 +223,26 @@
     }
 
     // --- Final Data Sync ---
+    // --- Final Data Sync ---
     async function confirmDeployment() {
         const docName = document.getElementById('doc-name-input').value.trim();
         if (!docName) return showNotify("Please provide a name", "error");
 
         const btn = document.querySelector('.btn-main');
+
+        // Correctly handle Token retrieval from AppStorage (Capacitor/Mobile context)
         const storageResult = await AppStorage.get('institutionToken');
         const token = (storageResult && typeof storageResult === 'object') ? storageResult.value : storageResult;
 
         const sections = document.querySelectorAll('.book-section');
         if (sections.length === 0) return showNotify("Workspace is empty", "error");
 
+        // UI Feedback
         toggleModal(false);
         btn.disabled = true;
         btn.innerText = "Processing Vault Sync...";
 
+        // Extract Data from Architect Workspace
         const syllabusData = Array.from(sections).map(sec => ({
             title: sec.querySelector('.section-title-input').value || "Manual Section",
             chapters: Array.from(sec.querySelectorAll('.chapter-row')).map(chap => ({
@@ -246,28 +251,41 @@
             }))
         }));
 
+        // --- SCHEME ALIGNMENT FIXES ---
+        // 1. Get classes for 'targets'
+        // 2. Get subjects for 'subject' field
+        const targetClasses = Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val);
+        const subjectList = Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val);
+
         const payload = {
             name: docName,
+            subject: subjectList.join(', ') || "General", // Backend expects string
+            targets: targetClasses,                       // Backend expects List[str]
             doc_type: "syllabus",
-            tags: [...Array.from(document.querySelectorAll('.tag')).map(t => t.dataset.val)],
             content: syllabusData
         };
 
         try {
             const response = await fetch(`${API_BASE}/document/vault/upload`, {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                showNotify("Deployed successfully!", "success");
+                showNotify("Deployed to Institution Vault!", "success");
                 setTimeout(() => history.back(), 2000);
             } else {
-                showNotify("Sync failed", "error");
+                const errData = await response.json();
+                console.error("Server Validation Error:", errData);
+                showNotify("Sync failed: Check data format", "error");
             }
         } catch (error) {
-            showNotify("Server unreachable", "error");
+            console.error("Network Error:", error);
+            showNotify("Institution server unreachable", "error");
         } finally {
             btn.disabled = false;
             btn.innerText = "Deploy to Institution Vault";

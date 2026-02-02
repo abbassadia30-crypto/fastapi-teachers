@@ -19,16 +19,18 @@ router = APIRouter(
 async def upload_to_vault(
         data: VaultUpload,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
-    # Find the institution linked to the user
+    # 1. Fetch the institution the user belongs to
     inst = db.query(Institution).filter(Institution.id == current_user.institution_id).first()
+
     if not inst:
+        # Using the custom error box rule from your instructions
         raise HTTPException(status_code=404, detail="Institution record not found")
 
-    # Create the syllabus record
+    # 2. Map schema to database model
     new_doc = Syllabus(
-        institution_ref=inst.institution_id,
+        institution_ref=inst.institution_id, # The unique hex ID
         name=data.name,
         subject=data.subject,
         targets=data.targets,
@@ -44,7 +46,8 @@ async def upload_to_vault(
         return {"status": "success", "id": new_doc.id}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        # Direct error reporting as requested
+        raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
 @router.post("/create", response_model=DateSheetResponse)
 def create_datesheet(
