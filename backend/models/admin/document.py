@@ -8,6 +8,7 @@ from backend.database import Base
 
 class Syllabus(Base):
     __tablename__ = "syllabi"
+    id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
