@@ -8,8 +8,6 @@ from backend.database import Base
 
 class Syllabus(Base):
     __tablename__ = "syllabi"
-
-    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
@@ -17,6 +15,9 @@ class Syllabus(Base):
     content = Column(JSON, nullable=False)
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    institution = relationship("Institution", back_populates="syllabi")
 
 class DateSheet(Base):
     __tablename__ = "datesheets"
