@@ -2,9 +2,15 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import engine
-from backend.models import Base
-from backend.routers import auth, dashboard, institution, ready, profile, document
+from backend.models import Base # This triggers __init__.py which loads all models
 import logging
+
+from backend.routers import auth
+from backend.routers import institution  # <--- Explicitly import each
+from backend.routers import dashboard
+from backend.routers import document
+from backend.routers import profile
+from backend.routers import ready
 # 🏛️ PEER TIP: This stops passlib from crashing on bcrypt version checks
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
