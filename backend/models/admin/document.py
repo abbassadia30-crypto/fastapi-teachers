@@ -2,7 +2,6 @@ import enum
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
 from backend.database import Base
-from institution import Institution
 
 # backend/models/admin/document.py
 class Syllabus(Base):
