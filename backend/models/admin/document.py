@@ -10,7 +10,7 @@ class Syllabus(Base):
     __table_args__ = {'extend_existing': True} # Add this for stability
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("`institution_id"))
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
