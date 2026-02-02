@@ -23,22 +23,24 @@ async def upload_to_vault(
         db: Session = Depends(get_db),
         current_user: Any = Depends(get_current_user)
 ):
-    # 1. Fetch the institution the user belongs to
-    inst = db.query(Institution).filter(Institution.id == current_user.institution_id).first()
+    # Log the ID to debug if the user session is correct
+    print(f"Uploading for User ID: {current_user.id}, Inst ID: {current_user.institution_id}")
 
+    inst = db.query(Institution).filter(Institution.id == current_user.institution_id).first()
     if not inst:
-        # Using the custom error box rule from your instructions
         raise HTTPException(status_code=404, detail="Institution record not found")
 
-    # 2. Map schema to database model
+    # Use getattr to safely get the name if it's missing
+    author = getattr(current_user, 'name', 'Unknown Instructor')
+
     new_doc = Syllabus(
-        institution_ref=inst.institution_id, # The unique hex ID
+        institution_ref=inst.institution_id,
         name=data.name,
         subject=data.subject,
         targets=data.targets,
         doc_type=data.doc_type,
         content=data.content,
-        author_name=current_user.name
+        author_name=author
     )
 
     try:
@@ -48,7 +50,8 @@ async def upload_to_vault(
         return {"status": "success", "id": new_doc.id}
     except Exception as e:
         db.rollback()
-        # Direct error reporting as requested
+        # This will show the exact SQL error in your Render logs
+        print(f"DATABASE ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
 @router.post("/create", response_model=DateSheetResponse)

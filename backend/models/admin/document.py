@@ -4,8 +4,10 @@ from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Bool
 from sqlalchemy.orm import relationship
 from backend.database import Base
 
+# backend/models/admin/document.py
 class Syllabus(Base):
-    __tablename__ = "Syllabus"  # Must be present and string
+    __tablename__ = "Syllabus"
+    __table_args__ = {'extend_existing': True} # Add this for stability
 
     id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
