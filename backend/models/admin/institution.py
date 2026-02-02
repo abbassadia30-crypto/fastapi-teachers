@@ -20,11 +20,12 @@ class Institution(Base):
     students = relationship("Student", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
+
     syllabi = relationship("Syllabus", back_populates="institution")
-    datesheet = relationship("DateSheet" , back_populates="institution")
-    notice = relationship("Notice" , back_populates="institution")
-    finance_template = relationship("FinanceTemplate" , back_populates="institution")
-    transaction = relationship("Transaction" , back_populates="institution")
+    datesheets = relationship("DateSheet", back_populates="institution")
+    institution_notices = relationship("Notice", back_populates="institution")
+    finance_templates = relationship("FinanceTemplate", back_populates="institution")
+    finance_transactions = relationship("Transaction", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
