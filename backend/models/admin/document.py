@@ -16,8 +16,6 @@ class Syllabus(Base):
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # This links back to Institution
-    institution = relationship("Institution", back_populates="syllabi")
 
 class DateSheet(Base):
     __tablename__ = "datesheets"

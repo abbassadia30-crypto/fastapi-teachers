@@ -21,8 +21,6 @@ class Institution(Base):
     staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
 
-    syllabi = relationship("Syllabus", back_populates="institution")
-
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
 class School(Institution):
