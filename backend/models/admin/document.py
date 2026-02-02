@@ -10,13 +10,12 @@ class Syllabus(Base):
     __tablename__ = "syllabi"
 
     id = Column(Integer, primary_key=True, index=True)
-
     institution_ref = Column(
-        String,
-        ForeignKey("institutions.institution_id"),
-        index=True,
-        nullable=False
-    )
+    String,
+    ForeignKey("institutions.institution_id"),
+    index=True,
+    nullable=False
+)
 
     name = Column(String, nullable=False)
     subject = Column(String)
@@ -27,10 +26,10 @@ class Syllabus(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     institution = relationship(
-        Institution,
-        foreign_keys=[institution_ref],
-        lazy="joined"
-    )
+    "Institution",
+    foreign_keys=[institution_ref],
+    primaryjoin="Syllabus.institution_ref == Institution.institution_id"
+)
 
 class DateSheet(Base):
     __tablename__ = "datesheets"
