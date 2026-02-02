@@ -2,16 +2,15 @@ import enum
 from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
 from sqlalchemy.orm import relationship
+from backend.models.admin.institution import Institution
 
 from backend.database import Base
 
-# backend/models/admin/document.py
 class Syllabus(Base):
-    __tablename__ = "syllabi"   # ✅ lowercase, plural
+    __tablename__ = "syllabi"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    # FK must match EXACT type
     institution_ref = Column(
         String,
         ForeignKey("institutions.institution_id"),
@@ -28,8 +27,8 @@ class Syllabus(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     institution = relationship(
-        "Institution",
-        primaryjoin="Syllabus.institution_ref == Institution.institution_id",
+        Institution,
+        foreign_keys=[institution_ref],
         lazy="joined"
     )
 

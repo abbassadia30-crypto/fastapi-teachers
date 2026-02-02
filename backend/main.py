@@ -15,8 +15,6 @@ from backend.routers import ready
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
 
-Base.metadata.create_all(bind=engine)
-
 app = FastAPI()
 # ... include routers ...
 
@@ -36,4 +34,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.post("/dev/reset-db")
+def reset_db_endpoint():
+    from backend.reset_db import reset_database
+    reset_database()
+    return {"status": "DB reset successful"}
 
