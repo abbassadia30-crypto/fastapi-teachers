@@ -1,16 +1,12 @@
-import uuid
-from datetime import datetime
 from typing import Any
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-from backend.models.admin.document import Syllabus, DateSheet, Notice, FinanceTemplate, Transaction
+from backend.models.admin.document import Syllabus, DateSheet, Notice
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse,  FinanceTemplateCreate
+    NoticeCreate, NoticeResponse
 
 router = APIRouter(
     prefix="/document",
@@ -38,7 +34,7 @@ async def upload_to_vault(
     author = getattr(current_user, 'name', 'Unknown Instructor')
 
     new_doc = Syllabus(
-    institution_ref=inst.institution_id,  # STRING UUID
+    institution_id =inst.institution_id,  # STRING UUID
     name=data.name,
     subject=data.subject,
     targets=data.targets,
@@ -94,7 +90,7 @@ def publish_notice(
     try:
         # Use payload.title and payload.message
         new_notice = Notice(
-            institution_ref=current_user.institution_id,
+            institution_id=current_user.institution_id,
             title=payload.title,
             message=payload.message,
             language=payload.language,

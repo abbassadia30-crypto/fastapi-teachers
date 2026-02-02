@@ -9,14 +9,7 @@ from backend.database import Base
 class Syllabus(Base):
     __tablename__ = "syllabi"
 
-    id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(
-    String,
-    ForeignKey("institutions.institution_id"),
-    index=True,
-    nullable=False
-)
-
+    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
@@ -25,18 +18,12 @@ class Syllabus(Base):
     author_name = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    institution = relationship(
-    "Institution",
-    foreign_keys=[institution_ref],
-    primaryjoin="Syllabus.institution_ref == Institution.institution_id"
-)
-
 class DateSheet(Base):
     __tablename__ = "datesheets"
 
     id = Column(Integer, primary_key=True, index=True)
 
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
 
     title = Column(String, nullable=False)
     target = Column(String, nullable=False)  # Class / Section / Program
@@ -52,7 +39,7 @@ class Notice(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
 
     title = Column(String, nullable=False)
     message = Column(String, nullable=False)
@@ -70,8 +57,7 @@ class VoucherMode(str, enum.Enum):
 class FinanceTemplate(Base):
     __tablename__ = "finance_templates"
     id = Column(Integer, primary_key=True, index=True)
-    # Use String if your institution_id is a UUID/String, or Integer if it's an ID
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
     target_group = Column(String)
     billing_month = Column(String)
     mode = Column(String)
@@ -84,7 +70,7 @@ class FinanceTemplate(Base):
 class Transaction(Base):
     __tablename__ = "finance_transactions"
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey("institutions.id"), primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
     template_id = Column(Integer, ForeignKey("finance_templates.id"))
     amount = Column(Float)
