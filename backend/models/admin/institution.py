@@ -58,7 +58,7 @@ class User(Base):
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
     has_institution = Column(Boolean, default=False)
-    institution_id = Column(Integer, ForeignKey("institutions.id") , nullable=True)
+    institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
 
     bio = relationship("UserBio", back_populates="user", uselist=False)
     owned_institution = relationship("Institution", back_populates="owner",
