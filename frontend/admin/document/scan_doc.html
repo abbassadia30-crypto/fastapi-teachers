@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Doc Scanner | Institution Console</title>
+    <title>Doc Scanner | Institution Vault</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
@@ -12,82 +12,90 @@
             --secondary: #03dac6;
             --bg: #121212;
             --danger: #cf6679;
-            --success: #03dad6;
+            --success: #2e7d32; /* Institution Green */
         }
 
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: var(--bg);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
 
-        /* Notification Box System */
+        /* 🏛️ Red/Green Sign Box Notifier */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         .bg-red { background: var(--danger) !important; top: 20px !important; }
-        .bg-green { background: var(--success) !important; color: #000 !important; top: 20px !important; }
+        .bg-green { background: var(--success) !important; top: 20px !important; }
 
-        /* Navigation Button Styling */
+        header { padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 500; }
+
         .nav-gen-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 8px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            text-transform: uppercase;
+            background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white; padding: 8px 12px; border-radius: 20px; font-size: 11px;
+            font-weight: 700; cursor: pointer; text-transform: uppercase;
         }
 
-        /* Scanner Viewport */
+        /* 🏛️ Scanner Viewport */
         .scanner-container {
             flex: 1; position: relative; display: flex; align-items: center; justify-content: center;
             background: #000; overflow: hidden;
         }
 
-        #camera-preview { width: 100%; height: 100%; object-fit: cover; }
+        #camera-preview, #scan-preview { width: 100%; height: 100%; object-fit: cover; }
+        #scan-preview { display: none; position: absolute; top: 0; left: 0; z-index: 10; background: #000; }
 
         .scan-overlay {
-            position: absolute; width: 80%; height: 60%;
+            position: absolute; width: 80%; height: 65%;
             border: 2px solid var(--secondary); border-radius: 15px;
             box-shadow: 0 0 0 2000px rgba(0,0,0,0.6);
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; z-index: 5;
         }
+
         .scan-overlay::before {
             content: ""; position: absolute; width: 100%; height: 2px;
             background: var(--secondary); top: 0; animation: scanMove 2s infinite linear;
         }
         @keyframes scanMove { 0% { top: 0%; } 100% { top: 100%; } }
 
-        /* Results Panel */
+        /* 🏛️ Results Panel */
         .results-panel {
             position: fixed; bottom: 0; left: 0; width: 100%;
             background: white; color: #333; padding: 20px;
             border-top-left-radius: 30px; border-top-right-radius: 30px;
-            height: 45%; transform: translateY(100%); transition: 0.5s;
+            height: 50%; transform: translateY(100%); transition: 0.5s;
             z-index: 1000; box-sizing: border-box;
         }
         .results-panel.open { transform: translateY(0); }
 
         .doc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit; }
 
         #extracted-text {
-            width: 100%; height: 80px; padding: 10px; border: 1px solid #eee;
-            border-radius: 10px; font-size: 12px; overflow-y: auto; background: #f9f9f9;
+            width: 100%; height: 100px; padding: 10px; border: 1px solid #eee;
+            border-radius: 10px; font-size: 13px; overflow-y: auto; background: #f9f9f9;
+            color: #444; line-height: 1.5;
         }
 
-        .action-bar {
-            padding: 20px; display: flex; justify-content: center; gap: 15px; background: #000;
-        }
+        .action-bar { padding: 30px; display: flex; justify-content: center; background: #000; }
+
         .btn-capture {
-            width: 70px; height: 70px; border-radius: 50%; border: 5px solid white;
-            background: var(--danger); cursor: pointer;
+            width: 75px; height: 75px; border-radius: 50%; border: 5px solid white;
+            background: var(--danger); cursor: pointer; box-shadow: 0 0 15px rgba(255,255,255,0.2);
         }
+
         .btn-save {
-            background: var(--primary); color: white; border: none; padding: 15px 30px;
-            border-radius: 15px; font-weight: 700; width: 100%; margin-top: 10px;
+            background: var(--primary); color: white; border: none; padding: 16px;
+            border-radius: 15px; font-weight: 700; width: 100%; margin-top: 15px;
+            font-size: 16px; box-shadow: 0 4px 10px rgba(98, 0, 238, 0.3);
         }
     </style>
 </head>
@@ -95,132 +103,164 @@
 
 <div id="notification-bar"></div>
 
-<header style="padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 500;">
+<header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <span style="font-weight: 800; font-size: 12px; letter-spacing: 1px;">DOC SCANNER PRO</span>
-    <button class="nav-gen-btn" onclick="location.href='audio_gen_eng.html'">Audio Generator</button>
+    <span style="font-weight: 800; font-size: 13px; letter-spacing: 1px;">INSTITUTION SCANNER</span>
+    <button class="nav-gen-btn" onclick="location.href='vault.html'">Vault</button>
 </header>
 
 <div class="scanner-container">
     <video id="camera-preview" autoplay playsinline></video>
-    <div class="scan-overlay"></div>
+    <img id="scan-preview" />
+    <div class="scan-overlay" id="overlay"></div>
 </div>
 
 <div class="results-panel" id="results">
-    <label style="font-size: 10px; font-weight: 800; color: #888;">DOCUMENT DETAILS</label>
+    <label style="font-size: 10px; font-weight: 800; color: #888; letter-spacing: 1px;">DOCUMENT CLASSIFICATION</label>
     <div class="doc-meta">
-        <input type="text" id="doc-name" placeholder="Document Name">
-        <select id="doc-cat" style="padding:12px; border-radius:10px; border:1px solid #ddd;">
-            <option>Notice</option>
-            <option>Syllabus</option>
-            <option>Certificate</option>
-            <option>Other</option>
+        <input type="text" id="doc-name" placeholder="Name (e.g. Physics Exam)">
+        <select id="doc-cat">
+            <option value="Syllabus">Syllabus</option>
+            <option value="Exam Paper">Exam Paper</option>
+            <option value="Notice">Notice</option>
+            <option value="Record">Student Record</option>
         </select>
     </div>
-    <label style="font-size: 10px; font-weight: 800; color: #888;">EXTRACTED TEXT (OCR)</label>
-    <div id="extracted-text" contenteditable="true">Processing image...</div>
+    <label style="font-size: 10px; font-weight: 800; color: #888; letter-spacing: 1px;">OCR CONTENT</label>
+    <div id="extracted-text" contenteditable="true">Detecting text...</div>
 
-    <button class="btn-save" onclick="saveToDB()">Save to Institution Vault</button>
+    <button class="btn-save" id="save-btn" onclick="saveToVault()">Upload to Institution Vault</button>
 </div>
 
 <div class="action-bar" id="controls">
-    <button class="btn-capture" onclick="captureDoc()"></button>
+    <button class="btn-capture" onclick="captureAndProcess()"></button>
 </div>
+
 <script src="../../capacitor.js"></script>
-<script src="../../js/storage.js"></script>
 <script>
-    const video = document.getElementById('camera-preview');
-    const resultsPanel = document.getElementById('results');
+    const API_URL = "https://fastapi-teachers.onrender.com";
+    let currentBlob = null;
+    let authToken = null;
 
-    // Initialize Camera (Web implementation for testing, Capacitor uses Camera.getPhoto)
-    async function initCamera() {
+    // --- 1. INITIALIZATION ---
+    window.onload = async () => {
+        // Auth Check using your established method
+        authToken = localStorage.getItem('institutionToken');
+        if (!authToken) {
+            window.location.replace("../../index.html");
+            return;
+        }
+        startCamera();
+    };
+
+    async function startCamera() {
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 1280 } });
-            video.srcObject = stream;
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: 'environment', width: { ideal: 1920 } }
+            });
+            document.getElementById('camera-preview').srcObject = stream;
         } catch (err) {
-            showNotify("Camera Access Denied", "error");
+            showNotify("Camera permission required", "error");
         }
     }
 
-    async function captureDoc() {
-        showNotify("Capturing High-Res Image...", "green");
+    // --- 2. CAPTURE & OPENCV NATIVE LOGIC ---
+    async function captureAndProcess() {
+        showNotify("Processing Native Scan...", "green");
 
-        // In Capacitor:
-        // const image = await Camera.getPhoto({ quality: 100, resultType: CameraResultType.Uri });
-
-        // Simulation for OCR:
-        resultsPanel.classList.add('open');
-        document.getElementById('controls').style.display = 'none';
-        performOCR();
-    }
-
-    async function performOCR() {
-        const output = document.getElementById('extracted-text');
-
-        // High word recognition using Tesseract
-        // In a real app, you would pass the image URI from Capacitor here
         try {
-            const result = await Tesseract.recognize(
-                video, // Using the video frame as source
-                'eng',
-                { logger: m => console.log(m) }
-            );
-            output.innerText = result.data.text;
-            showNotify("Text Recognition Complete", "green");
+            // Using Capacitor Camera for High-Performance Native Capture
+            const { Camera } = Capacitor.Plugins;
+            const image = await Camera.getPhoto({
+                quality: 100,
+                resultType: 'blob',
+                source: 'CAMERA'
+            });
+
+            currentBlob = image.blob;
+
+            // Update UI to show processed static image (OpenCV Result)
+            const preview = document.getElementById('scan-preview');
+            preview.src = URL.createObjectURL(currentBlob);
+            preview.style.display = 'block';
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('results').classList.add('open');
+            document.getElementById('controls').style.display = 'none';
+
+            // Start background OCR
+            runOCR(currentBlob);
         } catch (e) {
-            output.innerText = "Error recognizing text. Please try again.";
+            showNotify("Scan Cancelled", "error");
         }
     }
 
-    async function saveToDB() {
-        const docName = document.getElementById('doc-name').value;
-        const docCat = document.getElementById('doc-cat').value;
-        const ocrText = document.getElementById('extracted-text').innerText;
-        const token = localStorage.getItem('institutionToken');
+    // --- 3. OCR PROCESSING ---
+    async function runOCR(blob) {
+        try {
+            const result = await Tesseract.recognize(blob, 'eng');
+            document.getElementById('extracted-text').innerText = result.data.text;
+            showNotify("Text Extraction Success", "green");
+        } catch (e) {
+            showNotify("OCR failed but image captured", "error");
+            document.getElementById('extracted-text').innerText = "Manual entry required.";
+        }
+    }
 
-        if(!docName) return showNotify("Please name the document", "error");
-        if(ocrText === "Processing image..." || !ocrText) return showNotify("OCR not ready", "error");
+    // --- 4. BACKEND UPLOAD (MULTIPART) ---
+    async function saveToVault() {
+        const name = document.getElementById('doc-name').value;
+        const type = document.getElementById('doc-cat').value;
+        const text = document.getElementById('extracted-text').innerText;
 
-        const btn = document.querySelector('.btn-save');
+        if(!name) return showNotify("Please name this document", "error");
+        if(!currentBlob) return showNotify("No image captured", "error");
+
+        const btn = document.getElementById('save-btn');
         btn.disabled = true;
-        btn.innerText = "Uploading to Vault...";
+        btn.innerText = "Uploading to Render...";
 
-        const payload = {
-            name: docName,
-            doc_type: docCat,
-            content: ocrText
-        };
+        // 🏛️ Real App Multipart Form Data
+        const formData = new FormData();
+        formData.append('file', currentBlob, `${Date.now()}.jpg`);
+        formData.append('name', name);
+        formData.append('doc_type', type);
+        formData.append('subject', 'Institutional');
+        formData.append('targets', 'Staff');
+        formData.append('content', text);
 
         try {
-            const res = await fetch("https://fastapi-teachers.onrender.com/document/vault/upload", {
+            const res = await fetch(`${API_URL}/vault/upload`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: formData
             });
 
             if(res.ok) {
-                showNotify("Document Saved to Institution Vault", "green");
+                showNotify("Saved to Institution Vault", "green");
                 setTimeout(() => location.href = "vault.html", 1500);
             } else {
-                showNotify("Upload Failed. Check Login.", "error");
-                btn.disabled = false;
+                throw new Error("Upload failed");
             }
         } catch (err) {
-            showNotify("Server Connection Error", "error");
+            showNotify("Upload Failed: Check connection", "error");
             btn.disabled = false;
+            btn.innerText = "Try Upload Again";
         }
     }
-    const notifyBar = document.getElementById('notification-bar');
 
+    // --- 5. NOTIFIER SYSTEM ---
     function showNotify(msg, type) {
-        notifyBar.innerText = msg;
-        notifyBar.className = type === "error" ? "bg-red" : "bg-green";
-        setTimeout(() => { notifyBar.className = ""; }, 3000);
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === "error" ? "bg-red" : "bg-green";
+
+        // Haptics for physical feedback in Capacitor
+        if (window.Capacitor && Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type === 'error' ? 'ERROR' : 'SUCCESS' });
+        }
+
+        setTimeout(() => { bar.className = ""; }, 3000);
     }
-    initCamera();
 </script>
 </body>
 </html>

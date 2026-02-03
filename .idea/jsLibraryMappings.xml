@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JavaScriptLibraryMappings">
+    <file url="file://$PROJECT_DIR$" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/android" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/android/app" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/android/capacitor-cordova-android-plugins" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/node_modules/@capacitor-community/speech-recognition/android" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/node_modules/@capacitor-community/sqlite/android" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/node_modules/@capacitor/android/capacitor" libraries="{opencv}" />
+    <file url="file://$PROJECT_DIR$/node_modules/@capacitor/preferences/android" libraries="{opencv}" />
+  </component>
+</project>
