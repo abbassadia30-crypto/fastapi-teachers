@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voice Console | Institution Architect</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6200ee;
+            --secondary: #263238;
+            --bg: #f8f9fa;
+            --danger: #ef5350;
+            --success: #00c853;
+        }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Red/Green Sign Box */
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--danger) !important; top: 20px !important; }
+        .bg-green { background: var(--success) !important; top: 20px !important; }
+
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+
+        /* Formatting Toolbar */
+        .toolbar {
+            background: white; padding: 10px; display: flex; gap: 8px; overflow-x: auto;
+            border-bottom: 1px solid #eee; scrollbar-width: none;
+        }
+        .toolbar::-webkit-scrollbar { display: none; }
+
+        .tool-btn {
+            min-width: 40px; height: 40px; border-radius: 10px; border: 1px solid #ddd;
+            background: white; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .tool-btn.active { background: var(--primary); color: white; }
+
+        /* The Main Console */
+        .console-wrapper { flex: 1; padding: 20px; display: flex; flex-direction: column; overflow: hidden; }
+
+        #text-console {
+            flex: 1; background: white; border-radius: 20px; padding: 20px;
+            border: 2px solid #e0e0e0; font-size: 16px; line-height: 1.6;
+            overflow-y: auto; outline: none; transition: border-color 0.3s;
+        }
+        #text-console:focus { border-color: var(--primary); }
+
+        /* Voice Status */
+        .voice-indicator {
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            padding: 10px; font-size: 12px; font-weight: 700; color: #888;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #ccc; }
+        .listening .dot { background: var(--danger); animation: pulse 1s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .footer-actions { padding: 20px; background: white; display: flex; gap: 10px; }
+        .btn-mic {
+            background: var(--danger); color: white; border: none; width: 60px; height: 60px;
+            border-radius: 50%; font-size: 24px; box-shadow: 0 4px 15px rgba(239, 83, 80, 0.4);
+        }
+        .btn-save { flex: 1; background: var(--secondary); color: white; border: none; border-radius: 15px; font-weight: 700; }
+
+        .tab-btn {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd;
+            background: #f9f9f9; font-weight: 700; font-size: 12px; cursor: pointer;
+        }
+        /* Active state for each file */
+        #tab-en { border-color: var(--primary); color: var(--primary); } /* Change ID based on file */
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<header>
+    <div onclick='location.href="documents.html";' style="font-size:24px; cursor:pointer;">✕</div>
+    <span style="font-weight: 800; font-size: 14px;">TEXT CONSOLE AI</span>
+    <div style="width: 24px;"></div>
+</header>
+
+<div class="lang-tabs" style="display: flex; background: white; padding: 10px; gap: 10px; border-bottom: 1px solid #eee;">
+    <button class="tab-btn" onclick="location.href='audio_gen_eng.html'" id="tab-en">English</button>
+    <button class="tab-btn" onclick="location.href='audio_gen_ur.html'" id="tab-ur">اردو</button>
+    <button class="tab-btn" onclick="location.href='audio_gen_ar.html'" id="tab-ar">العربية</button>
+</div>
+
+<div class="toolbar">
+    <button class="tool-btn" onclick="execCmd('bold')">B</button>
+    <button class="tool-btn" onclick="execCmd('italic')">I</button>
+    <button class="tool-btn" onclick="execCmd('underline')">U</button>
+    <input type="color" onchange="execCmd('foreColor', this.value)" style="width:40px; height:40px; border:none;">
+    <select onchange="execCmd('fontSize', this.value)" style="border:1px solid #ddd; border-radius:10px; padding:5px;">
+        <option value="3">Small</option>
+        <option value="5" selected>Medium</option>
+        <option value="7">Large</option>
+    </select>
+</div>
+
+<div class="console-wrapper">
+    <div class="voice-indicator" id="voice-status">
+        <div class="dot"></div> <span id="status-text">LISTENER OFF</span>
+    </div>
+
+    <div id="text-console" contenteditable="true" placeholder="Start speaking or type here..."></div>
+</div>
+
+<div class="footer-actions">
+    <button class="btn-mic" id="mic-trigger" onclick="toggleListener()">🎤</button>
+    <button class="btn-save" onclick="saveDocument()">Save to Institution</button>
+</div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+<script>
+    const consoleEl = document.getElementById('text-console');
+    const statusText = document.getElementById('status-text');
+    const voiceIndicator = document.getElementById('voice-status');
+    let isListening = false;
+    let recognition;
+
+    // 🏛️ Dictionary for Symbols (Spoken -> Character)
+    const symbolMap = {
+        "سوالیہ نشان": "؟",
+        "ختمہ": "۔",
+        "کامہ": "،",
+        "ہیش": "#",
+        "ایٹ ریٹ": "@",
+        "بریکٹ شروع": "(",
+        "بریکٹ بند": ")",
+        "ڈیش": "-",
+        "فیصد": "%"
+    };
+
+    // 🏛️ Urdu Action Commands
+    const commandMap = {
+        "اگلی لائن": () => execCmd('insertHTML', '<br>'),
+        "نیا پیرا گراف": () => execCmd('insertHTML', '<br><br>'),
+        "صاف کریں": () => { if(confirm("کیا آپ مٹانا چاہتے ہیں؟")) consoleEl.innerHTML = ""; },
+        "بولڈ": () => execCmd('bold'),
+        "انڈر لائن": () => execCmd('underline')
+    };
+
+    // 🏛️ Formatting Engine
+    function execCmd(cmd, value = null) {
+        consoleEl.focus();
+        document.execCommand(cmd, false, value);
+    }
+
+    // 🏛️ Notification Logic (No Alerts)
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        if(!bar) return;
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => bar.className = "", 3000);
+    }
+
+    // 🎙️ Speech Control Logic
+    function toggleListener() {
+        isListening ? stopSpeech() : startSpeech();
+    }
+
+    function startSpeech() {
+        const WebSpeech = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!WebSpeech) return showNotify("Speech not supported on this device", "error");
+
+        recognition = new WebSpeech();
+        recognition.continuous = true;
+        recognition.interimResults = false;
+        recognition.lang = 'ur-PK';
+
+        recognition.onstart = () => {
+            isListening = true;
+            voiceIndicator.classList.add('listening');
+            statusText.innerText = "AI LISTENER ACTIVE";
+            showNotify("Microphone On", "green");
+        };
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+            processTranscript(transcript);
+        };
+
+        recognition.onerror = (e) => {
+            showNotify("Mic Error: " + e.error, "error");
+            stopSpeech();
+        };
+
+        recognition.onend = () => {
+            if(isListening) recognition.start(); // Auto-restart for continuous flow
+        };
+
+        recognition.start();
+    }
+
+    function stopSpeech() {
+        isListening = false;
+        if (recognition) recognition.stop();
+        voiceIndicator.classList.remove('listening');
+        statusText.innerText = "LISTENER OFF";
+        showNotify("Microphone Off", "error");
+    }
+
+    // 🏛️ Advanced Intelligence Engine
+    function processTranscript(text) {
+        console.log("Raw Speech Input:", text);
+
+        // 1. Check if the entire phrase is a command (e.g., "next line")
+        if (commandMap[text]) {
+            commandMap[text]();
+            return;
+        }
+
+        // 2. Map Symbols (Replace spoken words with characters)
+        let processedText = text;
+        for (let word in symbolMap) {
+            const regex = new RegExp(`\\b${word}\\b`, 'g');
+            processedText = processedText.replace(regex, symbolMap[word]);
+        }
+
+        // 3. Smart Capitalization
+        // If the console is empty or the last character is a newline/period
+        const currentContent = consoleEl.innerText.trim();
+        if (currentContent.length === 0 || currentContent.endsWith('.') || currentContent.endsWith('\n')) {
+            processedText = processedText.charAt(0).toUpperCase() + processedText.slice(1);
+        }
+
+        // 4. Inject into the console at cursor position
+        execCmd('insertText', processedText + " ");
+    }
+
+    async function saveDocument() {
+        const content = consoleEl.innerHTML;
+        if (!content || content === "<br>") return showNotify("Nothing to save", "error");
+
+        showNotify("Uploading to Institution Vault...", "green");
+        // Add your Fetch API call here
+    }
+</script>
+</body>
+</html>

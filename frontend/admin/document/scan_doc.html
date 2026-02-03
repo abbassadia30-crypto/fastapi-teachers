@@ -10,20 +10,35 @@
         :root {
             --primary: #6200ee;
             --secondary: #03dac6;
-            --bg: #121212; /* Dark mode for camera focus */
+            --bg: #121212;
             --danger: #cf6679;
             --success: #03dad6;
         }
 
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: white; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
+        /* Notification Box System */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-red { background: var(--danger); top: 20px !important; }
-        .bg-green { background: var(--success); color: #000; top: 20px !important; }
+        .bg-red { background: var(--danger) !important; top: 20px !important; }
+        .bg-green { background: var(--success) !important; color: #000 !important; top: 20px !important; }
+
+        /* Navigation Button Styling */
+        .nav-gen-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            text-transform: uppercase;
+        }
 
         /* Scanner Viewport */
         .scanner-container {
@@ -47,9 +62,11 @@
 
         /* Results Panel */
         .results-panel {
+            position: fixed; bottom: 0; left: 0; width: 100%;
             background: white; color: #333; padding: 20px;
             border-top-left-radius: 30px; border-top-right-radius: 30px;
-            height: 40%; transform: translateY(100%); transition: 0.5s;
+            height: 45%; transform: translateY(100%); transition: 0.5s;
+            z-index: 1000; box-sizing: border-box;
         }
         .results-panel.open { transform: translateY(0); }
 
@@ -78,10 +95,10 @@
 
 <div id="notification-bar"></div>
 
-<header style="padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+<header style="padding: 20px; display: flex; justify-content: space-between; align-items: center; z-index: 500;">
     <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <span style="font-weight: 800; font-size: 14px;">DOC SCANNER PRO</span>
-    <div style="width: 24px;"></div>
+    <span style="font-weight: 800; font-size: 12px; letter-spacing: 1px;">DOC SCANNER PRO</span>
+    <button class="nav-gen-btn" onclick="location.href='audio_gen_eng.html'">Audio Generator</button>
 </header>
 
 <div class="scanner-container">
@@ -95,23 +112,22 @@
         <input type="text" id="doc-name" placeholder="Document Name">
         <select id="doc-cat" style="padding:12px; border-radius:10px; border:1px solid #ddd;">
             <option>Notice</option>
+            <option>Syllabus</option>
             <option>Certificate</option>
-            <option>Fee Record</option>
             <option>Other</option>
         </select>
     </div>
     <label style="font-size: 10px; font-weight: 800; color: #888;">EXTRACTED TEXT (OCR)</label>
     <div id="extracted-text" contenteditable="true">Processing image...</div>
 
-    <button class="btn-save" onclick="saveToDB()">Save to Institution DB</button>
+    <button class="btn-save" onclick="saveToDB()">Save to Institution Vault</button>
 </div>
 
 <div class="action-bar" id="controls">
     <button class="btn-capture" onclick="captureDoc()"></button>
 </div>
-
 <script src="../../capacitor.js"></script>
-
+<script src="../../js/storage.js"></script>
 <script>
     const video = document.getElementById('camera-preview');
     const resultsPanel = document.getElementById('results');
@@ -196,6 +212,13 @@
             showNotify("Server Connection Error", "error");
             btn.disabled = false;
         }
+    }
+    const notifyBar = document.getElementById('notification-bar');
+
+    function showNotify(msg, type) {
+        notifyBar.innerText = msg;
+        notifyBar.className = type === "error" ? "bg-red" : "bg-green";
+        setTimeout(() => { notifyBar.className = ""; }, 3000);
     }
     initCamera();
 </script>

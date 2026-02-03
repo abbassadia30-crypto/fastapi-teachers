@@ -114,6 +114,17 @@
             window.location.replace("../../index.html");
             return;
         }
+        raw_data = await AppStorage.get("catched_students")
+        if (raw_data){
+            try {
+                allStudents = JSON.parse(raw_data)
+            }
+            catch (e){
+                allStudents = []
+            }
+        }
+        activeSections = [...new Set(allStudents.map(s => s.section))].filter(Boolean);
+        renderClasses(activeSections);
         await load();
     };
 
@@ -139,7 +150,8 @@
 
             const data = await res.json();
             allStudents = data.students || data || [];
-
+            thirty = allStudents.slice(0 , 30)
+            await AppStorage.set("catched_students" , JSON.stringify(thirty))
             // Unique sections only
             activeSections = [...new Set(allStudents.map(s => s.section))].filter(Boolean);
             renderClasses(activeSections);

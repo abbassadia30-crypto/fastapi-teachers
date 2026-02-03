@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,62 +7,67 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #2c3e50;
-            --accent: #3498db;
-            --bg: #f4f7f6;
+            --primary: #6200ee;
+            --secondary: #263238;
+            --bg: #f8f9fa;
             --white: #ffffff;
+            --accent: #03dac6;
         }
 
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--primary); display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--secondary); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-        header { background: var(--white); padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+        header { background: var(--white); padding: 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
 
-        /* Filter Chips */
-        .filter-scroll {
-            display: flex; overflow-x: auto; padding: 15px 20px; gap: 10px; background: var(--white);
-            -ms-overflow-style: none; scrollbar-width: none;
-        }
-        .filter-scroll::-webkit-scrollbar { display: none; }
-        .chip {
-            white-space: nowrap; padding: 8px 18px; border-radius: 20px; background: #eee;
-            font-size: 12px; font-weight: 700; color: #666; cursor: pointer; transition: 0.3s;
-        }
-        .chip.active { background: var(--accent); color: white; }
-
-        .vault-container { flex: 1; overflow-y: auto; padding: 20px; }
-
-        /* File Card Design */
-        .file-card {
-            background: var(--white); border-radius: 15px; padding: 15px; margin-bottom: 15px;
-            display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.03);
-            border: 1px solid #efefef; position: relative;
-        }
-        .file-icon {
-            width: 50px; height: 50px; border-radius: 12px; display: flex;
-            align-items: center; justify-content: center; font-size: 24px;
-        }
-        .icon-scan { background: #e1f5fe; color: #0288d1; }
-        .icon-trans { background: #f3e5f5; color: #7b1fa2; }
-        .icon-exam { background: #e8f5e9; color: #388e3c; }
-
-        .file-details { flex: 1; }
-        .file-name { font-weight: 700; font-size: 14px; margin-bottom: 2px; display: block; }
-        .file-meta { font-size: 10px; color: #888; font-weight: 600; }
-
-        .file-action { font-size: 20px; color: #ccc; cursor: pointer; padding: 5px; }
-
+        /* Notification Box (Institutional Standard) */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            color: white; text-align: center; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; font-weight: 600;
         }
-        .bg-green { background: #2ecc71; top: 20px !important; }
+        .bg-green { background: #00c853 !important; top: 20px !important; }
+        .bg-red { background: #ff5252 !important; top: 20px !important; }
 
-        .search-box { padding: 0 20px 10px 20px; background: var(--white); }
-        .search-box input {
-            width: 100%; padding: 12px; border: 1px solid #eee; border-radius: 10px;
-            background: #f9f9f9; font-family: inherit; box-sizing: border-box;
+        /* Search Section */
+        .search-area { padding: 15px 20px; background: var(--white); border-bottom: 1px solid #f0f0f0; }
+        #vault-search {
+            width: 100%; padding: 12px 15px; border: 1.5px solid #eee; border-radius: 12px;
+            background: #f9f9f9; font-size: 14px; outline: none; box-sizing: border-box;
         }
+
+        /* Dynamic Section Tabs */
+        .section-header { padding: 15px 20px 5px; font-size: 11px; font-weight: 800; color: #999; text-transform: uppercase; letter-spacing: 1px; }
+        .filter-scroll { display: flex; overflow-x: auto; padding: 10px 20px; gap: 10px; scrollbar-width: none; }
+        .filter-scroll::-webkit-scrollbar { display: none; }
+        .chip {
+            white-space: nowrap; padding: 10px 18px; border-radius: 12px; background: #fff;
+            font-size: 12px; font-weight: 700; color: #666; border: 1px solid #ddd; cursor: pointer; transition: 0.2s;
+        }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 4px 10px rgba(98,0,238,0.2); }
+
+        /* Document Section List */
+        .vault-container { flex: 1; overflow-y: auto; padding: 15px 20px; }
+
+        .section-btn {
+            background: var(--white); border-radius: 18px; padding: 18px; margin-bottom: 12px;
+            display: flex; align-items: center; gap: 15px; border: 1px solid #efefef;
+            cursor: pointer; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+        }
+        .section-btn:active { transform: scale(0.98); background: #fafafa; }
+
+        .icon-box {
+            width: 48px; height: 48px; border-radius: 12px; display: flex;
+            align-items: center; justify-content: center; font-size: 20px;
+        }
+        .bg-vouchers { background: #fff3e0; color: #ef6c00; }
+        .bg-exams { background: #e8f5e9; color: #2e7d32; }
+        .bg-scans { background: #e3f2fd; color: #1565c0; }
+        .bg-gen { background: #f3e5f5; color: #7b1fa2; }
+
+        .btn-info { flex: 1; }
+        .btn-title { font-weight: 700; font-size: 15px; color: var(--secondary); display: block; }
+        .btn-count { font-size: 11px; color: #aaa; font-weight: 600; }
+
+        .chevron { color: #ccc; font-size: 18px; }
     </style>
 </head>
 <body>
@@ -71,84 +76,98 @@
 
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <h2 style="margin:0; font-size:16px; font-weight:800;">Central Vault</h2>
-    <div style="width:24px;"></div>
+    <span style="font-weight: 800; font-size: 15px;">INSTITUTION VAULT</span>
+    <div style="width: 24px;"></div>
 </header>
 
-<div class="search-box">
-    <input type="text" placeholder="Search files, exams, or scans..." id="vault-search" onkeyup="filterFiles()">
+<div class="search-area">
+    <input type="text" id="vault-search" placeholder="Search sections or documents..." onkeyup="filterSections()">
 </div>
 
-<div class="filter-scroll">
-    <div class="chip active" onclick="setFilter('all', this)">All Files</div>
-    <div class="chip" onclick="setFilter('scan', this)">Scanned Docs</div>
-    <div class="chip" onclick="setFilter('translate', this)">Translations</div>
-    <div class="chip" onclick="setFilter('exam', this)">Exam Papers</div>
+<div class="section-header">Last Accessed</div>
+<div class="filter-scroll" id="dynamic-chips">
 </div>
 
-<div class="vault-container" id="vault-list">
+<div class="vault-container" id="sections-list">
 </div>
 
 <script>
-    // Mock Data representing the combined DB fetch from all your previous modules
-    const archiveData = [
-        { id: 1, type: 'scan', name: 'Board Notification 001', date: '2026-01-28', size: '1.2 MB' },
-        { id: 2, type: 'translate', name: 'Holiday Notice (Urdu)', date: '2026-01-29', size: '15 KB' },
-        { id: 3, type: 'exam', name: 'Physics Mid-Term 10th', date: '2026-01-29', size: '45 KB' },
-        { id: 4, type: 'scan', name: 'Building Rent Receipt', date: '2026-01-25', size: '800 KB' },
-        { id: 5, type: 'exam', name: 'Math Quiz - Unit 2', date: '2026-01-27', size: '30 KB' }
+    // 🏛️ Simulation of Database Fetch
+    // In a real app, 'sections' would come from your DB query:
+    // SELECT type, COUNT(*) as total FROM vault GROUP BY type
+    const institutionSections = [
+        { id: 'vouchers', name: 'Fee Vouchers', icon: '🎫', color: 'bg-vouchers', count: '124 files' },
+        { id: 'scans', name: 'Scanned Documents', icon: '📷', color: 'bg-scans', count: '45 files' },
+        { id: 'exams', name: 'Exam Papers', icon: '📝', color: 'bg-exams', count: '89 files' },
+        { id: 'gen', name: 'Generated Reports', icon: '📊', color: 'bg-gen', count: '12 files' }
     ];
 
-    function renderVault(filter = 'all') {
-        const container = document.getElementById('vault-list');
-        container.innerHTML = '';
+    function initVault() {
+        renderChips();
+        renderSections();
+    }
 
-        const filtered = filter === 'all' ? archiveData : archiveData.filter(d => d.type === filter);
+    function renderChips() {
+        const chipContainer = document.getElementById('dynamic-chips');
+        chipContainer.innerHTML = `<div class="chip active" onclick="filterType('all', this)">All Sections</div>`;
 
-        filtered.forEach(file => {
-            let iconClass = '';
-            let iconLabel = '';
-            if(file.type === 'scan') { iconClass = 'icon-scan'; iconLabel = '📷'; }
-            if(file.type === 'translate') { iconClass = 'icon-trans'; iconLabel = '文'; }
-            if(file.type === 'exam') { iconClass = 'icon-exam'; iconLabel = '📝'; }
+        institutionSections.forEach(sec => {
+            chipContainer.innerHTML += `<div class="chip" onclick="filterType('${sec.id}', this)">${sec.name}</div>`;
+        });
+    }
 
-            container.innerHTML += `
-                <div class="file-card">
-                    <div class="file-icon ${iconClass}">${iconLabel}</div>
-                    <div class="file-details">
-                        <span class="file-name">${file.name}</span>
-                        <span class="file-meta">${file.date.toUpperCase()} • ${file.size}</span>
+    function renderSections(filterId = 'all') {
+        const listContainer = document.getElementById('sections-list');
+        listContainer.innerHTML = '';
+
+        const data = filterId === 'all' ? institutionSections : institutionSections.filter(s => s.id === filterId);
+
+        data.forEach(sec => {
+            listContainer.innerHTML += `
+                <div class="section-btn" onclick="navigateTo('${sec.id}', '${sec.name}')">
+                    <div class="icon-box ${sec.color}">${sec.icon}</div>
+                    <div class="btn-info">
+                        <span class="btn-title">${sec.name}</span>
+                        <span class="btn-count">${sec.count}</span>
                     </div>
-                    <div class="file-action" onclick="openFile('${file.name}')">⋮</div>
+                    <div class="chevron">❯</div>
                 </div>
             `;
         });
     }
 
-    function setFilter(type, el) {
+    function filterType(id, el) {
         document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
         el.classList.add('active');
-        renderVault(type);
+        renderSections(id);
     }
 
-    function openFile(name) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = "Opening " + name + "...";
-        bar.className = "bg-green";
-        setTimeout(() => bar.className = "", 2000);
-    }
-
-    function filterFiles() {
+    function filterSections() {
         const query = document.getElementById('vault-search').value.toLowerCase();
-        const cards = document.querySelectorAll('.file-card');
-        cards.forEach(card => {
-            const name = card.querySelector('.file-name').innerText.toLowerCase();
-            card.style.display = name.includes(query) ? 'flex' : 'none';
+        const btns = document.querySelectorAll('.section-btn');
+        btns.forEach(btn => {
+            const title = btn.querySelector('.btn-title').innerText.toLowerCase();
+            btn.style.display = title.includes(query) ? 'flex' : 'none';
         });
     }
 
-    // Initial Load
-    renderVault();
+    function navigateTo(id, name) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = `Accessing ${name}...`;
+        bar.className = "bg-green";
+
+        // Save last accessed to local storage for the "Recent" logic
+        localStorage.setItem('last_vault_section', id);
+
+        setTimeout(() => {
+            // Capacitor-friendly navigation
+            // We pass the ID so the next page knows what to fetch from the DB
+            window.location.href = `view_docs.html?section=${id}`;
+        }, 600);
+    }
+
+    // Load on start
+    initVault();
 </script>
 </body>
 </html>

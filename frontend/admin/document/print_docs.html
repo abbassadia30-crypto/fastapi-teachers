@@ -2,186 +2,209 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Document Print Engine | Institution</title>
+    <title>Ultimate AI Console | Institution Vault</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; }
+        :root { --primary: #1a237e; --bg: #f0f2f5; --card: #ffffff; --accent: #00c853; --danger: #d50000; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
+        /* Institutional Notification Sign Box */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            color: white; text-align: center; transition: 0.4s; z-index: 9999; font-weight: 700;
         }
-        .bg-red { background: var(--accent); top: 20px !important; }
-        .bg-green { background: #2e7d32; top: 20px !important; }
+        .bg-red { background: var(--danger) !important; top: 20px !important; }
+        .bg-green { background: var(--accent) !important; top: 20px !important; }
 
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
-        .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
+        header { background: var(--primary); color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
 
-        /* Vault Selection */
-        .selector-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        label { font-size: 10px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 5px; display: block; }
-        select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-family: inherit; margin-bottom: 15px; }
+        /* Advanced Toolbar */
+        .master-toolbar { background: white; padding: 10px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #ddd; }
+        .t-btn { background: #f1f3f4; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .t-btn:active { background: #e0e0e0; }
 
-        /* Toolbar */
-        .toolbar { display: flex; gap: 10px; margin-bottom: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .tool-btn { background: #fff; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-        .tool-btn:active { background: #eee; }
+        /* Dual Console & Pagination Workspace */
+        .workspace { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow: hidden; }
 
-        /* Print Canvas (A4 Simulation) */
-        .print-canvas {
-            background: white; padding: 50px; border: 1px solid #000;
-            min-height: 800px; margin-top: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1);
-            position: relative; overflow: hidden;
-        }
+        .console-container { flex: 1; display: grid; grid-template-rows: 1fr 1fr; gap: 10px; overflow: hidden; }
 
-        /* Editing Features */
-        .editable { outline: none; transition: 0.2s; }
-        .editable:focus { background: #fffde7; border-bottom: 1px dashed var(--primary); }
+        .console-box { background: white; border: 2px solid #ddd; border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .c-header { background: #f8f9fa; padding: 8px 15px; font-size: 10px; font-weight: 800; color: #666; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
 
-        .print-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; box-sizing: border-box; }
-        .btn-print { background: var(--primary); color: white; border: none; flex: 2; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .btn-secondary { background: #eee; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.7; outline: none; background: #fff; }
 
-        @media print {
-            body { background: white; }
-            .main-container, header, .selector-card, .toolbar, .print-footer { display: none; }
-            .print-canvas { border: none; padding: 0; box-shadow: none; margin: 0; width: 100%; }
-            #notification-bar { display: none; }
-        }
+        /* Pagination Controls */
+        .page-nav { background: #fff; padding: 10px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Fixed Watermark */
+        .fixed-wm { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60px; color: rgba(0,0,0,0.03); pointer-events: none; font-weight: 900; z-index: 0; }
+
+        .footer-tools { padding: 15px; background: white; border-top: 1px solid #ddd; display: flex; gap: 10px; align-items: center; }
+        .mic-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .mic-on { background: var(--danger); animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        .btn-action { flex: 1; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; }
+
+        /* Image/Graph Styles */
+        .ext-img { max-width: 100%; border: 1px solid #ddd; margin: 10px 0; border-radius: 8px; }
+        .ext-graph { background: #e3f2fd; padding: 20px; text-align: center; border: 2px dashed #2196f3; color: #1565c0; font-weight: 700; border-radius: 8px; }
+
+        #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div id="notification-bar"></div>
+<div id="loading-overlay"><div class="spinner"></div><p id="load-msg" style="font-weight:700; margin-top:15px; color:var(--primary);">DEEP SCANNING...</p></div>
 
 <header>
-    <div onclick="history.back()" style="font-size:24px; cursor:pointer; margin-right:15px;">✕</div>
-    <h2 style="margin:0; font-size:15px; font-weight: 800;">DOC PRINT ENGINE</h2>
+    <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
+    <span style="font-weight: 800; font-size: 14px;">ULTIMATE INSTITUTION CONSOLE</span>
+    <div style="width:24px;"></div>
 </header>
 
-<div class="main-container">
-    <div class="selector-card">
-        <label>Pick from Central Vault</label>
-        <select id="doc-picker" onchange="loadDocument()">
-            <option value="">-- Select Document --</option>
-            <option value="test">Monthly Test: Computer (10th)</option>
-            <option value="marksheet">Student Marksheet: Ali Khan</option>
-            <option value="syllabus">Syllabus: Mid-Term Biology</option>
-        </select>
+<div class="master-toolbar">
+    <button class="t-btn" onclick="document.getElementById('fIn').click()">📁 IMPORT FILE</button>
+    <button class="t-btn" onclick="location.href='vault.html'">🏛️ FROM VAULT</button>
+    <select id="m-lang" class="t-btn"><option value="en-US">Mic: EN</option><option value="ur-PK">Mic: UR</option><option value="ar-SA">Mic: AR</option></select>
+    <button class="t-btn" onclick="document.execCommand('bold')">B</button>
+    <button class="t-btn" onclick="document.execCommand('italic')">I</button>
+    <button class="t-btn" onclick="addWatermark()">+ WATERMARK</button>
+</div>
 
-        <div class="toolbar">
-            <button class="tool-btn" onclick="toggleEdit()">🔒 Lock/Unlock Editing</button>
-            <button class="tool-btn" onclick="addWatermark()">Add Watermark</button>
-            <button class="tool-btn" onclick="adjustFont(1)">A+</button>
-            <button class="tool-btn" onclick="adjustFont(-1)">A-</button>
+<div class="workspace">
+    <div class="console-container">
+        <div class="console-box">
+            <div class="fixed-wm">Starlight</div>
+            <div class="c-header"><span>SOURCE EXTRACTION</span> <span id="p-count">PAGE: 0/0</span></div>
+            <div id="src-console" class="content-area" contenteditable="true"></div>
+            <div class="page-nav">
+                <button class="t-btn" onclick="movePage(-1)">PREV</button>
+                <span id="det-lang" style="font-size: 9px; font-weight: 800; color: var(--primary);">DETECTION: IDLE</span>
+                <button class="t-btn" onclick="movePage(1)">NEXT</button>
+            </div>
         </div>
-    </div>
 
-    <div class="print-canvas" id="print-area">
-        <div style="text-align: center; color: #ccc; padding-top: 100px;">
-            <h3>SELECT A DOCUMENT TO PREVIEW</h3>
-            <p>Documents loaded here can be edited before printing.</p>
+        <div class="console-box">
+            <div class="c-header">
+                <span>AI TRANSLATION</span>
+                <select id="t-lang" class="t-btn" style="border:none; color:var(--primary);">
+                    <option value="ur">TO URDU</option>
+                    <option value="ar">TO ARABIC</option>
+                    <option value="en">TO ENGLISH</option>
+                </select>
+            </div>
+            <div id="res-console" class="content-area"></div>
         </div>
     </div>
 </div>
 
-<div class="print-footer">
-    <button class="btn-secondary" onclick="saveChanges()">SAVE EDITS</button>
-    <button class="btn-print" onclick="window.print()">PRINT DOCUMENT</button>
+<div class="footer-tools">
+    <button class="mic-circle" id="mic-trigger" onclick="runMic()">🎤</button>
+    <button class="btn-action" onclick="runAI()">DEEP TRANSLATE & SAVE</button>
 </div>
+
+<input type="file" id="fIn" hidden onchange="powerExtract(event)">
 
 <script>
-    const docs = {
-        test: `
-            <div style="text-align:center; border:2px solid #000; padding:15px; margin-bottom:20px;">
-                <h1 class="editable" contenteditable="true">INSTITUTION NAME</h1>
-                <p>SUBJECT: COMPUTER • CLASS: 10TH • TIME: 45 MINS</p>
-                <div style="display:flex; justify-content:space-between; font-size:12px;">
-                    <span>NAME: ________________</span>
-                    <span>ROLL NO: ________</span>
-                </div>
-            </div>
-            <div class="editable" contenteditable="true">
-                <p><b>Q.1 Choose the correct option: (5 Marks)</b></p>
-                <p>1. CPU stands for ______________.</p>
-                <p>2. RAM is a _________ memory.</p>
-                <p><b>Q.2 Short Questions: (10 Marks)</b></p>
-                <p>1. Define Hardware?</p>
-                <p>2. What is an Operating System?</p>
-            </div>
-        `,
-        marksheet: `
-            <div style="text-align:center;">
-                <h2>STUDENT PROGRESS REPORT</h2>
-                <hr>
-            </div>
-            <table style="width:100%; border-collapse: collapse; margin-top:20px;" border="1">
-                <tr><th style="padding:10px;">Subject</th><th>Total</th><th>Obtained</th></tr>
-                <tr><td style="padding:10px;">English</td><td>100</td><td class="editable" contenteditable="true">85</td></tr>
-                <tr><td style="padding:10px;">Maths</td><td>100</td><td class="editable" contenteditable="true">92</td></tr>
-                <tr><td style="padding:10px;">Science</td><td>100</td><td class="editable" contenteditable="true">78</td></tr>
-            </table>
-            <div style="margin-top:30px;">
-                <p><b>Remarks:</b> <span class="editable" contenteditable="true">Excellent Performance</span></p>
-            </div>
-        `,
-        syllabus: `
-            <div style="text-align:center; background:#eee; padding:10px;">
-                <h2>ACADEMIC SYLLABUS 2026</h2>
-            </div>
-            <h3>Biology - Grade 9</h3>
-            <ul class="editable" contenteditable="true">
-                <li>Chapter 1: Introduction to Biology</li>
-                <li>Chapter 2: Solving a Biological Problem</li>
-                <li>Chapter 3: Biodiversity</li>
-            </ul>
-        `
-    };
+    let pages = [];
+    let curIdx = 0;
 
-    let fontSize = 14;
+    function notify(msg, type) {
+        const b = document.getElementById('notification-bar');
+        b.innerText = msg; b.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => b.className = "", 3000);
+    }
 
-    function loadDocument() {
-        const val = document.getElementById('doc-picker').value;
-        const area = document.getElementById('print-area');
-        if(docs[val]) {
-            area.innerHTML = docs[val];
-            showNotify("Document Loaded from Central Vault", "green");
+    // 🏛️ POWERFUL EXTRACTOR + PAGINATION
+    function powerExtract(e) {
+        const file = e.target.files[0];
+        if(!file) return;
+        document.getElementById('loading-overlay').style.display = 'flex';
+
+        setTimeout(() => {
+            // Simulated Deep Extraction of 3 High-Quality Pages
+            pages = [
+                { content: `<h3>${file.name} - Page 1</h3><p>Official Institutional Data.</p><img src="https://via.placeholder.com/400x120?text=Extracted+Image" class="ext-img"><p>Fee record initialized.</p>`, lang: 'en' },
+                { content: `<h3>Page 2: Analysis</h3><div class="ext-graph">[GRAPH: STUDENT GROWTH 2026]</div><p>Detailed performance metrics follow.</p>`, lang: 'en' },
+                { content: `<h3>صفحہ 3: اردو دستاویز</h3><p>یہ ادارے کے قواعد و ضوابط ہیں۔ <span style="font-size:20px;">📜</span></p>`, lang: 'ur' }
+            ];
+            curIdx = 0;
+            renderPage();
+            document.getElementById('loading-overlay').style.display = 'none';
+            notify("Deep Scan Finished. " + pages.length + " Pages Extracted.", "green");
+        }, 2500);
+    }
+
+    function renderPage() {
+        if(!pages[curIdx]) return;
+        const src = document.getElementById('src-console');
+        src.innerHTML = pages[curIdx].content;
+        document.getElementById('p-count').innerText = `PAGE: ${curIdx+1}/${pages.length}`;
+
+        // Auto Language/Direction Logic
+        if(pages[curIdx].lang === 'ur') {
+            src.dir = "rtl"; src.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+            document.getElementById('det-lang').innerText = "DETECTION: URDU";
+        } else {
+            src.dir = "ltr"; src.style.fontFamily = "'Poppins', sans-serif";
+            document.getElementById('det-lang').innerText = "DETECTION: ENGLISH";
         }
     }
 
-    function toggleEdit() {
-        const editables = document.querySelectorAll('.editable');
-        const isEditable = editables[0]?.contentEditable === "true";
-        editables.forEach(el => el.contentEditable = !isEditable);
-        showNotify(isEditable ? "Editing Locked" : "Editing Enabled", isEditable ? "error" : "green");
+    function movePage(dir) {
+        if(pages[curIdx + dir]) { curIdx += dir; renderPage(); }
     }
 
-    function adjustFont(val) {
-        fontSize += val;
-        document.getElementById('print-area').style.fontSize = fontSize + "px";
+    // 🏛️ TRIPLE LANG MIC
+    let isRec = false;
+    let rec;
+    function runMic() {
+        const SDK = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if(!SDK) return notify("Mic Error", "error");
+        if(!isRec) {
+            rec = new SDK();
+            rec.lang = document.getElementById('m-lang').value;
+            rec.start();
+            rec.onstart = () => { isRec = true; document.getElementById('mic-trigger').classList.add('mic-on'); };
+            rec.onresult = (e) => { document.getElementById('src-console').innerHTML += e.results[0][0].transcript; };
+            rec.onend = () => { isRec = false; document.getElementById('mic-trigger').classList.remove('mic-on'); };
+        } else { rec.stop(); }
+    }
+
+    // 🏛️ AI TRANSLATION
+    function runAI() {
+        const text = document.getElementById('src-console').innerText;
+        const target = document.getElementById('t-lang').value;
+        if(!text) return notify("No data to process", "error");
+
+        document.getElementById('loading-overlay').style.display = 'flex';
+        document.getElementById('load-msg').innerText = "AI TRANSLATING...";
+
+        setTimeout(() => {
+            const out = document.getElementById('res-console');
+            if(target === 'ur') {
+                out.dir = "rtl"; out.style.fontFamily = "'Noto Nastaliq Urdu', serif";
+                out.innerHTML = "ترجمہ شدہ مواد: ادارے کا تمام ڈیٹا محفوظ کر لیا گیا ہے۔";
+            } else {
+                out.dir = "ltr"; out.innerHTML = "Translated Content: All institutional data has been securely processed.";
+            }
+            document.getElementById('loading-overlay').style.display = 'none';
+            notify("Deep Translation Complete", "green");
+        }, 2000);
     }
 
     function addWatermark() {
-        const area = document.getElementById('print-area');
         const wm = document.createElement('div');
-        wm.innerText = "OFFICIAL COPY";
-        wm.style = "position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-45deg); font-size:60px; color:rgba(0,0,0,0.05); pointer-events:none; font-weight:900; white-space:nowrap;";
-        area.appendChild(wm);
-        showNotify("Watermark Added", "green");
-    }
-
-    function saveChanges() {
-        showNotify("Edits Saved back to Vault", "green");
-    }
-
-    function showNotify(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-        setTimeout(() => bar.className = "", 3000);
+        wm.innerText = prompt("Watermark text?", "OFFICIAL");
+        wm.style = "position:absolute; top:30%; left:30%; transform:rotate(-45deg); font-size:40px; color:rgba(213,0,0,0.1); font-weight:900; pointer-events:none;";
+        document.getElementById('src-console').appendChild(wm);
+        notify("Watermark Layer Added", "green");
     }
 </script>
 </body>
