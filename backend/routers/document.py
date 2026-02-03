@@ -13,7 +13,7 @@ router = APIRouter(
     tags=["document Management"]
 )
 
-@router.post("/document/vault/upload")
+@router.post("/vault/upload")
 async def upload_to_vault(
         data: VaultUpload,
         db: Session = Depends(get_db),
@@ -71,21 +71,32 @@ def create_datesheet(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    # 🏛️ 1. Validation for Institution Context
     if not current_user.institution_id:
-        raise HTTPException(status_code=400, detail="Institution not found")
+        raise HTTPException(status_code=400, detail="User not linked to an institution")
 
+    # 🏛️ 2. Creating the Instance
+    # FIX: Change 'institution_id' to 'institution_ref' to match your model
     new_ds = DateSheet(
-        institution_id=current_user.institution_id,
+        institution_ref=current_user.institution_id, # Match the hex string ref
         title=payload.title,
         target=payload.target,
+        # model_dump() is correct for Pydantic v2 to store as JSON
         exams=[e.model_dump() for e in payload.exams],
         created_by=current_user.email
     )
 
-    db.add(new_ds)
-    db.commit()
-    db.refresh(new_ds)
-    return new_ds
+    try:
+        db.add(new_ds)
+        db.commit()
+        db.refresh(new_ds)
+        return new_ds
+    except Exception as e:
+        db.rollback()
+        # Log the specific database error to Render console
+        print(f"DATESHEET DB ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save DateSheet to Institution records")
+
 
 
 @router.post("/publish", response_model=NoticeResponse)
