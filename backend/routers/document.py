@@ -101,17 +101,19 @@ def create_datesheet(
 
 @router.post("/publish", response_model=NoticeResponse)
 def publish_notice(
-        payload: NoticeCreate, # FastAPI automatically validates this
+        payload: NoticeCreate,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    # 1. 🏛️ Institutional Check
     if not current_user.institution_id:
         raise HTTPException(status_code=403, detail="Institution not linked")
 
     try:
-        # Use payload.title and payload.message
+        # 2. 🏛️ Map to Database Model
+        # FIX: Change 'institution_id' to 'institution_ref' to match Notice model
         new_notice = Notice(
-            institution_id=current_user.institution_id,
+            institution_ref=current_user.institution_id, # Match SQLAlchemy column name
             title=payload.title,
             message=payload.message,
             language=payload.language,
@@ -125,7 +127,6 @@ def publish_notice(
 
     except Exception as e:
         db.rollback()
-        # This will now print the actual error if it persists
-        print(f"DATABASE ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to save notice")
-
+        # Essential for Render monitoring
+        print(f"DATABASE ERROR (Notice): {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to save notice: {str(e)}")
