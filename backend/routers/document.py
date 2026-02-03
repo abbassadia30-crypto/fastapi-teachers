@@ -13,47 +13,57 @@ router = APIRouter(
     tags=["document Management"]
 )
 
-@router.post("/vault/upload")
+@router.post("/document/vault/upload")
 async def upload_to_vault(
         data: VaultUpload,
         db: Session = Depends(get_db),
         current_user: Any = Depends(get_current_user)
 ):
-    # Log the ID to debug if the user session is correct
-    print(f"Uploading for User ID: {current_user.id}, Inst ID: {current_user.institution_id}")
-
+    # 1. 🏛️ Get the Institution Record
+    # We query by current_user.institution_id to get the hex reference
     inst = db.query(Institution).filter(
-    Institution.id == current_user.institution_id
+        Institution.id == current_user.institution_id
     ).first()
 
     if not inst:
-       raise HTTPException(status_code=404, detail="Institution record not found")
+        raise HTTPException(status_code=404, detail="Institution record not found")
 
-
-    # Use getattr to safely get the name if it's missing
+    # 2. 🏛️ Set Author name safely
     author = getattr(current_user, 'name', 'Unknown Instructor')
 
+    # 3. 🏛️ Create the Syllabus instance
+    # FIX: We use 'institution_ref' to match your SQLAlchemy Class 'Syllabus'
     new_doc = Syllabus(
-    institution_id =inst.institution_id,  # STRING UUID
-    name=data.name,
-    subject=data.subject,
-    targets=data.targets,
-    doc_type=data.doc_type,
-    content=data.content,
-    author_name=author
-)
-
+        institution_ref=inst.institution_id, # Mapping to the hex ref
+        name=data.name,
+        subject=data.subject,
+        targets=data.targets,                # SQLAlchemy handles List -> JSON
+        doc_type=data.doc_type,              # Usually 'syllabus'
+        content=data.content,                # SQLAlchemy handles List[Dict] -> JSON
+        author_name=author
+    )
 
     try:
         db.add(new_doc)
         db.commit()
         db.refresh(new_doc)
-        return {"status": "success", "id": new_doc.id}
+
+        # Return the VaultResponse compatible structure
+        return {
+            "status": "success",
+            "id": new_doc.id,
+            "name": new_doc.name,
+            "institution_ref": new_doc.institution_ref
+        }
+
     except Exception as e:
         db.rollback()
-        # This will show the exact SQL error in your Render logs
-        print(f"DATABASE ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
+        # Essential for debugging the 500 error in Render logs
+        print(f"CRITICAL VAULT ERROR: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Database Sync Failed: {str(e)}"
+        )
 
 @router.post("/create", response_model=DateSheetResponse)
 def create_datesheet(
