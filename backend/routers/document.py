@@ -1,12 +1,12 @@
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.models.admin.document import Syllabus, DateSheet, Notice
+from backend.models.admin.document import Syllabus, DateSheet, Notice, Voucher
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse
+    NoticeCreate, NoticeResponse, BulkDeployPayload
 
 router = APIRouter(
     prefix="/document",
@@ -130,3 +130,48 @@ def publish_notice(
         # Essential for Render monitoring
         print(f"DATABASE ERROR (Notice): {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to save notice: {str(e)}")
+
+@router.post("/finance/deploy-bulk")
+async def deploy_vouchers(
+        payload: BulkDeployPayload,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    if not current_user.institution_id:
+        raise HTTPException(status_code=403, detail="Institution context missing")
+
+    vouchers_to_save = []
+
+    try:
+        for draft in payload.vouchers:
+            # 🏛️ Calculate total on the server for security
+            total = sum(item.amount for item in draft.heads)
+
+            new_v = Voucher(
+                institution_ref=current_user.institution_id,
+                recipient_type=payload.mode,
+                name=draft.name,
+                registration_id=draft.id,
+                father_name=draft.parent,
+                phone=draft.phone,
+                billing_period=payload.billing_period,
+                particulars=[h.model_dump() for h in draft.heads],
+                total_amount=total,
+                created_by=current_user.email
+            )
+            vouchers_to_save.append(new_v)
+
+        # 🏛️ Bulk insert for performance
+        db.add_all(vouchers_to_save)
+        db.commit()
+
+        return {
+            "status": "success",
+            "count": len(vouchers_to_save),
+            "message": f"Successfully deployed {len(vouchers_to_save)} vouchers"
+        }
+
+    except Exception as e:
+        db.rollback()
+        print(f"FINANCE DEPLOY ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database integrity failure during bulk deploy")

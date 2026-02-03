@@ -22,10 +22,8 @@ class Institution(Base):
     teachers = relationship("Teacher", back_populates="institution")
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
-    # ADDED: Completed relationships for all document types
     notices = relationship("Notice", back_populates="institution")
-    finance_templates = relationship("FinanceTemplate", back_populates="institution")
-    transactions = relationship("Transaction", back_populates="institution")
+    vouchers = relationship("Voucher", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 

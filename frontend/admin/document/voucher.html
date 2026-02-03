@@ -2,274 +2,312 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Finance Architect | Institution Console</title>
+    <title>Finance Architect | Professional Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #2e7d32;
-            --secondary: #263238;
-            --bg: #f4f7f6;
-            --border: #d1d9e0;
-            --danger: #ef5350;
-        }
+        :root { --primary: #1b5e20; --secondary: #263238; --bg: #f8faf9; --border: #cfd8dc; --danger: #d32f2f; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: var(--secondary); }
 
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        /* 🏛️ Notification Box */
+        #sign-box { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 9999; font-weight: 700; display: none; }
+        .sign-red { background: var(--danger); display: block !important; top: 20px !important; }
+        .sign-green { background: var(--primary); display: block !important; top: 20px !important; }
 
-        /* Mode Switcher */
-        .mode-bar {
-            background: white; padding: 10px; display: flex; gap: 10px; border-bottom: 1px solid #eee;
-        }
-        .mode-btn {
-            flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #ddd;
-            font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; transition: 0.3s;
-        }
-        .mode-btn.active { background: var(--secondary); color: white; border-color: var(--secondary); }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+        .workspace { flex: 1; overflow-y: auto; padding: 15px; }
 
-        #notification-bar {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
-        }
-        .bg-red { background: var(--danger); top: 20px !important; }
-        .bg-green { background: var(--primary); top: 20px !important; }
+        /* Step Tabs */
+        .step-bar { display: flex; background: #eceff1; margin: 10px; border-radius: 12px; padding: 5px; }
+        .step-tab { flex: 1; text-align: center; padding: 10px; font-size: 10px; font-weight: 800; border-radius: 8px; color: #78909c; }
+        .step-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
-        header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .config-card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); }
+        label { font-size: 10px; font-weight: 800; color: #546e7a; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
-        .main-container { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 120px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box; }
 
-        .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        /* Voucher List Tabs */
+        .voucher-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 15px; }
+        .v-tab { padding: 8px 15px; background: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 11px; white-space: nowrap; font-weight: 600; cursor: pointer; }
+        .v-tab.selected { background: var(--primary); color: white; border-color: var(--primary); }
 
-        label { font-size: 11px; font-weight: 700; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .fee-row { display: grid; grid-template-columns: 2fr 1fr 30px; gap: 8px; margin-bottom: 8px; }
+        .btn-add-field { background: #e8f5e9; color: var(--primary); border: 2px dashed var(--primary); padding: 10px; border-radius: 10px; font-weight: 700; font-size: 11px; width: 100%; cursor: pointer; }
 
-        input, select {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 14px;
-        }
+        .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .btn-main { background: var(--primary); color: white; border: none; flex: 2; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
+        .btn-back { background: #cfd8dc; color: #455a64; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; display: none; }
 
-        .fee-item-row { display: grid; grid-template-columns: 2fr 1fr 40px; gap: 10px; margin-bottom: 10px; }
-        .remove-btn { color: var(--danger); font-weight: 800; cursor: pointer; padding-top: 12px; text-align: center; }
-
-        /* Preview Box */
-        .voucher-preview {
-            background: white; border: 2px solid var(--secondary); border-radius: 15px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            background-image: radial-gradient(#ccc 1px, transparent 1px); background-size: 20px 20px;
-        }
-        .v-type-tag { font-size: 10px; background: #eee; padding: 2px 8px; border-radius: 4px; margin-bottom: 10px; display: inline-block; }
-        .v-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
-        .total-strip { background: var(--secondary); color: white; padding: 10px; border-radius: 8px; margin-top: 15px; display: flex; justify-content: space-between; font-weight: 700; }
-
-        .btn-add { background: #e8f5e9; color: var(--primary); border: 2px dashed var(--primary); width: 100%; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; margin-bottom: 20px; }
-
-        .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
-        .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-<div id="notification-bar"></div>
-
-<div class="mode-bar">
-    <div class="mode-btn active" id="btn-student" onclick="setMode('student')">Student Voucher</div>
-    <div class="mode-btn" id="btn-staff" onclick="setMode('staff')">Staff Pay Receipt</div>
-</div>
+<div id="sign-box"></div>
 
 <header>
-    <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <h2 id="header-title" style="margin:0; font-size:16px; font-weight:800;">Fee Voucher Architect</h2>
-    <div style="width:24px;"></div>
+    <div onclick="history.back()" style="font-size:22px;">✕</div>
+    <span style="font-weight: 900; font-size: 14px; letter-spacing: 1px;">FINANCE ARCHITECT</span>
+    <div style="width:22px;"></div>
 </header>
 
-<div class="main-container">
-    <div class="config-card">
-        <label id="lbl-target">Target Class / Department</label>
-        <select id="target-group" onchange="updatePreview()">
-            <option>Grade 10 - Section A</option>
-            <option>Grade 9 - All Sections</option>
-            <option>Faculty of Science</option>
-            <option>Administrative Staff</option>
-        </select>
+<div class="step-bar">
+    <div class="step-tab active" id="tab-1">1. SETUP</div>
+    <div class="step-tab" id="tab-2">2. DRAFTING</div>
+    <div class="step-tab" id="tab-3">3. DEPLOY</div>
+</div>
 
-        <label>Billing Month</label>
-        <input type="month" id="billing-month" onchange="updatePreview()">
+<div class="workspace">
+    <div id="view-setup">
+        <div class="config-card">
+            <label>Transaction Type</label>
+            <select id="mode-select" onchange="toggleCustomMode()">
+                <option value="student">Student Fee (Bulk)</option>
+                <option value="staff">Staff Payroll (Bulk)</option>
+                <option value="custom">Manual / One-Off Receipt</option>
+            </select>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap:10px;">
-            <div><label>Issue Date</label><input type="date" id="issue-date" onchange="updatePreview()"></div>
-            <div><label id="lbl-date-type">Due Date</label><input type="date" id="due-date" onchange="updatePreview()"></div>
-        </div>
-    </div>
-
-    <div class="config-card">
-        <label id="lbl-heads">Earnings / Charges</label>
-        <div id="heads-list">
-            <div class="fee-item-row">
-                <input type="text" placeholder="e.g. Tuition Fee" class="h-name" oninput="updatePreview()">
-                <input type="number" placeholder="Amount" class="h-amount" oninput="updatePreview()">
-                <div class="remove-btn" onclick="this.parentElement.remove(); updatePreview();">✕</div>
+            <div id="target-container">
+                <label id="target-label">Target Class</label>
+                <select id="target-group" onchange="checkManualTarget(this.value)">
+                    <option value="fetch">-- Loading Sections... --</option>
+                    <option value="manual_entry">[+] ENTER MANUALLY</option>
+                </select>
+                <input type="text" id="manual-target" class="hidden" placeholder="Type Section/Dept Name...">
             </div>
+
+            <label>Billing Period</label>
+            <input type="month" id="billing-period">
         </div>
-        <button class="btn-add" onclick="addHeadRow()">+ Add New Head</button>
+
+        <div class="config-card" id="base-template-card">
+            <label>Base Template (Charges/Earnings)</label>
+            <div id="base-heads">
+                <div class="fee-row">
+                    <input type="text" placeholder="Description" class="h-name">
+                    <input type="number" placeholder="Amount" class="h-amount">
+                    <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+                </div>
+            </div>
+            <button class="btn-add-field" onclick="addHeadRow('base-heads')">+ ADD CHARGE HEAD</button>
+        </div>
     </div>
 
-    <label>Structure Template Preview</label>
-    <div class="voucher-preview">
-        <span class="v-type-tag" id="v-tag">FEE CHALLAN</span>
+    <div id="view-drafting" class="hidden">
+        <div class="voucher-tabs" id="draft-tabs"></div>
 
-        <div style="background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid var(--secondary);">
-            <div style="font-size: 10px; color: #888; font-weight: 700;">RECIPIENT NAME</div>
-            <div style="font-size: 14px; font-weight: 600; color: #333;">[DYNAMIC NAME FIELD]</div>
-            <div style="font-size: 10px; color: #aaa;">ID: [AUTO-GENERATED]</div>
-        </div>
+        <div class="config-card" id="editor-card">
+            <label>Recipient Information</label>
+            <div id="recipient-fields">
+                <input type="text" id="edit-name" placeholder="Name">
+                <input type="text" id="edit-id" placeholder="ID / Roll No">
+                <input type="text" id="edit-parent" placeholder="Father Name">
+                <input type="text" id="edit-phone" placeholder="Phone">
+            </div>
 
-        <div class="v-row"><span>Month:</span> <b id="pre-month">-</b></div>
-        <div class="v-row"><span id="pre-date-lbl">Due Date:</span> <span id="pre-due">-</span></div>
-
-        <hr style="border:none; border-top: 1px dashed #ddd; margin: 15px 0;">
-        <div id="pre-items"></div>
-
-        <div class="total-strip">
-            <span id="lbl-total">TOTAL PAYABLE</span>
-            <span id="pre-total">0.00</span>
+            <label>Voucher Particulars</label>
+            <div id="edit-heads"></div>
+            <button class="btn-add-field" onclick="addHeadRow('edit-heads')">+ ADD ADJUSTMENT</button>
         </div>
     </div>
 </div>
 
-<div class="publish-footer">
-    <button class="btn-main" onclick="processBulk()">Save Structure & Generate All</button>
+<div class="footer">
+    <button class="btn-back" id="btn-back" onclick="changeStep(-1)">BACK</button>
+    <button class="btn-main" id="btn-next" onclick="changeStep(1)">PROCEED TO DRAFT</button>
 </div>
+
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 
 <script>
-    let mode = 'student';
-    // Ensure this matches your FastAPI mount point
     const API_URL = "https://fastapi-teachers.onrender.com";
+    let step = 1;
+    let drafts = [];
+    let currentDraftIndex = 0;
 
-    function setMode(newMode) {
-        mode = newMode;
-        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + newMode).classList.add('active');
-
-        document.getElementById('header-title').innerText = mode === 'student' ? 'Fee Voucher Architect' : 'Staff Payroll Architect';
-        document.getElementById('v-tag').innerText = mode === 'student' ? 'FEE CHALLAN' : 'PAY SLIP';
-        document.getElementById('lbl-target').innerText = mode === 'student' ? 'Target Class / Section' : 'Department / Group';
-        document.getElementById('lbl-heads').innerText = mode === 'student' ? 'Fee Particulars' : 'Salary Breakdown';
-        document.getElementById('lbl-total').innerText = mode === 'student' ? 'TOTAL PAYABLE' : 'NET SALARY';
-        document.getElementById('lbl-date-type').innerText = mode === 'student' ? 'Due Date' : 'Pay Date';
-        document.getElementById('pre-date-lbl').innerText = mode === 'student' ? 'Due Date:' : 'Pay Date:';
-
-        const mainBtn = document.querySelector('.btn-main');
-        mainBtn.innerText = mode === 'student' ? 'Save & Send to Students' : 'Save & Process Payroll';
-
-        updatePreview();
-    }
-
-    function addHeadRow() {
-        const div = document.createElement('div');
-        div.className = 'fee-item-row';
-        div.innerHTML = `
-            <input type="text" placeholder="${mode === 'student' ? 'Tuition Fee' : 'Basic Salary'}" class="h-name" oninput="updatePreview()">
-            <input type="number" placeholder="Amount" class="h-amount" oninput="updatePreview()">
-            <div class="remove-btn" onclick="this.parentElement.remove(); updatePreview();">✕</div>
-        `;
-        document.getElementById('heads-list').appendChild(div);
-    }
-
-    function updatePreview() {
-        document.getElementById('pre-month').innerText = document.getElementById('billing-month').value || "-";
-        document.getElementById('pre-due').innerText = document.getElementById('due-date').value || "-";
-
-        const hNames = document.querySelectorAll('.h-name');
-        const hAmounts = document.querySelectorAll('.h-amount');
-        const list = document.getElementById('pre-items');
-        list.innerHTML = '';
-
-        let total = 0;
-        hNames.forEach((n, i) => {
-            const val = n.value.trim();
-            const amt = parseFloat(hAmounts[i].value) || 0;
-            if (val || amt > 0) {
-                total += amt;
-                list.innerHTML += `<div class="v-row"><span>${val || 'Item'}</span><span>${amt.toLocaleString()}</span></div>`;
-            }
-        });
-
-        document.getElementById('pre-total').innerText = total.toLocaleString() + " PKR";
-    }
-
+    // --- Core Navigation ---
     function showNotify(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-        setTimeout(() => bar.className = "", 3000);
+        const box = document.getElementById('sign-box');
+        box.innerText = msg;
+        box.className = type === 'success' ? 'sign-green' : 'sign-red';
+        setTimeout(() => box.className = "", 3000);
     }
 
-    async function processBulk() {
-        const btn = document.querySelector('.btn-main');
-        const heads = [];
+    async function changeStep(dir) {
+        if (dir === 1 && step === 1) await generateDrafts();
+        else if (dir === 1 && step === 2) await finalizeDeployment();
+        else {
+            step += dir;
+            updateUI();
+        }
+    }
 
-        document.querySelectorAll('.fee-item-row').forEach(row => {
-            const name = row.querySelector('.h-name').value.trim();
-            const amt = row.querySelector('.h-amount').value.trim();
-            if (name && amt) heads.push({ name, amount: parseFloat(amt) });
+    function updateUI() {
+        document.getElementById('view-setup').classList.toggle('hidden', step !== 1);
+        document.getElementById('view-drafting').classList.toggle('hidden', step !== 2);
+        document.getElementById('btn-back').style.display = step > 1 ? 'block' : 'none';
+        document.getElementById('btn-next').innerText = step === 1 ? 'PROCEED TO DRAFT' : 'DEPLOY VOUCHERS';
+
+        document.querySelectorAll('.step-tab').forEach((t, i) => {
+            t.classList.toggle('active', i + 1 === step);
         });
+    }
 
-        if (heads.length === 0) return showNotify("Add at least one head", "error");
+    // --- Logic 1: Fetching and Targeting ---
+    function toggleCustomMode() {
+        const mode = document.getElementById('mode-select').value;
+        document.getElementById('target-label').innerText = mode === 'staff' ? 'Department' : 'Target Class';
+        document.getElementById('base-template-card').classList.toggle('hidden', mode === 'custom');
+    }
 
-        const target_group = document.getElementById('target-group').value;
-        const billing_month = document.getElementById('billing-month').value;
-        const issue_date = document.getElementById('issue-date').value;
-        const due_date = document.getElementById('due-date').value;
+    function checkManualTarget(val) {
+        document.getElementById('manual-target').classList.toggle('hidden', val !== 'manual_entry');
+    }
 
-        if(!billing_month || !issue_date || !due_date) return showNotify("Fill all dates", "error");
+    // --- Logic 2: Generating Drafts ---
+    async function generateDrafts() {
+        const mode = document.getElementById('mode-select').value;
+        const target = document.getElementById('target-group').value;
+        const manualTarget = document.getElementById('manual-target').value;
+        const billing = document.getElementById('billing-period').value;
 
-        // Prepare JSON payload for FinanceTemplateCreate schema
-        const payload = {
-            target_group,
-            billing_month,
-            mode,
-            issue_date,
-            due_date,
-            heads
-        };
+        if (!billing) return showNotify("Please select a billing period", "error");
 
+        // Prepare Base Heads
+        const baseHeads = Array.from(document.querySelectorAll('#base-heads .fee-row')).map(r => ({
+            name: r.querySelector('.h-name').value,
+            amount: parseFloat(r.querySelector('.h-amount').value) || 0
+        }));
+
+        if (mode === 'custom') {
+            drafts = [{ name: "New Entry", id: "", parent: "", phone: "", heads: [] }];
+        } else {
+            showNotify("Fetching Members...", "success");
+            try {
+                const tokenRes = await AppStorage.get("institutionToken");
+                const token = tokenRes.value || tokenRes;
+                const endpoint = mode === 'student' ? `/institution/students/${target}` : `/institution/staff/${target}`;
+
+                const res = await fetch(`${API_URL}${endpoint}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const members = await res.json();
+
+                drafts = members.map(m => ({
+                    db_id: m.id,
+                    name: m.name,
+                    id: m.roll_no || m.staff_id || "",
+                    parent: m.father_name || "",
+                    phone: m.phone || "",
+                    heads: JSON.parse(JSON.stringify(baseHeads)) // Deep copy
+                }));
+            } catch (e) {
+                return showNotify("Connection Failed", "error");
+            }
+        }
+
+        step = 2;
+        renderTabs();
+        selectDraft(0);
+        updateUI();
+    }
+
+    // --- Logic 3: Editing Drafts ---
+    function renderTabs() {
+        const container = document.getElementById('draft-tabs');
+        container.innerHTML = drafts.map((d, i) => `
+            <div class="v-tab ${i === 0 ? 'selected' : ''}" onclick="selectDraft(${i})" id="tab-v-${i}">
+                ${d.name || 'Unnamed'}
+            </div>
+        `).join('');
+    }
+
+    function selectDraft(index) {
+        // Save current draft before switching
+        saveCurrentToMemory();
+
+        currentDraftIndex = index;
+        const d = drafts[index];
+
+        document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('selected'));
+        document.getElementById(`tab-v-${index}`).classList.add('selected');
+
+        document.getElementById('edit-name').value = d.name;
+        document.getElementById('edit-id').value = d.id;
+        document.getElementById('edit-parent').value = d.parent;
+        document.getElementById('edit-phone').value = d.phone;
+
+        const headsContainer = document.getElementById('edit-heads');
+        headsContainer.innerHTML = d.heads.map(h => `
+            <div class="fee-row">
+                <input type="text" value="${h.name}" class="h-name">
+                <input type="number" value="${h.amount}" class="h-amount">
+                <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+            </div>
+        `).join('');
+    }
+
+    function saveCurrentToMemory() {
+        if (drafts.length === 0) return;
+        const d = drafts[currentDraftIndex];
+        d.name = document.getElementById('edit-name').value;
+        d.id = document.getElementById('edit-id').value;
+        d.parent = document.getElementById('edit-parent').value;
+        d.phone = document.getElementById('edit-phone').value;
+
+        d.heads = Array.from(document.querySelectorAll('#edit-heads .fee-row')).map(r => ({
+            name: r.querySelector('.h-name').value,
+            amount: parseFloat(r.querySelector('.h-amount').value) || 0
+        }));
+
+        document.getElementById(`tab-v-${currentDraftIndex}`).innerText = d.name;
+    }
+
+    function addHeadRow(containerId) {
+        const div = document.createElement('div');
+        div.className = 'fee-row';
+        div.innerHTML = `
+            <input type="text" placeholder="Description" class="h-name">
+            <input type="number" placeholder="Amount" class="h-amount">
+            <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+        `;
+        document.getElementById(containerId).appendChild(div);
+    }
+
+    async function finalizeDeployment() {
+        saveCurrentToMemory();
+        const btn = document.getElementById('btn-next');
         btn.disabled = true;
-        btn.innerText = "Processing...";
+        btn.innerText = "DEPLOYING...";
 
         try {
-            // Retrieve token securely via Capacitor Storage
-            const result = await AppStorage.get("institutionToken");
-            const token = (result && typeof result === 'object') ? result.value : result;
+            const tokenRes = await AppStorage.get("institutionToken");
+            const token = tokenRes.value || tokenRes;
 
-            if (!token) {
-                btn.disabled = false;
-                btn.innerText = "Try Again";
-                return showNotify("Session Expired", "error");
-            }
-
-            const res = await fetch(`${API_URL}/document/process-bulk`, {
+            const res = await fetch(`${API_URL}/document/finance/deploy-bulk`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(payload)
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({
+                    billing_period: document.getElementById('billing-period').value,
+                    vouchers: drafts
+                })
             });
 
             if (res.ok) {
-                const data = await res.json();
-                showNotify(`Success! ${data.vouchers_generated} Vouchers Created`, "green");
+                showNotify("All Vouchers Processed!", "success");
                 setTimeout(() => location.reload(), 2000);
             } else {
-                const err = await res.json();
-                showNotify(err.detail || "Processing failed", "error");
+                throw new Error();
             }
-        } catch (err) {
-            showNotify("Connection to Server Failed", "error");
-        } finally {
+        } catch (e) {
+            showNotify("Deployment Failed", "error");
             btn.disabled = false;
-            setMode(mode); // Reset button text
+            btn.innerText = "DEPLOY VOUCHERS";
         }
     }
 </script>
+
 </body>
 </html>

@@ -37,6 +37,8 @@ class VaultResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+
 class ExamEntry(BaseModel):
     subject_name: str
     date: str
@@ -59,6 +61,8 @@ class DateSheetResponse(BaseModel):
     class Config:
         from_attributes = True
 
+
+
 class NoticeCreate(BaseModel):
     title: str
     message: str
@@ -73,22 +77,29 @@ class NoticeResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class HeadCreate(BaseModel):
+
+
+class VoucherParticular(BaseModel):
     name: str
     amount: float
 
-class VoucherBulkCreate(BaseModel):
-    target_group: str
-    billing_month: str
-    mode: VoucherMode
-    issue_date: str
-    due_date: str
-    heads: List[HeadCreate]
+class VoucherDraft(BaseModel):
+    name: str
+    id: str # This is the Roll No / Staff ID from the UI
+    parent: Optional[str] = None
+    phone: Optional[str] = None
+    heads: List[VoucherParticular]
 
-class FinanceTemplateCreate(BaseModel):
-    target_group: str
-    billing_month: str
-    mode: VoucherMode
-    issue_date: str
-    due_date: str
-    heads: List[HeadCreate]
+class BulkDeployPayload(BaseModel):
+    billing_period: str
+    mode: str # 'student', 'staff', or 'custom'
+    vouchers: List[VoucherDraft]
+
+class VoucherResponse(BaseModel):
+    id: int
+    name: str
+    total_amount: float
+    is_paid: bool
+
+    class Config:
+        from_attributes = True

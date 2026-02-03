@@ -42,7 +42,6 @@ class Notice(Base):
     created_by = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # ADDED: Relationship back to Institution
     institution = relationship("Institution", back_populates="notices")
 
 class VoucherMode(str, enum.Enum):
@@ -62,7 +61,6 @@ class FinanceTemplate(Base):
     due_date = Column(String)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    # ADDED: Relationship back to Institution
     institution = relationship("Institution", back_populates="finance_templates")
 
 class Transaction(Base):
@@ -76,5 +74,26 @@ class Transaction(Base):
     paid_at = Column(DateTime, nullable=True)
     voucher_no = Column(String, unique=True)
 
-    # ADDED: Relationship back to Institution
     institution = relationship("Institution", back_populates="transactions")
+
+class Voucher(Base):
+    __tablename__ = "vouchers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+
+    recipient_type = Column(String)
+    name = Column(String, nullable=False)
+    registration_id = Column(String)
+    father_name = Column(String)
+    phone = Column(String)
+
+    billing_period = Column(String)
+    particulars = Column(JSON)
+    total_amount = Column(Float)
+
+    is_paid = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(String)
+
+    institution = relationship("Institution", back_populates="vouchers")

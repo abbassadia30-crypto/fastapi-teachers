@@ -3,7 +3,7 @@
 from .base import Base
 
 # 1. Import the "Leaf" models first (things that don't depend on Institution as much)
-from .admin.document import Syllabus, DateSheet, Notice, Transaction, FinanceTemplate
+from .admin.document import Syllabus, DateSheet, Notice, Voucher
 from .admin.profile import UserBio, Profile
 
 # 2. Import the "Core" models
@@ -17,6 +17,6 @@ from .admin.dashboard import Student, Staff, Teacher
 __all__ = [
     "Base", "User", "Institution", "Syllabus",
     "School", "Academy", "College", "UserBio",
-    "Profile", "DateSheet", "Notice", "Transaction",
-    "FinanceTemplate", "Student", "Staff", "Teacher"
+    "Profile", "DateSheet", "Notice", "Voucher" ,
+    "Student", "Staff", "Teacher"
 ]
