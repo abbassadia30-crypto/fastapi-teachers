@@ -6,7 +6,7 @@ from backend.models.base import Base
 class Institution(Base):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
+    owner_id = Column(Integer, ForeignKey("users.id")) # Corrected typo from owner_d
     institution_id = Column(String, unique=True, index=True, nullable=False,
                             default=lambda: str(uuid.uuid4().hex[:8].upper()))
     type = Column(String(50))
@@ -23,7 +23,13 @@ class Institution(Base):
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
     notices = relationship("Notice", back_populates="institution")
+    finance_templates = relationship("FinanceTemplate", back_populates="institution")
+    transactions = relationship("Transaction", back_populates="institution")
     vouchers = relationship("Voucher", back_populates="institution")
+    academic_results = relationship("AcademicResult", back_populates="institution")
+    papers = relationship("PaperVault", back_populates="institution")
+    attendance_logs = relationship("AttendanceLog", back_populates="institution")
+    individual_attendances = relationship("IndividualAttendance", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 

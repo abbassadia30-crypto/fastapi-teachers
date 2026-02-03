@@ -7,18 +7,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; overflow-x: hidden; }
 
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        .bg-red { background: var(--accent); top: 20px !important; }
-        .bg-green { background: #2e7d32; top: 20px !important; }
+        .bg-red { background: var(--accent) !important; top: 20px !important; }
+        .bg-green { background: #2e7d32 !important; top: 20px !important; }
 
         header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
-        .tab-bar { display: flex; background: #fff; border-bottom: 1px solid #ddd; }
+        .tab-bar { display: flex; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
         .tab { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; color: #888; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
@@ -29,21 +29,20 @@
         .type-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
         .btn-type { background: #fff; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
 
-        /* Dynamic Inputs */
         #config-panel { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px; display: none; border: 1px dashed var(--primary); }
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         .input-group input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
 
         /* Paper Canvas */
-        .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin-top: 20px; }
+        .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin-top: 20px; min-height: 500px; }
         .paper-header { border: 2px solid #000; padding: 15px; margin-bottom: 30px; text-align: center; }
-        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 110px; text-align: center; font-family: inherit; }
+        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 110px; text-align: center; font-family: inherit; outline: none; }
 
         .question-block { margin-bottom: 25px; position: relative; }
-        .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 10px; }
+        .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 10px; font-size: 14px; }
         .part-row { display: flex; gap: 10px; margin-bottom: 8px; }
         .part-label { font-weight: 600; min-width: 30px; }
-        .q-input { border: none; border-bottom: 1px solid #eee; width: 100%; font-size: 14px; padding: 2px; outline: none; }
+        .q-input { border: none; border-bottom: 1px solid #eee; width: 100%; font-size: 14px; padding: 2px; outline: none; background: transparent; }
 
         .mcq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-left: 35px; margin-bottom: 15px; font-size: 12px; }
 
@@ -51,6 +50,8 @@
         .rtl-block .q-header-row { flex-direction: row-reverse; }
         .rtl-block .part-row { flex-direction: row-reverse; }
         .rtl-block .q-input { font-family: 'Noto Nastaliq Urdu', serif; text-align: right; font-size: 18px; }
+
+        .vault-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
 
         .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; z-index: 1000; }
         .btn-action { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
@@ -62,7 +63,7 @@
 
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer; margin-right:15px;">✕</div>
-    <h2 style="margin:0; font-size:15px;">INSTITUTION TEST CONSOLE</h2>
+    <h2 style="margin:0; font-size:15px; font-weight: 900;">INSTITUTION TEST CONSOLE</h2>
 </header>
 
 <div class="tab-bar">
@@ -72,13 +73,13 @@
 
 <div class="main-container" id="design-view">
     <div class="blueprint-card">
-        <label>1. Select Language</label>
-        <select id="sel-lang" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; margin-bottom:15px;">
+        <label style="font-size: 10px; font-weight: 800; color: #666;">1. SELECT LANGUAGE</label>
+        <select id="sel-lang" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px; font-family: inherit;">
             <option value="en">English Layout</option>
             <option value="ur">Urdu Layout (RTL)</option>
         </select>
 
-        <label>2. Choose Question Type</label>
+        <label style="font-size: 10px; font-weight: 800; color: #666;">2. CHOOSE QUESTION TYPE</label>
         <div class="type-list">
             <button class="btn-type" onclick="showConfig('MCQs')">MCQs</button>
             <button class="btn-type" onclick="showConfig('Short')">Short Qs</button>
@@ -87,26 +88,26 @@
         </div>
 
         <div id="config-panel">
-            <h4 id="panel-title" style="margin:0 0 10px 0; font-size:12px; color:var(--primary);">Configuring Section</h4>
+            <h4 id="panel-title" style="margin:0 0 10px 0; font-size:11px; color:var(--primary); text-transform: uppercase;">Configuring Section</h4>
             <div id="custom-statement-box" style="display:none; margin-bottom:10px;">
-                <input type="text" id="in-statement" placeholder="Enter Question Statement" style="width:100%; padding:8px; border-radius:5px; border:1px solid #ddd;">
+                <input type="text" id="in-statement" placeholder="Enter Question Statement" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
             </div>
             <div class="input-group">
-                <input type="number" id="in-qty" placeholder="Quantity">
-                <input type="number" id="in-marks" placeholder="Marks per Q">
+                <input type="number" id="in-qty" placeholder="Quantity" inputmode="numeric">
+                <input type="number" id="in-marks" placeholder="Marks per Q" inputmode="numeric">
             </div>
-            <button class="btn-action" style="padding:10px; font-size:12px;" onclick="addSectionToPaper()">Add to Paper</button>
+            <button class="btn-action" style="padding:10px; font-size:12px; border-radius: 8px;" onclick="addSectionToPaper()">ADD SECTION</button>
         </div>
     </div>
 
     <div class="paper-canvas">
         <div class="paper-header">
-            <div style="font-size: 20px; font-weight: 900;">INSTITUTION NAME</div>
+            <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">INSTITUTION NAME</div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size: 11px; margin-top:10px; border-bottom: 1px solid #eee; padding-bottom:10px;">
-                <div>SUB: <input type="text" class="editable-head" value="Subject"></div>
-                <div>CLASS: <input type="text" class="editable-head" style="width:70px" value="10th"></div>
-                <div>TYPE: <input type="text" class="editable-head" value="Monthly"></div>
-                <div>TIME: <input type="text" class="editable-head" style="width:70px" value="40m"></div>
+                <div>SUB: <input type="text" id="p-subject" class="editable-head" value="Subject"></div>
+                <div>CLASS: <input type="text" id="p-class" class="editable-head" style="width:70px" value="10th"></div>
+                <div>TYPE: <input type="text" id="p-type" class="editable-head" value="Monthly"></div>
+                <div>TIME: <input type="text" id="p-duration" class="editable-head" style="width:70px" value="40m"></div>
             </div>
             <div style="display:grid; grid-template-columns: 1.5fr 0.5fr; gap:10px; font-size: 11px; margin-top:10px; text-align:left;">
                 <div>NAME: __________________________</div>
@@ -119,23 +120,29 @@
 
 <div class="main-container" id="vault-view" style="display:none;">
     <div id="vault-list">
-        <div style="text-align:center; padding:50px; color:#888;">No Pending Papers</div>
+        <div style="text-align:center; padding:50px; color:#888;">Syncing with Vault...</div>
     </div>
 </div>
 
 <div class="publish-footer">
-    <button class="btn-action" onclick="saveToVault()">SAVE TO PENDING VAULT</button>
+    <button class="btn-action" id="btn-save" onclick="saveToVault()">SAVE TO PENDING VAULT</button>
 </div>
 
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
 <script>
+    const API_URL = "https://fastapi-teachers.onrender.com";
     let activeType = '';
     let sectionCounter = 1;
+    let paperSections = [];
 
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
         document.getElementById('t-'+t).classList.add('active');
         document.getElementById('design-view').style.display = t === 'design' ? 'block' : 'none';
         document.getElementById('vault-view').style.display = t === 'vault' ? 'block' : 'none';
+        if(t === 'vault') fetchVault();
     }
 
     function showConfig(type) {
@@ -143,11 +150,8 @@
         document.getElementById('panel-title').innerText = "Configure " + type;
         document.getElementById('config-panel').style.display = 'block';
         document.getElementById('custom-statement-box').style.display = (type === 'Custom') ? 'block' : 'none';
-
-        // Default values
         document.getElementById('in-qty').value = (type === 'MCQs') ? 5 : (type === 'Short' ? 3 : 1);
         document.getElementById('in-marks').value = (type === 'MCQs') ? 1 : (type === 'Short' ? 2 : 5);
-        document.getElementById('in-statement').value = "";
     }
 
     function addSectionToPaper() {
@@ -165,8 +169,14 @@
         else if(activeType === 'Long') headText = "Answer in detail";
         else headText = customStmt || "Custom Section";
 
+        const sectionId = Date.now();
         const sectionDiv = document.createElement('div');
         sectionDiv.className = `question-block ${lang === 'ur' ? 'rtl-block' : ''}`;
+        sectionDiv.dataset.id = sectionId;
+        sectionDiv.dataset.type = activeType;
+        sectionDiv.dataset.marks = marks;
+        sectionDiv.dataset.qty = qty;
+        sectionDiv.dataset.head = headText;
 
         let html = `
             <div class="q-header-row">
@@ -178,7 +188,7 @@
             html += `
                 <div class="part-row">
                     <span class="part-label">(${i})</span>
-                    <input type="text" class="q-input" placeholder="Type question statement...">
+                    <input type="text" class="q-input" placeholder="${lang === 'ur' ? 'سوال یہاں لکھیں۔۔۔' : 'Type question statement...'}">
                 </div>`;
             if(activeType === 'MCQs') {
                 html += `<div class="mcq-grid">
@@ -191,7 +201,94 @@
         sectionDiv.innerHTML = html;
         content.appendChild(sectionDiv);
         document.getElementById('config-panel').style.display = 'none';
-        showNotify("Section added", "green");
+        showNotify("Section added to canvas", "green");
+    }
+
+    async function saveToVault() {
+        const btn = document.getElementById('btn-save');
+        btn.disabled = true;
+        btn.innerText = "UPLOADING TO VAULT...";
+
+        const blueprint = [];
+        let totalMarks = 0;
+
+        document.querySelectorAll('.question-block').forEach(block => {
+            const questions = Array.from(block.querySelectorAll('.q-input')).map(inp => inp.value);
+            const m = parseInt(block.dataset.marks);
+            const q = parseInt(block.dataset.qty);
+            totalMarks += (m * q);
+
+            blueprint.push({
+                block_type: block.dataset.type,
+                header_text: block.dataset.head,
+                marks_per_q: m,
+                qty: q,
+                questions: questions
+            });
+        });
+
+        const payload = {
+            subject: document.getElementById('p-subject').value,
+            target_class: document.getElementById('p-class').value,
+            paper_type: document.getElementById('p-type').value,
+            duration: document.getElementById('p-duration').value,
+            language: document.getElementById('sel-lang').value,
+            blueprint: blueprint,
+            total_marks: totalMarks
+        };
+
+        try {
+            const tokenObj = await AppStorage.get("institutionToken");
+            const token = tokenObj.value || tokenObj;
+
+            const res = await fetch(`${API_URL}/papers/save-vault`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                showNotify("Paper Secured in Vault", "green");
+                setTimeout(() => location.reload(), 1500);
+            } else { throw new Error(); }
+        } catch(e) {
+            showNotify("Vault Sync Failed", "error");
+            btn.disabled = false;
+            btn.innerText = "SAVE TO PENDING VAULT";
+        }
+    }
+
+    async function fetchVault() {
+        const list = document.getElementById('vault-list');
+        try {
+            const tokenObj = await AppStorage.get("institutionToken");
+            const token = tokenObj.value || tokenObj;
+
+            const res = await fetch(`${API_URL}/papers/vault-list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const papers = await res.json();
+
+            if(papers.length === 0) {
+                list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">Vault is empty</div>';
+                return;
+            }
+
+            list.innerHTML = papers.map(p => `
+                <div class="vault-item">
+                    <div>
+                        <div style="font-weight:800; color:var(--primary);">${p.subject} - ${p.target_class}</div>
+                        <div style="font-size:10px; color:#666;">${p.paper_type} | ${new Date(p.created_at).toLocaleDateString()}</div>
+                    </div>
+                    <div style="font-weight:900; color:var(--accent);">MARKS: ${p.total_marks}</div>
+                </div>
+            `).join('');
+        } catch(e) {
+            list.innerHTML = '<div style="color:red; text-align:center;">Failed to load vault</div>';
+        }
     }
 
     function showNotify(msg, type) {
@@ -199,11 +296,6 @@
         bar.innerText = msg;
         bar.className = type === 'error' ? 'bg-red' : 'bg-green';
         setTimeout(() => bar.className = "", 3000);
-    }
-
-    function saveToVault() {
-        showNotify("Saved to Vault", "green");
-        switchTab('vault');
     }
 </script>
 </body>

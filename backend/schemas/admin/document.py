@@ -1,6 +1,6 @@
 from pydantic import ConfigDict
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime , date
 from pydantic import BaseModel
 from typing import Optional, List
 
@@ -103,3 +103,65 @@ class VoucherResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SubjectResult(BaseModel):
+    subject: str
+    max: float
+    obt: float
+    pass_mark: float
+
+class StudentMarkEntry(BaseModel):
+    student_id: Optional[int] = None  # None for manual entries
+    name: str
+    father_name: str
+    marks: List[SubjectResult]
+    status: str  # "PASS" or "FAIL"
+
+class BulkResultPayload(BaseModel):
+    exam_title: str
+    class_name: str
+    results: List[StudentMarkEntry]
+
+
+
+class QuestionBlock(BaseModel):
+    block_type: str # 'MCQs', 'Short', 'Long', 'Custom'
+    header_text: str
+    marks_per_q: int
+    qty: int
+    questions: List[str] # The text typed in the .q-input fields
+
+class PaperCreate(BaseModel):
+    subject: str
+    target_class: str
+    paper_type: str
+    duration: str
+    language: str
+    blueprint: List[QuestionBlock]
+    total_marks: int
+
+class PaperResponse(BaseModel):
+    id: int
+    subject: str
+    is_published: bool
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+
+class AttendanceEntry(BaseModel):
+    student_id: str
+    student_name: str
+    status: str
+    is_manual: bool
+
+class AttendanceSubmit(BaseModel):
+    section_id: str  # 'MANUAL' or a specific ID
+    custom_section_name: Optional[str] = None
+    date: date
+    type: str  # 'class' or 'test'
+    subject: Optional[str] = None
+    data: List[AttendanceEntry]

@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float
+from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float, Date
 from sqlalchemy.orm import relationship
 from backend.models.base import Base
 
@@ -97,3 +97,72 @@ class Voucher(Base):
     created_by = Column(String)
 
     institution = relationship("Institution", back_populates="vouchers")
+
+class AcademicResult(Base):
+    __tablename__ = "academic_results"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+
+    exam_title = Column(String, nullable=False)
+    target_class = Column(String)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
+    student_name = Column(String, nullable=False)
+    father_name = Column(String)
+    marks_data = Column(JSON)
+    percentage = Column(Float)
+    final_status = Column(String)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(String)
+
+    institution = relationship("Institution", back_populates="academic_results")
+
+class PaperVault(Base):
+    __tablename__ = "paper_vault"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    subject = Column(String, nullable=False)
+    target_class = Column(String)
+    paper_type = Column(String)
+    duration = Column(String)
+    language = Column(String, default="en")
+    content_blueprint = Column(JSON)
+    total_marks = Column(Integer)
+    is_published = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    created_by = Column(String)
+
+    institution = relationship("Institution", back_populates="papers")
+
+class AttendanceLog(Base):
+    __tablename__ = "attendance_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    section_identifier = Column(String, index=True)
+    custom_section_name = Column(String, nullable=True)
+    log_date = Column(Date, index=True)
+    category = Column(String)
+    subject = Column(String, nullable=True)
+    is_official = Column(Boolean, default=True)
+    attendance_data = Column(JSON)
+    p_count = Column(Integer, default=0)
+    a_count = Column(Integer, default=0)
+    l_count = Column(Integer, default=0)
+
+    institution = relationship("Institution", back_populates="attendance_logs")
+
+class IndividualAttendance(Base):
+    __tablename__ = "individual_attendance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    student_id = Column(Integer, ForeignKey("students.id"), index=True)
+    log_id = Column(Integer, ForeignKey("attendance_logs.id"))
+    status = Column(String)
+    date = Column(Date, index=True)
+
+    student = relationship("Student", back_populates="attendance_records")
+    parent_log = relationship("AttendanceLog")
+    institution = relationship("Institution", back_populates="individual_attendance")

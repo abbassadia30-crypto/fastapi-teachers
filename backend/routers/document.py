@@ -1,12 +1,13 @@
 from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from backend.models.admin.document import Syllabus, DateSheet, Notice, Voucher
-from backend.routers.auth import get_current_user
+from backend.models.admin.document import Syllabus, DateSheet, Notice, Voucher, AcademicResult, PaperVault, \
+    IndividualAttendance, AttendanceLog
+from backend.routers.auth import get_current_user, get_verified_inst
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse, BulkDeployPayload
+    NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit
 
 router = APIRouter(
     prefix="/document",
@@ -175,3 +176,152 @@ async def deploy_vouchers(
         db.rollback()
         print(f"FINANCE DEPLOY ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database integrity failure during bulk deploy")
+
+@router.post("/academic/deploy-results")
+async def deploy_results(
+        payload: BulkResultPayload,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    if not current_user.institution_id:
+        raise HTTPException(status_code=400, detail="Institution context required")
+
+    db_entries = []
+
+    for entry in payload.results:
+        # 🏛️ Server-side Calculation for Integrity
+        total_max = sum(m.max for m in entry.marks)
+        total_obt = sum(m.obt for m in entry.marks)
+        perc = (total_obt / total_max * 100) if total_max > 0 else 0
+
+        # 🏛️ Server-side Pass/Fail check (Security Measure)
+        actual_status = "PASS"
+        for m in entry.marks:
+            if m.obt < m.pass_mark:
+                actual_status = "FAIL"
+                break
+
+        new_res = AcademicResult(
+            institution_ref=current_user.institution_id,
+            exam_title=payload.exam_title,
+            target_class=payload.class_name,
+            student_id=entry.student_id,
+            student_name=entry.name,
+            father_name=entry.father_name,
+            marks_data=[m.model_dump() for m in entry.marks],
+            percentage=round(perc, 2),
+            final_status=actual_status,
+            created_by=current_user.email
+        )
+        db_entries.append(new_res)
+
+    try:
+        # Bulk save to DB
+        db.add_all(db_entries)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Successfully published {len(db_entries)} marksheets",
+            "exam": payload.exam_title
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"DEPLOYMENT ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database commit failed")
+
+
+
+@router.post("/papers/save-vault")
+async def save_to_vault(
+        payload: PaperCreate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    try:
+        new_paper = PaperVault(
+            institution_ref=current_user.institution_id,
+            subject=payload.subject,
+            target_class=payload.target_class,
+            paper_type=payload.paper_type,
+            duration=payload.duration,
+            language=payload.language,
+            content_blueprint=[block.model_dump() for block in payload.blueprint],
+            total_marks=payload.total_marks,
+            created_by=current_user.email
+        )
+
+        db.add(new_paper)
+        db.commit()
+        db.refresh(new_paper)
+
+        return {"status": "success", "paper_id": new_paper.id}
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to sync with Vault")
+
+@router.get("/papers/vault-list")
+async def get_vault_papers(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Fetch papers specifically for this institution that aren't published yet
+    papers = db.query(PaperVault).filter(
+        PaperVault.institution_ref == current_user.institution_id,
+        PaperVault.is_published == False
+    ).order_by(PaperVault.created_at.desc()).all()
+    return papers
+
+
+@router.post("/submit")
+async def submit_attendance(
+        payload: AttendanceSubmit,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+        inst: Institution = Depends(get_verified_inst) # Our secure dependency
+):
+    try:
+        # 1. Create the Master Log (The Session View)
+        new_log = AttendanceLog(
+            institution_id=inst.id,
+            section_identifier=payload.section_id,
+            custom_section_name=payload.custom_section_name,
+            log_date=payload.date,
+            category=payload.type,
+            subject=payload.subject,
+            is_official=(payload.section_id != "MANUAL"),
+            attendance_data=[entry.model_dump() for entry in payload.data],
+            p_count=len([x for x in payload.data if x.status == 'P']),
+            a_count=len([x for x in payload.data if x.status == 'A']),
+            l_count=len([x for x in payload.data if x.status == 'L'])
+        )
+
+        db.add(new_log)
+        db.flush() # Generates new_log.id for use in the next step
+
+        # 2. Create Individual Records (The History View)
+        individual_records = []
+        for entry in payload.data:
+            # We only create individual history rows for official students
+            # Manual/Guest entries are only stored in the JSON of the Master Log
+            if not entry.is_manual:
+                indiv = IndividualAttendance(
+                    institution_id=inst.id,
+                    student_id=entry.student_id,
+                    log_id=new_log.id,
+                    status=entry.status,
+                    date=payload.date
+                )
+                individual_records.append(indiv)
+
+        if individual_records:
+            db.add_all(individual_records)
+
+        db.commit()
+        return {"status": "success", "message": "Attendance locked and synced"}
+
+    except Exception as e:
+        db.rollback()
+        print(f"ATTENDANCE ERROR: {str(e)}") # Critical for Render logs
+        return {"status": "error", "message": "System failed to archive record"}

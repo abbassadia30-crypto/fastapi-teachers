@@ -11,7 +11,7 @@ from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token
-from backend.models.admin.institution import User
+from backend.models.admin.institution import User, Institution
 
 load_dotenv()
 
@@ -77,6 +77,20 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
         })
     except Exception as e:
         print(f"Resend Email Error: {e}")
+
+def get_verified_inst(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if not current_user.institution_id:
+        raise HTTPException(status_code=400, detail="User not linked to an institution")
+
+    inst = db.query(Institution).filter(
+        Institution.id == current_user.institution_id,
+        Institution.is_active == True
+    ).first()
+
+    if not inst:
+        raise HTTPException(status_code=403, detail="Institution suspended or invalid")
+
+    return inst # This is now a verified Institution object
 
 # --- Routes ---
 

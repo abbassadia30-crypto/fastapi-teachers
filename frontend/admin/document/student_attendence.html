@@ -13,69 +13,65 @@
       --present: #4caf50;
       --absent: #f44336;
       --late: #ff9800;
+      --border: #e0e0e0;
     }
 
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     #notification-bar {
       position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
       width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-      color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+      color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700;
     }
-    .bg-red { background: var(--absent); top: 20px !important; }
-    .bg-green { background: var(--primary); top: 20px !important; }
+    .bg-red { background: var(--absent) !important; top: 20px !important; }
+    .bg-green { background: var(--primary) !important; top: 20px !important; }
 
-    header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 
-    .type-switcher {
-      display: flex; background: #e0e0e0; margin: 15px 20px; border-radius: 12px; padding: 4px;
-    }
-    .type-btn {
-      flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; transition: 0.3s; color: #666;
-    }
+    .type-switcher { display: flex; background: #e0e0e0; margin: 15px 20px; border-radius: 12px; padding: 4px; }
+    .type-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; transition: 0.3s; color: #666; }
     .type-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
     .main-container { flex: 1; overflow-y: auto; padding: 0 20px 120px 20px; }
 
-    .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e0e0e0; }
-    label { font-size: 10px; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; }
+    .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+    label { font-size: 9px; font-weight: 900; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; letter-spacing: 0.5px; }
 
-    input, select {
-      width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit;
-    }
+    input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 12px; font-family: inherit; font-size: 13px; outline: none; box-sizing: border-box; }
 
     .student-item {
-      background: white; border-radius: 15px; padding: 15px; margin-bottom: 10px;
+      background: white; border-radius: 15px; padding: 12px 15px; margin-bottom: 10px;
       display: flex; align-items: center; justify-content: space-between;
       border: 1px solid #eee; animation: slideIn 0.3s ease-out;
     }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .student-info { display: flex; flex-direction: column; }
-    .student-name { font-weight: 700; font-size: 14px; }
-    .student-id { font-size: 10px; color: #888; }
-    .tag-manual { font-size: 8px; color: var(--primary); font-weight: 800; }
+    .student-info { display: flex; flex-direction: column; max-width: 60%; }
+    .student-name { font-weight: 700; font-size: 13px; color: #333; }
+    .student-father { font-size: 10px; color: #777; font-weight: 500; }
+    .tag-manual { font-size: 8px; background: var(--secondary); color: white; padding: 2px 6px; border-radius: 4px; margin-left: 5px; }
 
-    .status-pill-group { display: flex; gap: 5px; }
+    .status-pill-group { display: flex; gap: 4px; }
     .pill {
-      padding: 6px 12px; border-radius: 8px; font-size: 10px; font-weight: 800;
-      border: 1px solid #ddd; cursor: pointer; transition: 0.2s;
+      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+      border-radius: 10px; font-size: 11px; font-weight: 800;
+      border: 1px solid #ddd; cursor: pointer; transition: 0.2s; color: #888;
     }
     .pill.p.active { background: var(--present); color: white; border-color: var(--present); }
     .pill.a.active { background: var(--absent); color: white; border-color: var(--absent); }
     .pill.l.active { background: var(--late); color: white; border-color: var(--late); }
 
     .summary-bar {
-      background: var(--secondary); color: white; padding: 15px; border-radius: 15px;
+      background: var(--secondary); color: white; padding: 15px; border-radius: 18px;
       display: flex; justify-content: space-around; text-align: center; margin-bottom: 20px;
     }
+    .summary-bar small { font-size: 9px; text-transform: uppercase; opacity: 0.8; font-weight: 700; }
+    .summary-bar div b { display: block; font-size: 18px; }
 
-    .manual-entry-box {
-      border: 2px dashed #ccc; padding: 15px; border-radius: 15px; margin-bottom: 20px;
-    }
+    .manual-entry-box { border: 2px dashed #ccc; padding: 15px; border-radius: 15px; margin-top: 10px; }
 
-    .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
-    .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; }
+    .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
+    .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -84,77 +80,75 @@
 
 <header>
   <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-  <h2 id="header-title" style="margin:0; font-size:16px; font-weight:800;">Class Attendance</h2>
+  <h2 id="header-title" style="margin:0; font-size:15px; font-weight:800; text-transform: uppercase;">Class Attendance</h2>
   <div style="width:24px;"></div>
 </header>
 
 <div class="type-switcher">
-  <button class="type-btn active" id="btn-class" onclick="setType('class')">Class Attendance</button>
-  <button class="type-btn" id="btn-test" onclick="setType('test')">Test Attendance</button>
+  <button class="type-btn active" id="btn-class" onclick="setType('class')">CLASS MODE</button>
+  <button class="type-btn" id="btn-test" onclick="setType('test')">TEST MODE</button>
 </div>
 
 <div class="main-container">
   <div class="config-card">
-    <label>Target Class / Record Filter</label>
-    <select id="class-select" onchange="fetchStudentsFromDB()">
-      <option value="">Select Class...</option>
-      <option value="10A">Grade 10 - Section A</option>
-      <option value="9B">Grade 9 - Section B</option>
-    </select>
-
-    <div id="subject-container" style="display: none;">
-      <label>Subject Name</label>
-      <select id="subject-name">
-        <option>Mathematics</option>
-        <option>Physics</option>
-        <option>Chemistry</option>
-        <option>English</option>
+    <div id="section-select-container">
+      <label>Select Institution Section</label>
+      <select id="class-select" onchange="checkCustomSection(this)">
+        <option value="">Loading Sections...</option>
+        <option value="CUSTOM_NEW" style="font-weight: bold; color: var(--primary);">+ ADD CUSTOM SECTION</option>
       </select>
     </div>
 
-    <label>Session Date</label>
-    <input type="date" id="att-date" value="2026-01-29">
+    <div id="section-custom-container" style="display: none;">
+      <label>Custom Section Name</label>
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="custom-section-name" placeholder="e.g. Combined 10th-A & B" style="margin-bottom: 0;">
+        <button onclick="toggleSectionInput(false)" style="background:#eee; border:none; border-radius:12px; padding:0 15px; font-size:10px; font-weight:700;">BACK</button>
+      </div>
+    </div>
+
+    <div id="subject-container" style="display: none; margin-top: 15px;">
+      <label>Testing Subject</label>
+      <input type="text" id="test-subject" placeholder="e.g. Physics Midterm">
+    </div>
+
+    <label style="margin-top: 15px;">Attendance Date</label>
+    <input type="date" id="att-date">
   </div>
 
   <div class="summary-bar">
-    <div><small>Present</small><div id="sum-p">0</div></div>
-    <div><small>Absent</small><div id="sum-a">0</div></div>
-    <div><small>Manual</small><div id="sum-m">0</div></div>
+    <div><small>Present</small><b id="sum-p">0</b></div>
+    <div><small>Absent</small><b id="sum-a">0</b></div>
+    <div><small>Manual</small><b id="sum-m">0</b></div>
   </div>
 
   <div id="student-list">
-    <div style="text-align: center; color: #aaa; padding: 40px;">Select a class to fetch records</div>
+    <div style="text-align: center; color: #aaa; padding: 40px; font-size: 12px;">Select a section to load members</div>
   </div>
 
   <div class="manual-entry-box">
-    <label>Add Temporary / Manual Student</label>
+    <label>Add Guest/Manual Student</label>
     <div style="display: flex; gap: 10px;">
-      <input type="text" id="manual-name" placeholder="Full Name" style="margin:0;">
-      <button onclick="addManualStudent()" style="background:var(--secondary); color:white; border:none; border-radius:10px; padding:0 15px; font-weight:bold;">+</button>
+      <input type="text" id="manual-name" placeholder="Name" style="margin:0;">
+      <button onclick="addManualStudent()" style="background:var(--secondary); color:white; border:none; border-radius:12px; padding:0 20px; font-weight:900;">+</button>
     </div>
   </div>
 </div>
 
 <div class="publish-footer">
-  <button class="btn-main" onclick="submitAttendance()">Submit Official Record</button>
+  <button class="btn-main" onclick="submitAttendance()">SUBMIT OFFICIAL RECORD</button>
 </div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 
 <script>
   let currentType = 'class';
   let manualCount = 0;
+  const API_URL = "https://fastapi-teachers.onrender.com";
 
-  // Simulated Database Records
-  const dbRecords = {
-    "10A": [
-      { id: "S101", name: "Ahmed Raza" },
-      { id: "S102", name: "Sara Khan" },
-      { id: "S103", name: "John Doe" }
-    ],
-    "9B": [
-      { id: "S905", name: "Zain Ali" },
-      { id: "S906", name: "Fatima Noor" }
-    ]
-  };
+  document.getElementById('att-date').valueAsDate = new Date();
+  fetchSections();
 
   function setType(type) {
     currentType = type;
@@ -164,49 +158,98 @@
     document.getElementById('header-title').innerText = type === 'class' ? 'Class Attendance' : 'Test Attendance';
   }
 
-  function fetchStudentsFromDB() {
-    const classID = document.getElementById('class-select').value;
+  async function fetchSections() {
+    try {
+      const res = await fetch(`${API_URL}/institution/sections`);
+      const sections = await res.json();
+      const select = document.getElementById('class-select');
+      const customOption = '<option value="CUSTOM_NEW" style="font-weight:bold;">+ ADD CUSTOM SECTION</option>';
+      select.innerHTML = '<option value="">Choose Section</option>' +
+              sections.map(s => `<option value="${s.id}">${s.name}</option>`).join('') +
+              customOption;
+    } catch (e) {
+      showNotify("Failed to fetch sections", "error");
+    }
+  }
+
+  function checkCustomSection(select) {
+    if (select.value === "CUSTOM_NEW") {
+      toggleSectionInput(true);
+    } else {
+      fetchStudents();
+    }
+  }
+
+  function toggleSectionInput(isCustom) {
+    const selectCont = document.getElementById('section-select-container');
+    const customCont = document.getElementById('section-custom-container');
     const list = document.getElementById('student-list');
-    list.innerHTML = '';
+
+    if (isCustom) {
+      selectCont.style.display = 'none';
+      customCont.style.display = 'block';
+      list.innerHTML = '<div style="text-align: center; color: #aaa; padding: 40px; font-size: 12px;">Custom Section Mode: Add students manually using the box below.</div>';
+      manualCount = 0;
+      updateSummary();
+    } else {
+      selectCont.style.display = 'block';
+      customCont.style.display = 'none';
+      document.getElementById('class-select').value = "";
+    }
+  }
+
+  async function fetchStudents() {
+    const sectionId = document.getElementById('class-select').value;
+    if (!sectionId || sectionId === "CUSTOM_NEW") return;
+
+    const list = document.getElementById('student-list');
+    list.innerHTML = '<div style="text-align:center; padding:20px;">Fetching Members...</div>';
     manualCount = 0;
 
-    if (dbRecords[classID]) {
-      dbRecords[classID].forEach(s => {
-        appendStudentRow(s.name, s.id, false);
-      });
-      showNotify(`Fetched ${dbRecords[classID].length} students from records.`, "green");
-    } else {
-      list.innerHTML = '<div style="text-align: center; color: #aaa; padding: 40px;">No records found for this class.</div>';
+    try {
+      const res = await fetch(`${API_URL}/institution/students/${sectionId}`);
+      const students = await res.json();
+      list.innerHTML = '';
+      students.forEach(s => appendStudentRow(s.name, s.father_name, s.id, false));
+      updateSummary();
+    } catch (e) {
+      showNotify("Error loading students", "error");
     }
-    updateSummary();
   }
 
   function addManualStudent() {
     const nameInput = document.getElementById('manual-name');
-    if (!nameInput.value) return showNotify("Enter name first", "error");
+    if (!nameInput.value) return showNotify("Name required", "error");
 
-    appendStudentRow(nameInput.value, "M-" + Date.now().toString().slice(-4), true);
+    appendStudentRow(nameInput.value, "Manual Entry", "M-" + Date.now().toString().slice(-4), true);
     nameInput.value = '';
     manualCount++;
     updateSummary();
-    showNotify("Manual student added to session.", "green");
+    showNotify("Temporary student added", "green");
   }
 
-  function appendStudentRow(name, id, isManual) {
+  function appendStudentRow(name, father, id, isManual) {
     const list = document.getElementById('student-list');
+    // Remove the "Custom Mode" placeholder if adding first student
+    if(list.innerText.includes("Custom Section Mode")) list.innerHTML = '';
+
     const div = document.createElement('div');
     div.className = 'student-item';
+    div.dataset.sid = id;
+    div.dataset.name = name;
+    div.dataset.manual = isManual;
+
     div.innerHTML = `
-            <div class="student-info">
-                <span class="student-name">${name} ${isManual ? '<span class="tag-manual">MANUAL</span>' : ''}</span>
-                <span class="student-id">ID: ${id}</span>
-            </div>
-            <div class="status-pill-group">
-                <div class="pill p active" onclick="setStatus(this, 'p')">P</div>
-                <div class="pill a" onclick="setStatus(this, 'a')">A</div>
-                <div class="pill l" onclick="setStatus(this, 'l')">L</div>
-            </div>
-        `;
+      <div class="student-info">
+        <span class="student-name">${name} ${isManual ? '<span class="tag-manual">MANUAL</span>' : ''}</span>
+        <span class="student-father">s/o ${father}</span>
+      </div>
+      <div class="status-pill-group">
+        <div class="pill p active" onclick="setStatus(this, 'p')">P</div>
+        <div class="pill a" onclick="setStatus(this, 'a')">A</div>
+        <div class="pill l" onclick="setStatus(this, 'l')">L</div>
+      </div>
+    `;
     list.appendChild(div);
   }
 
@@ -229,11 +272,46 @@
     setTimeout(() => bar.className = "", 3000);
   }
 
-  function submitAttendance() {
-    const classID = document.getElementById('class-select').value;
-    if(!classID) return showNotify("Select a class first", "error");
+  async function submitAttendance() {
+    const selectVal = document.getElementById('class-select').value;
+    const customName = document.getElementById('custom-section-name').value;
 
-    showNotify("Attendance record processed successfully!", "green");
+    if(!selectVal && !customName) return showNotify("Define a section first", "error");
+
+    const records = [];
+    document.querySelectorAll('.student-item').forEach(item => {
+      records.push({
+        student_id: item.dataset.sid,
+        student_name: item.dataset.name,
+        status: item.querySelector('.pill.active').innerText,
+        is_manual: item.dataset.manual === 'true'
+      });
+    });
+
+    if(records.length === 0) return showNotify("Add at least one student", "error");
+
+    const payload = {
+      section_id: selectVal === "CUSTOM_NEW" ? "MANUAL" : selectVal,
+      custom_section_name: customName || null,
+      date: document.getElementById('att-date').value,
+      type: currentType,
+      subject: document.getElementById('test-subject').value,
+      data: records
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/attendance/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if(res.ok) {
+        showNotify("Record Synced Successfully!", "green");
+        setTimeout(() => location.reload(), 2000);
+      }
+    } catch (e) {
+      showNotify("Network Error", "error");
+    }
   }
 </script>
 </body>
