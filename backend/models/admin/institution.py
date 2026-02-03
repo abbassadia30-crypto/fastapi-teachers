@@ -20,12 +20,12 @@ class Institution(Base):
     students = relationship("Student", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
-
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
-    institution_notices = relationship("Notice", back_populates="institution")
+    # ADDED: Completed relationships for all document types
+    notices = relationship("Notice", back_populates="institution")
     finance_templates = relationship("FinanceTemplate", back_populates="institution")
-    finance_transactions = relationship("Transaction", back_populates="institution")
+    transactions = relationship("Transaction", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -60,6 +60,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     role = Column(String, default="unassigned")
+    target_group = Column(String, nullable=True)
     is_verified = Column(Boolean, default=False)
     otp_code = Column(String, nullable=True)
     otp_created_at = Column(DateTime(timezone=True), nullable=True)
