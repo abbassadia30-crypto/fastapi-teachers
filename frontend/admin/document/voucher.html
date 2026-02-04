@@ -7,35 +7,33 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1b5e20; --secondary: #263238; --bg: #f8faf9; --border: #cfd8dc; --danger: #d32f2f; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: var(--secondary); }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: var(--secondary); overflow: hidden;}
 
         /* 🏛️ Notification Box */
         #sign-box { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 9999; font-weight: 700; display: none; }
         .sign-red { background: var(--danger); display: block !important; top: 20px !important; }
         .sign-green { background: var(--primary); display: block !important; top: 20px !important; }
 
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; flex-shrink: 0;}
         .workspace { flex: 1; overflow-y: auto; padding: 15px; }
 
-        /* Step Tabs */
-        .step-bar { display: flex; background: #eceff1; margin: 10px; border-radius: 12px; padding: 5px; }
+        .step-bar { display: flex; background: #eceff1; margin: 10px; border-radius: 12px; padding: 5px; flex-shrink: 0;}
         .step-tab { flex: 1; text-align: center; padding: 10px; font-size: 10px; font-weight: 800; border-radius: 8px; color: #78909c; }
         .step-tab.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .config-card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); }
         label { font-size: 10px; font-weight: 800; color: #546e7a; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box; background: white; }
 
-        /* Voucher List Tabs */
-        .voucher-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 15px; }
+        .voucher-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
         .v-tab { padding: 8px 15px; background: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 11px; white-space: nowrap; font-weight: 600; cursor: pointer; }
         .v-tab.selected { background: var(--primary); color: white; border-color: var(--primary); }
 
         .fee-row { display: grid; grid-template-columns: 2fr 1fr 30px; gap: 8px; margin-bottom: 8px; }
-        .btn-add-field { background: #e8f5e9; color: var(--primary); border: 2px dashed var(--primary); padding: 10px; border-radius: 10px; font-weight: 700; font-size: 11px; width: 100%; cursor: pointer; }
+        .btn-add-field { background: #e8f5e9; color: var(--primary); border: 2px dashed var(--primary); padding: 10px; border-radius: 10px; font-weight: 700; font-size: 11px; width: 100%; cursor: pointer; margin-bottom: 10px; }
 
-        .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-shrink: 0;}
         .btn-main { background: var(--primary); color: white; border: none; flex: 2; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
         .btn-back { background: #cfd8dc; color: #455a64; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; display: none; }
 
@@ -47,7 +45,7 @@
 <div id="sign-box"></div>
 
 <header>
-    <div onclick="history.back()" style="font-size:22px;">✕</div>
+    <div onclick="history.back()" style="font-size:22px; cursor: pointer;">✕</div>
     <span style="font-weight: 900; font-size: 14px; letter-spacing: 1px;">FINANCE ARCHITECT</span>
     <div style="width:22px;"></div>
 </header>
@@ -69,10 +67,9 @@
             </select>
 
             <div id="target-container">
-                <label id="target-label">Target Class</label>
+                <label id="target-label">Target Section</label>
                 <select id="target-group" onchange="checkManualTarget(this.value)">
-                    <option value="fetch">-- Loading Sections... --</option>
-                    <option value="manual_entry">[+] ENTER MANUALLY</option>
+                    <option value="">-- Select Section --</option>
                 </select>
                 <input type="text" id="manual-target" class="hidden" placeholder="Type Section/Dept Name...">
             </div>
@@ -82,12 +79,12 @@
         </div>
 
         <div class="config-card" id="base-template-card">
-            <label>Base Template (Charges/Earnings)</label>
+            <label>Base Template (Default Charges)</label>
             <div id="base-heads">
                 <div class="fee-row">
-                    <input type="text" placeholder="Description" class="h-name">
+                    <input type="text" placeholder="Description" class="h-name" value="Tuition Fee">
                     <input type="number" placeholder="Amount" class="h-amount">
-                    <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+                    <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
                 </div>
             </div>
             <button class="btn-add-field" onclick="addHeadRow('base-heads')">+ ADD CHARGE HEAD</button>
@@ -99,14 +96,14 @@
 
         <div class="config-card" id="editor-card">
             <label>Recipient Information</label>
-            <div id="recipient-fields">
-                <input type="text" id="edit-name" placeholder="Name">
+            <input type="text" id="edit-name" placeholder="Name">
+            <div style="display: flex; gap: 8px;">
                 <input type="text" id="edit-id" placeholder="ID / Roll No">
-                <input type="text" id="edit-parent" placeholder="Father Name">
                 <input type="text" id="edit-phone" placeholder="Phone">
             </div>
+            <input type="text" id="edit-parent" placeholder="Father Name">
 
-            <label>Voucher Particulars</label>
+            <label style="margin-top: 10px;">Voucher Particulars</label>
             <div id="edit-heads"></div>
             <button class="btn-add-field" onclick="addHeadRow('edit-heads')">+ ADD ADJUSTMENT</button>
         </div>
@@ -124,6 +121,7 @@
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
     let step = 1;
+    let allStudents = [];
     let drafts = [];
     let currentDraftIndex = 0;
 
@@ -155,10 +153,38 @@
         });
     }
 
-    // --- Logic 1: Fetching and Targeting ---
+    // --- Data Initialization ---
+    async function loadData() {
+        try {
+            const tokenRes = await AppStorage.get("institutionToken");
+            const token = tokenRes.value || tokenRes;
+            if(!token) return window.location.replace("../../index.html");
+
+            const res = await fetch(`${API_URL}/dashboard/my_students`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await res.json();
+            allStudents = data.students || data || [];
+
+            // Unique sections for dropdown
+            const activeSections = [...new Set(allStudents.map(s => s.section))].filter(Boolean);
+            const dropdown = document.getElementById('target-group');
+
+            dropdown.innerHTML = '<option value="">-- Select Section --</option>';
+            activeSections.forEach(sec => {
+                dropdown.innerHTML += `<option value="${sec}">${sec}</option>`;
+            });
+            dropdown.innerHTML += `<option value="manual_entry">[+] ENTER MANUALLY</option>`;
+
+        } catch (e) {
+            showNotify("Institutional Sync Failed", "error");
+        }
+    }
+
     function toggleCustomMode() {
         const mode = document.getElementById('mode-select').value;
-        document.getElementById('target-label').innerText = mode === 'staff' ? 'Department' : 'Target Class';
+        document.getElementById('target-label').innerText = mode === 'staff' ? 'Department' : 'Target Section';
         document.getElementById('base-template-card').classList.toggle('hidden', mode === 'custom');
     }
 
@@ -170,42 +196,30 @@
     async function generateDrafts() {
         const mode = document.getElementById('mode-select').value;
         const target = document.getElementById('target-group').value;
-        const manualTarget = document.getElementById('manual-target').value;
         const billing = document.getElementById('billing-period').value;
 
-        if (!billing) return showNotify("Please select a billing period", "error");
+        if (!billing) return showNotify("Select billing period", "error");
+        if (mode !== 'custom' && !target) return showNotify("Select a target section", "error");
 
-        // Prepare Base Heads
         const baseHeads = Array.from(document.querySelectorAll('#base-heads .fee-row')).map(r => ({
-            name: r.querySelector('.h-name').value,
+            name: r.querySelector('.h-name').value || "Unnamed Head",
             amount: parseFloat(r.querySelector('.h-amount').value) || 0
         }));
 
         if (mode === 'custom') {
             drafts = [{ name: "New Entry", id: "", parent: "", phone: "", heads: [] }];
         } else {
-            showNotify("Fetching Members...", "success");
-            try {
-                const tokenRes = await AppStorage.get("institutionToken");
-                const token = tokenRes.value || tokenRes;
-                const endpoint = mode === 'student' ? `/institution/students/${target}` : `/institution/staff/${target}`;
+            // Filter from memory cache
+            const members = allStudents.filter(s => s.section === target);
+            if (members.length === 0) return showNotify("No members found", "error");
 
-                const res = await fetch(`${API_URL}${endpoint}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const members = await res.json();
-
-                drafts = members.map(m => ({
-                    db_id: m.id,
-                    name: m.name,
-                    id: m.roll_no || m.staff_id || "",
-                    parent: m.father_name || "",
-                    phone: m.phone || "",
-                    heads: JSON.parse(JSON.stringify(baseHeads)) // Deep copy
-                }));
-            } catch (e) {
-                return showNotify("Connection Failed", "error");
-            }
+            drafts = members.map(m => ({
+                name: m.name,
+                id: m.roll_no || m.id || "N/A",
+                parent: m.father_name || "",
+                phone: m.phone || "",
+                heads: JSON.parse(JSON.stringify(baseHeads))
+            }));
         }
 
         step = 2;
@@ -219,20 +233,19 @@
         const container = document.getElementById('draft-tabs');
         container.innerHTML = drafts.map((d, i) => `
             <div class="v-tab ${i === 0 ? 'selected' : ''}" onclick="selectDraft(${i})" id="tab-v-${i}">
-                ${d.name || 'Unnamed'}
+                ${d.name || 'Draft'}
             </div>
         `).join('');
     }
 
     function selectDraft(index) {
-        // Save current draft before switching
         saveCurrentToMemory();
-
         currentDraftIndex = index;
         const d = drafts[index];
 
         document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('selected'));
-        document.getElementById(`tab-v-${index}`).classList.add('selected');
+        const activeTab = document.getElementById(`tab-v-${index}`);
+        if(activeTab) activeTab.classList.add('selected');
 
         document.getElementById('edit-name').value = d.name;
         document.getElementById('edit-id').value = d.id;
@@ -244,13 +257,13 @@
             <div class="fee-row">
                 <input type="text" value="${h.name}" class="h-name">
                 <input type="number" value="${h.amount}" class="h-amount">
-                <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+                <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
             </div>
         `).join('');
     }
 
     function saveCurrentToMemory() {
-        if (drafts.length === 0) return;
+        if (drafts.length === 0 || step !== 2) return;
         const d = drafts[currentDraftIndex];
         d.name = document.getElementById('edit-name').value;
         d.id = document.getElementById('edit-id').value;
@@ -262,7 +275,8 @@
             amount: parseFloat(r.querySelector('.h-amount').value) || 0
         }));
 
-        document.getElementById(`tab-v-${currentDraftIndex}`).innerText = d.name;
+        const tab = document.getElementById(`tab-v-${currentDraftIndex}`);
+        if(tab) tab.innerText = d.name || "Draft";
     }
 
     function addHeadRow(containerId) {
@@ -271,7 +285,7 @@
         div.innerHTML = `
             <input type="text" placeholder="Description" class="h-name">
             <input type="number" placeholder="Amount" class="h-amount">
-            <div style="color:var(--danger); font-weight:900;" onclick="this.parentElement.remove()">✕</div>
+            <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
         `;
         document.getElementById(containerId).appendChild(div);
     }
@@ -279,7 +293,10 @@
     async function finalizeDeployment() {
         saveCurrentToMemory();
         const btn = document.getElementById('btn-next');
-        const selectedMode = document.getElementById('mode-select').value; // <--- ADD THIS
+        const mode = document.getElementById('mode-select').value;
+
+        btn.disabled = true;
+        btn.innerText = "SYNCING WITH RENDER...";
 
         try {
             const tokenRes = await AppStorage.get("institutionToken");
@@ -287,32 +304,30 @@
 
             const res = await fetch(`${API_URL}/document/finance/deploy-bulk`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     billing_period: document.getElementById('billing-period').value,
-                    mode: selectedMode, // <--- ADD THIS LINE
+                    mode: mode,
                     vouchers: drafts
                 })
             });
 
             if (res.ok) {
-                showNotify("All Vouchers Processed!", "success");
+                showNotify("Vouchers Deployed Successfully", "success");
                 setTimeout(() => location.reload(), 2000);
             } else {
-                const errData = await res.json();
-                console.log("Validation Error Details:", errData);
                 showNotify("Server rejected data format", "error");
+                btn.disabled = false;
+                btn.innerText = "DEPLOY VOUCHERS";
             }
         } catch (e) {
-            showNotify("Deployment Failed", "error");
-        } finally {
+            showNotify("Sync Failed: Check Connection", "error");
             btn.disabled = false;
-            btn.innerText = "DEPLOY VOUCHERS";
         }
     }
+
+    // Init
+    loadData();
 </script>
 
 </body>

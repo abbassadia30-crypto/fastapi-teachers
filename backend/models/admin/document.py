@@ -158,12 +158,11 @@ class IndividualAttendance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     institution_id = Column(String, ForeignKey("institutions.institution_id"))
-    student_id = Column(Integer, ForeignKey("students.id"), index=True)
+    student_id = Column(String, ForeignKey("students.id"), index=True)
     log_id = Column(Integer, ForeignKey("attendance_logs.id"))
     status = Column(String)
     date = Column(Date, index=True)
 
-    student = relationship("Student", back_populates="attendance_records")
+    student = relationship("Student")
     parent_log = relationship("AttendanceLog")
-    # CORRECTED: Changed back_populates to use the plural form to match the Institution model
-    institution = relationship("Institution", back_populates="individual_attendances")
+    institution = relationship("Institution", back_populates="individual_attendance")
