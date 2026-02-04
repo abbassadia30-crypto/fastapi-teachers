@@ -103,7 +103,7 @@ class Voucher(Base):
 class AcademicResult(Base):
     __tablename__ = "academic_results"
 
-    id = Column(Integer, primary_key=Tire, index=True)
+    id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
 
     exam_title = Column(String, nullable=False)
