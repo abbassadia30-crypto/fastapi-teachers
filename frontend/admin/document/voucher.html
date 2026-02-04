@@ -279,8 +279,7 @@
     async function finalizeDeployment() {
         saveCurrentToMemory();
         const btn = document.getElementById('btn-next');
-        btn.disabled = true;
-        btn.innerText = "DEPLOYING...";
+        const selectedMode = document.getElementById('mode-select').value; // <--- ADD THIS
 
         try {
             const tokenRes = await AppStorage.get("institutionToken");
@@ -288,9 +287,13 @@
 
             const res = await fetch(`${API_URL}/document/finance/deploy-bulk`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     billing_period: document.getElementById('billing-period').value,
+                    mode: selectedMode, // <--- ADD THIS LINE
                     vouchers: drafts
                 })
             });
@@ -299,10 +302,13 @@
                 showNotify("All Vouchers Processed!", "success");
                 setTimeout(() => location.reload(), 2000);
             } else {
-                throw new Error();
+                const errData = await res.json();
+                console.log("Validation Error Details:", errData);
+                showNotify("Server rejected data format", "error");
             }
         } catch (e) {
             showNotify("Deployment Failed", "error");
+        } finally {
             btn.disabled = false;
             btn.innerText = "DEPLOY VOUCHERS";
         }
