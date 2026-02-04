@@ -165,4 +165,5 @@ class IndividualAttendance(Base):
 
     student = relationship("Student", back_populates="attendance_records")
     parent_log = relationship("AttendanceLog")
-    institution = relationship("Institution", back_populates="individual_attendance")
+    # CORRECTED: Changed back_populates to use the plural form to match the Institution model
+    institution = relationship("Institution", back_populates="individual_attendances")
