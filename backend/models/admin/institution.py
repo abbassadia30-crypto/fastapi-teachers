@@ -74,3 +74,5 @@ class User(Base):
                                      foreign_keys=[Institution.owner_id], uselist=False)
     profile = relationship("Profile", back_populates="owner", uselist=False)
     employed_at = relationship("Institution", foreign_keys=[institution_id])
+    # ADDED: Relationship to Transaction
+    transactions = relationship("Transaction", back_populates="user")
