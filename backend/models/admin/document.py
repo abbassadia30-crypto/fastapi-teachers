@@ -75,6 +75,8 @@ class Transaction(Base):
     voucher_no = Column(String, unique=True)
 
     institution = relationship("Institution", back_populates="transactions")
+    # ADDED: Relationship to User
+    user = relationship("User", back_populates="transactions")
 
 class Voucher(Base):
     __tablename__ = "vouchers"
@@ -101,7 +103,7 @@ class Voucher(Base):
 class AcademicResult(Base):
     __tablename__ = "academic_results"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, primary_key=Tire, index=True)
     institution_ref = Column(String, ForeignKey("institutions.institution_id"))
 
     exam_title = Column(String, nullable=False)
@@ -165,4 +167,4 @@ class IndividualAttendance(Base):
 
     student = relationship("Student")
     parent_log = relationship("AttendanceLog")
-    institution = relationship("Institution", back_populates="individual_attendance")
+    institution = relationship("Institution", back_populates="individual_attendances")
