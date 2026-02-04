@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Datesheet Vault | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #fb8c00; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+        /* 🔔 Notifier */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🏛️ Selection Header (Swaps when active) */
+        #selectionHeader {
+            display: none; background: var(--secondary); color: white; position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1000;
+        }
+
+        .controls { margin-bottom: 20px; margin-top: 10px; }
+        .search-bar {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+
+        /* 🗂️ Grid & Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 15px; }
+
+        .card {
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 2px solid transparent;
+        }
+
+        /* 🔵 Selection Dot */
+        .select-dot {
+            display: none; position: absolute; top: 10px; left: 10px;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd;
+            background: white;
+        }
+        .card.selected { border-color: var(--primary); background: #fff8e1; }
+        .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
+
+        .selection-active .select-dot { display: block; }
+
+        .icon-circle {
+            width: 50px; height: 50px; background: #fff3e0; color: var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-size: 24px;
+        }
+
+        .card-tag { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; }
+        .card-title { margin: 5px 0; font-size: 13px; font-weight: 700; color: #333; }
+
+        /* 📄 Full Screen View */
+        #fullView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 10000; display: none; flex-direction: column;
+        }
+        .view-header { padding: 15px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .view-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* 🛠️ Three-Dot Floating Menu */
+        #menuFAB {
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white; border: none;
+            font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 500;
+        }
+        .dot-menu {
+            position: fixed; bottom: 95px; right: 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1000; width: 220px;
+        }
+        .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); }
+
+        .action-row { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-edit { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
+        .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div id="selectionHeader">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="exitSelection()" style="font-size: 24px;">✕</span>
+        <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span onclick="selectAll()" style="font-size: 11px; font-weight: 800;">SELECT ALL</span>
+        <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80;">🗑️</span>
+    </div>
+</div>
+
+<div class="header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+    <h2 style="margin:0; font-weight: 800;">📅 Datesheets</h2>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+        <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+    </div>
+</div>
+
+<div class="controls">
+    <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Find Datesheet..." oninput="renderGrid()">
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+    <div class="menu-item" onclick="handleImport('chat')">💬 Import to Institution Chat</div>
+    <div class="menu-item" onclick="handleImport('translate')">🌐 Import to Translate</div>
+    <div class="menu-item" onclick="handleImport('export')">📤 Bulk Export JSON</div>
+</div>
+
+<div id="fullView">
+    <div class="view-header">
+        <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+        <span id="viewHeaderTitle" style="font-weight: 800; font-size: 14px;">EXAM SCHEDULE</span>
+        <div style="width:24px;"></div>
+    </div>
+    <div class="view-body">
+        <div id="templateContent"></div>
+        <div class="action-row">
+            <button class="btn-edit" onclick="editCurrent()">EDIT SCHEDULE</button>
+            <button class="btn-export" onclick="exportCurrent()">EXPORT PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isSelectionMode = false;
+    let selectedIds = new Set();
+    let datesheetVault = [
+        { id: 501, title: "Final Term 2026", target: "10th Grade", date: "2026-03-01" },
+        { id: 502, title: "First Mid-Term", target: "8th Grade", date: "2026-02-15" }
+    ];
+
+    function renderGrid() {
+        const grid = document.getElementById('sectionGrid');
+        grid.innerHTML = datesheetVault.map(ds => `
+            <div class="card ${selectedIds.has(ds.id) ? 'selected' : ''}" onclick="handleCardClick(${ds.id}, this)">
+                <div class="select-dot"></div>
+                <div class="icon-circle">📅</div>
+                <span class="card-tag">${ds.target}</span>
+                <span class="card-title">${ds.title}</span>
+                <div style="font-size:10px; color:#999;">${ds.date}</div>
+            </div>
+        `).join('');
+    }
+
+    function handleCardClick(id, el) {
+        if (isSelectionMode) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            el.classList.toggle('selected');
+            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        } else {
+            openFullView(id);
+        }
+    }
+
+    function enterSelectionMode() {
+        isSelectionMode = true;
+        document.body.classList.add('selection-active');
+        document.getElementById('selectionHeader').style.display = 'flex';
+        document.getElementById('menuFAB').style.display = 'block';
+    }
+
+    function exitSelection() {
+        isSelectionMode = false;
+        selectedIds.clear();
+        document.body.classList.remove('selection-active');
+        document.getElementById('selectionHeader').style.display = 'none';
+        document.getElementById('menuFAB').style.display = 'none';
+        document.getElementById('importMenu').style.display = 'none';
+        renderGrid();
+    }
+
+    function selectAll() {
+        datesheetVault.forEach(ds => selectedIds.add(ds.id));
+        renderGrid();
+        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+    }
+
+    function toggleMenu() {
+        const m = document.getElementById('importMenu');
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function openFullView(id) {
+        const ds = datesheetVault.find(i => i.id === id);
+        document.getElementById('viewHeaderTitle').innerText = ds.title;
+        document.getElementById('templateContent').innerHTML = `
+            <div style="border:2px solid #333; padding:20px; border-radius:5px;">
+                <h3 style="text-align:center; margin-top:0;">INSTITUTION DATESHEET</h3>
+                <hr>
+                <p><strong>Title:</strong> ${ds.title}</p>
+                <p><strong>Class:</strong> ${ds.target}</p>
+                <p><strong>Official Release:</strong> ${ds.date}</p>
+                <p style="color:#666; font-size:12px;">This is a system-generated official document of the institution vault.</p>
+            </div>
+        `;
+        document.getElementById('fullView').style.display = 'flex';
+    }
+
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
+
+    function notify(msg, type) {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'red' ? '#c62828' : '#2e7d32';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    function confirmBulkDelete() {
+        if (selectedIds.size === 0) return;
+        if(confirm(`Erase ${selectedIds.size} datesheets?`)) {
+            datesheetVault = datesheetVault.filter(ds => !selectedIds.has(ds.id));
+            notify(`Deleted ${selectedIds.size} records`, 'red');
+            exitSelection();
+        }
+    }
+
+    function handleImport(type) {
+        notify(`Importing ${selectedIds.size} docs to ${type}...`, 'green');
+        toggleMenu();
+        exitSelection();
+    }
+
+    function editCurrent() { notify("Opening Editor...", "green"); }
+    function exportCurrent() { notify("Exporting PDF...", "green"); }
+
+    renderGrid();
+</script>
+</body>
+</html>

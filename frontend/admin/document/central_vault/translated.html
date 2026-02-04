@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Translation Vault | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #4527a0; --bg: #f4f4f9; --text: #2c3e50; --white: #ffffff; --secondary: #311b92; --accent: #7e57c2; --print-btn: #37474f; }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+        /* 🔔 Notifier Box */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 10002;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🏛️ Vault Headers */
+        #selectionHeader {
+            display: none; background: var(--secondary); color: white; position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* 🔎 Search & Language Filter */
+        .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .search-bar {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+        .filter-row { display: flex; gap: 10px; }
+        .lang-select {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+            font-size: 12px; font-family: inherit; background: white;
+        }
+
+        /* 🗂️ Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .card {
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 2px solid transparent;
+        }
+        .select-dot {
+            display: none; position: absolute; top: 10px; left: 10px;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd; background: white;
+        }
+        .card.selected { border-color: var(--primary); background: #f3e5f5; }
+        .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
+        .selection-active .select-dot { display: block; }
+
+        /* 📄 Full View Expansion */
+        #fullView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 10000; display: none; flex-direction: column;
+        }
+        .view-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* 📋 Translation Logic Styling */
+        .doc-comparison { display: flex; flex-direction: column; gap: 15px; }
+        .lang-pane { background: white; padding: 15px; border-radius: 15px; border-top: 4px solid var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .lang-label { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; margin-bottom: 5px; display: block; }
+        .content-area { font-size: 13px; line-height: 1.6; min-height: 80px; }
+
+        /* 🔘 Action Buttons (Print & Re-Translate) */
+        .action-bar { display: flex; gap: 12px; margin-top: 20px; padding-bottom: 20px; }
+        .btn-print { flex: 1; background: var(--print-btn); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-retranslate { flex: 1; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
+
+        /* 🛠️ Three Dot Menu */
+        #menuFAB {
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white; border: none;
+            font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001;
+        }
+        .dot-menu {
+            position: fixed; bottom: 95px; right: 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
+        }
+        .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div id="selectionHeader">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="exitSelection()" style="font-size: 24px; cursor:pointer;">✕</span>
+        <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span onclick="selectAll()" style="font-size: 11px; font-weight: 800; cursor:pointer;">SELECT ALL</span>
+        <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80; cursor:pointer;">🗑️</span>
+    </div>
+</div>
+
+<div class="header">
+    <h2 style="margin:0; font-weight: 800;">🌍 Translated Docs</h2>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+        <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+    </div>
+</div>
+
+<div class="controls">
+    <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Search document name..." oninput="applyFilters()">
+    <div class="filter-row">
+        <select id="langFilter" class="lang-select" onchange="applyFilters()">
+            <option value="">All Languages</option>
+            <option value="English">English</option>
+            <option value="Urdu">Urdu</option>
+            <option value="Arabic">Arabic</option>
+        </select>
+    </div>
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+    <div class="menu-item" onclick="handleMenuAction('notary')">📜 Notary Verification</div>
+    <div class="menu-item" onclick="handleMenuAction('cloud')">☁️ Upload Translation</div>
+    <div class="menu-item" onclick="handleMenuAction('pdf')">📤 Export Bilingual PDF</div>
+</div>
+
+<div id="fullView">
+    <div class="header" style="padding: 20px 20px 10px; border-bottom: 1px solid #eee;">
+        <div>
+            <h2 id="viewTitle" style="margin:0; font-weight: 800; font-size: 16px;">Document</h2>
+            <span id="docCategory" style="font-size: 10px; font-weight: 700; color: var(--accent);"></span>
+        </div>
+        <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+    </div>
+
+    <div class="view-body">
+        <div id="translationContent" class="doc-comparison"></div>
+
+        <div class="action-bar">
+            <button class="btn-print" onclick="printDocument()"><span>🖨️</span> PRINT DOC</button>
+            <button class="btn-retranslate" onclick="retranslateDocument()"><span>🔄</span> RE-TRANSLATE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isSelectionMode = false;
+    let selectedIds = new Set();
+
+    let translatedVault = [
+        { id: 801, title: "Birth Certificate", lang: "Urdu", cat: "Official", source: "This is a certified birth record.", target: "یہ ایک تصدیق شدہ پیدائشی ریکارڈ ہے۔" },
+        { id: 802, title: "Leaving Certificate", lang: "Arabic", cat: "Academic", source: "Character certificate for graduation.", target: "شهادة حسن سير وسلوك للتخرج." },
+        { id: 803, title: "Staff ID Template", lang: "English", cat: "Identity", source: "Official Institution Identity Card.", target: "Official Institution Identity Card." },
+        { id: 804, title: "Institution Charter", lang: "Urdu", cat: "Legal", source: "Rules and Regulations of Institution.", target: "ادارے کے قواعد و ضوابط۔" }
+    ];
+
+    function renderGrid(data = translatedVault) {
+        const grid = document.getElementById('sectionGrid');
+        grid.innerHTML = data.map(item => `
+      <div class="card ${selectedIds.has(item.id) ? 'selected' : ''}" onclick="handleCardClick(${item.id}, this)">
+        <div class="select-dot"></div>
+        <div style="font-size: 24px;">🌐</div>
+        <span style="font-size:10px; font-weight:800; color:var(--primary);">${item.lang}</span>
+        <span style="display:block; font-size:13px; font-weight:700;">${item.title}</span>
+      </div>
+    `).join('');
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('vaultSearch').value.toLowerCase();
+        const l = document.getElementById('langFilter').value;
+        const filtered = translatedVault.filter(item => {
+            const matchText = item.title.toLowerCase().includes(q);
+            const matchLang = !l || item.lang === l;
+            return matchText && matchLang;
+        });
+        renderGrid(filtered);
+    }
+
+    function handleCardClick(id, el) {
+        if (isSelectionMode) {
+            selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+            el.classList.toggle('selected');
+            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        } else {
+            openFullView(translatedVault.find(r => r.id === id));
+        }
+    }
+
+    function openFullView(doc) {
+        document.getElementById('viewTitle').innerText = doc.title;
+        document.getElementById('docCategory').innerText = doc.cat;
+        document.getElementById('fullView').style.display = 'flex';
+
+        renderComparison(doc);
+    }
+
+    function renderComparison(doc) {
+        const container = document.getElementById('translationContent');
+        container.innerHTML = `
+      <div class="lang-pane">
+        <span class="lang-label">Original Content</span>
+        <div class="content-area">${doc.source}</div>
+      </div>
+      <div class="lang-pane">
+        <span class="lang-label">Target Translation (${doc.lang})</span>
+        <div class="content-area" dir="${doc.lang === 'Urdu' || doc.lang === 'Arabic' ? 'rtl' : 'ltr'}">${doc.target}</div>
+      </div>
+    `;
+    }
+
+    function printDocument() {
+        notify("Formatting for Institution Printer...", "green");
+    }
+
+    function retranslateDocument() {
+        notify("Syncing with Translation Engine...", "green");
+        setTimeout(() => notify("Document Re-translated Successfully", "green"), 1500);
+    }
+
+    function toggleMenu() {
+        const m = document.getElementById('importMenu');
+        m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function enterSelectionMode() {
+        isSelectionMode = true;
+        document.getElementById('selectionHeader').style.display = 'flex';
+        document.getElementById('menuFAB').style.display = 'block';
+    }
+
+    function exitSelection() {
+        isSelectionMode = false;
+        selectedIds.clear();
+        document.getElementById('selectionHeader').style.display = 'none';
+        document.getElementById('menuFAB').style.display = 'none';
+        renderGrid();
+    }
+
+    function notify(msg, type = 'green') {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'red' ? '#c62828' : '#4527a0';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
+    function handleMenuAction(a) { notify("Processing " + a + "..."); toggleMenu(); }
+
+    renderGrid();
+</script>
+</body>
+</html>

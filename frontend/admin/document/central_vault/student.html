@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Attendance Vault | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0288d1; --bg: #f0f2f5; --present: #2e7d32; --absent: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; --accent: #03a9f4; }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+        /* 🔔 Notifier Box */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 10002;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🏛️ Vault Headers */
+        #selectionHeader {
+            display: none; background: var(--secondary); color: white; position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* 🔎 Search & Date Filter */
+        .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .search-bar {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+        .filter-row { display: flex; gap: 10px; }
+        .date-input {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+            font-size: 12px; font-family: inherit; background: white;
+        }
+
+        /* 🗂️ Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .card {
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 2px solid transparent;
+        }
+        .select-dot {
+            display: none; position: absolute; top: 10px; left: 10px;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd; background: white;
+        }
+        .card.selected { border-color: var(--primary); background: #e1f5fe; }
+        .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
+        .selection-active .select-dot { display: block; }
+
+        /* 📄 Full View Expansion */
+        #fullView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 10000; display: none; flex-direction: column;
+        }
+        .view-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* 📋 Attendance List Styling */
+        .stats-card {
+            background: var(--secondary); color: white; border-radius: 20px;
+            padding: 20px; display: flex; justify-content: space-between; margin-bottom: 20px;
+        }
+        .student-row {
+            background: white; padding: 15px; border-radius: 15px; margin-bottom: 10px;
+            display: flex; align-items: center; justify-content: space-between; border-left: 5px solid #ddd;
+        }
+        .student-row.present { border-left-color: var(--present); background: #e8f5e9; }
+        .student-row.absent { border-left-color: var(--absent); background: #ffebee; }
+
+        /* 🔘 Edit Mode Elements */
+        #editActionBar { display: none; gap: 15px; margin-top: 20px; padding-bottom: 20px; }
+        .btn-save { flex: 2; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; }
+        .btn-msg { flex: 1; background: #eceff1; color: var(--secondary); border: none; border-radius: 12px; font-size: 20px; }
+        .btn-toggle-edit { width: 100%; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; margin-top: 10px; }
+
+        /* 🛠️ Three Dot Menu */
+        #menuFAB {
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white; border: none;
+            font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1001;
+        }
+        .dot-menu {
+            position: fixed; bottom: 95px; right: 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
+        }
+        .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div id="selectionHeader">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="exitSelection()" style="font-size: 24px; cursor:pointer;">✕</span>
+        <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span onclick="selectAll()" style="font-size: 11px; font-weight: 800; cursor:pointer;">SELECT ALL</span>
+        <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80; cursor:pointer;">🗑️</span>
+    </div>
+</div>
+
+<div class="header">
+    <h2 style="margin:0; font-weight: 800;">📅 Attendance Vault</h2>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+        <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+    </div>
+</div>
+
+<div class="controls">
+    <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Search class name (e.g. 10th)..." oninput="applyFilters()">
+    <div class="filter-row">
+        <input type="date" id="dateFilter" class="date-input" onchange="applyFilters()">
+    </div>
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+    <div class="menu-item" onclick="handleMenuAction('monthly')">📊 Export Monthly Report</div>
+    <div class="menu-item" onclick="handleMenuAction('cloud')">☁️ Sync to Institution Cloud</div>
+    <div class="menu-item" onclick="handleMenuAction('pdf')">📤 Bulk PDF Attendance</div>
+</div>
+
+<div id="fullView">
+    <div class="header" style="padding: 20px 20px 10px; border-bottom: 1px solid #eee;">
+        <div>
+            <h2 id="viewTitle" style="margin:0; font-weight: 800; font-size: 18px;">Register</h2>
+            <span id="currentDateDisp" style="font-size: 11px; font-weight: 600; color: #888;"></span>
+        </div>
+        <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+    </div>
+
+    <div class="view-body">
+        <div class="stats-card" id="statsArea">
+            <div style="text-align:center;"><span id="totalCount" style="display:block; font-size:20px; font-weight:800;">0</span><small>STUDENTS</small></div>
+            <div style="text-align:center; color:#81c784;"><span id="presentCount" style="display:block; font-size:20px; font-weight:800;">0</span><small>PRESENT</small></div>
+            <div style="text-align:center; color:#ff8a80;"><span id="absentCount" style="display:block; font-size:20px; font-weight:800;">0</span><small>ABSENT</small></div>
+        </div>
+
+        <div id="listContainer"></div>
+
+        <button class="btn-toggle-edit" id="editToggleBtn" onclick="enableEditing()">EDIT ATTENDANCE</button>
+
+        <div id="editActionBar">
+            <button class="btn-msg" onclick="sendAbsentAlerts()">💬</button>
+            <button class="btn-save" onclick="saveAttendance()">SUBMIT CHANGES</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isSelectionMode = false;
+    let isEditing = false;
+    let selectedIds = new Set();
+
+    let attendanceHistory = [
+        { id: 501, class: "10th-A", date: "2026-02-04", status: "Completed" },
+        { id: 502, class: "9th-B", date: "2026-02-04", status: "Pending" },
+        { id: 503, class: "10th-A", date: "2026-02-03", status: "Completed" }
+    ];
+
+    let students = [
+        { id: 1, name: "Zeeshan Haider", roll: "101", status: "p" },
+        { id: 2, name: "Ayesha Ahmed", roll: "102", status: "p" },
+        { id: 3, name: "Bilal Khan", roll: "103", status: "a" },
+        { id: 4, name: "Dua Fatima", roll: "104", status: "p" }
+    ];
+
+    function renderGrid(data = attendanceHistory) {
+        const grid = document.getElementById('sectionGrid');
+        grid.innerHTML = data.map(item => `
+      <div class="card ${selectedIds.has(item.id) ? 'selected' : ''}" onclick="handleCardClick(${item.id}, this)">
+        <div class="select-dot"></div>
+        <div style="font-size: 24px;">📅</div>
+        <span style="font-size:10px; font-weight:800; color:var(--primary);">${item.class}</span>
+        <span style="display:block; font-size:13px; font-weight:700;">${item.date}</span>
+      </div>
+    `).join('');
+    }
+
+    function applyFilters() {
+        const q = document.getElementById('vaultSearch').value.toLowerCase();
+        const d = document.getElementById('dateFilter').value;
+        const filtered = attendanceHistory.filter(item => {
+            const matchText = item.class.toLowerCase().includes(q);
+            const matchDate = !d || item.date === d;
+            return matchText && matchDate;
+        });
+        renderGrid(filtered);
+    }
+
+    function handleCardClick(id, el) {
+        if (isSelectionMode) {
+            selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+            el.classList.toggle('selected');
+            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        } else {
+            openFullView(attendanceHistory.find(r => r.id === id));
+        }
+    }
+
+    function openFullView(record) {
+        isEditing = false;
+        document.getElementById('viewTitle').innerText = record.class;
+        document.getElementById('currentDateDisp').innerText = record.date;
+        document.getElementById('fullView').style.display = 'flex';
+        document.getElementById('editActionBar').style.display = 'none';
+        document.getElementById('editToggleBtn').style.display = 'block';
+        loadStudents();
+    }
+
+    function enableEditing() {
+        isEditing = true;
+        document.getElementById('editToggleBtn').style.display = 'none';
+        document.getElementById('editActionBar').style.display = 'flex';
+        loadStudents();
+        notify("Editing Mode Active", "green");
+    }
+
+    function loadStudents() {
+        const container = document.getElementById('listContainer');
+        container.innerHTML = students.map(s => `
+      <div class="student-row ${s.status === 'p' ? 'present' : 'absent'}">
+        <div class="student-info">
+          <span class="st-name">${s.name}</span>
+          <span class="st-roll">Roll: ${s.roll}</span>
+        </div>
+        ${isEditing ? `
+          <button class="status-btn ${s.status === 'p' ? 'btn-p' : 'btn-a'}"
+                  style="padding:8px; border-radius:8px; border:none; color:white; font-weight:800; width:80px;"
+                  onclick="toggleStatus(${s.id})">
+            ${s.status === 'p' ? 'PRESENT' : 'ABSENT'}
+          </button>
+        ` : `<span style="font-weight:800; font-size:12px; color:${s.status==='p'?'green':'red'}">${s.status==='p'?'PRESENT':'ABSENT'}</span>`}
+      </div>
+    `).join('');
+        updateStats();
+    }
+
+    function toggleStatus(id) {
+        const s = students.find(item => item.id === id);
+        s.status = (s.status === 'p') ? 'a' : 'p';
+        loadStudents();
+    }
+
+    function updateStats() {
+        document.getElementById('totalCount').innerText = students.length;
+        document.getElementById('presentCount').innerText = students.filter(s => s.status === 'p').length;
+        document.getElementById('absentCount').innerText = students.filter(s => s.status === 'a').length;
+    }
+
+    function toggleMenu() {
+        const m = document.getElementById('importMenu');
+        m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+    }
+
+    function enterSelectionMode() {
+        isSelectionMode = true;
+        document.getElementById('selectionHeader').style.display = 'flex';
+        document.getElementById('menuFAB').style.display = 'block';
+    }
+
+    function exitSelection() {
+        isSelectionMode = false;
+        selectedIds.clear();
+        document.getElementById('selectionHeader').style.display = 'none';
+        document.getElementById('menuFAB').style.display = 'none';
+        renderGrid();
+    }
+
+    function notify(msg, type = 'green') {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'red' ? '#c62828' : '#0288d1';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    function saveAttendance() {
+        notify("Changes Saved Successfully");
+        closeFullView();
+    }
+
+    function sendAbsentAlerts() {
+        notify("Parent SMS Alerts Dispatched", "green");
+    }
+
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
+    function handleMenuAction(a) { notify("Generating " + a + " report..."); toggleMenu(); }
+
+    renderGrid();
+</script>
+</body>
+</html>

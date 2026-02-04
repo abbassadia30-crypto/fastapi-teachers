@@ -2,55 +2,215 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chat Hub - Institution</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Chat Hub | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #0288d1; --secondary: #263238; --accent: #00bcd4; --bg: #f0f2f5; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-        header { padding: 30px 20px 10px; text-align: center; }
-        h1 { color: var(--secondary); margin: 0; font-size: 24px; }
-        p { color: #666; font-size: 14px; }
-        .admin-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 20px; flex: 1; overflow-y: auto; padding-bottom: 100px; }
-        .menu-card { background: white; border-radius: 20px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-decoration: none; color: var(--secondary); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); border: 1px solid rgba(255,255,255,0.3); cursor: pointer; }
-        .menu-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(2, 136, 209, 0.2); border-color: var(--primary); }
-        .icon { font-size: 32px; margin-bottom: 10px; background: #e3f2fd; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 15px; }
-        .menu-card span { font-size: 13px; font-weight: 600; text-align: center; }
-        .bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95); backdrop-filter: blur(10px); height: 70px; border-radius: 25px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000; }
-        .nav-item { color: #b0bec5; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 10px; }
-        .nav-item.active { color: white; }
+        :root {
+            --primary: #0288d1;
+            --secondary: #263238;
+            --accent: #00bcd4;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --success: #2e7d32;
+            --error: #c62828;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            color: var(--secondary);
+        }
+
+        /* 🔔 Notifier Box (Real App Standard) */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        header {
+            padding: 40px 25px 15px;
+            background: var(--white);
+            border-bottom: 1px solid #e2e8f0;
+        }
+        h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+        .sub-header { color: #64748b; font-size: 13px; font-weight: 500; }
+
+        /* 🔎 Live Filter Search */
+        .search-container {
+            padding: 10px 20px;
+            background: var(--white);
+        }
+        .search-box {
+            width: 100%; padding: 12px 15px; border-radius: 12px;
+            border: 1.5px solid #eee; font-family: inherit; font-size: 14px;
+            outline: none; transition: 0.3s; box-sizing: border-box;
+        }
+        .search-box:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 136, 209, 0.1); }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 120px;
+        }
+
+        .menu-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: var(--secondary);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            transition: all 0.2s ease;
+            border: 1px solid #f1f5f9;
+            position: relative;
+        }
+
+        .menu-card:active { transform: scale(0.95); background: #f1f5f9; }
+
+        /* Pro Badge for Groups */
+        .badge {
+            position: absolute; top: 12px; right: 12px;
+            background: var(--primary); color: white;
+            font-size: 9px; font-weight: 800; padding: 3px 8px;
+            border-radius: 20px; text-transform: uppercase;
+        }
+
+        .icon {
+            font-size: 28px; margin-bottom: 12px;
+            background: #f0f9ff; width: 55px; height: 55px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 18px; color: var(--primary);
+        }
+
+        .menu-card span { font-size: 13px; font-weight: 700; text-align: center; }
+
+        /* Navigation Styles */
+        .bottom-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 92%; max-width: 500px; background: var(--secondary);
+            height: 70px; border-radius: 25px; display: flex;
+            justify-content: space-around; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); z-index: 1000;
+        }
+        .nav-item { color: #94a3b8; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: var(--white); }
+        .nav-item i { font-style: normal; font-size: 20px; margin-bottom: 2px; }
+
     </style>
 </head>
 <body>
-    <header><h1>Chat Hub</h1><p>Institution Messaging</p></header>
-    <div class="admin-grid">
-        <div class="menu-card" style="grid-column: span 2;" onclick="location.href='global.html'">
-            <div class="icon">🌎</div><span>Global Chat</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-teachers-group.html'">
-            <div class="icon">👨‍🏫</div><span>Teachers Group</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-teacher-specific.html'">
-            <div class="icon">👤</div><span>Specific Teacher</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-students-group.html'">
-            <div class="icon">🎓</div><span>Students Group</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-student-specific.html'">
-            <div class="icon">🧒</div><span>Specific Student</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-staff-group.html'">
-            <div class="icon">🏢</div><span>All Staff Group</span>
-        </div>
-        <div class="menu-card" onclick="location.href='chat-staff-specific.html'">
-            <div class="icon">🛠️</div><span>Specific Staff</span>
-        </div>
+
+<div id="appNotifier"></div>
+
+<header>
+    <h1>Chat Hub</h1>
+    <div class="sub-header">Select a communication channel</div>
+</header>
+
+<div class="search-container">
+    <input type="text" class="search-box" id="hubSearch" placeholder="Search groups or roles..." onkeyup="filterHub()">
+</div>
+
+<div class="admin-grid" id="menuGrid">
+    <div class="menu-card" style="grid-column: span 2;" onclick="navigate('global.html', 'Global Chat')">
+        <div class="badge">Live</div>
+        <div class="icon">🌎</div><span>Global Chat</span>
     </div>
-    <nav class="bottom-nav">
-        <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
-        <a href="../chat/chat.html" class="nav-item active"><i>💬</i><span>Chat</span></a>
-        <a href="../document/documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
-        <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
-    </nav>
+
+    <div class="menu-card" onclick="navigate('chat-teachers-group.html', 'Teachers Group')">
+        <div class="badge">Staff</div>
+        <div class="icon">👨‍🏫</div><span>Teachers Group</span>
+    </div>
+
+    <div class="menu-card" onclick="openSelector('teacher')">
+        <div class="icon">👤</div><span>Specific Teacher</span>
+    </div>
+
+    <div class="menu-card" onclick="navigate('chat-students-group.html', 'Students Group')">
+        <div class="badge">Class</div>
+        <div class="icon">🎓</div><span>Students Group</span>
+    </div>
+
+    <div class="menu-card" onclick="openSelector('student')">
+        <div class="icon">🧒</div><span>Specific Student</span>
+    </div>
+
+    <div class="menu-card" onclick="navigate('chat-staff-group.html', 'All Staff')">
+        <div class="icon">🏢</div><span>All Staff Group</span>
+    </div>
+
+    <div class="menu-card" onclick="openSelector('staff')">
+        <div class="icon">🛠️</div><span>Specific Staff</span>
+    </div>
+</div>
+
+<nav class="bottom-nav">
+    <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+    <a href="../chat/chat.html" class="nav-item active"><i>💬</i><span>Chat</span></a>
+    <a href="../document/documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
+    <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
+</nav>
+
+<script>
+    // Pro-Level Notification
+    function notify(msg, type = 'success') {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'error' ? 'var(--error)' : 'var(--success)';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    // Navigation with Haptic Simulation
+    function navigate(url, name) {
+        notify(`Connecting to ${name}...`);
+        setTimeout(() => {
+            window.location.href = url;
+        }, 800);
+    }
+
+    // Pro Feature: Role Selector (Handles the "Specific" logic)
+    function openSelector(role) {
+        notify(`Opening ${role} directory...`, 'success');
+        // Logic to simulate loading specific records
+        setTimeout(() => {
+            if(role === 'teacher') window.location.href = 'chat-teacher-specific.html';
+            if(role === 'student') window.location.href = 'chat-student-specific.html';
+            if(role === 'staff') window.location.href = 'chat-staff-specific.html';
+        }, 500);
+    }
+
+    // Live Hub Search
+    function filterHub() {
+        let input = document.getElementById('hubSearch').value.toLowerCase();
+        let cards = document.getElementsByClassName('menu-card');
+
+        for (let i = 0; i < cards.length; i++) {
+            let title = cards[i].getElementsByTagName('span')[0].innerText.toLowerCase();
+            if (title.includes(input)) {
+                cards[i].style.display = "flex";
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
+    }
+</script>
+
 </body>
 </html>

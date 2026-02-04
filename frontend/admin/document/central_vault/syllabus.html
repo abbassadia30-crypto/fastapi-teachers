@@ -2,227 +2,302 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Syllabus Vault | Institution Records</title>
+  <title>Syllabus Vault | Institution</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary: #6200ee;
-      --secondary: #263238;
-      --bg: #f4f7f6;
-      --white: #ffffff;
-      --border: #e0e0e0;
+    :root { --primary: #0288d1; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; }
+
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+    /* 🔔 Notifier (Red/Green Sign Box) */
+    #appNotifier {
+      position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+      text-align: center; color: white; font-weight: 600; z-index: 9999;
+      transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+    .notifier-show { transform: translateY(100px); }
+
+    /* 🏛️ Selection Header (Swaps when active) */
+    #selectionHeader {
+      display: none; background: var(--secondary); color: white; position: fixed;
+      top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+      justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
     }
 
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--secondary); display: flex; flex-direction: column; height: 100vh; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-    header { background: var(--white); padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
-
-    #notification-bar {
-      position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-      width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-      color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 600;
+    /* 🔎 Search & Sort Area */
+    .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+    .search-bar {
+      width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+      font-family: inherit; outline: none; box-sizing: border-box;
     }
-    .bg-green { background: #00c853 !important; top: 20px !important; }
-    .bg-red { background: #ff5252 !important; top: 20px !important; }
-
-    .search-container { padding: 15px 20px; background: var(--white); }
-    .search-bar { width: 100%; padding: 12px; border: 1.5px solid var(--border); border-radius: 12px; outline: none; font-size: 14px; box-sizing: border-box; }
-
-    .syllabus-list { flex: 1; overflow-y: auto; padding: 10px 20px 100px; }
-
-    .syllabus-card {
-      background: var(--white); border-radius: 18px; padding: 18px; margin-bottom: 15px;
-      border: 1px solid var(--border); display: flex; flex-direction: column; gap: 8px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    .filter-row { display: flex; gap: 10px; }
+    .date-input, .sort-select {
+      flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+      font-size: 12px; font-family: inherit; background: white;
     }
-    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
-    .sub-tag { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; background: #f3e5f5; padding: 4px 10px; border-radius: 20px; }
-    .card-title { font-weight: 700; font-size: 16px; margin-top: 5px; color: var(--secondary); }
-    .card-meta { font-size: 11px; color: #888; font-weight: 500; }
 
-    .targets-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 5px; }
-    .target-chip { font-size: 9px; background: #eee; padding: 3px 8px; border-radius: 5px; font-weight: 600; }
+    /* 🗂️ Grid Layout */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
 
-    .card-actions { display: flex; gap: 10px; margin-top: 10px; border-top: 1px solid #f0f0f0; padding-top: 12px; }
-    .btn-edit { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--primary); background: transparent; color: var(--primary); font-weight: 700; font-size: 12px; cursor: pointer; }
-    .btn-view { flex: 1; padding: 10px; border-radius: 10px; border: none; background: var(--primary); color: white; font-weight: 700; font-size: 12px; cursor: pointer; }
+    .card {
+      background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+      transition: 0.2s; position: relative; border: 2px solid transparent;
+    }
 
-    /* Full Screen Editor Modal */
-    #editor-modal {
+    /* 🔵 Selection Dot */
+    .select-dot {
+      display: none; position: absolute; top: 10px; left: 10px;
+      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd;
+      background: white;
+    }
+    .card.selected { border-color: var(--primary); background: #e1f5fe; }
+    .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
+    .selection-active .select-dot { display: block; }
+
+    .icon-circle {
+      width: 50px; height: 50px; background: #e1f5fe; color: var(--primary);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 10px; font-size: 24px;
+    }
+
+    .card-subject { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; }
+    .card-title { margin: 5px 0; font-size: 13px; font-weight: 700; display: block; }
+    .card-footer { font-size: 10px; color: #888; font-weight: 600; }
+
+    /* 📄 Full Screen View Modal */
+    #fullView {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: var(--white); z-index: 1000; display: none; flex-direction: column;
+      background: white; z-index: 10000; display: none; flex-direction: column;
     }
-    .editor-content { flex: 1; overflow-y: auto; padding: 20px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group label { font-size: 10px; font-weight: 800; text-transform: uppercase; color: #aaa; }
-    .form-input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; margin-top: 5px; box-sizing: border-box; font-family: inherit; }
-    textarea.form-input { height: 120px; resize: none; }
+    .view-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .view-body { flex: 1; overflow-y: auto; padding: 25px; }
+    .template-box { border: 2px solid #333; padding: 20px; border-radius: 5px; min-height: 60%; }
+
+    /* 🛠️ Three-Dot Floating Menu */
+    #menuFAB {
+      display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+      border-radius: 50%; background: var(--primary); color: white; border: none;
+      font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;
+    }
+    .dot-menu {
+      position: fixed; bottom: 95px; right: 20px; background: white;
+      border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
+    }
+    .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+
+    .action-row { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-edit { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: var(--text); }
+    .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
   </style>
 </head>
 <body>
 
-<div id="notification-bar"></div>
+<div id="appNotifier"></div>
 
-<header>
-  <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-  <span style="font-weight: 800; font-size: 14px;">SYLLABUS ARCHIVE</span>
-  <div style="width: 24px;"></div>
-</header>
-
-<div class="search-container">
-  <input type="text" class="search-bar" placeholder="Search by subject or title..." onkeyup="filterSyllabus(this.value)">
+<div id="selectionHeader">
+  <div style="display: flex; align-items: center; gap: 15px;">
+    <span onclick="exitSelection()" style="font-size: 24px;">✕</span>
+    <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+  </div>
+  <div style="display: flex; gap: 15px; align-items: center;">
+    <span onclick="selectAll()" style="font-size: 11px; font-weight: 800;">SELECT ALL</span>
+    <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80;">🗑️</span>
+  </div>
 </div>
 
-<div class="syllabus-list" id="syllabus-container">
-  <div style="text-align:center; padding:50px; color:#aaa;">Loading Institution Records...</div>
+<div class="header">
+  <h2 style="margin:0; font-weight: 800;">📚 Syllabus</h2>
+  <div style="display: flex; gap: 10px;">
+    <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+    <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+  </div>
 </div>
 
-<div id="editor-modal">
-  <header>
-    <div onclick="closeEditor()" style="font-size:20px; cursor:pointer;">Cancel</div>
-    <span style="font-weight: 800; font-size: 14px;">EDIT SYLLABUS</span>
-    <div onclick="saveChanges()" style="color: var(--primary); font-weight: 700; cursor:pointer;">Update</div>
-  </header>
-  <div class="editor-content">
-    <input type="hidden" id="edit-id">
-    <div class="form-group">
-      <label>Syllabus Title</label>
-      <input type="text" id="edit-name" class="form-input">
-    </div>
-    <div class="form-group">
-      <label>Subject</label>
-      <input type="text" id="edit-subject" class="form-input">
-    </div>
-    <div class="form-group">
-      <label>Content / Outline (JSON String)</label>
-      <textarea id="edit-content" class="form-input"></textarea>
+<div class="controls">
+  <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Find by title or subject..." oninput="applyAllFilters()">
+  <div class="filter-row">
+    <input type="date" id="dateFilter" class="date-input" onchange="applyAllFilters()">
+    <select id="sortOrder" class="sort-select" onchange="applyAllFilters()">
+      <option value="newest">Newest First</option>
+      <option value="subject">By Subject</option>
+      <option value="section">By Section</option>
+    </select>
+  </div>
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+  <div class="menu-item" onclick="handleImport('chat')">💬 Import to Institution Chat</div>
+  <div class="menu-item" onclick="handleImport('translate')">🌐 Import to Translate</div>
+  <div class="menu-item" onclick="handleImport('export')">📤 Bulk Export JSON</div>
+</div>
+
+<div id="fullView">
+  <div class="view-header">
+    <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+    <span id="viewHeaderTitle" style="font-weight: 800; font-size: 14px;">SYLLABUS DETAIL</span>
+    <div style="width:24px;"></div>
+  </div>
+  <div class="view-body">
+    <div class="template-box" id="templateContent"></div>
+    <div class="action-row">
+      <button class="btn-edit" onclick="editCurrent()">EDIT SYLLABUS</button>
+      <button class="btn-export" onclick="exportCurrent()">EXPORT PDF</button>
     </div>
   </div>
 </div>
 
-<script src="../../capacitor.js"></script>
-<script src="../../js/storage.js"></script>
-
 <script>
-  const API_URL = "https://fastapi-teachers.onrender.com";
-  let allSyllabuses = [];
+  let isSelectionMode = false;
+  let selectedIds = new Set();
 
-  // Auto-load on entry
-  fetchSyllabuses();
+  // 🏛️ Example Archive Data
+  let syllabusVault = [
+    { id: 1, name: "Midterm Biology", subject: "Science", section: "10th-A", date: "2026-02-01", content: "1. Cell Theory\n2. Plant Kingdom\n3. Animal Kingdom" },
+    { id: 2, name: "Urdu Grammar Q1", subject: "Urdu", section: "9th-B", date: "2026-02-01", content: "1. Ism o Fail\n2. Letters to Editor" },
+    { id: 3, name: "Math Algebra", subject: "Maths", section: "8th-C", date: "2026-01-15", content: "1. Quadratic Equations\n2. Sets and Functions" }
+  ];
 
-  async function fetchSyllabuses() {
-    try {
-      const tokenObj = await AppStorage.get("institutionToken");
-      const token = tokenObj.value || tokenObj;
+  function renderGrid(list) {
+    const grid = document.getElementById('sectionGrid');
+    if (!list) list = syllabusVault;
 
-      const res = await fetch(`${API_URL}/document/vault-list?type=syllabus`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      allSyllabuses = await res.json();
-      renderList(allSyllabuses);
-    } catch (e) {
-      showNotify("Connection to Vault failed", "red");
-    }
-  }
-
-  function renderList(data) {
-    const container = document.getElementById('syllabus-container');
-    container.innerHTML = '';
-
-    if (data.length === 0) {
-      container.innerHTML = '<div style="text-align:center; padding:50px; color:#aaa;">No syllabuses found in this institution.</div>';
+    if (list.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No records found.</div>`;
       return;
     }
 
-    data.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'syllabus-card';
-      card.innerHTML = `
-                <div class="card-top">
-                    <span class="sub-tag">${item.subject}</span>
-                    <span class="card-meta">By ${item.author_name || 'Admin'}</span>
+    grid.innerHTML = list.map(doc => `
+            <div class="card ${selectedIds.has(doc.id) ? 'selected' : ''}" onclick="handleCardClick(${doc.id}, this)">
+                <div class="select-dot"></div>
+                <div class="icon-circle">📄</div>
+                <span class="card-subject">${doc.subject}</span>
+                <span class="card-title">${doc.name}</span>
+                <div class="card-footer">
+                    <span>${doc.section}</span> • <span>${doc.date}</span>
                 </div>
-                <div class="card-title">${item.name}</div>
-                <div class="targets-row">
-                    ${item.targets.map(t => `<span class="target-chip">${t}</span>`).join('')}
-                </div>
-                <div class="card-actions">
-                    <button class="btn-edit" onclick="openEditor('${item.id}')">EDIT</button>
-                    <button class="btn-view" onclick="viewFull('${item.id}')">VIEW PDF</button>
-                </div>
-            `;
-      container.appendChild(card);
-    });
+            </div>
+        `).join('');
   }
 
-  function filterSyllabus(query) {
-    const filtered = allSyllabuses.filter(s =>
-            s.name.toLowerCase().includes(query.toLowerCase()) ||
-            s.subject.toLowerCase().includes(query.toLowerCase())
-    );
-    renderList(filtered);
-  }
-
-  function openEditor(id) {
-    const item = allSyllabuses.find(s => s.id == id);
-    if (!item) return;
-
-    document.getElementById('edit-id').value = item.id;
-    document.getElementById('edit-name').value = item.name;
-    document.getElementById('edit-subject').value = item.subject;
-    document.getElementById('edit-content').value = JSON.stringify(item.content, null, 2);
-
-    document.getElementById('editor-modal').style.display = 'flex';
-  }
-
-  function closeEditor() {
-    document.getElementById('editor-modal').style.display = 'none';
-  }
-
-  async function saveChanges() {
-    const id = document.getElementById('edit-id').value;
-    const updateData = {
-      name: document.getElementById('edit-name').value,
-      subject: document.getElementById('edit-subject').value,
-      content: JSON.parse(document.getElementById('edit-content').value)
-    };
-
-    try {
-      const tokenObj = await AppStorage.get("institutionToken");
-      const token = tokenObj.value || tokenObj;
-
-      const res = await fetch(`${API_URL}/document/vault-update/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(updateData)
-      });
-
-      if (res.ok) {
-        showNotify("Syllabus updated successfully!", "green");
-        closeEditor();
-        fetchSyllabuses(); // Refresh list
-      }
-    } catch (e) {
-      showNotify("Update failed", "red");
+  function handleCardClick(id, el) {
+    if (isSelectionMode) {
+      if (selectedIds.has(id)) selectedIds.delete(id);
+      else selectedIds.add(id);
+      el.classList.toggle('selected');
+      document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+    } else {
+      openFullView(id);
     }
   }
 
-  function viewFull(id) {
-    // Logic to generate/view PDF or full details
-    showNotify("Opening PDF Viewer...", "green");
+  function enterSelectionMode() {
+    isSelectionMode = true;
+    document.body.classList.add('selection-active');
+    document.getElementById('selectionHeader').style.display = 'flex';
+    document.getElementById('menuFAB').style.display = 'block';
   }
 
-  function showNotify(msg, colorClass) {
-    const bar = document.getElementById('notification-bar');
-    bar.innerText = msg;
-    bar.className = `bg-${colorClass}`;
-    setTimeout(() => bar.className = "", 3000);
+  function exitSelection() {
+    isSelectionMode = false;
+    selectedIds.clear();
+    document.body.classList.remove('selection-active');
+    document.getElementById('selectionHeader').style.display = 'none';
+    document.getElementById('menuFAB').style.display = 'none';
+    document.getElementById('importMenu').style.display = 'none';
+    renderGrid();
   }
+
+  function selectAll() {
+    syllabusVault.forEach(doc => selectedIds.add(doc.id));
+    document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+    renderGrid();
+  }
+
+  function applyAllFilters() {
+    const q = document.getElementById('vaultSearch').value.toLowerCase();
+    const dateQ = document.getElementById('dateFilter').value;
+    const sort = document.getElementById('sortOrder').value;
+
+    let filtered = syllabusVault.filter(doc => {
+      const matchesText = doc.name.toLowerCase().includes(q) || doc.subject.toLowerCase().includes(q);
+      const matchesDate = !dateQ || doc.date === dateQ;
+      return matchesText && matchesDate;
+    });
+
+    if (sort === 'subject') filtered.sort((a, b) => a.subject.localeCompare(b.subject));
+    if (sort === 'section') filtered.sort((a, b) => a.section.localeCompare(b.section));
+    if (sort === 'newest') filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    renderGrid(filtered);
+  }
+
+  function openFullView(id) {
+    const doc = syllabusVault.find(s => s.id === id);
+    if (!doc) return;
+
+    document.getElementById('viewHeaderTitle').innerText = doc.name.toUpperCase();
+    document.getElementById('templateContent').innerHTML = `
+            <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
+                <h1 style="margin:0;">INSTITUTION SYLLABUS</h1>
+                <p style="margin:0; font-weight:600;">Session 2025-2026</p>
+            </div>
+            <table style="width:100%; margin-bottom:20px; font-weight:700;">
+                <tr><td>Subject: ${doc.subject}</td><td style="text-align:right;">Section: ${doc.section}</td></tr>
+                <tr><td>Date: ${doc.date}</td><td style="text-align:right;">ID: #SYL-${doc.id}</td></tr>
+            </table>
+            <div style="white-space: pre-wrap; line-height:1.8;">
+                <strong>SYLLABUS CONTENT:</strong><br>
+                ${doc.content}
+            </div>
+        `;
+    document.getElementById('fullView').style.display = 'flex';
+  }
+
+  function closeFullView() {
+    document.getElementById('fullView').style.display = 'none';
+  }
+
+  function toggleMenu() {
+    const m = document.getElementById('importMenu');
+    m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  function notify(msg, type = 'green') {
+    const n = document.getElementById('appNotifier');
+    n.innerText = msg;
+    n.style.background = type === 'red' ? '#c62828' : '#2e7d32';
+    n.classList.add('notifier-show');
+    setTimeout(() => n.classList.remove('notifier-show'), 3000);
+  }
+
+  function confirmBulkDelete() {
+    if (selectedIds.size === 0) return;
+    if(confirm(`Erase ${selectedIds.size} records?`)) {
+      syllabusVault = syllabusVault.filter(doc => !selectedIds.has(doc.id));
+      notify(`Deleted ${selectedIds.size} items`, 'red');
+      exitSelection();
+    }
+  }
+
+  function handleImport(type) {
+    notify(`Importing ${selectedIds.size} docs to ${type}...`);
+    toggleMenu();
+    exitSelection();
+  }
+
+  function editCurrent() { notify("Opening Edit Mode..."); }
+  function exportCurrent() { notify("Exporting to PDF..."); }
+
+  // Initial Load
+  renderGrid(syllabusVault);
 </script>
 </body>
 </html>

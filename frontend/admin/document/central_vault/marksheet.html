@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Marksheet Vault | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #1a237e; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #283593; --gold: #ffd700; }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+        /* 🔔 Notifier */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🏛️ Selection Header */
+        #selectionHeader {
+            display: none; background: var(--secondary); color: white; position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* 🔎 Search & Sort */
+        .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .search-bar {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+        .filter-row { display: flex; gap: 10px; }
+        .date-input, .sort-select {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+            font-size: 12px; font-family: inherit; background: white;
+        }
+
+        /* 🗂️ Grid Layout */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+
+        .card {
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 2px solid transparent;
+        }
+
+        .select-dot {
+            display: none; position: absolute; top: 10px; left: 10px;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd;
+            background: white;
+        }
+        .card.selected { border-color: var(--primary); background: #e8eaf6; }
+        .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
+        .selection-active .select-dot { display: block; }
+
+        .icon-circle {
+            width: 50px; height: 50px; background: #e8eaf6; color: var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-size: 24px;
+        }
+
+        .card-id { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; }
+        .card-title { margin: 5px 0; font-size: 13px; font-weight: 700; display: block; }
+        .card-footer { font-size: 10px; color: #888; font-weight: 600; }
+
+        /* 📄 Full Screen View Modal */
+        #fullView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 10000; display: none; flex-direction: column;
+        }
+        .view-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .view-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* Result Slip Styling */
+        .result-container { border: 4px double var(--primary); padding: 20px; position: relative; }
+        .result-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+        .result-table th, .result-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .result-table th { background: #f5f5f5; }
+        .official-seal {
+            position: absolute; bottom: 40px; right: 40px; width: 80px; height: 80px;
+            border: 2px dashed #ddd; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; color: #eee; font-size: 10px; font-weight: 800; transform: rotate(-15deg);
+        }
+
+        /* 🛠️ Floating Menu */
+        #menuFAB {
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white; border: none;
+            font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;
+        }
+        .dot-menu {
+            position: fixed; bottom: 95px; right: 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
+        }
+        .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+
+        .action-row { display: flex; gap: 10px; margin-top: 20px; padding-bottom: 20px; }
+        .btn-edit { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: var(--text); }
+        .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div id="selectionHeader">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="exitSelection()" style="font-size: 24px; cursor:pointer;">✕</span>
+        <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span onclick="selectAll()" style="font-size: 11px; font-weight: 800; cursor:pointer;">SELECT ALL</span>
+        <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80; cursor:pointer;">🗑️</span>
+    </div>
+</div>
+
+<div class="header">
+    <h2 style="margin:0; font-weight: 800;">🎓 Marksheets</h2>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+        <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+    </div>
+</div>
+
+<div class="controls">
+    <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Search student or roll no..." oninput="applyAllFilters()">
+    <div class="filter-row">
+        <select id="classFilter" class="date-input" onchange="applyAllFilters()">
+            <option value="">All Classes</option>
+            <option value="10th">Class 10th</option>
+            <option value="9th">Class 9th</option>
+        </select>
+        <select id="sortOrder" class="sort-select" onchange="applyAllFilters()">
+            <option value="newest">Recent Exams</option>
+            <option value="top">Top Scorers</option>
+        </select>
+    </div>
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+    <div class="menu-item" onclick="handleImport('portal')">🌐 Upload to Student Portal</div>
+    <div class="menu-item" onclick="handleImport('parents')">📱 Send SMS to Parents</div>
+    <div class="menu-item" onclick="handleImport('export')">📤 Bulk PDF Export</div>
+</div>
+
+<div id="fullView">
+    <div class="view-header">
+        <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+        <span id="viewHeaderTitle" style="font-weight: 800; font-size: 14px;">ACADEMIC TRANSCRIPT</span>
+        <div style="width:24px;"></div>
+    </div>
+    <div class="view-body">
+        <div id="templateContent"></div>
+        <div class="action-row">
+            <button class="btn-edit" onclick="editCurrent()">UPDATE MARKS</button>
+            <button class="btn-export" onclick="exportCurrent()">PRINT CERTIFICATE</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isSelectionMode = false;
+    let selectedIds = new Set();
+
+    let marksheetVault = [
+        { id: 2001, name: "Ali Raza", roll: "7701", class: "10th", exam: "Final Term 2026", marks: { Math: 95, Science: 88, English: 82, Urdu: 90 }, status: "Pass" },
+        { id: 2002, name: "Maria Bibi", roll: "7705", class: "10th", exam: "Final Term 2026", marks: { Math: 45, Science: 50, English: 55, Urdu: 60 }, status: "Pass" },
+        { id: 2003, name: "Danish Taj", roll: "8812", class: "9th", exam: "Mid Term 2026", marks: { Math: 30, Science: 25, English: 40, Urdu: 35 }, status: "Fail" }
+    ];
+
+    function renderGrid(list) {
+        const grid = document.getElementById('sectionGrid');
+        if (!list) list = marksheetVault;
+
+        grid.innerHTML = list.map(m => `
+            <div class="card ${selectedIds.has(m.id) ? 'selected' : ''}" onclick="handleCardClick(${m.id}, this)">
+                <div class="select-dot"></div>
+                <div class="icon-circle">📜</div>
+                <span class="card-id">ROLL: ${m.roll}</span>
+                <span class="card-title">${m.name}</span>
+                <div class="card-footer">
+                    <span style="color:${m.status==='Pass'?'#2e7d32':'#c62828'}">${m.status}</span> • <span>${m.class}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function handleCardClick(id, el) {
+        if (isSelectionMode) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            el.classList.toggle('selected');
+            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        } else {
+            openFullView(id);
+        }
+    }
+
+    function enterSelectionMode() {
+        isSelectionMode = true;
+        document.body.classList.add('selection-active');
+        document.getElementById('selectionHeader').style.display = 'flex';
+        document.getElementById('menuFAB').style.display = 'block';
+    }
+
+    function exitSelection() {
+        isSelectionMode = false;
+        selectedIds.clear();
+        document.body.classList.remove('selection-active');
+        document.getElementById('selectionHeader').style.display = 'none';
+        document.getElementById('menuFAB').style.display = 'none';
+        renderGrid();
+    }
+
+    function selectAll() {
+        marksheetVault.forEach(m => selectedIds.add(m.id));
+        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        renderGrid();
+    }
+
+    function applyAllFilters() {
+        const q = document.getElementById('vaultSearch').value.toLowerCase();
+        const cls = document.getElementById('classFilter').value;
+
+        let filtered = marksheetVault.filter(m => {
+            const matchesText = m.name.toLowerCase().includes(q) || m.roll.includes(q);
+            const matchesClass = !cls || m.class === cls;
+            return matchesText && matchesClass;
+        });
+        renderGrid(filtered);
+    }
+
+    function openFullView(id) {
+        const m = marksheetVault.find(item => item.id === id);
+        if (!m) return;
+
+        let total = 0;
+        let rows = Object.entries(m.marks).map(([sub, mark]) => {
+            total += mark;
+            return `<tr><td>${sub}</td><td style="text-align:right;">${mark}</td><td style="text-align:right;">100</td></tr>`;
+        }).join('');
+
+        document.getElementById('viewHeaderTitle').innerText = m.name.toUpperCase();
+        document.getElementById('templateContent').innerHTML = `
+      <div class="result-container">
+        <div class="official-seal">INSTITUTION SEAL</div>
+        <div style="text-align:center; border-bottom:2px solid var(--primary); padding-bottom:10px;">
+          <h2 style="margin:0; color:var(--primary);">DETAILED MARK SHEET</h2>
+          <p style="margin:0; font-weight:700;">${m.exam}</p>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:11px; font-weight:700;">
+          <div>Student: ${m.name}<br>Roll No: ${m.roll}</div>
+          <div style="text-align:right;">Class: ${m.class}<br>Status: ${m.status}</div>
+        </div>
+        <table class="result-table">
+          <tr><th>Subject Name</th><th style="text-align:right;">Obtained</th><th style="text-align:right;">Total</th></tr>
+          ${rows}
+          <tr style="background:#f0f0f0; font-weight:800;">
+            <td>GRAND TOTAL</td>
+            <td style="text-align:right;">${total}</td>
+            <td style="text-align:right;">400</td>
+          </tr>
+        </table>
+        <div style="margin-top:20px; font-size:11px;">
+          <p><strong>Percentage:</strong> ${(total/400*100).toFixed(2)}%</p>
+          <p><strong>Remarks:</strong> ${total > 200 ? 'Excellent Performance' : 'Work Harder'}</p>
+        </div>
+        <div style="margin-top:40px; display:flex; justify-content:space-between; font-size:10px; font-weight:800;">
+          <span style="border-top:1px solid #333; padding-top:5px;">Class Teacher</span>
+          <span style="border-top:1px solid #333; padding-top:5px;">Principal / Controller</span>
+        </div>
+      </div>
+    `;
+        document.getElementById('fullView').style.display = 'flex';
+    }
+
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
+    function toggleMenu() {
+        const m = document.getElementById('importMenu');
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function notify(msg, type = 'green') {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'red' ? '#c62828' : '#1a237e';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    function confirmBulkDelete() {
+        if (selectedIds.size === 0) return;
+        if(confirm(`Erase ${selectedIds.size} marksheets?`)) {
+            marksheetVault = marksheetVault.filter(m => !selectedIds.has(m.id));
+            notify(`Records Deleted`, 'red');
+            exitSelection();
+        }
+    }
+
+    function handleImport(action) {
+        notify(`Processing ${action} for selected records...`);
+        toggleMenu(); exitSelection();
+    }
+
+    function editCurrent() { notify("Opening Grading Editor..."); }
+    function exportCurrent() { notify("Generating Print-Ready Transcript..."); }
+
+    renderGrid();
+</script>
+</body>
+</html>

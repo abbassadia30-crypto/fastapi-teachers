@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Salary Vault | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #37474f; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; --accent: #00acc1; }
+
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+
+        /* 🔔 Notifier */
+        #appNotifier {
+            position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
+            text-align: center; color: white; font-weight: 600; z-index: 9999;
+            transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+        }
+        .notifier-show { transform: translateY(100px); }
+
+        /* 🏛️ Selection Header */
+        #selectionHeader {
+            display: none; background: var(--secondary); color: white; position: fixed;
+            top: 0; left: 0; width: 100%; height: 70px; align-items: center;
+            justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
+        }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+
+        /* 🔎 Search & Sort */
+        .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .search-bar {
+            width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
+            font-family: inherit; outline: none; box-sizing: border-box;
+        }
+        .filter-row { display: flex; gap: 10px; }
+        .date-input, .sort-select {
+            flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
+            font-size: 12px; font-family: inherit; background: white;
+        }
+
+        /* 🗂️ Grid Layout */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+
+        .card {
+            background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
+            transition: 0.2s; position: relative; border: 2px solid transparent;
+        }
+
+        .select-dot {
+            display: none; position: absolute; top: 10px; left: 10px;
+            width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd;
+            background: white;
+        }
+        .card.selected { border-color: var(--accent); background: #e0f7fa; }
+        .card.selected .select-dot { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 3px white; }
+        .selection-active .select-dot { display: block; }
+
+        .icon-circle {
+            width: 50px; height: 50px; background: #eceff1; color: var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 10px; font-size: 24px;
+        }
+
+        .card-id { font-size: 10px; font-weight: 800; color: var(--accent); text-transform: uppercase; display: block; }
+        .card-title { margin: 5px 0; font-size: 13px; font-weight: 700; display: block; }
+        .card-footer { font-size: 10px; color: #888; font-weight: 600; }
+
+        /* 📄 Full Screen View Modal */
+        #fullView {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 10000; display: none; flex-direction: column;
+        }
+        .view-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .view-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* Pay Slip Styling */
+        .payslip-container { border: 2px solid #333; padding: 20px; border-radius: 5px; }
+        .payslip-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
+        .payslip-table th, .payslip-table td { border: 1px solid #eee; padding: 8px; text-align: left; }
+        .payslip-table th { background: #f9f9f9; }
+
+        /* 🛠️ Floating Menu */
+        #menuFAB {
+            display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
+            border-radius: 50%; background: var(--primary); color: white; border: none;
+            font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;
+        }
+        .dot-menu {
+            position: fixed; bottom: 95px; right: 20px; background: white;
+            border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
+        }
+        .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+
+        .action-row { display: flex; gap: 10px; margin-top: 20px; padding-bottom: 20px; }
+        .btn-edit { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: var(--text); }
+        .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<div id="appNotifier"></div>
+
+<div id="selectionHeader">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <span onclick="exitSelection()" style="font-size: 24px; cursor:pointer;">✕</span>
+        <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
+    </div>
+    <div style="display: flex; gap: 15px; align-items: center;">
+        <span onclick="selectAll()" style="font-size: 11px; font-weight: 800; cursor:pointer;">SELECT ALL</span>
+        <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80; cursor:pointer;">🗑️</span>
+    </div>
+</div>
+
+<div class="header">
+    <h2 style="margin:0; font-weight: 800;">💵 Salary Slips</h2>
+    <div style="display: flex; gap: 10px;">
+        <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
+        <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
+    </div>
+</div>
+
+<div class="controls">
+    <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Search staff name or employee ID..." oninput="applyAllFilters()">
+    <div class="filter-row">
+        <input type="month" id="monthFilter" class="date-input" onchange="applyAllFilters()">
+        <select id="sortOrder" class="sort-select" onchange="applyAllFilters()">
+            <option value="newest">Newest First</option>
+            <option value="name">Alpha Order</option>
+        </select>
+    </div>
+</div>
+
+<div id="sectionGrid" class="grid"></div>
+
+<button id="menuFAB" onclick="toggleMenu()">⋮</button>
+<div class="dot-menu" id="importMenu">
+    <div class="menu-item" onclick="handleImport('whatsapp')">💬 Send to Staff WhatsApp</div>
+    <div class="menu-item" onclick="handleImport('cloud')">☁️ Backup to Institution Cloud</div>
+    <div class="menu-item" onclick="handleImport('export')">📤 Bulk Export JSON</div>
+</div>
+
+<div id="fullView">
+    <div class="view-header">
+        <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
+        <span id="viewHeaderTitle" style="font-weight: 800; font-size: 14px;">PAYSLIP DETAIL</span>
+        <div style="width:24px;"></div>
+    </div>
+    <div class="view-body">
+        <div id="templateContent"></div>
+        <div class="action-row">
+            <button class="btn-edit" onclick="editCurrent()">EDIT FIGURES</button>
+            <button class="btn-export" onclick="exportCurrent()">GENERATE PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isSelectionMode = false;
+    let selectedIds = new Set();
+
+    let salaryVault = [
+        { id: 901, staff: "M. Usman", empId: "INS-04", month: "2026-01", base: 45000, bonus: 2000, tax: 500, status: "Released" },
+        { id: 902, staff: "Ayesha Noor", empId: "INS-12", month: "2026-01", base: 38000, bonus: 0, tax: 200, status: "Released" },
+        { id: 903, staff: "Zeeshan Khan", empId: "INS-07", month: "2026-01", base: 55000, bonus: 5000, tax: 1200, status: "Pending" }
+    ];
+
+    function renderGrid(list) {
+        const grid = document.getElementById('sectionGrid');
+        if (!list) list = salaryVault;
+
+        grid.innerHTML = list.map(s => `
+            <div class="card ${selectedIds.has(s.id) ? 'selected' : ''}" onclick="handleCardClick(${s.id}, this)">
+                <div class="select-dot"></div>
+                <div class="icon-circle">💰</div>
+                <span class="card-id">${s.empId}</span>
+                <span class="card-title">${s.staff}</span>
+                <div class="card-footer">
+                    <span>${s.month}</span> • <span style="color:${s.status==='Released'?'#2e7d32':'#ef6c00'}">${s.status}</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function handleCardClick(id, el) {
+        if (isSelectionMode) {
+            if (selectedIds.has(id)) selectedIds.delete(id);
+            else selectedIds.add(id);
+            el.classList.toggle('selected');
+            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        } else {
+            openFullView(id);
+        }
+    }
+
+    function enterSelectionMode() {
+        isSelectionMode = true;
+        document.body.classList.add('selection-active');
+        document.getElementById('selectionHeader').style.display = 'flex';
+        document.getElementById('menuFAB').style.display = 'block';
+    }
+
+    function exitSelection() {
+        isSelectionMode = false;
+        selectedIds.clear();
+        document.body.classList.remove('selection-active');
+        document.getElementById('selectionHeader').style.display = 'none';
+        document.getElementById('menuFAB').style.display = 'none';
+        renderGrid();
+    }
+
+    function selectAll() {
+        salaryVault.forEach(s => selectedIds.add(s.id));
+        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        renderGrid();
+    }
+
+    function applyAllFilters() {
+        const q = document.getElementById('vaultSearch').value.toLowerCase();
+        const mon = document.getElementById('monthFilter').value;
+
+        let filtered = salaryVault.filter(s => {
+            const matchesText = s.staff.toLowerCase().includes(q) || s.empId.toLowerCase().includes(q);
+            const matchesMon = !mon || s.month === mon;
+            return matchesText && matchesMon;
+        });
+        renderGrid(filtered);
+    }
+
+    function openFullView(id) {
+        const s = salaryVault.find(item => item.id === id);
+        if (!s) return;
+
+        const netPay = (s.base + s.bonus) - s.tax;
+
+        document.getElementById('viewHeaderTitle').innerText = s.staff.toUpperCase();
+        document.getElementById('templateContent').innerHTML = `
+      <div class="payslip-container">
+        <div style="text-align:center; border-bottom:1px solid #333; padding-bottom:10px;">
+          <h2 style="margin:0;">INSTITUTION PAYROLL</h2>
+          <p style="margin:0; font-size:12px;">Monthly Salary Statement: ${s.month}</p>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:15px; font-size:11px; font-weight:700;">
+          <span>Employee: ${s.staff}</span>
+          <span>ID: ${s.empId}</span>
+        </div>
+        <table class="payslip-table">
+          <tr><th>Description</th><th style="text-align:right;">Amount (Rs.)</th></tr>
+          <tr><td>Basic Salary</td><td style="text-align:right;">${s.base}</td></tr>
+          <tr><td>Allowances/Bonus</td><td style="text-align:right;">${s.bonus}</td></tr>
+          <tr><td>Income Tax / Deductions</td><td style="text-align:right; color:red;">- ${s.tax}</td></tr>
+          <tr style="background:#f0f0f0; font-weight:800;">
+            <td>NET PAYABLE</td>
+            <td style="text-align:right;">${netPay}</td>
+          </tr>
+        </table>
+        <div style="margin-top:20px; font-size:10px; color:#555;">
+          <p><strong>Status:</strong> ${s.status}</p>
+          <p>This is an electronically generated salary receipt and does not require a physical signature for validity within the institution.</p>
+        </div>
+      </div>
+    `;
+        document.getElementById('fullView').style.display = 'flex';
+    }
+
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
+    function toggleMenu() {
+        const m = document.getElementById('importMenu');
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function notify(msg, type = 'green') {
+        const n = document.getElementById('appNotifier');
+        n.innerText = msg;
+        n.style.background = type === 'red' ? '#c62828' : '#37474f';
+        n.classList.add('notifier-show');
+        setTimeout(() => n.classList.remove('notifier-show'), 3000);
+    }
+
+    function confirmBulkDelete() {
+        if (selectedIds.size === 0) return;
+        if(confirm(`Remove ${selectedIds.size} payroll records?`)) {
+            salaryVault = salaryVault.filter(s => !selectedIds.has(s.id));
+            notify(`Deleted Records`, 'red');
+            exitSelection();
+        }
+    }
+
+    function handleImport(dest) {
+        notify(`Sharing salary slips to ${dest}...`);
+        toggleMenu(); exitSelection();
+    }
+
+    function editCurrent() { notify("Accessing Payroll Editor..."); }
+    function exportCurrent() { notify("Generating Salary Certificate..."); }
+
+    renderGrid();
+</script>
+</body>
+</html>
