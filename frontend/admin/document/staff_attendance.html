@@ -7,71 +7,57 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #1565c0; /* Blue for Corporate/Staff management */
+            --primary: #1565c0;
             --secondary: #263238;
             --bg: #f8fafc;
             --present: #4caf50;
             --absent: #f44336;
             --late: #ff9800;
+            --border: #e2e8f0;
         }
 
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700;
         }
-        .bg-red { background: var(--absent); top: 20px !important; }
-        .bg-green { background: var(--primary); top: 20px !important; }
+        .bg-red { background: var(--absent) !important; top: 20px !important; }
+        .bg-green { background: var(--primary) !important; top: 20px !important; }
 
-        header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 
-        .category-bar {
-            display: flex; background: #eee; margin: 15px 20px; border-radius: 12px; padding: 4px;
-        }
-        .cat-btn {
-            flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; transition: 0.3s; color: #666;
-        }
+        .category-bar { display: flex; background: #e0e0e0; margin: 15px 20px; border-radius: 12px; padding: 4px; flex-shrink: 0; }
+        .cat-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; transition: 0.3s; color: #666; }
         .cat-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
         .main-container { flex: 1; overflow-y: auto; padding: 0 20px 120px 20px; }
 
-        .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; }
-        label { font-size: 10px; font-weight: 800; color: var(--secondary); text-transform: uppercase; margin-bottom: 8px; display: block; }
+        .config-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+        label { font-size: 9px; font-weight: 900; color: var(--secondary); text-transform: uppercase; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
 
-        input, select {
-            width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 10px; box-sizing: border-box; font-family: inherit;
-        }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; font-family: inherit; font-size: 12px; outline: none; box-sizing: border-box; }
 
-        /* Attendance Card */
         .staff-card {
             background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px;
-            border: 1px solid #eee; display: flex; flex-direction: column; gap: 10px;
+            border: 1px solid #eee; display: flex; flex-direction: column; gap: 8px;
         }
-        .staff-top { display: flex; justify-content: space-between; align-items: center; }
-        .staff-info { display: flex; flex-direction: column; }
-        .staff-name { font-weight: 700; font-size: 14px; color: var(--secondary); }
-        .staff-dept { font-size: 10px; color: #78909c; font-weight: 600; }
+        .staff-name { font-weight: 700; font-size: 14px; color: var(--secondary); display: block; }
+        .staff-id { font-size: 10px; color: #78909c; font-weight: 600; }
 
-        .role-selector {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 5px; border-radius: 10px;
-        }
-        .role-chip {
-            padding: 6px; text-align: center; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; background: #fff; border: 1px solid #cbd5e1;
-        }
+        .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #f1f5f9; padding: 4px; border-radius: 10px; }
+        .role-chip { padding: 6px; text-align: center; font-size: 9px; font-weight: 800; border-radius: 6px; cursor: pointer; background: #fff; border: 1px solid #cbd5e1; }
         .role-chip.active { background: var(--secondary); color: white; border-color: var(--secondary); }
 
-        .status-group { display: flex; gap: 8px; margin-top: 5px; }
-        .status-btn {
-            flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center;
-        }
+        .status-group { display: flex; gap: 6px; }
+        .status-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; font-size: 11px; font-weight: 700; cursor: pointer; text-align: center; color: #888; }
         .status-btn.p.active { background: var(--present); color: white; border-color: var(--present); }
         .status-btn.a.active { background: var(--absent); color: white; border-color: var(--absent); }
         .status-btn.l.active { background: var(--late); color: white; border-color: var(--late); }
 
-        .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 20px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; }
-        .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 15px; font-weight: 700; font-size: 16px; cursor: pointer; }
+        .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; z-index: 100; }
+        .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -80,7 +66,7 @@
 
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <h2 style="margin:0; font-size:16px; font-weight:800;">Staff Attendance</h2>
+    <h2 style="margin:0; font-size:15px; font-weight:800; text-transform: uppercase;">Staff Attendance</h2>
     <div style="width:24px;"></div>
 </header>
 
@@ -92,23 +78,22 @@
 <div class="main-container">
     <div class="config-card">
         <label>Attendance Date</label>
-        <input type="date" id="att-date" value="2026-01-29">
+        <input type="date" id="att-date">
 
         <div id="teacher-config">
-            <label>General Shift / Session</label>
-            <select>
-                <option>Morning Session</option>
-                <option>Evening Session</option>
+            <label>Duty Shift</label>
+            <select id="duty-shift">
+                <option value="Morning">Morning Session</option>
+                <option value="Evening">Evening Session</option>
             </select>
         </div>
     </div>
 
-    <div id="staff-list-container">
-    </div>
+    <div id="staff-list-container"></div>
 </div>
 
 <div class="publish-footer">
-    <button class="btn-main" onclick="saveAttendance()">Submit Attendance</button>
+    <button class="btn-main" onclick="saveAttendance()">SUBMIT OFFICIAL RECORD</button>
 </div>
 
 <script src="../../capacitor.js"></script>
@@ -117,52 +102,93 @@
 <script>
     let currentStaffType = 'teacher';
     const API_URL = "https://fastapi-teachers.onrender.com";
+    let cachedSections = [];
 
-    // Set default date to today
     document.getElementById('att-date').valueAsDate = new Date();
+
+    // Initial load: Fetch DB sections, then render staff
+    initPage();
+
+    async function initPage() {
+        await fetchAllSections();
+        fetchStaff();
+    }
+
+    async function fetchAllSections() {
+        try {
+            const tokenObj = await AppStorage.get("institutionToken");
+            const token = tokenObj.value || tokenObj;
+            const res = await fetch(`${API_URL}/dashboard/sections`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            cachedSections = await res.json();
+        } catch (e) {
+            console.error("DB Error: Section Fetch Failed", e);
+        }
+    }
 
     async function fetchStaff() {
         const container = document.getElementById('staff-list-container');
-        container.innerHTML = '<div style="text-align:center; padding:40px;">Syncing Staff List...</div>';
+        container.innerHTML = '<div style="text-align:center; padding:40px; font-size:12px; color:#666;">Syncing Records...</div>';
+
+        const endpoint = currentStaffType === 'teacher' ? 'teacher-list' : 'Staff_list';
 
         try {
             const tokenObj = await AppStorage.get("institutionToken");
             const token = tokenObj.value || tokenObj;
 
-            // Assuming staff are marked as 'staff' or 'teacher' in your users/members table
-            const res = await fetch(`${API_URL}/dashboard/my_staff?type=${currentStaffType}`, {
+            const res = await fetch(`${API_URL}/dashboard/${endpoint}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const staffList = await res.json();
+            const data = await res.json();
+            const staffMembers = data.rows || [];
 
             container.innerHTML = '';
-            staffList.forEach(person => {
-                appendStaffCard(person);
+            if (staffMembers.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:40px; font-size:12px; color:#999;">No staff found.</div>';
+                return;
+            }
+
+            staffMembers.forEach(person => {
+                appendStaffCard({
+                    id: person.id,
+                    name: person.name,
+                    dept: person.designation || person.subject_expertise || "General"
+                });
             });
         } catch (e) {
             showNotify("Error loading staff", "error");
-            container.innerHTML = '<div style="text-align:center; padding:40px; color:red;">Failed to load staff list.</div>';
         }
     }
 
     function appendStaffCard(person) {
         const container = document.getElementById('staff-list-container');
         const isTeacher = currentStaffType === 'teacher';
-
         const card = document.createElement('div');
         card.className = 'staff-card';
         card.dataset.id = person.id;
         card.dataset.name = person.name;
 
         card.innerHTML = `
-            <div class="staff-top">
-                <div class="staff-info">
-                    <span class="staff-name">${person.name}</span>
-                    <span class="staff-dept">ID: ${person.id} | ${person.dept || person.role}</span>
-                </div>
+            <div class="staff-info">
+                <span class="staff-name">${person.name}</span>
+                <span class="staff-id">ID: ${person.id} | ${person.dept}</span>
             </div>
 
             ${isTeacher ? `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top:5px;">
+                <div>
+                    <label>Assigned Subject</label>
+                    <input type="text" class="t-subject" placeholder="e.g. Science" value="${person.dept}">
+                </div>
+                <div>
+                    <label>Target Section (DB)</label>
+                    <select class="t-section">
+                        <option value="General">Choose Section</option>
+                        ${cachedSections.map(s => `<option value="${s}">${s}</option>`).join('')}
+                    </select>
+                </div>
+            </div>
             <div class="role-selector">
                 <div class="role-chip active" onclick="setRole(this)">CLASS TEACHER</div>
                 <div class="role-chip" onclick="setRole(this)">INVEGILATER</div>
@@ -199,16 +225,21 @@
     async function saveAttendance() {
         const btn = document.querySelector('.btn-main');
         btn.disabled = true;
-        btn.innerText = "UPLOADING...";
+        btn.innerText = "SYNCING WITH SERVER...";
 
         const records = [];
         document.querySelectorAll('.staff-card').forEach(card => {
-            const activeRole = card.querySelector('.role-chip.active');
+            const roleChip = card.querySelector('.role-chip.active');
+            const subjectInput = card.querySelector('.t-subject');
+            const sectionSelect = card.querySelector('.t-section');
+
             records.push({
-                staff_id: card.dataset.id,
+                staff_id: String(card.dataset.id),
                 staff_name: card.dataset.name,
-                status: card.querySelector('.status-btn.active').innerText.charAt(0), // P, A, or L
-                role: activeRole ? activeRole.innerText : "N/A",
+                status: card.querySelector('.status-btn.active').innerText.charAt(0),
+                role: roleChip ? roleChip.innerText : "OFFICE",
+                subject: subjectInput ? subjectInput.value : "N/A",
+                target_section: sectionSelect ? sectionSelect.value : "ADMIN",
                 is_manual: false
             });
         });
@@ -216,25 +247,21 @@
         const payload = {
             category: currentStaffType,
             date: document.getElementById('att-date').value,
-            shift: document.querySelector('#teacher-config select')?.value || "Office Hours",
+            shift: document.getElementById('duty-shift').value,
             data: records
         };
 
         try {
             const tokenObj = await AppStorage.get("institutionToken");
             const token = tokenObj.value || tokenObj;
-
             const res = await fetch(`${API_URL}/document/submit-staff`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
 
             if (res.ok) {
-                showNotify("Staff Record Synced!", "green");
+                showNotify("Staff Record Synced Successfully!", "green");
                 setTimeout(() => location.reload(), 2000);
             } else {
                 throw new Error();
@@ -242,7 +269,7 @@
         } catch (e) {
             showNotify("Backend Sync Failed", "error");
             btn.disabled = false;
-            btn.innerText = "Submit Attendance";
+            btn.innerText = "SUBMIT OFFICIAL RECORD";
         }
     }
 
@@ -252,9 +279,6 @@
         bar.className = type === 'error' ? 'bg-red' : 'bg-green';
         setTimeout(() => bar.className = "", 3000);
     }
-
-    // Initial load
-    fetchStaff();
 </script>
 </body>
 </html>
