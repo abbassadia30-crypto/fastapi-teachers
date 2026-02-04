@@ -7,7 +7,8 @@ from backend.routers.auth import get_current_user, get_verified_inst
 from backend.database import get_db
 from backend.models.admin.institution import Institution, User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
-    NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit
+    NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit, \
+    StaffAttendanceSubmit
 
 router = APIRouter(
     prefix="/document",
@@ -325,3 +326,31 @@ async def submit_attendance(
         db.rollback()
         print(f"ATTENDANCE ERROR: {str(e)}") # Critical for Render logs
         return {"status": "error", "message": "System failed to archive record"}
+
+
+@router.post("/submit-staff")
+async def submit_staff_attendance(
+        payload: StaffAttendanceSubmit,
+        db: Session = Depends(get_db),
+        inst: Institution = Depends(get_verified_inst)
+):
+    try:
+        # Create the Master Log entry in attendance_logs
+        new_log = AttendanceLog(
+            institution_id=inst.institution_id,
+            section_identifier=f"STAFF_{payload.category.upper()}",
+            log_date=payload.date,
+            category=payload.category,
+            subject=payload.shift,
+            attendance_data=[entry.model_dump() for entry in payload.data],
+            p_count=len([x for x in payload.data if x.status == 'P']),
+            a_count=len([x for x in payload.data if x.status == 'A']),
+            l_count=len([x for x in payload.data if x.status == 'L'])
+        )
+
+        db.add(new_log)
+        db.commit()
+        return {"status": "success", "message": "Staff record synced"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))

@@ -4,27 +4,26 @@
     <meta charset="UTF-8">
     <title>Professional Paper Console | Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; }
+        :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; --success: #2e7d32; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; overflow-x: hidden; }
 
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+            color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600; display: none;
         }
-        .bg-red { background: var(--accent) !important; top: 20px !important; }
-        .bg-green { background: #2e7d32 !important; top: 20px !important; }
+        .bg-red { background: var(--accent) !important; top: 20px !important; display: block !important; }
+        .bg-green { background: var(--success) !important; top: 20px !important; display: block !important; }
 
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); flex-shrink: 0; }
         .tab-bar { display: flex; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
         .tab { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; color: #888; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
         .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
 
-        /* Blueprint Card */
         .blueprint-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .type-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
         .btn-type { background: #fff; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
@@ -33,23 +32,33 @@
         .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
         .input-group input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
 
-        /* Paper Canvas */
         .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; box-shadow: 0 0 15px rgba(0,0,0,0.1); margin-top: 20px; min-height: 500px; }
         .paper-header { border: 2px solid #000; padding: 15px; margin-bottom: 30px; text-align: center; }
-        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 110px; text-align: center; font-family: inherit; outline: none; }
+        .editable-inst { font-size: 22px; font-weight: 900; letter-spacing: 1px; border: none; text-align: center; width: 100%; outline: none; border-bottom: 1px dashed transparent; }
+        .editable-inst:hover { border-bottom: 1px dashed #999; }
+        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 100px; text-align: center; font-family: inherit; outline: none; }
 
-        .question-block { margin-bottom: 25px; position: relative; }
+        .question-block { margin-bottom: 25px; position: relative; border: 1px solid transparent; padding: 10px; transition: 0.3s; }
+        .question-block:hover { border: 1px dashed #ccc; border-radius: 8px; }
+        .del-section { position: absolute; right: -10px; top: -10px; background: var(--accent); color: white; border-radius: 50%; width: 20px; height: 20px; text-align: center; font-size: 12px; line-height: 20px; cursor: pointer; font-weight: bold; opacity: 0; }
+        .question-block:hover .del-section { opacity: 1; }
+
         .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 10px; font-size: 14px; }
-        .part-row { display: flex; gap: 10px; margin-bottom: 8px; }
+        .part-row { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
         .part-label { font-weight: 600; min-width: 30px; }
         .q-input { border: none; border-bottom: 1px solid #eee; width: 100%; font-size: 14px; padding: 2px; outline: none; background: transparent; }
+        .del-q { color: #ccc; cursor: pointer; font-size: 12px; padding: 0 5px; }
+        .del-q:hover { color: var(--accent); }
 
         .mcq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-left: 35px; margin-bottom: 15px; font-size: 12px; }
 
+        /* RTL Support */
         .rtl-block { direction: rtl; text-align: right; }
         .rtl-block .q-header-row { flex-direction: row-reverse; }
         .rtl-block .part-row { flex-direction: row-reverse; }
-        .rtl-block .q-input { font-family: 'Noto Nastaliq Urdu', serif; text-align: right; font-size: 18px; }
+        .rtl-block .q-input { font-family: 'Amiri', 'Noto Nastaliq Urdu', serif; text-align: right; font-size: 18px; }
+        .rtl-block .mcq-grid { margin-left: 0; margin-right: 35px; }
+        .rtl-block .del-section { right: auto; left: -10px; }
 
         .vault-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid var(--primary); display: flex; justify-content: space-between; align-items: center; }
 
@@ -77,6 +86,7 @@
         <select id="sel-lang" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px; font-family: inherit;">
             <option value="en">English Layout</option>
             <option value="ur">Urdu Layout (RTL)</option>
+            <option value="ar">Arabic Layout (RTL)</option>
         </select>
 
         <label style="font-size: 10px; font-weight: 800; color: #666;">2. CHOOSE QUESTION TYPE</label>
@@ -93,16 +103,16 @@
                 <input type="text" id="in-statement" placeholder="Enter Question Statement" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
             </div>
             <div class="input-group">
-                <input type="number" id="in-qty" placeholder="Quantity" inputmode="numeric">
-                <input type="number" id="in-marks" placeholder="Marks per Q" inputmode="numeric">
+                <input type="number" id="in-qty" placeholder="Qty" inputmode="numeric">
+                <input type="number" id="in-marks" placeholder="Marks" inputmode="numeric">
             </div>
-            <button class="btn-action" style="padding:10px; font-size:12px; border-radius: 8px;" onclick="addSectionToPaper()">ADD SECTION</button>
+            <button class="btn-action" style="padding:10px; font-size:12px; border-radius: 8px;" onclick="addSectionToPaper()">ADD TO CANVAS</button>
         </div>
     </div>
 
     <div class="paper-canvas">
         <div class="paper-header">
-            <div style="font-size: 22px; font-weight: 900; letter-spacing: 1px;">INSTITUTION NAME</div>
+            <input type="text" class="editable-inst" value="INSTITUTION NAME" id="p-inst-name">
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size: 11px; margin-top:10px; border-bottom: 1px solid #eee; padding-bottom:10px;">
                 <div>SUB: <input type="text" id="p-subject" class="editable-head" value="Subject"></div>
                 <div>CLASS: <input type="text" id="p-class" class="editable-head" style="width:70px" value="10th"></div>
@@ -135,7 +145,6 @@
     const API_URL = "https://fastapi-teachers.onrender.com";
     let activeType = '';
     let sectionCounter = 1;
-    let paperSections = [];
 
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -158,76 +167,77 @@
         const qty = parseInt(document.getElementById('in-qty').value) || 0;
         const marks = parseInt(document.getElementById('in-marks').value) || 0;
         const lang = document.getElementById('sel-lang').value;
+        const isRTL = (lang === 'ur' || lang === 'ar');
         const customStmt = document.getElementById('in-statement').value;
         const content = document.getElementById('dynamic-content');
 
         if(qty <= 0) return;
 
-        let headText = "";
-        if(activeType === 'MCQs') headText = "Choose the correct answer";
-        else if(activeType === 'Short') headText = "Give short answers";
-        else if(activeType === 'Long') headText = "Answer in detail";
-        else headText = customStmt || "Custom Section";
+        let headText = (activeType === 'MCQs') ? "Choose the correct answer" : (activeType === 'Short' ? "Give short answers" : (activeType === 'Long' ? "Answer in detail" : customStmt));
 
-        const sectionId = Date.now();
         const sectionDiv = document.createElement('div');
-        sectionDiv.className = `question-block ${lang === 'ur' ? 'rtl-block' : ''}`;
-        sectionDiv.dataset.id = sectionId;
-        sectionDiv.dataset.type = activeType;
-        sectionDiv.dataset.marks = marks;
-        sectionDiv.dataset.qty = qty;
-        sectionDiv.dataset.head = headText;
-
-        let html = `
+        sectionDiv.className = `question-block ${isRTL ? 'rtl-block' : ''}`;
+        sectionDiv.innerHTML = `<div class="del-section" onclick="this.parentElement.remove(); renumerate();">✕</div>
             <div class="q-header-row">
-                <span>Q.${sectionCounter++} ${headText}</span>
+                <span class="q-title-text">Q.${sectionCounter++} ${headText}</span>
                 <span>(${qty} x ${marks} = ${qty*marks})</span>
-            </div>`;
+            </div>
+            <div class="q-parts-container" data-marks="${marks}" data-type="${activeType}" data-head="${headText}"></div>`;
 
+        const partsContainer = sectionDiv.querySelector('.q-parts-container');
         for(let i=1; i<=qty; i++) {
-            html += `
-                <div class="part-row">
-                    <span class="part-label">(${i})</span>
-                    <input type="text" class="q-input" placeholder="${lang === 'ur' ? 'سوال یہاں لکھیں۔۔۔' : 'Type question statement...'}">
-                </div>`;
+            const part = document.createElement('div');
+            part.className = 'part-row';
+            part.innerHTML = `<span class="del-q" onclick="this.parentElement.nextElementSibling?.remove(); this.parentElement.remove();">✕</span>
+                <span class="part-label">(${i})</span>
+                <input type="text" class="q-input" placeholder="Type question...">`;
+            partsContainer.appendChild(part);
+
             if(activeType === 'MCQs') {
-                html += `<div class="mcq-grid">
-                    <span>(a) _________</span><span>(b) _________</span>
-                    <span>(c) _________</span><span>(d) _________</span>
-                </div>`;
+                const opts = document.createElement('div');
+                opts.className = 'mcq-grid';
+                opts.innerHTML = `<span>(a) _________</span><span>(b) _________</span><span>(c) _________</span><span>(d) _________</span>`;
+                partsContainer.appendChild(opts);
             }
         }
 
-        sectionDiv.innerHTML = html;
         content.appendChild(sectionDiv);
         document.getElementById('config-panel').style.display = 'none';
-        showNotify("Section added to canvas", "green");
+    }
+
+    function renumerate() {
+        sectionCounter = 1;
+        document.querySelectorAll('.q-title-text').forEach(title => {
+            let currentText = title.innerText.replace(/Q\.\d+/, '');
+            title.innerText = `Q.${sectionCounter++} ${currentText}`;
+        });
     }
 
     async function saveToVault() {
         const btn = document.getElementById('btn-save');
         btn.disabled = true;
-        btn.innerText = "UPLOADING TO VAULT...";
+        btn.innerText = "UPLOADING...";
 
         const blueprint = [];
         let totalMarks = 0;
 
         document.querySelectorAll('.question-block').forEach(block => {
+            const container = block.querySelector('.q-parts-container');
             const questions = Array.from(block.querySelectorAll('.q-input')).map(inp => inp.value);
-            const m = parseInt(block.dataset.marks);
-            const q = parseInt(block.dataset.qty);
-            totalMarks += (m * q);
+            const m = parseInt(container.dataset.marks);
+            totalMarks += (questions.length * m);
 
             blueprint.push({
-                block_type: block.dataset.type,
-                header_text: block.dataset.head,
+                block_type: container.dataset.type,
+                header_text: container.dataset.head,
                 marks_per_q: m,
-                qty: q,
+                qty: questions.length,
                 questions: questions
             });
         });
 
         const payload = {
+            institution: document.getElementById('p-inst-name').value,
             subject: document.getElementById('p-subject').value,
             target_class: document.getElementById('p-class').value,
             paper_type: document.getElementById('p-type').value,
@@ -238,63 +248,42 @@
         };
 
         try {
-            const tokenObj = await AppStorage.get("institutionToken");
-            const token = tokenObj.value || tokenObj;
-
-            const res = await fetch(`${API_URL}/papers/save-vault`, {
+            const tokenRes = await AppStorage.get("institutionToken");
+            const token = tokenRes.value || tokenRes;
+            const res = await fetch(`${API_URL}/document/papers/save-vault`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
-
-            if(res.ok) {
-                showNotify("Paper Secured in Vault", "green");
-                setTimeout(() => location.reload(), 1500);
-            } else { throw new Error(); }
+            if(res.ok) { showNotify("Paper Secured", "green"); setTimeout(() => location.reload(), 1500); }
+            else { throw new Error(); }
         } catch(e) {
-            showNotify("Vault Sync Failed", "error");
-            btn.disabled = false;
-            btn.innerText = "SAVE TO PENDING VAULT";
+            showNotify("Sync Failed", "error");
+            btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
         }
     }
 
     async function fetchVault() {
         const list = document.getElementById('vault-list');
         try {
-            const tokenObj = await AppStorage.get("institutionToken");
-            const token = tokenObj.value || tokenObj;
-
-            const res = await fetch(`${API_URL}/papers/vault-list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            const tokenRes = await AppStorage.get("institutionToken");
+            const token = tokenRes.value || tokenRes;
+            const res = await fetch(`${API_URL}/document/papers/vault-list`, { headers: { 'Authorization': `Bearer ${token}` }});
             const papers = await res.json();
-
-            if(papers.length === 0) {
-                list.innerHTML = '<div style="text-align:center; padding:50px; color:#888;">Vault is empty</div>';
-                return;
-            }
-
-            list.innerHTML = papers.map(p => `
+            list.innerHTML = papers.length ? papers.map(p => `
                 <div class="vault-item">
                     <div>
                         <div style="font-weight:800; color:var(--primary);">${p.subject} - ${p.target_class}</div>
                         <div style="font-size:10px; color:#666;">${p.paper_type} | ${new Date(p.created_at).toLocaleDateString()}</div>
                     </div>
                     <div style="font-weight:900; color:var(--accent);">MARKS: ${p.total_marks}</div>
-                </div>
-            `).join('');
-        } catch(e) {
-            list.innerHTML = '<div style="color:red; text-align:center;">Failed to load vault</div>';
-        }
+                </div>`).join('') : '<div style="text-align:center; padding:50px; color:#888;">Vault is empty</div>';
+        } catch(e) { list.innerHTML = '<div style="color:red; text-align:center;">Load Failed</div>'; }
     }
 
     function showNotify(msg, type) {
         const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        bar.innerText = msg; bar.className = type === 'error' ? 'bg-red' : 'bg-green';
         setTimeout(() => bar.className = "", 3000);
     }
 </script>

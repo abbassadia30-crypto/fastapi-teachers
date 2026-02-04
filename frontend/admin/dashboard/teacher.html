@@ -86,93 +86,100 @@
         // We wait for the phone to give us the token
         authToken = await AppStorage.get('institutionToken');
 
-        if (!authToken) {
-            // No token? Boot them back to login immediately
-            window.location.href = "login.html";
-        } else {
-            console.log("Institution Session Verified.");
+        try {
+            const tokenRes = await AppStorage.get("institutionToken");
+            authToken = tokenRes.value || tokenRes;
+        } catch (e) {
+            console.error("Storage error", e);
         }
-    };
 
-    // --- 2. DYNAMIC FIELDS ---
-    function addField() {
-        const div = document.createElement('div');
-        div.className = 'dynamic-field-wrapper';
-        div.innerHTML = `
+        if (!authToken) {
+            location.replace("login.html");
+            return;
+        }
+
+        // --- 2. DYNAMIC FIELDS ---
+        function addField() {
+            const div = document.createElement('div');
+            div.className = 'dynamic-field-wrapper';
+            div.innerHTML = `
             <input type="text" placeholder="Field" class="field-key" style="flex:1;">
             <input type="text" placeholder="Value" class="field-value" style="flex:1.5;">
             <button type="button" class="btn-remove" onclick="this.parentElement.remove()">✕</button>
         `;
-        document.getElementById('dynamicContainer').appendChild(div);
-    }
-
-    // --- 3. STATUS BOX (Red/Green) ---
-    function showStatus(msg, isSuccess) {
-        const box = document.getElementById('statusBox');
-        box.innerText = msg;
-        box.className = isSuccess ? "sign-green" : "sign-red";
-
-        if(isSuccess) {
-            document.getElementById('hiringForm').reset();
-            // In a real app, we wait a second so they see the green box
-            setTimeout(() => { window.location.href = "teachers.html"; }, 1500);
-        }
-    }
-
-    // --- 4. FORM SUBMISSION ---
-    document.getElementById('hiringForm').onsubmit = async (e) => {
-        e.preventDefault();
-
-        // Safety check: Don't submit if token isn't loaded yet
-        if(!authToken) {
-            showStatus("Session not ready. Please wait.", false);
-            return;
+            document.getElementById('dynamicContainer').appendChild(div);
         }
 
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = "Saving to Database...";
-        btn.disabled = true;
+        // --- 3. STATUS BOX (Red/Green) ---
+        function showStatus(msg, isSuccess) {
+            const box = document.getElementById('statusBox');
+            box.innerText = msg;
+            box.className = isSuccess ? "sign-green" : "sign-red";
 
-        const extraData = {};
-        document.querySelectorAll('.dynamic-field-wrapper').forEach(w => {
-            const k = w.querySelector('.field-key').value.trim();
-            const v = w.querySelector('.field-value').value.trim();
-            if(k) extraData[k] = v;
-        });
+            if (isSuccess) {
+                document.getElementById('hiringForm').reset();
+                // In a real app, we wait a second so they see the green box
+                setTimeout(() => {
+                    window.location.href = "teachers.html";
+                }, 1500);
+            }
+        }
 
-        const payload = {
-            name: document.getElementById('tName').value,
-            designation: document.getElementById('tDesignation').value,
-            phone: document.getElementById('tPhone').value,
-            salary: parseFloat(document.getElementById('tSalary').value),
-            joining_date: new Date().toISOString().split('T')[0],
-            extra_details: extraData
-        };
+        // --- 4. FORM SUBMISSION ---
+        document.getElementById('hiringForm').onsubmit = async (e) => {
+            e.preventDefault();
 
-        try {
-            const res = await fetch(`${API_URL}/dashboard/hire-teacher`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${authToken}` // Fixed variable name here
-                },
-                body: JSON.stringify(payload)
+            // Safety check: Don't submit if token isn't loaded yet
+            if (!authToken) {
+                showStatus("Session not ready. Please wait.", false);
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Saving to Database...";
+            btn.disabled = true;
+
+            const extraData = {};
+            document.querySelectorAll('.dynamic-field-wrapper').forEach(w => {
+                const k = w.querySelector('.field-key').value.trim();
+                const v = w.querySelector('.field-value').value.trim();
+                if (k) extraData[k] = v;
             });
 
-            if (res.ok) {
-                showStatus("Teacher onboarded successfully!", true);
-            } else {
-                const err = await res.json();
-                showStatus(err.detail || "Error: Data mismatch", false);
+            const payload = {
+                name: document.getElementById('tName').value,
+                designation: document.getElementById('tDesignation').value,
+                phone: document.getElementById('tPhone').value,
+                salary: parseFloat(document.getElementById('tSalary').value),
+                joining_date: new Date().toISOString().split('T')[0],
+                extra_details: extraData
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/dashboard/hire-teacher`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${authToken}` // Fixed variable name here
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showStatus("Teacher onboarded successfully!", true);
+                } else {
+                    const err = await res.json();
+                    showStatus(err.detail || "Error: Data mismatch", false);
+                    btn.disabled = false;
+                    btn.innerText = "Confirm Hiring";
+                }
+            } catch (err) {
+                showStatus("Server Connection Failed", false);
                 btn.disabled = false;
                 btn.innerText = "Confirm Hiring";
             }
-        } catch (err) {
-            showStatus("Server Connection Failed", false);
-            btn.disabled = false;
-            btn.innerText = "Confirm Hiring";
-        }
-    };
+        };
+    }
 </script>
 </body>
 </html>

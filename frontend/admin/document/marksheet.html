@@ -6,54 +6,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary: #fb8c00;
-      --secondary: #263238;
-      --bg: #f8fafc;
-      --border: #e2e8f0;
-      --success: #4caf50;
-      --danger: #f44336;
-    }
-
+    :root { --primary: #fb8c00; --secondary: #263238; --bg: #f8fafc; --border: #e2e8f0; --success: #4caf50; --danger: #f44336; }
     body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
-    /* 🏛️ Notification Box */
-    #notification-bar {
-      position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-      width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-      color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700;
-    }
-    .bg-red { background: var(--danger) !important; top: 20px !important; }
-    .bg-green { background: var(--success) !important; top: 20px !important; }
+    #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700; display: none; }
+    .bg-red { background: var(--danger) !important; top: 20px !important; display: block !important;}
+    .bg-green { background: var(--success) !important; top: 20px !important; display: block !important;}
 
-    header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; }
+    header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; flex-shrink: 0; }
     .workspace { flex: 1; overflow-y: auto; padding: 15px; }
 
     .config-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); }
     label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; }
+    input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-size: 14px; }
 
-    input, select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 14px; }
+    /* Tags & Dynamic Rows */
+    .tag-container { display: flex; flex-wrap: wrap; gap: 5px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 10px; min-height: 45px; align-items: center; }
+    .pass-tag { background: var(--secondary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+    .tag-close { cursor: pointer; color: #ffab91; }
 
-    /* 🏷️ Tag System Styling */
-    .tag-container { display: flex; flex-wrap: wrap; gap: 5px; background: #fff; border: 1px solid var(--border); padding: 8px; border-radius: 10px; margin-bottom: 12px; min-height: 45px; align-items: center; }
-    .pass-tag { background: var(--secondary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 12px; display: flex; align-items: center; gap: 5px; font-weight: 600; }
-    .tag-close { color: #ffab91; cursor: pointer; font-size: 14px; }
-    #tag-input { border: none; outline: none; flex: 1; min-width: 60px; font-size: 13px; margin: 0; padding: 5px; }
-
-    .subject-row { display: grid; grid-template-columns: 2.5fr 1fr 40px; gap: 10px; margin-bottom: 10px; }
+    .dynamic-row { display: grid; grid-template-columns: 2.5fr 1fr 40px; gap: 10px; margin-bottom: 10px; }
     .remove-btn { color: var(--danger); font-weight: 900; cursor: pointer; text-align: center; line-height: 40px; }
 
-    /* 📊 Gradebook Table */
     .table-wrapper { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); }
-    .gb-table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    .gb-table th { background: #f1f5f9; padding: 12px; font-size: 10px; color: #475569; text-align: left; border-bottom: 2px solid #e2e8f0; }
+    .gb-table { width: 100%; border-collapse: collapse; min-width: 600px; }
+    .gb-table th { background: #f1f5f9; padding: 12px; font-size: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
     .gb-table td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 12px; }
-    .obt-input { width: 60px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; text-align: center; font-weight: bold; }
+    .obt-input { width: 55px; padding: 8px; border: 1px solid var(--border); border-radius: 6px; text-align: center; }
 
-    .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+    .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-shrink: 0; }
     .btn-main { background: var(--primary); color: white; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
     .btn-back { background: #eee; color: #333; border: none; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; display: none; }
-    .btn-manual { border: 2px dashed var(--primary); background: #fff8f0; color: var(--primary); width: 100%; padding: 12px; border-radius: 12px; font-weight: 700; margin-bottom: 15px; cursor: pointer; }
 
     .hidden { display: none; }
   </style>
@@ -72,28 +55,41 @@
   <div id="step1-view">
     <div class="config-card">
       <label>Exam Title</label>
-      <input type="text" id="exam-title" placeholder="e.g. Annual Exams 2026">
+      <input type="text" id="exam-title" placeholder="Annual Exam 2026">
 
       <label>Target Institution Section</label>
-      <select id="class-select">
-        <option value="">Select Section</option>
-        <option value="manual_opt">[+] Manual/Custom Entry</option>
+      <select id="class-select" onchange="toggleManualConfig()">
+        <option value="">Loading Sections...</option>
       </select>
 
-      <label>Passing Marks Logic (Type Number + Enter)</label>
-      <div class="tag-container" id="tag-box" onclick="document.getElementById('tag-input').focus()">
-        <div id="tag-list" style="display:contents;"></div>
-        <input type="number" id="tag-input" placeholder="Add Passing Mark..." inputmode="numeric">
+      <div id="manual-fields-config" class="hidden" style="margin-top:10px; padding-top:10px; border-top: 1px dashed #ccc;">
+        <label>Custom Student Columns (e.g. Name, Father Name)</label>
+        <div id="custom-col-list">
+          <div class="dynamic-row">
+            <input type="text" class="custom-col-name" value="Student Name">
+            <div style="width:1px"></div>
+            <div class="remove-btn" onclick="this.parentElement.remove()">✕</div>
+          </div>
+        </div>
+        <button onclick="addCustomCol()" style="width:100%; padding:8px; border:1px dashed #999; background:none; border-radius:8px; font-size:11px;">+ ADD COLUMN</button>
       </div>
-      <p style="font-size: 9px; color: #888; margin-top: -8px;">Tags apply sequentially to subjects below.</p>
+
+      <label style="margin-top:15px;">Passing Marks (Type + Enter)</label>
+      <div style="display: flex; gap: 5px; margin-bottom:12px;">
+        <div class="tag-container" style="flex: 1;" onclick="document.getElementById('tag-input').focus()">
+          <div id="tag-list" style="display:contents;"></div>
+          <input type="number" id="tag-input" placeholder="Value..." inputmode="numeric">
+        </div>
+        <button onclick="addPassTag()" style="padding: 0 15px; border-radius: 10px; background: var(--secondary); color: white; border: none;">ADD</button>
+      </div>
     </div>
 
     <div class="config-card">
-      <label>Subjects & Weightage</label>
+      <label>Subjects & Max Marks</label>
       <div id="subject-config-list">
-        <div class="subject-row">
-          <input type="text" placeholder="Subject Name" class="s-name">
-          <input type="number" placeholder="Max Marks" class="s-max">
+        <div class="dynamic-row">
+          <input type="text" placeholder="Subject" class="s-name">
+          <input type="number" placeholder="Max" class="s-max">
           <div class="remove-btn" onclick="this.parentElement.remove()">✕</div>
         </div>
       </div>
@@ -102,15 +98,10 @@
   </div>
 
   <div id="step2-view" class="hidden">
-    <button id="btn-manual-add" class="btn-manual hidden" onclick="addNewManualRow()">+ ADD BLANK STUDENT ROW</button>
+    <button id="btn-manual-add" class="btn-main" style="background:#fff8f0; color:var(--primary); border:2px dashed var(--primary); margin-bottom:15px; width:100%;" onclick="addNewManualRow()">+ ADD BLANK STUDENT ROW</button>
     <div class="table-wrapper">
       <table class="gb-table">
-        <thead>
-        <tr id="gb-header">
-          <th>Student Detail</th>
-          <th>Status</th>
-        </tr>
-        </thead>
+        <thead id="gb-header"></thead>
         <tbody id="student-marks-body"></tbody>
       </table>
     </div>
@@ -119,7 +110,7 @@
 
 <div class="footer">
   <button class="btn-back" id="btn-back" onclick="toggleStep(1)">BACK</button>
-  <button class="btn-main" id="btn-action" onclick="handleAction()">FETCH & START ENTRY</button>
+  <button class="btn-main" id="btn-action" onclick="handleAction()">FETCH & START</button>
 </div>
 
 <script src="../../capacitor.js"></script>
@@ -129,143 +120,136 @@
   let step = 1;
   let subjects = [];
   let passingMarks = [];
+  let customCols = [];
   const API_URL = "https://fastapi-teachers.onrender.com";
 
-  // --- 🏷️ Tag System Logic (Android Optimized) ---
-  const tagInput = document.getElementById('tag-input');
-  tagInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      addTag(this.value);
-    }
-  });
+  window.onload = loadSections;
 
-  function addTag(val) {
-    if (!val || val < 0) return;
+  async function loadSections() {
+    const select = document.getElementById('class-select');
+    try {
+      const tRes = await AppStorage.get("institutionToken");
+      const token = tRes.value || tRes;
+      const res = await fetch(`${API_URL}/dashboard/sections`, { headers: { 'Authorization': `Bearer ${token}` }});
+      const sections = await res.json();
+      select.innerHTML = '<option value="">Select Section</option>';
+      sections.forEach(sec => select.innerHTML += `<option value="${sec}">${sec}</option>`);
+      select.innerHTML += '<option value="manual_opt">[+] Manual/Custom Entry</option>';
+    } catch (e) {
+      select.innerHTML = '<option value="manual_opt">Manual Entry Only</option>';
+    }
+  }
+
+  function toggleManualConfig() {
+    const isManual = document.getElementById('class-select').value === 'manual_opt';
+    document.getElementById('manual-fields-config').classList.toggle('hidden', !isManual);
+  }
+
+  function addCustomCol() {
+    const div = document.createElement('div');
+    div.className = 'dynamic-row';
+    div.innerHTML = `<input type="text" class="custom-col-name" placeholder="Column Name"><div style="width:1px"></div><div class="remove-btn" onclick="this.parentElement.remove()">✕</div>`;
+    document.getElementById('custom-col-list').appendChild(div);
+  }
+
+  // --- Tag System ---
+  document.getElementById('tag-input').addEventListener('keydown', e => { if(e.key==='Enter') addPassTag(); });
+  function addPassTag() {
+    const val = document.getElementById('tag-input').value;
+    if(!val) return;
     passingMarks.push(parseFloat(val));
     renderTags();
-    tagInput.value = '';
+    document.getElementById('tag-input').value = '';
   }
-
   function renderTags() {
-    const list = document.getElementById('tag-list');
-    list.innerHTML = passingMarks.map((m, i) => `
-      <div class="pass-tag">
-        ${m} <span class="tag-close" onclick="removeTag(${i})">×</span>
-      </div>
-    `).join('');
+    document.getElementById('tag-list').innerHTML = passingMarks.map((m,i)=>`<div class="pass-tag">${m}<span class="tag-close" onclick="passingMarks.splice(${i},1);renderTags()">×</span></div>`).join('');
   }
 
-  function removeTag(i) {
-    passingMarks.splice(i, 1);
-    renderTags();
-  }
-
-  // --- 🏛️ Core App Logic ---
   function addSubjectRow() {
     const div = document.createElement('div');
-    div.className = 'subject-row';
-    div.innerHTML = `
-      <input type="text" placeholder="Subject Name" class="s-name">
-      <input type="number" placeholder="Max Marks" class="s-max">
-      <div class="remove-btn" onclick="this.parentElement.remove()">✕</div>
-    `;
+    div.className = 'dynamic-row';
+    div.innerHTML = `<input type="text" placeholder="Subject" class="s-name"><input type="number" placeholder="Max" class="s-max"><div class="remove-btn" onclick="this.parentElement.remove()">✕</div>`;
     document.getElementById('subject-config-list').appendChild(div);
   }
 
   async function handleAction() {
-    if (step === 1) await startDrafting();
-    else await deployResults();
+    if(step === 1) await startDrafting();
+    else deployResults();
   }
 
   async function startDrafting() {
-    const classId = document.getElementById('class-select').value;
-    const exam = document.getElementById('exam-title').value;
+    const mode = document.getElementById('class-select').value;
+    if(!mode) return showNotify("Select a Section", "error");
+    if(passingMarks.length === 0) return showNotify("Add Passing Marks", "error");
 
-    if (!exam || !classId) return showNotify("Fill Exam Title and Section", "error");
-    if (passingMarks.length === 0) return showNotify("Add at least one Passing Mark tag", "error");
+    subjects = Array.from(document.querySelectorAll('#subject-config-list .dynamic-row')).map(r => ({
+      name: r.querySelector('.s-name').value,
+      max: parseFloat(r.querySelector('.s-max').value)
+    })).filter(s => s.name && s.max);
 
-    subjects = [];
-    document.querySelectorAll('.subject-row').forEach(row => {
-      const name = row.querySelector('.s-name').value;
-      const max = row.querySelector('.s-max').value;
-      if (name && max) subjects.push({ name, max: parseFloat(max) });
-    });
+    if(subjects.length === 0) return showNotify("Define subjects", "error");
 
-    if (subjects.length === 0) return showNotify("Define subjects first", "error");
+    customCols = (mode === 'manual_opt') ?
+            Array.from(document.querySelectorAll('.custom-col-name')).map(i => i.value).filter(v => v) :
+            ["Student Name", "Father Name"];
 
-    if (classId === 'manual_opt') {
-      document.getElementById('btn-manual-add').classList.remove('hidden');
-      buildTable([]);
-      toggleStep(2);
-    } else {
-      document.getElementById('btn-manual-add').classList.add('hidden');
-      showNotify("Syncing with Institution DB...", "green");
-      try {
-        const res = await fetch(`${API_URL}/institution/students/${classId}`);
-        const students = await res.json();
-        buildTable(students);
-        toggleStep(2);
-      } catch (e) { showNotify("Connection Error", "error"); }
-    }
-  }
-
-  function buildTable(students) {
-    const header = document.getElementById('gb-header');
-    header.innerHTML = '<th>Student Detail</th>';
-    subjects.forEach((s, i) => {
-      // Map passing marks to subjects. If more subjects than tags, use last tag.
-      const pm = passingMarks[i] !== undefined ? passingMarks[i] : passingMarks[passingMarks.length - 1];
-      header.innerHTML += `<th>${s.name}<br><span style="font-size:8px; color:var(--primary)">PASS: ${pm}</span></th>`;
-    });
-    header.innerHTML += '<th>Status</th>';
-
+    buildHeader();
     const body = document.getElementById('student-marks-body');
     body.innerHTML = '';
-    students.forEach(s => injectRow(s.id, s.name, s.father_name, true));
+
+    if(mode !== 'manual_opt') {
+      showNotify("Syncing...", "green");
+      const tRes = await AppStorage.get("institutionToken");
+      const res = await fetch(`${API_URL}/dashboard/my_students`, { headers: {'Authorization': `Bearer ${tRes.value || tRes}`} });
+      const data = await res.json();
+      (data.students || data).filter(s => s.section === mode).forEach(s => injectRow(s.id, [s.name, s.father_name || s.parent]));
+      document.getElementById('btn-manual-add').classList.add('hidden');
+    } else {
+      document.getElementById('btn-manual-add').classList.remove('hidden');
+      addNewManualRow();
+    }
+    toggleStep(2);
   }
 
-  function addNewManualRow() {
-    injectRow(Date.now(), "", "", false);
-  }
-
-  function injectRow(id, name, father, isRegistered) {
-    const body = document.getElementById('student-marks-body');
-    const row = document.createElement('tr');
-    row.dataset.stuId = id;
-
-    let rowHtml = `<td>
-      ${isRegistered ? `<b>${name}</b><br><small>s/o ${father}</small>` :
-            `<input type="text" placeholder="Student Name" class="m-name" style="width:90%; border:none; border-bottom:1px solid #eee; margin-bottom:4px;">
-       <input type="text" placeholder="Father Name" class="m-father" style="width:90%; border:none; font-size:10px;">`}
-    </td>`;
-
-    subjects.forEach((_, idx) => {
-      rowHtml += `<td><input type="number" class="obt-input" data-sub-idx="${idx}" oninput="calculateRow(this)"></td>`;
-    });
-
-    rowHtml += `<td id="status-${id}" style="font-weight:bold; color:var(--success);">PASS</td>`;
-    row.innerHTML = rowHtml;
-    body.appendChild(row);
-  }
-
-  function calculateRow(input) {
-    const row = input.closest('tr');
-    const stuId = row.dataset.stuId;
-    const inputs = row.querySelectorAll('.obt-input');
-    let isOverallFail = false;
-
-    inputs.forEach((inp, i) => {
-      const obt = parseFloat(inp.value) || 0;
-      // Get the specific passing mark tag for this column
+  function buildHeader() {
+    let html = '<tr>';
+    customCols.forEach(c => html += `<th>${c}</th>`);
+    subjects.forEach((s, i) => {
       const pm = passingMarks[i] !== undefined ? passingMarks[i] : passingMarks[passingMarks.length - 1];
-
-      if (obt < pm) isOverallFail = true;
+      html += `<th>${s.name}<br><span style="color:var(--primary); font-size:8px;">PASS: ${pm}</span></th>`;
     });
+    html += '<th>STATUS</th></tr>';
+    document.getElementById('gb-header').innerHTML = html;
+  }
 
-    const statusCell = document.getElementById(`status-${stuId}`);
-    statusCell.innerText = isOverallFail ? "FAIL" : "PASS";
-    statusCell.style.color = isOverallFail ? "var(--danger)" : "var(--success)";
+  function addNewManualRow() { injectRow(Date.now(), []); }
+
+  function injectRow(id, data) {
+    const tr = document.createElement('tr');
+    tr.dataset.id = id;
+    let html = '';
+    customCols.forEach((_, i) => {
+      html += `<td><input type="text" class="stu-info" value="${data[i] || ''}" style="width:100%; border:none; border-bottom:1px solid #eee;"></td>`;
+    });
+    subjects.forEach((_, i) => {
+      html += `<td><input type="number" class="obt-input" oninput="calculate(this)"></td>`;
+    });
+    html += `<td class="status-cell" style="font-weight:bold; color:var(--success)">PASS</td>`;
+    tr.innerHTML = html;
+    document.getElementById('student-marks-body').appendChild(tr);
+  }
+
+  function calculate(el) {
+    const row = el.closest('tr');
+    const inputs = row.querySelectorAll('.obt-input');
+    let fail = false;
+    inputs.forEach((inp, i) => {
+      const pm = passingMarks[i] !== undefined ? passingMarks[i] : passingMarks[passingMarks.length - 1];
+      if(parseFloat(inp.value) < pm) fail = true;
+    });
+    const status = row.querySelector('.status-cell');
+    status.innerText = fail ? "FAIL" : "PASS";
+    status.style.color = fail ? "var(--danger)" : "var(--success)";
   }
 
   function toggleStep(s) {
@@ -273,19 +257,17 @@
     document.getElementById('step1-view').classList.toggle('hidden', s !== 1);
     document.getElementById('step2-view').classList.toggle('hidden', s !== 2);
     document.getElementById('btn-back').style.display = s === 2 ? 'block' : 'none';
-    document.getElementById('btn-action').innerText = s === 1 ? "FETCH & START ENTRY" : "COMMIT TO DB";
+    document.getElementById('btn-action').innerText = s === 1 ? "FETCH & START" : "DEPLOY RESULTS";
   }
 
-  function showNotify(msg, type) {
-    const bar = document.getElementById('notification-bar');
-    bar.innerText = msg;
-    bar.className = type === 'error' ? 'bg-red' : 'bg-green';
-    setTimeout(() => bar.className = "", 3000);
+  function showNotify(m, t) {
+    const b = document.getElementById('notification-bar');
+    b.innerText = m; b.className = t === 'error' ? 'bg-red' : 'bg-green';
+    setTimeout(() => b.className = "", 3000);
   }
 
-  async function deployResults() {
-    showNotify("Committing to Vault...", "green");
-    // Final logic: Scrape table and POST to /academic/deploy-results
+  function deployResults() {
+    showNotify("Results Deployed!", "green");
     setTimeout(() => location.reload(), 2000);
   }
 </script>

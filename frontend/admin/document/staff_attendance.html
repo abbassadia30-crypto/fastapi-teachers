@@ -111,60 +111,79 @@
     <button class="btn-main" onclick="saveAttendance()">Submit Attendance</button>
 </div>
 
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
 <script>
     let currentStaffType = 'teacher';
+    const API_URL = "https://fastapi-teachers.onrender.com";
 
-    // Simulated Staff Records from DB
-    const staffDB = {
-        'teacher': [
-            { id: 'T001', name: 'Prof. Shakeel Ahmed', dept: 'Mathematics' },
-            { id: 'T002', name: 'Ms. Hina Parvez', dept: 'Physics' },
-            { id: 'T003', name: 'Mr. David Wilson', dept: 'English' }
-        ],
-        'admin-staff': [
-            { id: 'S501', name: 'Irfan Malik', dept: 'Accountant' },
-            { id: 'S502', name: 'Zeeshan Ali', dept: 'IT Admin' }
-        ]
-    };
+    // Set default date to today
+    document.getElementById('att-date').valueAsDate = new Date();
+
+    async function fetchStaff() {
+        const container = document.getElementById('staff-list-container');
+        container.innerHTML = '<div style="text-align:center; padding:40px;">Syncing Staff List...</div>';
+
+        try {
+            const tokenObj = await AppStorage.get("institutionToken");
+            const token = tokenObj.value || tokenObj;
+
+            // Assuming staff are marked as 'staff' or 'teacher' in your users/members table
+            const res = await fetch(`${API_URL}/dashboard/my_staff?type=${currentStaffType}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const staffList = await res.json();
+
+            container.innerHTML = '';
+            staffList.forEach(person => {
+                appendStaffCard(person);
+            });
+        } catch (e) {
+            showNotify("Error loading staff", "error");
+            container.innerHTML = '<div style="text-align:center; padding:40px; color:red;">Failed to load staff list.</div>';
+        }
+    }
+
+    function appendStaffCard(person) {
+        const container = document.getElementById('staff-list-container');
+        const isTeacher = currentStaffType === 'teacher';
+
+        const card = document.createElement('div');
+        card.className = 'staff-card';
+        card.dataset.id = person.id;
+        card.dataset.name = person.name;
+
+        card.innerHTML = `
+            <div class="staff-top">
+                <div class="staff-info">
+                    <span class="staff-name">${person.name}</span>
+                    <span class="staff-dept">ID: ${person.id} | ${person.dept || person.role}</span>
+                </div>
+            </div>
+
+            ${isTeacher ? `
+            <div class="role-selector">
+                <div class="role-chip active" onclick="setRole(this)">CLASS TEACHER</div>
+                <div class="role-chip" onclick="setRole(this)">INVEGILATER</div>
+            </div>
+            ` : ''}
+
+            <div class="status-group">
+                <div class="status-btn p active" onclick="setStatus(this)">PRESENT</div>
+                <div class="status-btn a" onclick="setStatus(this)">ABSENT</div>
+                <div class="status-btn l" onclick="setStatus(this)">LATE</div>
+            </div>
+        `;
+        container.appendChild(card);
+    }
 
     function setStaffType(type, el) {
         currentStaffType = type;
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         el.classList.add('active');
         document.getElementById('teacher-config').style.display = type === 'teacher' ? 'block' : 'none';
-        renderStaff();
-    }
-
-    function renderStaff() {
-        const container = document.getElementById('staff-list-container');
-        container.innerHTML = '';
-
-        staffDB[currentStaffType].forEach(person => {
-            const isTeacher = currentStaffType === 'teacher';
-            container.innerHTML += `
-                <div class="staff-card">
-                    <div class="staff-top">
-                        <div class="staff-info">
-                            <span class="staff-name">${person.name}</span>
-                            <span class="staff-dept">ID: ${person.id} | ${person.dept}</span>
-                        </div>
-                    </div>
-
-                    ${isTeacher ? `
-                    <div class="role-selector">
-                        <div class="role-chip active" onclick="setRole(this)">CLASS TEACHER</div>
-                        <div class="role-chip" onclick="setRole(this)">INVEGILATER</div>
-                    </div>
-                    ` : ''}
-
-                    <div class="status-group">
-                        <div class="status-btn p active" onclick="setStatus(this)">PRESENT</div>
-                        <div class="status-btn a" onclick="setStatus(this)">ABSENT</div>
-                        <div class="status-btn l" onclick="setStatus(this)">LATE</div>
-                    </div>
-                </div>
-            `;
-        });
+        fetchStaff();
     }
 
     function setRole(el) {
@@ -177,6 +196,56 @@
         el.classList.add('active');
     }
 
+    async function saveAttendance() {
+        const btn = document.querySelector('.btn-main');
+        btn.disabled = true;
+        btn.innerText = "UPLOADING...";
+
+        const records = [];
+        document.querySelectorAll('.staff-card').forEach(card => {
+            const activeRole = card.querySelector('.role-chip.active');
+            records.push({
+                staff_id: card.dataset.id,
+                staff_name: card.dataset.name,
+                status: card.querySelector('.status-btn.active').innerText.charAt(0), // P, A, or L
+                role: activeRole ? activeRole.innerText : "N/A",
+                is_manual: false
+            });
+        });
+
+        const payload = {
+            category: currentStaffType,
+            date: document.getElementById('att-date').value,
+            shift: document.querySelector('#teacher-config select')?.value || "Office Hours",
+            data: records
+        };
+
+        try {
+            const tokenObj = await AppStorage.get("institutionToken");
+            const token = tokenObj.value || tokenObj;
+
+            const res = await fetch(`${API_URL}/document/submit-staff`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                showNotify("Staff Record Synced!", "green");
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                throw new Error();
+            }
+        } catch (e) {
+            showNotify("Backend Sync Failed", "error");
+            btn.disabled = false;
+            btn.innerText = "Submit Attendance";
+        }
+    }
+
     function showNotify(msg, type) {
         const bar = document.getElementById('notification-bar');
         bar.innerText = msg;
@@ -184,13 +253,8 @@
         setTimeout(() => bar.className = "", 3000);
     }
 
-    function saveAttendance() {
-        showNotify("Staff attendance saved to records.", "green");
-        // Logic: Push to staff_attendance table with Role & Status
-    }
-
     // Initial load
-    renderStaff();
+    fetchStaff();
 </script>
 </body>
 </html>

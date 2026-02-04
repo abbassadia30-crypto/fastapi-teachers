@@ -21,14 +21,14 @@
     #notification-bar {
       position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
       width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-      color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700;
+      color: white; text-align: center; transition: 0.4s; z-index: 5000; font-weight: 700; display: none;
     }
-    .bg-red { background: var(--absent) !important; top: 20px !important; }
-    .bg-green { background: var(--primary) !important; top: 20px !important; }
+    .bg-red { background: var(--absent) !important; top: 20px !important; display: block !important; }
+    .bg-green { background: var(--primary) !important; top: 20px !important; display: block !important; }
 
     header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); }
 
-    .type-switcher { display: flex; background: #e0e0e0; margin: 15px 20px; border-radius: 12px; padding: 4px; }
+    .type-switcher { display: flex; background: #e0e0e0; margin: 15px 20px; border-radius: 12px; padding: 4px; flex-shrink: 0; }
     .type-btn { flex: 1; padding: 10px; border-radius: 10px; border: none; font-weight: 700; font-size: 11px; cursor: pointer; transition: 0.3s; color: #666; }
     .type-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
 
@@ -42,9 +42,8 @@
     .student-item {
       background: white; border-radius: 15px; padding: 12px 15px; margin-bottom: 10px;
       display: flex; align-items: center; justify-content: space-between;
-      border: 1px solid #eee; animation: slideIn 0.3s ease-out;
+      border: 1px solid #eee;
     }
-    @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     .student-info { display: flex; flex-direction: column; max-width: 60%; }
     .student-name { font-weight: 700; font-size: 13px; color: #333; }
@@ -95,21 +94,20 @@
       <label>Select Institution Section</label>
       <select id="class-select" onchange="checkCustomSection(this)">
         <option value="">Loading Sections...</option>
-        <option value="CUSTOM_NEW" style="font-weight: bold; color: var(--primary);">+ ADD CUSTOM SECTION</option>
       </select>
     </div>
 
     <div id="section-custom-container" style="display: none;">
       <label>Custom Section Name</label>
       <div style="display: flex; gap: 8px;">
-        <input type="text" id="custom-section-name" placeholder="e.g. Combined 10th-A & B" style="margin-bottom: 0;">
+        <input type="text" id="custom-section-name" placeholder="e.g. Combined 10th" style="margin-bottom: 0;">
         <button onclick="toggleSectionInput(false)" style="background:#eee; border:none; border-radius:12px; padding:0 15px; font-size:10px; font-weight:700;">BACK</button>
       </div>
     </div>
 
     <div id="subject-container" style="display: none; margin-top: 15px;">
       <label>Testing Subject</label>
-      <input type="text" id="test-subject" placeholder="e.g. Physics Midterm">
+      <input type="text" id="test-subject" placeholder="e.g. Mathematics">
     </div>
 
     <label style="margin-top: 15px;">Attendance Date</label>
@@ -119,7 +117,7 @@
   <div class="summary-bar">
     <div><small>Present</small><b id="sum-p">0</b></div>
     <div><small>Absent</small><b id="sum-a">0</b></div>
-    <div><small>Manual</small><b id="sum-m">0</b></div>
+    <div><small>Late</small><b id="sum-l">0</b></div>
   </div>
 
   <div id="student-list">
@@ -127,7 +125,7 @@
   </div>
 
   <div class="manual-entry-box">
-    <label>Add Guest/Manual Student</label>
+    <label>Add Guest Student</label>
     <div style="display: flex; gap: 10px;">
       <input type="text" id="manual-name" placeholder="Name" style="margin:0;">
       <button onclick="addManualStudent()" style="background:var(--secondary); color:white; border:none; border-radius:12px; padding:0 20px; font-weight:900;">+</button>
@@ -144,7 +142,6 @@
 
 <script>
   let currentType = 'class';
-  let manualCount = 0;
   const API_URL = "https://fastapi-teachers.onrender.com";
 
   document.getElementById('att-date').valueAsDate = new Date();
@@ -160,13 +157,18 @@
 
   async function fetchSections() {
     try {
-      const res = await fetch(`${API_URL}/institution/sections`);
+      const tokenObj = await AppStorage.get("institutionToken");
+      const token = tokenObj.value || tokenObj;
+
+      const res = await fetch(`${API_URL}/dashboard/sections`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const sections = await res.json();
       const select = document.getElementById('class-select');
-      const customOption = '<option value="CUSTOM_NEW" style="font-weight:bold;">+ ADD CUSTOM SECTION</option>';
+
       select.innerHTML = '<option value="">Choose Section</option>' +
-              sections.map(s => `<option value="${s.id}">${s.name}</option>`).join('') +
-              customOption;
+              sections.map(s => `<option value="${s}">${s}</option>`).join('') +
+              '<option value="CUSTOM_NEW" style="font-weight:bold; color:var(--primary);">+ ADD CUSTOM SECTION</option>';
     } catch (e) {
       showNotify("Failed to fetch sections", "error");
     }
@@ -176,7 +178,7 @@
     if (select.value === "CUSTOM_NEW") {
       toggleSectionInput(true);
     } else {
-      fetchStudents();
+      fetchStudents(select.value);
     }
   }
 
@@ -188,8 +190,7 @@
     if (isCustom) {
       selectCont.style.display = 'none';
       customCont.style.display = 'block';
-      list.innerHTML = '<div style="text-align: center; color: #aaa; padding: 40px; font-size: 12px;">Custom Section Mode: Add students manually using the box below.</div>';
-      manualCount = 0;
+      list.innerHTML = '<div style="text-align: center; color: #aaa; padding: 40px; font-size: 12px;">Custom mode active. Add students manually.</div>';
       updateSummary();
     } else {
       selectCont.style.display = 'block';
@@ -198,19 +199,28 @@
     }
   }
 
-  async function fetchStudents() {
-    const sectionId = document.getElementById('class-select').value;
-    if (!sectionId || sectionId === "CUSTOM_NEW") return;
-
+  async function fetchStudents(sectionName) {
     const list = document.getElementById('student-list');
     list.innerHTML = '<div style="text-align:center; padding:20px;">Fetching Members...</div>';
-    manualCount = 0;
 
     try {
-      const res = await fetch(`${API_URL}/institution/students/${sectionId}`);
+      const tokenObj = await AppStorage.get("institutionToken");
+      const token = tokenObj.value || tokenObj;
+
+      const res = await fetch(`${API_URL}/dashboard/my_students`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       const students = await res.json();
+
+      // Filter students by section
+      const filtered = (students.students || students).filter(s => s.section === sectionName);
+
       list.innerHTML = '';
-      students.forEach(s => appendStudentRow(s.name, s.father_name, s.id, false));
+      if(filtered.length === 0) {
+        list.innerHTML = '<div style="text-align:center; padding:20px; color:#888;">No students found in this section</div>';
+      } else {
+        filtered.forEach(s => appendStudentRow(s.name, (s.father_name || s.parent), s.id, false));
+      }
       updateSummary();
     } catch (e) {
       showNotify("Error loading students", "error");
@@ -223,15 +233,13 @@
 
     appendStudentRow(nameInput.value, "Manual Entry", "M-" + Date.now().toString().slice(-4), true);
     nameInput.value = '';
-    manualCount++;
     updateSummary();
     showNotify("Temporary student added", "green");
   }
 
   function appendStudentRow(name, father, id, isManual) {
     const list = document.getElementById('student-list');
-    // Remove the "Custom Mode" placeholder if adding first student
-    if(list.innerText.includes("Custom Section Mode")) list.innerHTML = '';
+    if(list.innerText.includes("mode active")) list.innerHTML = '';
 
     const div = document.createElement('div');
     div.className = 'student-item';
@@ -262,7 +270,7 @@
   function updateSummary() {
     document.getElementById('sum-p').innerText = document.querySelectorAll('.pill.p.active').length;
     document.getElementById('sum-a').innerText = document.querySelectorAll('.pill.a.active').length;
-    document.getElementById('sum-m').innerText = manualCount;
+    document.getElementById('sum-l').innerText = document.querySelectorAll('.pill.l.active').length;
   }
 
   function showNotify(msg, type) {
@@ -278,36 +286,49 @@
 
     if(!selectVal && !customName) return showNotify("Define a section first", "error");
 
+    // Map rows to the 'AttendanceEntry' Pydantic model
     const records = [];
     document.querySelectorAll('.student-item').forEach(item => {
       records.push({
         student_id: item.dataset.sid,
         student_name: item.dataset.name,
-        status: item.querySelector('.pill.active').innerText,
+        status: item.querySelector('.pill.active').innerText, // 'P', 'A', or 'L'
         is_manual: item.dataset.manual === 'true'
       });
     });
 
     if(records.length === 0) return showNotify("Add at least one student", "error");
 
+    // Construct payload to match 'AttendanceSubmit' schema exactly
     const payload = {
       section_id: selectVal === "CUSTOM_NEW" ? "MANUAL" : selectVal,
       custom_section_name: customName || null,
-      date: document.getElementById('att-date').value,
-      type: currentType,
-      subject: document.getElementById('test-subject').value,
-      data: records
+      date: document.getElementById('att-date').value, // Matches 'date' type
+      type: currentType, // 'class' or 'test'
+      subject: document.getElementById('test-subject').value || "General",
+      data: records // Must be 'data' to match your schema
     };
 
     try {
-      const res = await fetch(`${API_URL}/attendance/submit`, {
+      const tokenObj = await AppStorage.get("institutionToken");
+      const token = tokenObj.value || tokenObj;
+
+      const res = await fetch(`${API_URL}/document/submit`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(payload)
       });
+
       if(res.ok) {
-        showNotify("Record Synced Successfully!", "green");
+        showNotify("Attendance locked and synced", "green");
         setTimeout(() => location.reload(), 2000);
+      } else {
+        const errorData = await res.json();
+        console.error("Schema Mismatch:", errorData);
+        showNotify("Validation Error: Check Console", "error");
       }
     } catch (e) {
       showNotify("Network Error", "error");

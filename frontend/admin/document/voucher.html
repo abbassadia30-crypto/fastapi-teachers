@@ -4,15 +4,14 @@
     <meta charset="UTF-8">
     <title>Finance Architect | Professional Edition</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #1b5e20; --secondary: #263238; --bg: #f8faf9; --border: #cfd8dc; --danger: #d32f2f; }
-        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: var(--secondary); overflow: hidden;}
+        :root { --primary: #1b5e20; --secondary: #263238; --bg: #f8faf9; --border: #cfd8dc; --danger: #d32f2f; --success: #2e7d32; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; flex-direction: column; height: 100vh; color: var(--secondary); overflow: hidden;}
 
-        /* 🏛️ Notification Box */
-        #sign-box { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; text-align: center; transition: 0.4s; z-index: 9999; font-weight: 700; display: none; }
-        .sign-red { background: var(--danger); display: block !important; top: 20px !important; }
-        .sign-green { background: var(--primary); display: block !important; top: 20px !important; }
+        /* 🏛️ Sign Box */
+        #sign-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; max-width: 400px; padding: 15px; border-radius: 12px; text-align: center; transition: 0.4s; z-index: 9999; font-weight: 700; display: none; }
+        .sign-red { background: #fef2f2; color: var(--danger); border: 1px solid var(--danger); display: block !important; }
+        .sign-green { background: #ecfdf5; color: var(--success); border: 1px solid var(--success); display: block !important; }
 
         header { background: white; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #ddd; flex-shrink: 0;}
         .workspace { flex: 1; overflow-y: auto; padding: 15px; }
@@ -23,21 +22,32 @@
 
         .config-card { background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px; border: 1px solid var(--border); }
         label { font-size: 10px; font-weight: 800; color: #546e7a; text-transform: uppercase; margin-bottom: 5px; display: block; }
+        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 13px; box-sizing: border-box; background: white; }
 
-        input, select, textarea { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 13px; box-sizing: border-box; background: white; }
+        /* 📑 Professional Voucher Styles (Image 1 Style) */
+        .voucher-wrap { background: white; border: 1px solid #333; font-size: 11px; margin-bottom: 20px; display: grid; grid-template-rows: auto auto 1fr auto; }
+        .v-header { display: flex; justify-content: space-between; padding: 5px; background: #eee; border-bottom: 1px solid #333; font-weight: bold; }
+        .v-sub-header { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid #333; }
+        .v-sub-header div { padding: 5px; border-right: 1px solid #333; }
+        .v-table { width: 100%; border-collapse: collapse; }
+        .v-table th { background: #f0f0f0; border: 1px solid #333; padding: 4px; text-align: left; }
+        .v-table td { border: 1px solid #333; padding: 4px; }
+        .triple-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; overflow-x: auto; }
+
+        /* 📑 Salary Slip Styles (Image 2 Style) */
+        .slip-wrap { background: white; border: 1px solid var(--border); padding: 20px; border-radius: 10px; font-size: 12px; }
+        .slip-title { text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px; color: var(--primary); border-bottom: 2px solid var(--primary); }
 
         .voucher-tabs { display: flex; overflow-x: auto; gap: 8px; padding-bottom: 10px; margin-bottom: 15px; scrollbar-width: none; }
         .v-tab { padding: 8px 15px; background: #fff; border: 1px solid var(--border); border-radius: 20px; font-size: 11px; white-space: nowrap; font-weight: 600; cursor: pointer; }
-        .v-tab.selected { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .fee-row { display: grid; grid-template-columns: 2fr 1fr 30px; gap: 8px; margin-bottom: 8px; }
-        .btn-add-field { background: #e8f5e9; color: var(--primary); border: 2px dashed var(--primary); padding: 10px; border-radius: 10px; font-weight: 700; font-size: 11px; width: 100%; cursor: pointer; margin-bottom: 10px; }
+        .v-tab.selected { background: var(--primary); color: white; }
 
         .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; flex-shrink: 0;}
         .btn-main { background: var(--primary); color: white; border: none; flex: 2; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; }
         .btn-back { background: #cfd8dc; color: #455a64; border: none; flex: 1; padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer; display: none; }
 
         .hidden { display: none; }
+        [contenteditable="true"]:hover { background: #fffde7; border-radius: 4px; outline: 1px dashed var(--primary); }
     </style>
 </head>
 <body>
@@ -51,284 +61,238 @@
 </header>
 
 <div class="step-bar">
-    <div class="step-tab active" id="tab-1">1. SETUP</div>
-    <div class="step-tab" id="tab-2">2. DRAFTING</div>
-    <div class="step-tab" id="tab-3">3. DEPLOY</div>
+    <div class="step-tab active" id="st-1">1. SETUP</div>
+    <div class="step-tab" id="st-2">2. DRAFTING</div>
+    <div class="step-tab" id="st-3">3. PREVIEW</div>
 </div>
 
 <div class="workspace">
-    <div id="view-setup">
+    <div id="view-1">
         <div class="config-card">
             <label>Transaction Type</label>
-            <select id="mode-select" onchange="toggleCustomMode()">
-                <option value="student">Student Fee (Bulk)</option>
-                <option value="staff">Staff Payroll (Bulk)</option>
-                <option value="custom">Manual / One-Off Receipt</option>
+            <select id="mode-select" onchange="toggleInputs()">
+                <option value="student">Student Fee (Bulk Voucher)</option>
+                <option value="teacher">Teacher Payroll (Salary Slip)</option>
+                <option value="staff">Staff Payroll (Salary Slip)</option>
+                <option value="manual">Manual Entry</option>
             </select>
-
-            <div id="target-container">
-                <label id="target-label">Target Section</label>
-                <select id="target-group" onchange="checkManualTarget(this.value)">
-                    <option value="">-- Select Section --</option>
-                </select>
-                <input type="text" id="manual-target" class="hidden" placeholder="Type Section/Dept Name...">
+            <div id="sec-wrap">
+                <label>Section</label>
+                <select id="target-sec"></select>
             </div>
-
             <label>Billing Period</label>
-            <input type="month" id="billing-period">
+            <input type="month" id="bill-month">
         </div>
-
-        <div class="config-card" id="base-template-card">
-            <label>Base Template (Default Charges)</label>
-            <div id="base-heads">
-                <div class="fee-row">
-                    <input type="text" placeholder="Description" class="h-name" value="Tuition Fee">
-                    <input type="number" placeholder="Amount" class="h-amount">
-                    <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
+        <div class="config-card" id="heads-card">
+            <label>Common Headings (Base Template)</label>
+            <div id="base-rows">
+                <div style="display:flex; gap:5px; margin-bottom:5px;">
+                    <input type="text" placeholder="Description" class="h-name" value="Tuition Fee" style="margin:0;">
+                    <input type="number" placeholder="Amount" class="h-amount" style="margin:0; width:80px;">
                 </div>
             </div>
-            <button class="btn-add-field" onclick="addHeadRow('base-heads')">+ ADD CHARGE HEAD</button>
+            <button class="btn-add-field" onclick="addRow('base-rows')" style="margin-top:10px;">+ ADD HEAD</button>
         </div>
     </div>
 
-    <div id="view-drafting" class="hidden">
-        <div class="voucher-tabs" id="draft-tabs"></div>
-
-        <div class="config-card" id="editor-card">
-            <label>Recipient Information</label>
-            <input type="text" id="edit-name" placeholder="Name">
-            <div style="display: flex; gap: 8px;">
-                <input type="text" id="edit-id" placeholder="ID / Roll No">
-                <input type="text" id="edit-phone" placeholder="Phone">
-            </div>
-            <input type="text" id="edit-parent" placeholder="Father Name">
-
-            <label style="margin-top: 10px;">Voucher Particulars</label>
-            <div id="edit-heads"></div>
-            <button class="btn-add-field" onclick="addHeadRow('edit-heads')">+ ADD ADJUSTMENT</button>
+    <div id="view-2" class="hidden">
+        <div class="voucher-tabs" id="draft-tags"></div>
+        <div class="config-card">
+            <label>Recipient Data</label>
+            <input type="text" id="ed-name" placeholder="Name">
+            <input type="text" id="ed-id" placeholder="ID No">
+            <div id="ed-heads-container"></div>
+            <button class="btn-add-field" onclick="addRow('ed-heads-container')">+ ADD ADJUSTMENT</button>
         </div>
+    </div>
+
+    <div id="view-3" class="hidden">
+        <div class="config-card" id="triple-toggle-wrap">
+            <label>Voucher Format</label>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <label style="flex:1; background:#eee; padding:10px; border-radius:8px; text-align:center;">
+                    <input type="radio" name="v-type" value="single" checked onchange="renderPreview()"> Single Copy
+                </label>
+                <label style="flex:1; background:#eee; padding:10px; border-radius:8px; text-align:center;">
+                    <input type="radio" name="v-type" value="triple" onchange="renderPreview()"> Triple Copy
+                </label>
+            </div>
+        </div>
+        <p style="font-size:9px; color:gray; text-align:center; margin-bottom:10px;">TIP: Click any text below to edit it manually before deployment.</p>
+        <div id="final-canvas"></div>
     </div>
 </div>
 
 <div class="footer">
     <button class="btn-back" id="btn-back" onclick="changeStep(-1)">BACK</button>
-    <button class="btn-main" id="btn-next" onclick="changeStep(1)">PROCEED TO DRAFT</button>
+    <button class="btn-main" id="btn-next" onclick="changeStep(1)">PROCEED TO DRAFTS</button>
 </div>
 
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 
 <script>
-    const API_URL = "https://fastapi-teachers.onrender.com";
-    let step = 1;
-    let allStudents = [];
-    let drafts = [];
-    let currentDraftIndex = 0;
+    const API = "https://fastapi-teachers.onrender.com/dashboard";
+    let step = 1; let drafts = []; let activeIdx = 0; let token = "";
 
-    // --- Core Navigation ---
-    function showNotify(msg, type) {
-        const box = document.getElementById('sign-box');
-        box.innerText = msg;
-        box.className = type === 'success' ? 'sign-green' : 'sign-red';
-        setTimeout(() => box.className = "", 3000);
+    window.onload = async () => {
+        const tRes = await AppStorage.get("institutionToken");
+        token = tRes.value || tRes;
+        loadSections();
+    };
+
+    function showStatus(m, ok) {
+        const s = document.getElementById('sign-box');
+        s.innerText = m; s.className = ok ? 'sign-green' : 'sign-red';
+        setTimeout(() => s.className = "", 3000);
+    }
+
+    async function loadSections() {
+        try {
+            const r = await fetch(`${API}/sections`, { headers: {'Authorization': `Bearer ${token}`} });
+            const d = await r.json();
+            document.getElementById('target-sec').innerHTML = d.map(s => `<option value="${s}">${s}</option>`).join('');
+        } catch(e) {}
+    }
+
+    function toggleInputs() {
+        const m = document.getElementById('mode-select').value;
+        document.getElementById('sec-wrap').style.display = m === 'student' ? 'block' : 'none';
+        document.querySelector('.h-name').value = m === 'student' ? 'Tuition Fee' : 'Basic Salary';
     }
 
     async function changeStep(dir) {
-        if (dir === 1 && step === 1) await generateDrafts();
-        else if (dir === 1 && step === 2) await finalizeDeployment();
-        else {
-            step += dir;
-            updateUI();
-        }
+        if(dir === 1 && step === 1) await fetchDrafts();
+        else if(dir === 1 && step === 2) { step = 3; updateUI(); }
+        else if(dir === 1 && step === 3) deploy();
+        else { step += dir; updateUI(); }
     }
 
-    function updateUI() {
-        document.getElementById('view-setup').classList.toggle('hidden', step !== 1);
-        document.getElementById('view-drafting').classList.toggle('hidden', step !== 2);
-        document.getElementById('btn-back').style.display = step > 1 ? 'block' : 'none';
-        document.getElementById('btn-next').innerText = step === 1 ? 'PROCEED TO DRAFT' : 'DEPLOY VOUCHERS';
-
-        document.querySelectorAll('.step-tab').forEach((t, i) => {
-            t.classList.toggle('active', i + 1 === step);
-        });
-    }
-
-    // --- Data Initialization ---
-    async function loadData() {
-        try {
-            const tokenRes = await AppStorage.get("institutionToken");
-            const token = tokenRes.value || tokenRes;
-            if(!token) return window.location.replace("../../index.html");
-
-            const res = await fetch(`${API_URL}/dashboard/my_students`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            const data = await res.json();
-            allStudents = data.students || data || [];
-
-            // Unique sections for dropdown
-            const activeSections = [...new Set(allStudents.map(s => s.section))].filter(Boolean);
-            const dropdown = document.getElementById('target-group');
-
-            dropdown.innerHTML = '<option value="">-- Select Section --</option>';
-            activeSections.forEach(sec => {
-                dropdown.innerHTML += `<option value="${sec}">${sec}</option>`;
-            });
-            dropdown.innerHTML += `<option value="manual_entry">[+] ENTER MANUALLY</option>`;
-
-        } catch (e) {
-            showNotify("Institutional Sync Failed", "error");
-        }
-    }
-
-    function toggleCustomMode() {
-        const mode = document.getElementById('mode-select').value;
-        document.getElementById('target-label').innerText = mode === 'staff' ? 'Department' : 'Target Section';
-        document.getElementById('base-template-card').classList.toggle('hidden', mode === 'custom');
-    }
-
-    function checkManualTarget(val) {
-        document.getElementById('manual-target').classList.toggle('hidden', val !== 'manual_entry');
-    }
-
-    // --- Logic 2: Generating Drafts ---
-    async function generateDrafts() {
-        const mode = document.getElementById('mode-select').value;
-        const target = document.getElementById('target-group').value;
-        const billing = document.getElementById('billing-period').value;
-
-        if (!billing) return showNotify("Select billing period", "error");
-        if (mode !== 'custom' && !target) return showNotify("Select a target section", "error");
-
-        const baseHeads = Array.from(document.querySelectorAll('#base-heads .fee-row')).map(r => ({
-            name: r.querySelector('.h-name').value || "Unnamed Head",
-            amount: parseFloat(r.querySelector('.h-amount').value) || 0
-        }));
-
-        if (mode === 'custom') {
-            drafts = [{ name: "New Entry", id: "", parent: "", phone: "", heads: [] }];
-        } else {
-            // Filter from memory cache
-            const members = allStudents.filter(s => s.section === target);
-            if (members.length === 0) return showNotify("No members found", "error");
-
-            drafts = members.map(m => ({
-                name: m.name,
-                id: m.roll_no || m.id || "N/A",
-                parent: m.father_name || "",
-                phone: m.phone || "",
-                heads: JSON.parse(JSON.stringify(baseHeads))
-            }));
-        }
-
-        step = 2;
-        renderTabs();
-        selectDraft(0);
-        updateUI();
-    }
-
-    // --- Logic 3: Editing Drafts ---
-    function renderTabs() {
-        const container = document.getElementById('draft-tabs');
-        container.innerHTML = drafts.map((d, i) => `
-            <div class="v-tab ${i === 0 ? 'selected' : ''}" onclick="selectDraft(${i})" id="tab-v-${i}">
-                ${d.name || 'Draft'}
-            </div>
-        `).join('');
-    }
-
-    function selectDraft(index) {
-        saveCurrentToMemory();
-        currentDraftIndex = index;
-        const d = drafts[index];
-
-        document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('selected'));
-        const activeTab = document.getElementById(`tab-v-${index}`);
-        if(activeTab) activeTab.classList.add('selected');
-
-        document.getElementById('edit-name').value = d.name;
-        document.getElementById('edit-id').value = d.id;
-        document.getElementById('edit-parent').value = d.parent;
-        document.getElementById('edit-phone').value = d.phone;
-
-        const headsContainer = document.getElementById('edit-heads');
-        headsContainer.innerHTML = d.heads.map(h => `
-            <div class="fee-row">
-                <input type="text" value="${h.name}" class="h-name">
-                <input type="number" value="${h.amount}" class="h-amount">
-                <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
-            </div>
-        `).join('');
-    }
-
-    function saveCurrentToMemory() {
-        if (drafts.length === 0 || step !== 2) return;
-        const d = drafts[currentDraftIndex];
-        d.name = document.getElementById('edit-name').value;
-        d.id = document.getElementById('edit-id').value;
-        d.parent = document.getElementById('edit-parent').value;
-        d.phone = document.getElementById('edit-phone').value;
-
-        d.heads = Array.from(document.querySelectorAll('#edit-heads .fee-row')).map(r => ({
+    async function fetchDrafts() {
+        const m = document.getElementById('mode-select').value;
+        const baseHeads = Array.from(document.querySelectorAll('#base-rows div')).map(r => ({
             name: r.querySelector('.h-name').value,
             amount: parseFloat(r.querySelector('.h-amount').value) || 0
         }));
 
-        const tab = document.getElementById(`tab-v-${currentDraftIndex}`);
-        if(tab) tab.innerText = d.name || "Draft";
+        if(m === 'manual') {
+            drafts = [{ name: "New Entry", id: "001", heads: JSON.parse(JSON.stringify(baseHeads)) }];
+        } else {
+            let path = m === 'student' ? '/my_students' : (m === 'teacher' ? '/teacher-list' : '/Staff_list');
+            const res = await fetch(`${API}${path}`, { headers: {'Authorization': `Bearer ${token}`} });
+            const data = await res.json();
+            let raw = m === 'student' ? data.students.filter(s => s.section === document.getElementById('target-sec').value) : data.rows;
+
+            drafts = raw.map(x => ({
+                name: x.name,
+                id: x.roll_no || x.id || "ID",
+                heads: JSON.parse(JSON.stringify(baseHeads))
+            }));
+        }
+        step = 2; renderTags(); loadDraft(0); updateUI();
     }
 
-    function addHeadRow(containerId) {
-        const div = document.createElement('div');
-        div.className = 'fee-row';
-        div.innerHTML = `
-            <input type="text" placeholder="Description" class="h-name">
-            <input type="number" placeholder="Amount" class="h-amount">
-            <div style="color:var(--danger); font-weight:900; text-align:center;" onclick="this.parentElement.remove()">✕</div>
-        `;
-        document.getElementById(containerId).appendChild(div);
+    function renderTags() {
+        document.getElementById('draft-tags').innerHTML = drafts.map((d, i) => `
+            <div class="v-tab ${i===0?'selected':''}" id="t-${i}" onclick="loadDraft(${i})">${d.name}</div>
+        `).join('');
     }
 
-    async function finalizeDeployment() {
-        saveCurrentToMemory();
-        const btn = document.getElementById('btn-next');
+    function loadDraft(idx) {
+        saveDraft(); activeIdx = idx;
+        document.querySelectorAll('.v-tab').forEach(t => t.classList.remove('selected'));
+        document.getElementById(`t-${idx}`).classList.add('selected');
+        const d = drafts[idx];
+        document.getElementById('ed-name').value = d.name;
+        document.getElementById('ed-id').value = d.id;
+        document.getElementById('ed-heads-container').innerHTML = d.heads.map(h => `
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" value="${h.name}" class="h-name" style="margin:0;">
+                <input type="number" value="${h.amount}" class="h-amount" style="margin:0; width:80px;">
+            </div>
+        `).join('');
+    }
+
+    function saveDraft() {
+        if(step !== 2) return;
+        const d = drafts[activeIdx];
+        d.name = document.getElementById('ed-name').value;
+        d.id = document.getElementById('ed-id').value;
+        d.heads = Array.from(document.querySelectorAll('#ed-heads-container div')).map(r => ({
+            name: r.querySelector('.h-name').value,
+            amount: parseFloat(r.querySelector('.h-amount').value) || 0
+        }));
+    }
+
+    function updateUI() {
+        document.getElementById('view-1').classList.toggle('hidden', step !== 1);
+        document.getElementById('view-2').classList.toggle('hidden', step !== 2);
+        document.getElementById('view-3').classList.toggle('hidden', step !== 3);
+        document.getElementById('btn-back').style.display = step > 1 ? 'block' : 'none';
+        document.querySelectorAll('.step-tab').forEach((s, i) => s.classList.toggle('active', i+1 === step));
+        if(step === 3) renderPreview();
+        document.getElementById('btn-next').innerText = step === 1 ? 'PROCEED' : (step === 2 ? 'GENERATE' : 'DEPLOY');
+    }
+
+    function renderPreview() {
+        saveDraft();
         const mode = document.getElementById('mode-select').value;
+        const type = document.querySelector('input[name="v-type"]:checked').value;
+        const canvas = document.getElementById('final-canvas');
+        const d = drafts[0];
+        const total = d.heads.reduce((a, b) => a + b.amount, 0);
 
-        btn.disabled = true;
-        btn.innerText = "SYNCING WITH RENDER...";
+        document.getElementById('triple-toggle-wrap').style.display = mode === 'student' ? 'block' : 'none';
 
-        try {
-            const tokenRes = await AppStorage.get("institutionToken");
-            const token = tokenRes.value || tokenRes;
-
-            const res = await fetch(`${API_URL}/document/finance/deploy-bulk`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({
-                    billing_period: document.getElementById('billing-period').value,
-                    mode: mode,
-                    vouchers: drafts
-                })
-            });
-
-            if (res.ok) {
-                showNotify("Vouchers Deployed Successfully", "success");
-                setTimeout(() => location.reload(), 2000);
-            } else {
-                showNotify("Server rejected data format", "error");
-                btn.disabled = false;
-                btn.innerText = "DEPLOY VOUCHERS";
-            }
-        } catch (e) {
-            showNotify("Sync Failed: Check Connection", "error");
-            btn.disabled = false;
+        if(mode === 'student') {
+            const copies = type === 'triple' ? ['Student Copy', 'Institution Copy', 'Bank Copy'] : ['Original Copy'];
+            canvas.className = type === 'triple' ? 'triple-grid' : '';
+            canvas.innerHTML = copies.map(c => `
+                <div class="voucher-wrap">
+                    <div class="v-header"><span contenteditable="true">INSTITUTION NAME</span> <span>${c}</span></div>
+                    <div class="v-sub-header">
+                        <div><b>Name:</b> <span contenteditable="true">${d.name}</span></div>
+                        <div><b>ID:</b> <span contenteditable="true">${d.id}</span></div>
+                    </div>
+                    <table class="v-table">
+                        <tr><th>Description</th><th>Amount</th></tr>
+                        ${d.heads.map(h => `<tr><td>${h.name}</td><td>${h.amount}</td></tr>`).join('')}
+                        <tr><td style="text-align:right"><b>Total:</b></td><td><b>${total}</b></td></tr>
+                    </table>
+                    <div style="padding:5px; font-size:8px;" contenteditable="true">Payment terms and banking info here...</div>
+                </div>
+            `).join('');
+        } else {
+            canvas.className = "";
+            canvas.innerHTML = `
+                <div class="slip-wrap">
+                    <div class="slip-title" contenteditable="true">SALARY SLIP</div>
+                    <p><b>Employee Name:</b> <span contenteditable="true">${d.name}</span></p>
+                    <p><b>Employee ID:</b> <span contenteditable="true">${d.id}</span></p>
+                    <hr>
+                    <table style="width:100%; text-align:left;">
+                        ${d.heads.map(h => `<tr><td>${h.name}</td><td style="text-align:right">${h.amount}</td></tr>`).join('')}
+                        <tr style="font-weight:bold; border-top:1px solid #000;">
+                            <td>Net Payable</td><td style="text-align:right">${total}</td>
+                        </tr>
+                    </table>
+                    <div style="margin-top:40px; border-top:1px solid #ccc; width:150px; text-align:center;">Signature</div>
+                </div>
+            `;
         }
     }
 
-    // Init
-    loadData();
-</script>
+    function addRow(id) {
+        const div = document.createElement('div');
+        div.style = "display:flex; gap:5px; margin-bottom:5px;";
+        div.innerHTML = `<input type="text" class="h-name" style="margin:0;"><input type="number" class="h-amount" style="margin:0; width:80px;">`;
+        document.getElementById(id).appendChild(div);
+    }
 
+    async function deploy() {
+        showStatus("Deploying Finance Documents...", true);
+        setTimeout(() => location.reload(), 2000);
+    }
+</script>
 </body>
 </html>

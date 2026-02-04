@@ -165,3 +165,18 @@ class AttendanceSubmit(BaseModel):
     type: str  # 'class' or 'test'
     subject: Optional[str] = None
     data: List[AttendanceEntry]
+
+
+
+class StaffAttendanceEntry(BaseModel):
+    staff_id: str
+    staff_name: str
+    status: str      # P, A, or L
+    role: str        # Class Teacher, Invigilator, or N/A
+    is_manual: bool = False
+
+class StaffAttendanceSubmit(BaseModel):
+    category: str    # 'teacher' or 'admin-staff'
+    date: date
+    shift: Optional[str] = "Morning"
+    data: List[StaffAttendanceEntry]
