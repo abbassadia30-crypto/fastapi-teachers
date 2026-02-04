@@ -28,6 +28,8 @@ class Institution(Base):
     vouchers = relationship("Voucher", back_populates="institution")
     academic_results = relationship("AcademicResult", back_populates="institution")
     papers = relationship("PaperVault", back_populates="institution")
+    # CORRECTED: Re-added the relationship to resolve the error
+    attendance_logs = relationship("AttendanceLog", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -74,5 +76,4 @@ class User(Base):
                                      foreign_keys=[Institution.owner_id], uselist=False)
     profile = relationship("Profile", back_populates="owner", uselist=False)
     employed_at = relationship("Institution", foreign_keys=[institution_id])
-    # ADDED: Relationship to Transaction
     transactions = relationship("Transaction", back_populates="user")
