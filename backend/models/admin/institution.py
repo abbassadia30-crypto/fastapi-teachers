@@ -28,8 +28,9 @@ class Institution(Base):
     vouchers = relationship("Voucher", back_populates="institution")
     academic_results = relationship("AcademicResult", back_populates="institution")
     papers = relationship("PaperVault", back_populates="institution")
-    # CORRECTED: Re-added the relationship to resolve the error
+    # CORRECTED: Re-added the missing relationships to resolve the errors
     attendance_logs = relationship("AttendanceLog", back_populates="institution")
+    individual_attendances = relationship("IndividualAttendance", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
