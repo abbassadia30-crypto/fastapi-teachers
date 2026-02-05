@@ -75,7 +75,7 @@
 <div id="notification-bar"></div>
 
 <header>
-    <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
+    <div onclick='location.href="documents.html"' style="font-size:24px; cursor:pointer;">✕</div>
     <span style="font-weight: 800; font-size: 14px; letter-spacing: 0.5px;">INSTITUTION ARCHIVE</span>
     <div style="width: 24px;"></div>
 </header>
@@ -102,7 +102,7 @@
 <script>
     // 🏛️ Real-world Section Definitions
     const vaultSections = [
-        { id: 'datesheets', name: 'Datesheets', icon: '📅', cat: 'academic', color: 'c-academic', count: 'View Schedule' },
+        { id: 'datesheets', name: 'Datesheets', icon: '📅', cat: 'academic', color: 'c-academic', count: 'View Schedule'},
         { id: 'syllabuses', name: 'Syllabuses', icon: '📚', cat: 'academic', color: 'c-academic', count: 'Curriculum Vault' },
         { id: 'notices', name: 'Notices', icon: '📢', cat: 'admin', color: 'c-admin', count: 'Official Circulars' },
         { id: 'vouchers', name: 'Fee Vouchers', icon: '🧾', cat: 'finance', color: 'c-finance', count: 'Billing Records' },
@@ -113,7 +113,6 @@
         { id: 'stu_attendance', name: 'Student Attendance', icon: '🧑‍🎓', cat: 'attendance', color: 'c-attendance', count: 'Daily Logs' },
         { id: 'teach_attendance', name: 'Teacher Attendance', icon: '👨‍🏫', cat: 'attendance', color: 'c-attendance', count: 'Staff Logs' },
         { id: 'translations', name: 'Translated Docs', icon: '🌐', cat: 'legal', color: 'c-docs', count: 'Multilingual' },
-        { id: 'papers', name: 'Papers', icon: '✍️', cat: 'academic', color: 'c-academic', count: 'Question Bank' }
     ];
 
     function initVault() {
@@ -155,15 +154,53 @@
         });
     }
 
+    let notifyTimer;
     function navigateTo(id, name) {
         const bar = document.getElementById('notification-bar');
-        bar.innerText = `Opening ${name}...`;
-        bar.className = "bg-green";
 
-        setTimeout(() => {
-            // Standardizing navigation for your Capacitor App
-            window.location.href = `view_archive.html?type=${id}`;
-        }, 500);
+        clearTimeout(notifyTimer);
+        // 🚨 Define which IDs go to which files
+        const routeMap = {
+            'translations': 'central_vault/translated.html',
+            'stu_attendance': 'central_vault/student.html',
+            'teach_attendance': 'central_vault/teachers.html',
+            'syllabuses': 'central_vault/syllabus.html',
+            'vouchers': 'central_vault/vouchers.html',
+            'notices': 'central_vault/notices.html',
+            'scans': 'central_vault/scanned.html',
+            'marksheets': 'central_vault/marksheet.html',
+            'datesheets' : 'central_vault/datesheet.html',
+            'salaries' : 'central_vault/salary.html',
+            'tests' : 'central_vault/test.html'
+        };
+
+        const targetPath = routeMap[id];
+
+        if (targetPath) {
+            // Success State (Green Box)
+            bar.innerText = `Accessing ${name} Vault...`;
+            bar.className = "bg-green"; // Custom class for success
+
+            // Auto-hide after 3 seconds (in case page doesn't switch instantly)
+            notifyTimer = setTimeout(() => {
+                bar.className = "";
+            }, 3000);
+
+            // Execute Navigation
+            setTimeout(() => {
+                window.location.href = targetPath;
+            }, 600);
+
+        } else {
+            // Development/Error State (Red Box)
+            bar.innerText = `${name} Section is being encrypted...`;
+            bar.className = "bg-red"; // Custom class for warning/error
+
+            // Auto-hide the red box after 2 seconds
+            notifyTimer = setTimeout(() => {
+                bar.className = "";
+            }, 2000);
+        }
     }
 
     // Initial load

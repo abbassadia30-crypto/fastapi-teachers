@@ -11,6 +11,7 @@ from backend.routers import dashboard
 from backend.routers import document
 from backend.routers import profile
 from backend.routers import ready
+from backend.routers import central_vault
 
 Base.metadata.drop_all(bind=engine)
 
@@ -29,6 +30,7 @@ app.include_router(dashboard.router)
 app.include_router(ready.router)
 app.include_router(profile.router)
 app.include_router(document.router)
+app.include_router(central_vault)
 
 app.add_middleware(
     CORSMiddleware,

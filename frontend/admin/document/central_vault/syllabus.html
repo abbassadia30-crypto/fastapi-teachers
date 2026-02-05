@@ -153,46 +153,73 @@
     </div>
   </div>
 </div>
-
+<script src="../../js/storage.js"></script>
 <script>
+  // 🏛️ Real-World Configuration
+  const API_BASE = "https://fastapi-teachers.onrender.com/central_vault";
   let isSelectionMode = false;
   let selectedIds = new Set();
+  let syllabusVault = [];
+  let currentViewingId = null;
+  let notifyTimer;
 
-  // 🏛️ Example Archive Data
-  let syllabusVault = [
-    { id: 1, name: "Midterm Biology", subject: "Science", section: "10th-A", date: "2026-02-01", content: "1. Cell Theory\n2. Plant Kingdom\n3. Animal Kingdom" },
-    { id: 2, name: "Urdu Grammar Q1", subject: "Urdu", section: "9th-B", date: "2026-02-01", content: "1. Ism o Fail\n2. Letters to Editor" },
-    { id: 3, name: "Math Algebra", subject: "Maths", section: "8th-C", date: "2026-01-15", content: "1. Quadratic Equations\n2. Sets and Functions" }
-  ];
+  // --- 1. CORE SYNC (FETCH FROM BACKEND) ---
+  async function syncVault() {
+    const token = await AppStorage.get('institutionToken');
+    if (!token) return notify("Auth Error: Log in again", "red");
 
-  function renderGrid(list) {
+    try {
+      const response = await fetch(`${API_BASE}/central_vault/vault/list`, {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error("Server Sync Failed");
+
+      const data = await response.json();
+      syllabusVault = data;
+      renderGrid(syllabusVault);
+    } catch (err) {
+      console.error(err);
+      notify("Failed to load institution records", "red");
+    }
+  }
+
+  // --- 2. RENDER GRID ---
+  function renderGrid(list = syllabusVault) {
     const grid = document.getElementById('sectionGrid');
-    if (!list) list = syllabusVault;
 
     if (list.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No records found.</div>`;
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No records found in Vault.</div>`;
       return;
     }
 
     grid.innerHTML = list.map(doc => `
-            <div class="card ${selectedIds.has(doc.id) ? 'selected' : ''}" onclick="handleCardClick(${doc.id}, this)">
-                <div class="select-dot"></div>
-                <div class="icon-circle">📄</div>
-                <span class="card-subject">${doc.subject}</span>
-                <span class="card-title">${doc.name}</span>
-                <div class="card-footer">
-                    <span>${doc.section}</span> • <span>${doc.date}</span>
-                </div>
-            </div>
-        `).join('');
+      <div class="card ${selectedIds.has(doc.id) ? 'selected' : ''}" onclick="handleCardClick(${doc.id}, this)">
+          <div class="select-dot"></div>
+          <div class="icon-circle">📄</div>
+          <span class="card-subject">${doc.subject || 'GENERAL'}</span>
+          <span class="card-title">${doc.name}</span>
+          <div class="card-footer">
+              <span>${doc.targets ? doc.targets.join(', ') : 'All'}</span> •
+              <span>${new Date(doc.created_at || Date.now()).toLocaleDateString()}</span>
+          </div>
+      </div>
+    `).join('');
   }
 
+  // --- 3. SELECTION LOGIC ---
   function handleCardClick(id, el) {
     if (isSelectionMode) {
-      if (selectedIds.has(id)) selectedIds.delete(id);
-      else selectedIds.add(id);
-      el.classList.toggle('selected');
+      if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+        el.classList.remove('selected');
+      } else {
+        selectedIds.add(id);
+        el.classList.add('selected');
+      }
       document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+      if (selectedIds.size === 0) exitSelection();
     } else {
       openFullView(id);
     }
@@ -221,48 +248,105 @@
     renderGrid();
   }
 
+  // --- 4. REAL BACKEND BULK DELETE ---
+  async function confirmBulkDelete() {
+    if (selectedIds.size === 0) return;
+
+    if (confirm(`Erase ${selectedIds.size} records from Institution Vault?`)) {
+      const token = await AppStorage.get('institutionToken');
+      const idsArray = Array.from(selectedIds);
+
+      try {
+        const res = await fetch(`${API_BASE}central_vault/vault/delete-bulk`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ ids: idsArray })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          notify(`Purged ${result.deleted_count} items`, 'green');
+          exitSelection();
+          syncVault(); // Refresh
+        } else {
+          throw new Error("Deletion failed");
+        }
+      } catch (err) {
+        notify("Delete failed: Server Error", "red");
+      }
+    }
+  }
+
+  // --- 5. SEARCH & FILTER ---
   function applyAllFilters() {
     const q = document.getElementById('vaultSearch').value.toLowerCase();
     const dateQ = document.getElementById('dateFilter').value;
     const sort = document.getElementById('sortOrder').value;
 
     let filtered = syllabusVault.filter(doc => {
-      const matchesText = doc.name.toLowerCase().includes(q) || doc.subject.toLowerCase().includes(q);
-      const matchesDate = !dateQ || doc.date === dateQ;
+      const matchesText = doc.name.toLowerCase().includes(q) || (doc.subject && doc.subject.toLowerCase().includes(q));
+      const matchesDate = !dateQ || (doc.created_at && doc.created_at.startsWith(dateQ));
       return matchesText && matchesDate;
     });
 
-    if (sort === 'subject') filtered.sort((a, b) => a.subject.localeCompare(b.subject));
-    if (sort === 'section') filtered.sort((a, b) => a.section.localeCompare(b.section));
-    if (sort === 'newest') filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (sort === 'subject') filtered.sort((a, b) => (a.subject || "").localeCompare(b.subject || ""));
+    if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     renderGrid(filtered);
   }
 
+  // --- 6. VIEW & EDIT ---
   function openFullView(id) {
     const doc = syllabusVault.find(s => s.id === id);
     if (!doc) return;
+    currentViewingId = id;
 
     document.getElementById('viewHeaderTitle').innerText = doc.name.toUpperCase();
+
+    // Formatting the content from JSON list
+    let contentHtml = "";
+    if(Array.isArray(doc.content)) {
+      contentHtml = doc.content.map(c => `<li><strong>${c.heading}:</strong> ${c.detail}</li>`).join('');
+    } else {
+      contentHtml = doc.content;
+    }
+
     document.getElementById('templateContent').innerHTML = `
-            <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
-                <h1 style="margin:0;">INSTITUTION SYLLABUS</h1>
-                <p style="margin:0; font-weight:600;">Session 2025-2026</p>
-            </div>
-            <table style="width:100%; margin-bottom:20px; font-weight:700;">
-                <tr><td>Subject: ${doc.subject}</td><td style="text-align:right;">Section: ${doc.section}</td></tr>
-                <tr><td>Date: ${doc.date}</td><td style="text-align:right;">ID: #SYL-${doc.id}</td></tr>
-            </table>
-            <div style="white-space: pre-wrap; line-height:1.8;">
-                <strong>SYLLABUS CONTENT:</strong><br>
-                ${doc.content}
-            </div>
-        `;
+        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
+            <h1 style="margin:0;">INSTITUTION SYLLABUS</h1>
+            <p style="margin:0; font-weight:600;">System Ref: #SYL-${doc.id}</p>
+        </div>
+        <table style="width:100%; margin-bottom:20px; font-weight:700;">
+            <tr><td>Subject: ${doc.subject}</td><td style="text-align:right;">Author: ${doc.author_name || 'Admin'}</td></tr>
+            <tr><td>Targets: ${doc.targets ? doc.targets.join(', ') : 'N/A'}</td><td style="text-align:right;">Date: ${new Date(doc.created_at).toLocaleDateString()}</td></tr>
+        </table>
+        <div style="line-height:1.8;">
+            <strong>SYLLABUS CONTENT:</strong><br>
+            <ul>${contentHtml}</ul>
+        </div>
+    `;
     document.getElementById('fullView').style.display = 'flex';
+  }
+
+  function editCurrent() {
+    window.location.href = `create_syllabus.html?editId=${currentViewingId}`;
   }
 
   function closeFullView() {
     document.getElementById('fullView').style.display = 'none';
+  }
+
+  // --- 7. UTILS ---
+  function notify(msg, type = 'green') {
+    const n = document.getElementById('appNotifier');
+    clearTimeout(notifyTimer);
+    n.innerText = msg;
+    n.style.background = type === 'red' ? '#c62828' : '#2e7d32';
+    n.classList.add('notifier-show');
+    notifyTimer = setTimeout(() => n.classList.remove('notifier-show'), 3000);
   }
 
   function toggleMenu() {
@@ -270,34 +354,8 @@
     m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
   }
 
-  function notify(msg, type = 'green') {
-    const n = document.getElementById('appNotifier');
-    n.innerText = msg;
-    n.style.background = type === 'red' ? '#c62828' : '#2e7d32';
-    n.classList.add('notifier-show');
-    setTimeout(() => n.classList.remove('notifier-show'), 3000);
-  }
-
-  function confirmBulkDelete() {
-    if (selectedIds.size === 0) return;
-    if(confirm(`Erase ${selectedIds.size} records?`)) {
-      syllabusVault = syllabusVault.filter(doc => !selectedIds.has(doc.id));
-      notify(`Deleted ${selectedIds.size} items`, 'red');
-      exitSelection();
-    }
-  }
-
-  function handleImport(type) {
-    notify(`Importing ${selectedIds.size} docs to ${type}...`);
-    toggleMenu();
-    exitSelection();
-  }
-
-  function editCurrent() { notify("Opening Edit Mode..."); }
-  function exportCurrent() { notify("Exporting to PDF..."); }
-
-  // Initial Load
-  renderGrid(syllabusVault);
+  // Auto-load on entry
+  syncVault();
 </script>
 </body>
 </html>
