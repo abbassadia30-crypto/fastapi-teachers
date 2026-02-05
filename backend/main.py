@@ -30,7 +30,7 @@ app.include_router(dashboard.router)
 app.include_router(ready.router)
 app.include_router(profile.router)
 app.include_router(document.router)
-app.include_router(central_vault)
+app.include_router(central_vault.router)
 
 app.add_middleware(
     CORSMiddleware,

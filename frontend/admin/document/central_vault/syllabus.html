@@ -148,7 +148,7 @@
   <div class="view-body">
     <div class="template-box" id="templateContent"></div>
     <div class="action-row">
-      <button class="btn-edit" onclick="editCurrent()">EDIT SYLLABUS</button>
+      <button class="btn-edit" onclick="updateDocument()">EDIT SYLLABUS</button>
       <button class="btn-export" onclick="exportCurrent()">EXPORT PDF</button>
     </div>
   </div>
@@ -354,6 +354,23 @@
     m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
   }
 
+  async function updateDocument(docId, updatedData) {
+    const token = await AppStorage.get('institutionToken');
+
+    const response = await fetch(`${API_BASE}/vault/update/${docId}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updatedData) // Must match VaultUpload schema
+    });
+
+    const result = await response.json();
+    if (result.status === "success") {
+      notify("Changes saved to Institution Vault", "green");
+    }
+  }
   // Auto-load on entry
   syncVault();
 </script>
