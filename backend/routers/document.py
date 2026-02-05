@@ -16,56 +16,20 @@ router = APIRouter(
 )
 
 @router.post("/vault/upload")
-async def upload_to_vault(
-        data: VaultUpload,
-        db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
-):
-    # 1. 🏛️ Get the Institution Record
-    # We query by current_user.institution_id to get the hex reference
-    inst = db.query(Institution).filter(
-        Institution.id == current_user.institution_id
-    ).first()
-
-    if not inst:
-        raise HTTPException(status_code=404, detail="Institution record not found")
-
-    # 2. 🏛️ Set Author name safely
-    author = getattr(current_user, 'name', 'Unknown Instructor')
-
-    # 3. 🏛️ Create the Syllabus instance
-    # FIX: We use 'institution_ref' to match your SQLAlchemy Class 'Syllabus'
+async def upload_to_vault(data: VaultUpload, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
+    # Corrected: model uses institution_ref
     new_doc = Syllabus(
-        institution_ref=inst.institution_id, # Mapping to the hex ref
+        institution_ref=current_user.institution_id,
         name=data.name,
         subject=data.subject,
-        targets=data.targets,                # SQLAlchemy handles List -> JSON
-        doc_type=data.doc_type,              # Usually 'syllabus'
-        content=data.content,                # SQLAlchemy handles List[Dict] -> JSON
-        author_name=author
+        targets=data.targets,
+        doc_type=data.doc_type,
+        content=data.content,
+        author_name=getattr(current_user, 'name', 'Admin')
     )
-
-    try:
-        db.add(new_doc)
-        db.commit()
-        db.refresh(new_doc)
-
-        # Return the VaultResponse compatible structure
-        return {
-            "status": "success",
-            "id": new_doc.id,
-            "name": new_doc.name,
-            "institution_ref": new_doc.institution_ref
-        }
-
-    except Exception as e:
-        db.rollback()
-        # Essential for debugging the 500 error in Render logs
-        print(f"CRITICAL VAULT ERROR: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Database Sync Failed: {str(e)}"
-        )
+    db.add(new_doc)
+    db.commit()
+    return {"status": "success", "id": new_doc.id}
 
 @router.post("/create", response_model=DateSheetResponse)
 def create_datesheet(
@@ -276,81 +240,53 @@ async def get_vault_papers(
 
 
 @router.post("/submit")
-async def submit_attendance(
-        payload: AttendanceSubmit,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user),
-        inst: Institution = Depends(get_verified_inst) # Our secure dependency
-):
+async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
     try:
-        # 1. Create the Master Log (The Session View)
+        # Corrected: model uses institution_id
         new_log = AttendanceLog(
-            institution_id=inst.id,
+            institution_id=current_user.institution_id,
             section_identifier=payload.section_id,
-            custom_section_name=payload.custom_section_name,
             log_date=payload.date,
             category=payload.type,
-            subject=payload.subject,
-            is_official=(payload.section_id != "MANUAL"),
-            attendance_data=[entry.model_dump() for entry in payload.data],
+            attendance_data=[e.model_dump() for e in payload.data],
             p_count=len([x for x in payload.data if x.status == 'P']),
             a_count=len([x for x in payload.data if x.status == 'A']),
             l_count=len([x for x in payload.data if x.status == 'L'])
         )
-
         db.add(new_log)
-        db.flush() # Generates new_log.id for use in the next step
+        db.flush()
 
-        # 2. Create Individual Records (The History View)
-        individual_records = []
         for entry in payload.data:
-            # We only create individual history rows for official students
-            # Manual/Guest entries are only stored in the JSON of the Master Log
             if not entry.is_manual:
                 indiv = IndividualAttendance(
-                    institution_id=inst.id,
-                    student_id=entry.student_id,
+                    institution_id=current_user.institution_id,
+                    student_id=str(entry.student_id), # model expects String FK
                     log_id=new_log.id,
                     status=entry.status,
                     date=payload.date
                 )
-                individual_records.append(indiv)
-
-        if individual_records:
-            db.add_all(individual_records)
+                db.add(indiv)
 
         db.commit()
-        return {"status": "success", "message": "Attendance locked and synced"}
-
-    except Exception as e:
-        db.rollback()
-        print(f"ATTENDANCE ERROR: {str(e)}") # Critical for Render logs
-        return {"status": "error", "message": "System failed to archive record"}
-
-
-@router.post("/submit-staff")
-async def submit_staff_attendance(
-        payload: StaffAttendanceSubmit,
-        db: Session = Depends(get_db),
-        inst: Institution = Depends(get_verified_inst)
-):
-    try:
-        # Create the Master Log entry in attendance_logs
-        new_log = AttendanceLog(
-            institution_id=inst.institution_id,
-            section_identifier=f"STAFF_{payload.category.upper()}",
-            log_date=payload.date,
-            category=payload.category,
-            subject=payload.shift,
-            attendance_data=[entry.model_dump() for entry in payload.data],
-            p_count=len([x for x in payload.data if x.status == 'P']),
-            a_count=len([x for x in payload.data if x.status == 'A']),
-            l_count=len([x for x in payload.data if x.status == 'L'])
-        )
-
-        db.add(new_log)
-        db.commit()
-        return {"status": "success", "message": "Staff record synced"}
+        return {"status": "success"}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/submit-staff")
+async def submit_staff_attendance(payload: StaffAttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
+    # Corrected: model uses institution_id
+    new_log = AttendanceLog(
+        institution_id=current_user.institution_id,
+        section_identifier=f"STAFF_{payload.category.upper()}",
+        log_date=payload.date,
+        category=payload.category,
+        attendance_data=[entry.model_dump() for entry in payload.data],
+        p_count=len([x for x in payload.data if x.status == 'P']),
+        a_count=len([x for x in payload.data if x.status == 'A']),
+        l_count=len([x for x in payload.data if x.status == 'L'])
+    )
+    db.add(new_log)
+    db.commit()
+    return {"status": "success"}

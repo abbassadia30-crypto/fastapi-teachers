@@ -153,7 +153,8 @@
     </div>
   </div>
 </div>
-<script src="../../js/storage.js"></script>
+<script src="../../../capacitor.js"></script>
+<script src="../../../js/storage.js"></script>
 <script>
   // 🏛️ Real-World Configuration
   const API_BASE = "https://fastapi-teachers.onrender.com/central_vault";
@@ -169,7 +170,7 @@
     if (!token) return notify("Auth Error: Log in again", "red");
 
     try {
-      const response = await fetch(`${API_BASE}/central_vault/vault/list`, {
+      const response = await fetch(`${API_BASE}/vault/list`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -257,7 +258,7 @@
       const idsArray = Array.from(selectedIds);
 
       try {
-        const res = await fetch(`${API_BASE}central_vault/vault/delete-bulk`, {
+        const res = await fetch(`${API_BASE}/vault/delete-bulk`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
