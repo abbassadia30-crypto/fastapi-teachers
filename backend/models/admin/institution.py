@@ -28,9 +28,12 @@ class Institution(Base):
     vouchers = relationship("Voucher", back_populates="institution")
     academic_results = relationship("AcademicResult", back_populates="institution")
     papers = relationship("PaperVault", back_populates="institution")
-    # CORRECTED: Re-added the missing relationships to resolve the errors
     attendance_logs = relationship("AttendanceLog", back_populates="institution")
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
+    messages = relationship("Message", back_populates="institution")
+    admin = relationship("Admin", back_populates="institution")
+    teacher = relationship("Teacher", back_populates="institution")
+    student = relationship("Student", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -79,3 +82,6 @@ class User(Base):
     employed_at = relationship("Institution", foreign_keys=[institution_id])
     transactions = relationship("Transaction", back_populates="user")
     messages = relationship("Message", back_populates="user")
+    admin = relationship("Admin", back_populates="user")
+    teacher = relationship("Teacher", back_populates="user")
+    student = relationship("Student", back_populates="user")

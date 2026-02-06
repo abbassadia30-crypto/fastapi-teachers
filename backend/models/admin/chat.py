@@ -11,7 +11,7 @@ class Message(Base):
     message_type = Column(String, default="text")
 
     # 🔗 Direct link to the Institution
-    institution_id = Column(Integer, ForeignKey('institution.id'), index=True)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), index=True)
 
     # Flags (using lowercase 'default')
     is_read = Column(Boolean, default=False)
@@ -27,7 +27,7 @@ class Message(Base):
 
     # Participants
     sender = Column(String)
-    sender_id = Column(Integer, ForeignKey('user.id'))
+    sender_id = Column(Integer, ForeignKey('users.id'))
     receiver = Column(String)
     receiver_id = Column(Integer) # ID of the recipient user
 
