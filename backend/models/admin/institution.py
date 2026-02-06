@@ -32,8 +32,9 @@ class Institution(Base):
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
     messages = relationship("Message", back_populates="institution")
     admin = relationship("Admin", back_populates="institution")
-    teacher = relationship("teacher", back_populates="institution")
-    student = relationship("student", back_populates="institution")
+    # CORRECTED: Pointing to the new lowercase role classes
+    student_roles = relationship("student", back_populates="institution")
+    teacher_roles = relationship("teacher", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -83,5 +84,6 @@ class User(Base):
     transactions = relationship("Transaction", back_populates="user")
     messages = relationship("Message", back_populates="user")
     admin = relationship("Admin", back_populates="user")
-    teacher = relationship("teacher", back_populates="user")
-    student = relationship("student", back_populates="user")
+    # CORRECTED: Pointing to the new lowercase role classes
+    student_role = relationship("student", back_populates="user", uselist=False)
+    teacher_role = relationship("teacher", back_populates="user", uselist=False)
