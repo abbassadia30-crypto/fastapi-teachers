@@ -1,11 +1,12 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
-from backend.database import Base
+# CORRECTED: All models must use the exact same Base object.
+from backend.models.base import Base
 
 
 class Message(Base):
-    __tablename__ = "Message"
+    __tablename__ = "messages" # Use lowercase for table names as is conventional
     id = Column(Integer, primary_key=True)
     content = Column(String)
     message_type = Column(String, default="text")
@@ -13,7 +14,7 @@ class Message(Base):
     # 🔗 Direct link to the Institution
     institution_id = Column(Integer, ForeignKey('institutions.id'), index=True)
 
-    # Flags (using lowercase 'default')
+    # Flags
     is_read = Column(Boolean, default=False)
     is_seen = Column(Boolean, default=False)
     is_deleted = Column(Boolean, default=False)
@@ -29,7 +30,7 @@ class Message(Base):
     sender = Column(String)
     sender_id = Column(Integer, ForeignKey('users.id'))
     receiver = Column(String)
-    receiver_id = Column(Integer) # ID of the recipient user
+    receiver_id = Column(Integer)
 
     # Metadata
     deleted_at = Column(DateTime, nullable=True)
@@ -37,7 +38,5 @@ class Message(Base):
     replied_at = Column(DateTime, nullable=True)
 
     # Relationships
-    # Link to the institution record
     institution = relationship("Institution", back_populates="messages")
-    # Link to the sender user
     user = relationship("User", back_populates="messages")
