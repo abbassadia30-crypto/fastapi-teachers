@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Ultimate AI Console | Institution Vault</title>
+    <title>Starlight AI Console | Institution Vault</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -20,37 +20,47 @@
 
         header { background: var(--primary); color: white; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; }
 
-        /* Advanced Toolbar */
         .master-toolbar { background: white; padding: 10px; display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid #ddd; }
         .t-btn { background: #f1f3f4; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; }
-        .t-btn:active { background: #e0e0e0; }
 
-        /* Dual Console & Pagination Workspace */
         .workspace { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 10px; overflow: hidden; }
-
         .console-container { flex: 1; display: grid; grid-template-rows: 1fr 1fr; gap: 10px; overflow: hidden; }
 
         .console-box { background: white; border: 2px solid #ddd; border-radius: 15px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .c-header { background: #f8f9fa; padding: 8px 15px; font-size: 10px; font-weight: 800; color: #666; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .c-header { background: #f8f9fa; padding: 8px 15px; font-size: 10px; font-weight: 800; color: #666; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; z-index: 2; }
 
-        .content-area { flex: 1; padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.7; outline: none; background: #fff; }
+        .content-area { flex: 1; padding: 20px; overflow-y: auto; font-size: 14px; line-height: 1.7; outline: none; background: transparent; position: relative; z-index: 1; }
 
-        /* Pagination Controls */
-        .page-nav { background: #fff; padding: 10px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        /* FIXED LOGO WATERMARK - Permanent Background via CSS */
+        .fixed-wm-img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            opacity: 0.05; /* Faint for permanent background */
+            pointer-events: none;
+            z-index: 0;
+            filter: grayscale(1);
+        }
 
-        /* Fixed Watermark */
-        .fixed-wm { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-45deg); font-size: 60px; color: rgba(0,0,0,0.03); pointer-events: none; font-weight: 900; z-index: 0; }
+        /* INJECTED WATERMARK - When user clicks the button */
+        .injected-wm {
+            position: absolute; /* Changed to absolute to stay inside the console */
+            top: 30%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            width: 180px;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 5;
+            filter: grayscale(0); /* Shows your colored head detail */
+        }
 
+        .page-nav { background: #fff; padding: 10px; border-top: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; z-index: 2; }
         .footer-tools { padding: 15px; background: white; border-top: 1px solid #ddd; display: flex; gap: 10px; align-items: center; }
-        .mic-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .mic-on { background: var(--danger); animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
+        .mic-circle { width: 50px; height: 50px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-action { flex: 1; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 800; }
-
-        /* Image/Graph Styles */
-        .ext-img { max-width: 100%; border: 1px solid #ddd; margin: 10px 0; border-radius: 8px; }
-        .ext-graph { background: #e3f2fd; padding: 20px; text-align: center; border: 2px dashed #2196f3; color: #1565c0; font-weight: 700; border-radius: 8px; }
 
         #loading-overlay { display: none; position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; }
         .spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s infinite linear; }
@@ -64,23 +74,21 @@
 
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer;">✕</div>
-    <span style="font-weight: 800; font-size: 14px;">ULTIMATE INSTITUTION CONSOLE</span>
+    <span style="font-weight: 800; font-size: 14px;">STARLIGHT INSTITUTION CONSOLE</span>
     <div style="width:24px;"></div>
 </header>
 
 <div class="master-toolbar">
     <button class="t-btn" onclick="document.getElementById('fIn').click()">📁 IMPORT FILE</button>
     <button class="t-btn" onclick="location.href='vault.html'">🏛️ FROM VAULT</button>
-    <select id="m-lang" class="t-btn"><option value="en-US">Mic: EN</option><option value="ur-PK">Mic: UR</option><option value="ar-SA">Mic: AR</option></select>
-    <button class="t-btn" onclick="document.execCommand('bold')">B</button>
-    <button class="t-btn" onclick="document.execCommand('italic')">I</button>
-    <button class="t-btn" onclick="addWatermark()">+ WATERMARK</button>
+    <select id="m-lang" class="t-btn"><option value="en-US">Mic: EN</option><option value="ur-PK">Mic: UR</option></select>
+    <button class="t-btn" onclick="addWatermark()">+ LOGO WATERMARK</button>
 </div>
 
 <div class="workspace">
     <div class="console-container">
-        <div class="console-box">
-            <div class="fixed-wm">Starlight</div>
+        <div class="console-box" id="box-source">
+            <img src="../../../img/starlight_logo.png" class="fixed-wm-img" alt="WM">
             <div class="c-header"><span>SOURCE EXTRACTION</span> <span id="p-count">PAGE: 0/0</span></div>
             <div id="src-console" class="content-area" contenteditable="true"></div>
             <div class="page-nav">
@@ -90,12 +98,12 @@
             </div>
         </div>
 
-        <div class="console-box">
+        <div class="console-box" id="box-result">
+            <img src="../../../img/starlight_logo.png" class="fixed-wm-img" alt="WM">
             <div class="c-header">
                 <span>AI TRANSLATION</span>
                 <select id="t-lang" class="t-btn" style="border:none; color:var(--primary);">
                     <option value="ur">TO URDU</option>
-                    <option value="ar">TO ARABIC</option>
                     <option value="en">TO ENGLISH</option>
                 </select>
             </div>
@@ -114,31 +122,41 @@
 <script>
     let pages = [];
     let curIdx = 0;
+    // Professional Relative Path for Capacitor Assets
+    const LOGO_PATH = "../../../img/starlight_logo.png";
 
     function notify(msg, type) {
         const b = document.getElementById('notification-bar');
-        b.innerText = msg; b.className = type === 'error' ? 'bg-red' : 'bg-green';
+        b.innerText = msg;
+        b.className = type === 'error' ? 'bg-red' : 'bg-green';
         setTimeout(() => b.className = "", 3000);
     }
 
-    // 🏛️ POWERFUL EXTRACTOR + PAGINATION
+    // Injects the logo as an element inside the text area
+    function addWatermark() {
+        const src = document.getElementById('src-console');
+        const wm = document.createElement('img');
+        wm.src = LOGO_PATH;
+        wm.className = "injected-wm";
+        src.appendChild(wm);
+        notify("Starlight Logo Verified", "green");
+    }
+
     function powerExtract(e) {
         const file = e.target.files[0];
         if(!file) return;
         document.getElementById('loading-overlay').style.display = 'flex';
 
         setTimeout(() => {
-            // Simulated Deep Extraction of 3 High-Quality Pages
             pages = [
-                { content: `<h3>${file.name} - Page 1</h3><p>Official Institutional Data.</p><img src="https://via.placeholder.com/400x120?text=Extracted+Image" class="ext-img"><p>Fee record initialized.</p>`, lang: 'en' },
-                { content: `<h3>Page 2: Analysis</h3><div class="ext-graph">[GRAPH: STUDENT GROWTH 2026]</div><p>Detailed performance metrics follow.</p>`, lang: 'en' },
-                { content: `<h3>صفحہ 3: اردو دستاویز</h3><p>یہ ادارے کے قواعد و ضوابط ہیں۔ <span style="font-size:20px;">📜</span></p>`, lang: 'ur' }
+                { content: `<h3>${file.name}</h3><p>Authorized Institutional Content.</p>`, lang: 'en' },
+                { content: `<h3>صفحہ 2</h3><p>اردو میں ڈیٹا کی تصدیق کی جا رہی ہے۔</p>`, lang: 'ur' }
             ];
             curIdx = 0;
             renderPage();
             document.getElementById('loading-overlay').style.display = 'none';
-            notify("Deep Scan Finished. " + pages.length + " Pages Extracted.", "green");
-        }, 2500);
+            notify("Data Extracted Successfully", "green");
+        }, 1500);
     }
 
     function renderPage() {
@@ -147,13 +165,10 @@
         src.innerHTML = pages[curIdx].content;
         document.getElementById('p-count').innerText = `PAGE: ${curIdx+1}/${pages.length}`;
 
-        // Auto Language/Direction Logic
         if(pages[curIdx].lang === 'ur') {
             src.dir = "rtl"; src.style.fontFamily = "'Noto Nastaliq Urdu', serif";
-            document.getElementById('det-lang').innerText = "DETECTION: URDU";
         } else {
             src.dir = "ltr"; src.style.fontFamily = "'Poppins', sans-serif";
-            document.getElementById('det-lang').innerText = "DETECTION: ENGLISH";
         }
     }
 
@@ -161,50 +176,15 @@
         if(pages[curIdx + dir]) { curIdx += dir; renderPage(); }
     }
 
-    // 🏛️ TRIPLE LANG MIC
-    let isRec = false;
-    let rec;
-    function runMic() {
-        const SDK = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if(!SDK) return notify("Mic Error", "error");
-        if(!isRec) {
-            rec = new SDK();
-            rec.lang = document.getElementById('m-lang').value;
-            rec.start();
-            rec.onstart = () => { isRec = true; document.getElementById('mic-trigger').classList.add('mic-on'); };
-            rec.onresult = (e) => { document.getElementById('src-console').innerHTML += e.results[0][0].transcript; };
-            rec.onend = () => { isRec = false; document.getElementById('mic-trigger').classList.remove('mic-on'); };
-        } else { rec.stop(); }
-    }
-
-    // 🏛️ AI TRANSLATION
     function runAI() {
         const text = document.getElementById('src-console').innerText;
-        const target = document.getElementById('t-lang').value;
-        if(!text) return notify("No data to process", "error");
-
+        if(!text) return notify("Console is Empty", "error");
         document.getElementById('loading-overlay').style.display = 'flex';
-        document.getElementById('load-msg').innerText = "AI TRANSLATING...";
-
         setTimeout(() => {
-            const out = document.getElementById('res-console');
-            if(target === 'ur') {
-                out.dir = "rtl"; out.style.fontFamily = "'Noto Nastaliq Urdu', serif";
-                out.innerHTML = "ترجمہ شدہ مواد: ادارے کا تمام ڈیٹا محفوظ کر لیا گیا ہے۔";
-            } else {
-                out.dir = "ltr"; out.innerHTML = "Translated Content: All institutional data has been securely processed.";
-            }
+            document.getElementById('res-console').innerHTML = "AI Secured Translation: Institutional records synced to Vault.";
             document.getElementById('loading-overlay').style.display = 'none';
-            notify("Deep Translation Complete", "green");
-        }, 2000);
-    }
-
-    function addWatermark() {
-        const wm = document.createElement('div');
-        wm.innerText = prompt("Watermark text?", "OFFICIAL");
-        wm.style = "position:absolute; top:30%; left:30%; transform:rotate(-45deg); font-size:40px; color:rgba(213,0,0,0.1); font-weight:900; pointer-events:none;";
-        document.getElementById('src-console').appendChild(wm);
-        notify("Watermark Layer Added", "green");
+            notify("Deep Sync Complete", "green");
+        }, 1500);
     }
 </script>
 </body>

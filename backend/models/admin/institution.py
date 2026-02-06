@@ -78,3 +78,4 @@ class User(Base):
     profile = relationship("Profile", back_populates="owner", uselist=False)
     employed_at = relationship("Institution", foreign_keys=[institution_id])
     transactions = relationship("Transaction", back_populates="user")
+    messages = relationship("Message", back_populates="user")

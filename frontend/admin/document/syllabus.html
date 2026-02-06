@@ -18,12 +18,10 @@
 
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 120px; color: var(--secondary); overflow-x: hidden; }
 
-        /* Notification Box */
-        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 4000; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 6000; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         .sign-red { background: var(--danger); }
         .sign-green { background: var(--success); }
 
-        /* Modal for Doc Name */
         #name-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center; }
         .modal-card { background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; text-align: center; }
 
@@ -35,7 +33,6 @@
 
         label { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; }
 
-        /* Android Optimized Input Wrapper */
         .input-wrapper { background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; }
         .field-row { display: flex; align-items: center; border-bottom: 2px solid #ddd; margin-bottom: 10px; transition: 0.3s; }
         .field-row:focus-within { border-bottom-color: var(--primary); }
@@ -51,12 +48,15 @@
         .tag { background: var(--secondary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; font-weight: 600; }
         .tag span { cursor: pointer; opacity: 0.6; }
 
-        /* Syllabus Section */
         .book-section { background: white; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; }
         .book-header { background: #f8f9fa; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
+        .section-title-input { font-weight: 800; border: none; background: transparent; font-size: 14px; flex: 1; }
+
         .chapter-row { padding: 20px; border-bottom: 1px solid #f0f0f0; }
+        .chap-name { font-weight: 600; border: none; border-bottom: 1px solid #eee; width: 80%; margin-bottom: 10px; }
 
         .topic-pill { background: #e3f2fd; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; margin: 4px; font-weight: 700; }
+        .topic-pill span { margin-left: 8px; font-size: 14px; cursor: pointer; }
 
         .btn-main { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--primary); color: white; border: none; padding: 20px; border-radius: 18px; font-weight: 800; font-size: 16px; z-index: 2000; box-shadow: 0 8px 20px rgba(2,136,209,0.3); }
         .gen-btn { background: var(--secondary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 700; margin-top: 10px; }
@@ -70,7 +70,6 @@
 <div id="name-modal">
     <div class="modal-card">
         <h3 style="margin-top:0;">Name this Syllabus</h3>
-        <p style="font-size:12px; color:var(--muted);">This is how it will appear in the institution collection.</p>
         <input type="text" id="doc-name-input" placeholder="e.g. Annual Syllabus 2026" style="border-bottom: 2px solid var(--primary); margin: 20px 0; text-align: center; font-size: 18px;">
         <div style="display:flex; gap:10px;">
             <button class="gen-btn" style="background:#eee; color:#333;" onclick="toggleModal(false)">Cancel</button>
@@ -80,7 +79,7 @@
 </div>
 
 <header>
-    <div onclick='location.href="documents.html";' style="font-size:24px; font-weight:800; cursor:pointer;">✕</div>
+    <div onclick='history.back();' style="font-size:24px; font-weight:800; cursor:pointer;">✕</div>
     <h2 style="margin:0; font-size:17px; font-weight: 800;">Syllabus Architect</h2>
     <div style="width:24px;"></div>
 </header>
@@ -88,12 +87,11 @@
 <div class="main-container">
     <div class="card">
         <label>Architect Configuration</label>
-
         <div class="input-wrapper">
             <div class="field-row">
                 <div class="input-group">
                     <span class="micro-label">Target Classes</span>
-                    <input type="text" id="class-input" placeholder="Enter Class Name" enterkeyhint="done" onkeydown="if(event.key==='Enter') addListTag('class')">
+                    <input type="text" id="class-input" placeholder="Enter Class Name" onkeydown="if(event.key==='Enter') addListTag('class')">
                 </div>
                 <div class="manual-add" onclick="addListTag('class')">+</div>
             </div>
@@ -104,18 +102,16 @@
             <div class="field-row">
                 <div class="input-group">
                     <span class="micro-label">Target Subjects</span>
-                    <input type="text" id="subject-input" placeholder="Enter Subject Name" enterkeyhint="done" onkeydown="if(event.key==='Enter') addListTag('subject')">
+                    <input type="text" id="subject-input" placeholder="Enter Subject Name" onkeydown="if(event.key==='Enter') addListTag('subject')">
                 </div>
                 <div class="manual-add" onclick="addListTag('subject')">+</div>
             </div>
             <div class="tag-box" id="subject-tags"></div>
         </div>
-
         <button class="gen-btn" onclick="generateArchitectSections()">Build Architect Workspace</button>
     </div>
 
     <div id="syllabus-content"></div>
-
     <button class="add-btn" onclick="addBook('')" style="border-style: solid; border-width: 1px;">+ Add Empty Manual Section</button>
 </div>
 
@@ -125,6 +121,8 @@
 <script src="../../js/storage.js"></script>
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
+    let isEditMode = false;
+    let currentEditId = null;
 
     function showNotify(msg, type) {
         const box = document.getElementById('sign-box');
@@ -134,57 +132,38 @@
         setTimeout(() => box.style.display = 'none', 3000);
     }
 
-    function toggleModal(show) {
-        document.getElementById('name-modal').style.display = show ? 'flex' : 'none';
-    }
+    function toggleModal(show) { document.getElementById('name-modal').style.display = show ? 'flex' : 'none'; }
 
-    // --- Tag Logic ---
     function addListTag(type) {
         const input = document.getElementById(`${type}-input`);
         const val = input.value.trim();
         if (!val) return;
+        injectTag(type, val);
+        input.value = "";
+    }
 
+    function injectTag(type, val) {
         const container = document.getElementById(`${type}-tags`);
         const existing = Array.from(container.querySelectorAll('.tag')).map(t => t.dataset.val);
-        if (existing.includes(val)) return showNotify("Already added", "error");
-
+        if (existing.includes(val)) return;
         const tag = document.createElement('div');
-        tag.className = 'tag';
-        tag.dataset.val = val;
+        tag.className = 'tag'; tag.dataset.val = val;
         tag.innerHTML = `${val} <span onclick="this.parentElement.remove()">✕</span>`;
         container.appendChild(tag);
-
-        input.value = "";
-        input.focus();
     }
 
-    function generateArchitectSections() {
-        const classes = Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val);
-        const subjects = Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val);
-
-        if (classes.length === 0 || subjects.length === 0) {
-            return showNotify("Need at least one Class and Subject", "error");
-        }
-
-        classes.forEach(c => {
-            subjects.forEach(s => {
-                const combined = `${c} - ${s}`;
-                const existingHeaders = Array.from(document.querySelectorAll('.section-title-input')).map(i => i.value);
-                if (!existingHeaders.includes(combined)) addBook(combined);
-            });
-        });
-        showNotify("Workspace Ready", "success");
-    }
-
-    // --- Dynamic Section Helpers ---
     function addTopic(e, input) {
-        if (e.key === 'Enter' && input.value.trim() !== "") {
-            const pill = document.createElement('div');
-            pill.className = 'topic-pill';
-            pill.innerHTML = `${input.value.trim()} <span onclick="this.parentElement.remove()">✕</span>`;
-            input.previousElementSibling.appendChild(pill);
-            input.value = "";
-            e.preventDefault();
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevent form submission
+            const topicText = input.value.trim();
+            if (topicText) {
+                const pill = document.createElement('div');
+                pill.className = 'topic-pill';
+                pill.dataset.topic = topicText; // Store the raw text
+                pill.innerHTML = `${topicText} <span onclick="this.parentElement.remove()">✕</span>`;
+                input.previousElementSibling.appendChild(pill);
+                input.value = '';
+            }
         }
     }
 
@@ -192,12 +171,12 @@
         const div = document.createElement('div');
         div.className = 'chapter-row';
         div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <input type="text" class="chap-name" placeholder="Chapter Name" style="font-weight:600; border:none; border-bottom:1px solid #eee; width:80%;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <input type="text" class="chap-name" placeholder="Chapter Name">
                 <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-size:11px; font-weight:700;">DEL</span>
             </div>
             <div class="topic-list"></div>
-            <input type="text" placeholder="+ Add topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">
+            <input type="text" placeholder="+ topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">
         `;
         btn.before(div);
     }
@@ -208,89 +187,105 @@
         section.className = 'book-section';
         section.innerHTML = `
             <div class="book-header">
-                <input type="text" class="section-title-input" value="${title}" placeholder="Section Title" style="font-weight:800; border:none; background:transparent; flex:1;">
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:var(--danger); font-size:18px;">✕</button>
+                <input type="text" class="section-title-input" value="${title}" placeholder="Section Title">
+                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:var(--danger);">✕</button>
             </div>
             <div class="chapter-row">
-                <input type="text" class="chap-name" placeholder="Chapter Name" style="font-weight:600; border:none; border-bottom:1px solid #eee; width:80%;">
+                <input type="text" class="chap-name" placeholder="Chapter Name">
                 <div class="topic-list"></div>
-                <input type="text" placeholder="+ Add topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">
+                <input type="text" placeholder="+ topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">
             </div>
-            <button class="add-btn" style="border:none; color:var(--primary); background:#e1f5fe; border-radius:0; padding:12px; font-size:11px;" onclick="addChapter(this)">+ Add Chapter</button>
+            <button class="add-btn" style="border:none; color:var(--primary); background:#e1f5fe; border-radius:0;" onclick="addChapter(this)">+ Add Chapter</button>
         `;
         container.appendChild(section);
-        section.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // --- Final Data Sync ---
-    // --- Final Data Sync ---
+    function generateArchitectSections() {
+        const classes = Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val);
+        const subjects = Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val);
+        if (!classes.length || !subjects.length) return showNotify("Add class and subject tags", "error");
+        classes.forEach(c => subjects.forEach(s => addBook(`${c} - ${s}`)));
+    }
+
+    async function initArchitect() {
+        const params = new URLSearchParams(window.location.search);
+        currentEditId = params.get('editId');
+        if (!currentEditId) return;
+
+        isEditMode = true;
+        document.querySelector('h2').innerText = "Edit Syllabus";
+        document.querySelector('.btn-main').innerText = "Update Vault Record";
+
+        const resToken = await AppStorage.get('institutionToken');
+        const token = resToken.value || resToken;
+
+        try {
+            const res = await fetch(`${API_BASE}/central_vault/vault/list`, { headers: {'Authorization': `Bearer ${token}`} });
+            const docs = await res.json();
+            const doc = docs.find(d => d.id == currentEditId);
+            if (doc) {
+                document.getElementById('doc-name-input').value = doc.name;
+                doc.targets.forEach(t => injectTag('class', t));
+                doc.subject.split(',').forEach(s => injectTag('subject', s.trim()));
+                document.getElementById('syllabus-content').innerHTML = "";
+                doc.content.forEach(sec => {
+                    addBook(sec.title);
+                    const lastSec = document.getElementById('syllabus-content').lastElementChild;
+                    lastSec.querySelector('.chapter-row').remove(); // Clear default chapter
+                    sec.chapters.forEach(ch => {
+                        const div = document.createElement('div');
+                        div.className = 'chapter-row';
+                        div.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <input type="text" class="chap-name" value="${ch.name}">
+                                <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-size:11px; font-weight:700;">DEL</span>
+                            </div>
+                            <div class="topic-list">${ch.topics.map(t => `<div class="topic-pill" data-topic="${t}">${t} <span onclick="this.parentElement.remove()">✕</span></div>`).join('')}</div>
+                            <input type="text" placeholder="+ topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">`;
+                        lastSec.querySelector('.add-btn').before(div);
+                    });
+                });
+            }
+        } catch (e) { showNotify("Load Error", "error"); }
+    }
+
     async function confirmDeployment() {
         const docName = document.getElementById('doc-name-input').value.trim();
-        if (!docName) return showNotify("Please provide a name", "error");
+        if (!docName) return showNotify("Provide a name", "error");
 
-        const btn = document.querySelector('.btn-main');
-
-        // Correctly handle Token retrieval from AppStorage (Capacitor/Mobile context)
-        const storageResult = await AppStorage.get('institutionToken');
-        const token = (storageResult && typeof storageResult === 'object') ? storageResult.value : storageResult;
-
-        const sections = document.querySelectorAll('.book-section');
-        if (sections.length === 0) return showNotify("Workspace is empty", "error");
-
-        // UI Feedback
-        toggleModal(false);
-        btn.disabled = true;
-        btn.innerText = "Processing Vault Sync...";
-
-        // Extract Data from Architect Workspace
-        const syllabusData = Array.from(sections).map(sec => ({
-            title: sec.querySelector('.section-title-input').value || "Manual Section",
-            chapters: Array.from(sec.querySelectorAll('.chapter-row')).map(chap => ({
-                name: chap.querySelector('.chap-name').value || "General Chapter",
-                topics: Array.from(chap.querySelectorAll('.topic-pill')).map(p => p.innerText.replace('✕', '').trim())
-            }))
-        }));
-
-        // --- SCHEME ALIGNMENT FIXES ---
-        // 1. Get classes for 'targets'
-        // 2. Get subjects for 'subject' field
-        const targetClasses = Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val);
-        const subjectList = Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val);
+        const resToken = await AppStorage.get('institutionToken');
+        const token = resToken.value || resToken;
 
         const payload = {
             name: docName,
-            subject: subjectList.join(', ') || "General", // Backend expects string
-            targets: targetClasses,                       // Backend expects List[str]
+            subject: Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val).join(', '),
+            targets: Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val),
             doc_type: "syllabus",
-            content: syllabusData
+            content: Array.from(document.querySelectorAll('.book-section')).map(sec => ({
+                title: sec.querySelector('.section-title-input').value,
+                chapters: Array.from(sec.querySelectorAll('.chapter-row')).map(chap => ({
+                    name: chap.querySelector('.chap-name').value,
+                    // CORRECTED: Directly read the data attribute for reliable extraction.
+                    topics: Array.from(chap.querySelectorAll('.topic-pill')).map(p => p.dataset.topic)
+                }))
+            }))
         };
 
+        const url = isEditMode ? `${API_BASE}/central_vault/vault/update/${currentEditId}` : `${API_BASE}/document/vault/upload`;
         try {
-            const response = await fetch(`${API_BASE}/document/vault/upload`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
+            const res = await fetch(url, {
+                method: isEditMode ? 'PUT' : 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
-            if (response.ok) {
-                showNotify("Deployed to Institution Vault!", "success");
-                setTimeout(() => history.back(), 2000);
-            } else {
-                const errData = await response.json();
-                console.error("Server Validation Error:", errData);
-                showNotify("Sync failed: Check data format", "error");
+            if (res.ok) {
+                showNotify(isEditMode ? "Vault Updated!" : "Syllabus Created!", "success");
+                setTimeout(() => location.href="central_vault/syllabus.html", 1500);
             }
-        } catch (error) {
-            console.error("Network Error:", error);
-            showNotify("Institution server unreachable", "error");
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Deploy to Institution Vault";
-        }
+        } catch (e) { showNotify("Server Sync Failed", "error"); }
     }
+
+    initArchitect();
 </script>
 </body>
 </html>

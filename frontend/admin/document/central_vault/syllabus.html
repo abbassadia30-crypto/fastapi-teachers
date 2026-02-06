@@ -6,93 +6,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root { --primary: #0288d1; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; }
+    :root { --primary: #0288d1; --bg: #f0f2f5; --danger: #c62828; --text: #2c3e50; --white: #ffffff; --secondary: #263238; --success: #2e7d32; }
 
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding: 20px; box-sizing: border-box; padding-bottom: 100px; }
 
     /* 🔔 Notifier (Red/Green Sign Box) */
     #appNotifier {
       position: fixed; top: -100px; left: 0; width: 100%; padding: 18px;
-      text-align: center; color: white; font-weight: 600; z-index: 9999;
+      text-align: center; color: white; font-weight: 600; z-index: 12000;
       transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28);
     }
     .notifier-show { transform: translateY(100px); }
 
-    /* 🏛️ Selection Header (Swaps when active) */
+    /* 🏛️ Selection Header */
     #selectionHeader {
       display: none; background: var(--secondary); color: white; position: fixed;
       top: 0; left: 0; width: 100%; height: 70px; align-items: center;
-      justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1001;
+      justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 1100;
     }
 
     .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 
-    /* 🔎 Search & Sort Area */
+    /* 🔎 Search & Sort */
     .controls { margin-bottom: 20px; display: flex; flex-direction: column; gap: 10px; }
-    .search-bar {
-      width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd;
-      font-family: inherit; outline: none; box-sizing: border-box;
-    }
+    .search-bar { width: 100%; padding: 12px; border-radius: 12px; border: 1.5px solid #ddd; outline: none; box-sizing: border-box; font-family: inherit; }
     .filter-row { display: flex; gap: 10px; }
-    .date-input, .sort-select {
-      flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd;
-      font-size: 12px; font-family: inherit; background: white;
-    }
+    .date-input, .sort-select { flex: 1; padding: 10px; border-radius: 10px; border: 1.5px solid #ddd; font-size: 12px; font-family: inherit; background: white; }
 
     /* 🗂️ Grid Layout */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+    .card { background: white; padding: 25px 10px; border-radius: 18px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; position: relative; border: 2px solid transparent; }
 
-    .card {
-      background: white; padding: 25px 10px; border-radius: 18px; text-align: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05); cursor: pointer;
-      transition: 0.2s; position: relative; border: 2px solid transparent;
-    }
-
-    /* 🔵 Selection Dot */
-    .select-dot {
-      display: none; position: absolute; top: 10px; left: 10px;
-      width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd;
-      background: white;
-    }
+    .select-dot { display: none; position: absolute; top: 10px; left: 10px; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #ddd; background: white; }
     .card.selected { border-color: var(--primary); background: #e1f5fe; }
     .card.selected .select-dot { background: var(--primary); border-color: var(--primary); box-shadow: inset 0 0 0 3px white; }
     .selection-active .select-dot { display: block; }
 
-    .icon-circle {
-      width: 50px; height: 50px; background: #e1f5fe; color: var(--primary);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 10px; font-size: 24px;
-    }
-
+    .icon-circle { width: 50px; height: 50px; background: #e1f5fe; color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; font-size: 24px; }
     .card-subject { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; display: block; }
     .card-title { margin: 5px 0; font-size: 13px; font-weight: 700; display: block; }
     .card-footer { font-size: 10px; color: #888; font-weight: 600; }
 
-    /* 📄 Full Screen View Modal */
-    #fullView {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: white; z-index: 10000; display: none; flex-direction: column;
-    }
+    /* 📄 Full View */
+    #fullView { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 10000; display: none; flex-direction: column; }
     .view-header { padding: 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
     .view-body { flex: 1; overflow-y: auto; padding: 25px; }
-    .template-box { border: 2px solid #333; padding: 20px; border-radius: 5px; min-height: 60%; }
+    .template-box { border: 1.5px solid #eee; padding: 20px; border-radius: 12px; background: #fff; }
 
-    /* 🛠️ Three-Dot Floating Menu */
-    #menuFAB {
-      display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px;
-      border-radius: 50%; background: var(--primary); color: white; border: none;
-      font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000;
-    }
-    .dot-menu {
-      position: fixed; bottom: 95px; right: 20px; background: white;
-      border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-      display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px;
-    }
+    /* 🛠️ Floating Menu */
+    #menuFAB { display: none; position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--primary); color: white; border: none; font-size: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 1000; }
+    .dot-menu { position: fixed; bottom: 95px; right: 20px; background: white; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.2); display: none; flex-direction: column; overflow: hidden; z-index: 1001; width: 220px; }
     .menu-item { padding: 14px 20px; font-size: 12px; font-weight: 700; border-bottom: 1px solid #f0f0f0; color: var(--secondary); cursor: pointer; }
+    .menu-item:last-child { border: none; color: var(--danger); }
 
     .action-row { display: flex; gap: 10px; margin-top: 20px; }
-    .btn-edit { flex: 1; background: #eee; border: none; padding: 12px; border-radius: 10px; font-weight: 700; color: var(--text); }
-    .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 700; }
+    .btn-edit { flex: 1; background: #eee; border: none; padding: 15px; border-radius: 12px; font-weight: 700; color: var(--text); }
+    .btn-export { flex: 1; background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 700; }
   </style>
 </head>
 <body>
@@ -101,17 +70,17 @@
 
 <div id="selectionHeader">
   <div style="display: flex; align-items: center; gap: 15px;">
-    <span onclick="exitSelection()" style="font-size: 24px;">✕</span>
+    <span onclick="exitSelection()" style="font-size: 24px; cursor:pointer;">✕</span>
     <span id="selectedCount" style="font-weight: 700;">0 Selected</span>
   </div>
   <div style="display: flex; gap: 15px; align-items: center;">
-    <span onclick="selectAll()" style="font-size: 11px; font-weight: 800;">SELECT ALL</span>
-    <span onclick="confirmBulkDelete()" style="font-size: 20px; color: #ff8a80;">🗑️</span>
+    <span onclick="selectAll()" style="font-size: 11px; font-weight: 800; cursor:pointer;">SELECT ALL</span>
+    <span onclick="confirmBulkDelete()" style="font-size: 20px; cursor:pointer;">🗑️</span>
   </div>
 </div>
 
 <div class="header">
-  <h2 style="margin:0; font-weight: 800;">📚 Syllabus</h2>
+  <h2 style="margin:0; font-weight: 800;">📚 Syllabus Vault</h2>
   <div style="display: flex; gap: 10px;">
     <button onclick="enterSelectionMode()" style="background:white; border:1px solid #ddd; padding:8px 12px; border-radius:10px;">☑️</button>
     <button onclick="history.back()" style="background:white; border:1px solid #ddd; padding:8px 15px; border-radius:10px; font-weight:600;">Back</button>
@@ -119,13 +88,12 @@
 </div>
 
 <div class="controls">
-  <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Find by title or subject..." oninput="applyAllFilters()">
+  <input type="text" id="vaultSearch" class="search-bar" placeholder="🔍 Search records..." oninput="applyAllFilters()">
   <div class="filter-row">
     <input type="date" id="dateFilter" class="date-input" onchange="applyAllFilters()">
     <select id="sortOrder" class="sort-select" onchange="applyAllFilters()">
       <option value="newest">Newest First</option>
       <option value="subject">By Subject</option>
-      <option value="section">By Section</option>
     </select>
   </div>
 </div>
@@ -134,64 +102,86 @@
 
 <button id="menuFAB" onclick="toggleMenu()">⋮</button>
 <div class="dot-menu" id="importMenu">
-  <div class="menu-item" onclick="handleImport('chat')">💬 Import to Institution Chat</div>
-  <div class="menu-item" onclick="handleImport('translate')">🌐 Import to Translate</div>
-  <div class="menu-item" onclick="handleImport('export')">📤 Bulk Export JSON</div>
+  <div class="menu-item" onclick="handleImport('chat')">💬 Send to Institution Chat</div>
+  <div class="menu-item" onclick="handleImport('print')">🖨️ Move to Print Center</div>
+  <div class="menu-item" onclick="confirmBulkDelete()">🗑️ Delete Selected</div>
 </div>
 
 <div id="fullView">
   <div class="view-header">
     <button onclick="closeFullView()" style="border:none; background:none; font-size:24px;">✕</button>
-    <span id="viewHeaderTitle" style="font-weight: 800; font-size: 14px;">SYLLABUS DETAIL</span>
+    <span id="viewHeaderTitle" style="font-weight: 800; font-size: 13px;">SYLLABUS VIEW</span>
     <div style="width:24px;"></div>
   </div>
   <div class="view-body">
     <div class="template-box" id="templateContent"></div>
     <div class="action-row">
-      <button class="btn-edit" onclick="updateDocument()">EDIT SYLLABUS</button>
-      <button class="btn-export" onclick="exportCurrent()">EXPORT PDF</button>
+      <button class="btn-edit" onclick="editCurrent()">EDIT RECORD</button>
+      <button class="btn-export" onclick="window.print()">PRINT / PDF</button>
     </div>
   </div>
 </div>
+
 <script src="../../../capacitor.js"></script>
 <script src="../../../js/storage.js"></script>
 <script>
-  // 🏛️ Real-World Configuration
-  const API_BASE = "https://fastapi-teachers.onrender.com/central_vault";
+  const API_BASE = "https://fastapi-teachers.onrender.com";
   let isSelectionMode = false;
   let selectedIds = new Set();
   let syllabusVault = [];
   let currentViewingId = null;
   let notifyTimer;
 
-  // --- 1. CORE SYNC (FETCH FROM BACKEND) ---
-  async function syncVault() {
-    const token = await AppStorage.get('institutionToken');
-    if (!token) return notify("Auth Error: Log in again", "red");
+  // --- 1. NOTIFIER ---
+  function notify(msg, type = 'success') {
+    const n = document.getElementById('appNotifier');
+    if (!n) return;
+    clearTimeout(notifyTimer);
+    n.innerText = msg;
+    n.style.background = type === 'error' ? '#c62828' : '#2e7d32';
+    n.classList.add('notifier-show');
+    notifyTimer = setTimeout(() => n.classList.remove('notifier-show'), 3000);
+  }
 
+  // --- 2. AUTH & SYNC ---
+  async function syncVault() {
+    console.log("Syncing Vault..."); // Debug log
     try {
-      const response = await fetch(`${API_BASE}/vault/list`, {
+      const res = await AppStorage.get('institutionToken');
+      // Capacitor Storage returns an object { value: "..." }
+      const token = (res && typeof res === 'object') ? res.value : res;
+
+      if (!token) {
+        console.error("No token found");
+        return notify("Session Expired", "error");
+      }
+
+      const response = await fetch(`${API_BASE}/central_vault/vault/list`, {
         method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
       });
 
-      if (!response.ok) throw new Error("Server Sync Failed");
+      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
-      const data = await response.json();
-      syllabusVault = data;
+      syllabusVault = await response.json();
+      console.log("Data Received:", syllabusVault);
       renderGrid(syllabusVault);
-    } catch (err) {
-      console.error(err);
-      notify("Failed to load institution records", "red");
+    } catch (e) {
+      console.error("Fetch Error:", e);
+      notify("Failed to fetch vault", "error");
     }
   }
 
-  // --- 2. RENDER GRID ---
+  // --- 3. GRID RENDERING ---
   function renderGrid(list = syllabusVault) {
     const grid = document.getElementById('sectionGrid');
+    if (!grid) return;
 
-    if (list.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">No records found in Vault.</div>`;
+    if (!list || list.length === 0) {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">Empty Vault</div>`;
       return;
     }
 
@@ -199,17 +189,14 @@
       <div class="card ${selectedIds.has(doc.id) ? 'selected' : ''}" onclick="handleCardClick(${doc.id}, this)">
           <div class="select-dot"></div>
           <div class="icon-circle">📄</div>
-          <span class="card-subject">${doc.subject || 'GENERAL'}</span>
+          <span class="card-subject">${doc.subject || 'Syllabus'}</span>
           <span class="card-title">${doc.name}</span>
-          <div class="card-footer">
-              <span>${doc.targets ? doc.targets.join(', ') : 'All'}</span> •
-              <span>${new Date(doc.created_at || Date.now()).toLocaleDateString()}</span>
-          </div>
+          <div class="card-footer">${doc.targets ? (Array.isArray(doc.targets) ? doc.targets.join(', ') : doc.targets) : 'General'}</div>
       </div>
     `).join('');
   }
 
-  // --- 3. SELECTION LOGIC ---
+  // --- 4. SELECTION LOGIC ---
   function handleCardClick(id, el) {
     if (isSelectionMode) {
       if (selectedIds.has(id)) {
@@ -220,160 +207,149 @@
         el.classList.add('selected');
       }
       document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
-      if (selectedIds.size === 0) exitSelection();
     } else {
       openFullView(id);
     }
   }
 
+  // --- 5. FULL VIEW ---
+  // --- 5. FULL VIEW ---
+  function openFullView(id) {
+    const doc = syllabusVault.find(s => s.id === id);
+    if (!doc) return;
+    currentViewingId = id;
+
+    let content = doc.content;
+    if (typeof content === 'string') {
+      try {
+        content = JSON.parse(content);
+        if (typeof content === 'string') content = JSON.parse(content);
+      } catch(e) { console.error("Parse Error", e); }
+    }
+
+    let html = `
+  <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:15px;">
+    <h2 style="margin:0; color:var(--secondary);">${doc.name}</h2>
+    <small style="color:var(--muted);">Institution Record #${doc.id}</small>
+  </div>`;
+
+    if (Array.isArray(content)) {
+      html += content.map(sec => {
+        const rows = (sec.chapters || []).map(ch => {
+          let rawTopics = Array.isArray(ch.topics) ? ch.topics : [];
+
+          // Logic to remove any leaked '✕' and filter empties
+          let cleanTopics = rawTopics
+                  .map(t => String(t).replace(/✕/g, '').trim())
+                  .filter(t => t !== "");
+
+          let topicDisplay = cleanTopics.length > 0
+                  ? cleanTopics.map(t => `<span style="background:#e1f5fe; color:#0288d1; padding:2px 8px; border-radius:4px; margin:2px; display:inline-block; font-size:11px; font-weight:600; border:1px solid #b3e5fc;">${t}</span>`).join('')
+                  : `<i style="color:#ccc;">No topics</i>`;
+
+          return `
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding:12px; font-weight:700; width:35%; background:#fafafa; border-right:1px solid #eee;">${ch.name || 'Untitled'}</td>
+          <td style="padding:12px;">${topicDisplay}</td>
+        </tr>`;
+        }).join('');
+
+        return `
+      <div style="margin-bottom:20px; border:1px solid #ddd; border-radius:12px; overflow:hidden;">
+        <div style="background:var(--secondary); color:white; padding:10px 15px; font-weight:800; font-size:11px;">${sec.title || "Section"}</div>
+        <table style="width:100%; border-collapse:collapse; font-size:12px;">${rows}</table>
+      </div>`;
+      }).join('');
+    } else {
+      html += `<div style="padding:15px;">${content}</div>`;
+    }
+
+    document.getElementById('templateContent').innerHTML = html;
+    document.getElementById('fullView').style.display = 'flex';
+  }
+
+  // --- 6. ACTIONS ---
+  async function confirmBulkDelete() {
+    // 1. Validation
+    if (!selectedIds.size) return notify("Nothing selected", "error");
+
+    const count = selectedIds.size;
+    if (!confirm(`Permanently delete ${count} records?`)) return;
+
+    // 2. Auth Token Retrieval
+    const resToken = await AppStorage.get('institutionToken');
+    const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+
+    // 3. Prepare Payload (Matches your Python dict = Body(...))
+    const payload = {
+      ids: Array.from(selectedIds) // Converts Set to [1, 2, 3]
+    };
+
+    try {
+      // 4. Single POST request to the bulk route
+      const response = await fetch(`${API_BASE}/central_vault/vault/delete-bulk`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // 5. Success UI Feedback
+        notify(result.message || `Purged ${result.deleted_count} records`, "success");
+
+        // 6. Reset UI State
+        exitSelection();
+        await syncVault(); // Refresh the grid to show they are gone
+      } else {
+        const errData = await response.json();
+        notify(errData.detail || "Bulk delete failed", "error");
+      }
+    } catch (e) {
+      console.error("Connection Error:", e);
+      notify("Server connection failed", "error");
+    }
+  }
+
   function enterSelectionMode() {
     isSelectionMode = true;
-    document.body.classList.add('selection-active');
     document.getElementById('selectionHeader').style.display = 'flex';
     document.getElementById('menuFAB').style.display = 'block';
+    renderGrid(); // Refresh grid to show select dots
   }
 
   function exitSelection() {
     isSelectionMode = false;
     selectedIds.clear();
-    document.body.classList.remove('selection-active');
     document.getElementById('selectionHeader').style.display = 'none';
     document.getElementById('menuFAB').style.display = 'none';
-    document.getElementById('importMenu').style.display = 'none';
     renderGrid();
   }
 
+  function editCurrent() {
+    location.href = `../syllabus.html?editId=${currentViewingId}`;
+  }
+
+  function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
   function selectAll() {
     syllabusVault.forEach(doc => selectedIds.add(doc.id));
     document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
     renderGrid();
   }
 
-  // --- 4. REAL BACKEND BULK DELETE ---
-  async function confirmBulkDelete() {
-    if (selectedIds.size === 0) return;
-
-    if (confirm(`Erase ${selectedIds.size} records from Institution Vault?`)) {
-      const token = await AppStorage.get('institutionToken');
-      const idsArray = Array.from(selectedIds);
-
-      try {
-        const res = await fetch(`${API_BASE}/vault/delete-bulk`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ ids: idsArray })
-        });
-
-        if (res.ok) {
-          const result = await res.json();
-          notify(`Purged ${result.deleted_count} items`, 'green');
-          exitSelection();
-          syncVault(); // Refresh
-        } else {
-          throw new Error("Deletion failed");
-        }
-      } catch (err) {
-        notify("Delete failed: Server Error", "red");
-      }
-    }
-  }
-
-  // --- 5. SEARCH & FILTER ---
-  function applyAllFilters() {
-    const q = document.getElementById('vaultSearch').value.toLowerCase();
-    const dateQ = document.getElementById('dateFilter').value;
-    const sort = document.getElementById('sortOrder').value;
-
-    let filtered = syllabusVault.filter(doc => {
-      const matchesText = doc.name.toLowerCase().includes(q) || (doc.subject && doc.subject.toLowerCase().includes(q));
-      const matchesDate = !dateQ || (doc.created_at && doc.created_at.startsWith(dateQ));
-      return matchesText && matchesDate;
-    });
-
-    if (sort === 'subject') filtered.sort((a, b) => (a.subject || "").localeCompare(b.subject || ""));
-    if (sort === 'newest') filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-    renderGrid(filtered);
-  }
-
-  // --- 6. VIEW & EDIT ---
-  function openFullView(id) {
-    const doc = syllabusVault.find(s => s.id === id);
-    if (!doc) return;
-    currentViewingId = id;
-
-    document.getElementById('viewHeaderTitle').innerText = doc.name.toUpperCase();
-
-    // Formatting the content from JSON list
-    let contentHtml = "";
-    if(Array.isArray(doc.content)) {
-      contentHtml = doc.content.map(c => `<li><strong>${c.heading}:</strong> ${c.detail}</li>`).join('');
-    } else {
-      contentHtml = doc.content;
-    }
-
-    document.getElementById('templateContent').innerHTML = `
-        <div style="text-align:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:20px;">
-            <h1 style="margin:0;">INSTITUTION SYLLABUS</h1>
-            <p style="margin:0; font-weight:600;">System Ref: #SYL-${doc.id}</p>
-        </div>
-        <table style="width:100%; margin-bottom:20px; font-weight:700;">
-            <tr><td>Subject: ${doc.subject}</td><td style="text-align:right;">Author: ${doc.author_name || 'Admin'}</td></tr>
-            <tr><td>Targets: ${doc.targets ? doc.targets.join(', ') : 'N/A'}</td><td style="text-align:right;">Date: ${new Date(doc.created_at).toLocaleDateString()}</td></tr>
-        </table>
-        <div style="line-height:1.8;">
-            <strong>SYLLABUS CONTENT:</strong><br>
-            <ul>${contentHtml}</ul>
-        </div>
-    `;
-    document.getElementById('fullView').style.display = 'flex';
-  }
-
-  function editCurrent() {
-    window.location.href = `create_syllabus.html?editId=${currentViewingId}`;
-  }
-
-  function closeFullView() {
-    document.getElementById('fullView').style.display = 'none';
-  }
-
-  // --- 7. UTILS ---
-  function notify(msg, type = 'green') {
-    const n = document.getElementById('appNotifier');
-    clearTimeout(notifyTimer);
-    n.innerText = msg;
-    n.style.background = type === 'red' ? '#c62828' : '#2e7d32';
-    n.classList.add('notifier-show');
-    notifyTimer = setTimeout(() => n.classList.remove('notifier-show'), 3000);
-  }
-
   function toggleMenu() {
     const m = document.getElementById('importMenu');
-    m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
   }
 
-  async function updateDocument(docId, updatedData) {
-    const token = await AppStorage.get('institutionToken');
-
-    const response = await fetch(`${API_BASE}/vault/update/${docId}`, {
-      method: 'PUT',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(updatedData) // Must match VaultUpload schema
-    });
-
-    const result = await response.json();
-    if (result.status === "success") {
-      notify("Changes saved to Institution Vault", "green");
-    }
-  }
-  // Auto-load on entry
-  syncVault();
+  // --- START ---
+  window.onload = () => {
+    syncVault();
+  };
 </script>
 </body>
 </html>

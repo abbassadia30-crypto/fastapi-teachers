@@ -1,12 +1,13 @@
-from typing import Any, List
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 
-# Internal Imports
 from backend.database import get_db
 from backend.routers.auth import get_current_user
-from backend.models.admin.document import Syllabus  # Assuming consistent naming
+from backend.models.admin.document import Syllabus
 from backend.schemas.admin.document import VaultUpload
+# CORRECTED: Import the new response model
+from backend.schemas.admin.central_vault import SyllabusResponse
 
 router = APIRouter(
     prefix="/central_vault",
@@ -14,18 +15,19 @@ router = APIRouter(
 )
 
 # --- 1. FETCH ALL SYLLABUS DOCS ---
-@router.get("/vault/list")
+# CORRECTED: Use the response_model to ensure proper serialization
+@router.get("/vault/list", response_model=List[SyllabusResponse])
 async def get_syllabus_list(
         db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
+        current_user: dict = Depends(get_current_user)
 ):
     """
     Retrieves all syllabus documents specifically for the logged-in institution.
     """
     try:
-        # Security: strictly filter by institution_id (the hex ref)
+        # The query remains the same.
         docs = db.query(Syllabus).filter(
-            Syllabus.institution_ref == current_user.institution_id
+            Syllabus.institution_ref == current_user["institution_id"]
         ).order_by(Syllabus.created_at.desc()).all()
 
         return docs
@@ -39,7 +41,7 @@ async def update_syllabus(
         doc_id: int,
         payload: VaultUpload,
         db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
+        current_user: dict = Depends(get_current_user)
 ):
     """
     Updates a specific document. Includes security check to prevent
@@ -47,18 +49,18 @@ async def update_syllabus(
     """
     doc = db.query(Syllabus).filter(
         Syllabus.id == doc_id,
-        Syllabus.institution_ref == current_user.institution_id
+        Syllabus.institution_ref == current_user["institution_id"]
     ).first()
 
     if not doc:
-        # 404 is safer/cleaner here than 403 to avoid leaking record existence
         raise HTTPException(status_code=404, detail="Document not found in your institution")
 
-    # Mapping updated fields
+    # Convert Pydantic models to dictionaries for the JSON field
+    doc.content = [item.model_dump() for item in payload.content]
+    # Update other fields
     doc.name = payload.name
     doc.subject = payload.subject
     doc.targets = payload.targets
-    doc.content = payload.content
 
     try:
         db.commit()
@@ -74,13 +76,12 @@ async def update_syllabus(
 # --- 3. BULK DELETE ---
 @router.post("/vault/delete-bulk")
 async def delete_syllabus_bulk(
-        payload: dict = Body(...), # Expecting format: {"ids": [1, 2, 3]}
+        payload: dict = Body(...),
         db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
+        current_user: dict = Depends(get_current_user)
 ):
     """
-    Deletes multiple records. Uses False for synchronize_session for
-    high-performance bulk deletion.
+    Deletes multiple records.
     """
     ids_to_delete = payload.get("ids", [])
 
@@ -88,17 +89,13 @@ async def delete_syllabus_bulk(
         return {"status": "success", "deleted_count": 0}
 
     try:
-        # Security: Ensure query only captures records belonging to THIS institution
         query = db.query(Syllabus).filter(
             Syllabus.id.in_(ids_to_delete),
-            Syllabus.institution_ref == current_user.institution_id
+            Syllabus.institution_ref == current_user["institution_id"]
         )
 
         deleted_count = query.count()
-
-        # PRO TIP: synchronize_session=False is faster for bulk operations
         query.delete(synchronize_session=False)
-
         db.commit()
 
         return {
