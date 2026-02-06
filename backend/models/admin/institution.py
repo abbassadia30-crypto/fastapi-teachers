@@ -32,7 +32,7 @@ class Institution(Base):
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
     messages = relationship("Message", back_populates="institution")
     admin = relationship("Admin", back_populates="institution")
-    teacher = relationship("Teacher", back_populates="institution")
+    teacher = relationship("teacher", back_populates="institution")
     student = relationship("student", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
@@ -83,5 +83,5 @@ class User(Base):
     transactions = relationship("Transaction", back_populates="user")
     messages = relationship("Message", back_populates="user")
     admin = relationship("Admin", back_populates="user")
-    teacher = relationship("Teacher", back_populates="user")
+    teacher = relationship("teacher", back_populates="user")
     student = relationship("student", back_populates="user")

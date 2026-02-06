@@ -15,7 +15,7 @@ class Admin(Base):
     institution = relationship("Institution", back_populates="admin")
     user = relationship("User", back_populates="admin")
 
-class Teacher(Base):
+class teacher(Base):
     __tablename__ = 'teacher'
     id = Column(Integer, primary_key=True)
     username = Column(String, ForeignKey('users.name'))
