@@ -11,12 +11,17 @@ class Admin(Base):
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution_name = Column(String, ForeignKey("institutions.name"))
 
-    institution = relationship("Institution", foreign_keys=[institution_id], back_populates="admin")
+    # FIX: Added primaryjoin to handle multiple Foreign Keys to 'institutions'
+    institution = relationship(
+        "Institution",
+        primaryjoin="Admin.institution_id == Institution.id",
+        foreign_keys=[institution_id],
+        back_populates="admin"
+    )
     user = relationship("User", foreign_keys=[user_id], back_populates="admin")
 
-# CORRECTED: Class names are now lowercase to avoid conflicts
 class teacher(Base):
-    __tablename__ = 'teacher_roles' # Renamed table to avoid conflict with 'teacher' table from dashboard
+    __tablename__ = 'teacher_roles'
     id = Column(Integer, primary_key=True)
     username = Column(String, ForeignKey('users.name'))
     email = Column(String, ForeignKey("users.email"))
@@ -25,10 +30,17 @@ class teacher(Base):
     institution_name = Column(String, ForeignKey("institutions.name"))
 
     user = relationship("User", foreign_keys=[user_id], back_populates="teacher_role")
-    institution = relationship("Institution", foreign_keys=[institution_id], back_populates="teacher_roles")
+
+    # FIX: Added primaryjoin
+    institution = relationship(
+        "Institution",
+        primaryjoin="teacher.institution_id == Institution.id",
+        foreign_keys=[institution_id],
+        back_populates="teacher_roles"
+    )
 
 class student(Base):
-    __tablename__ = 'student_roles' # Renamed table to avoid conflict with 'student' table from dashboard
+    __tablename__ = 'student_roles'
     id = Column(Integer, primary_key=True)
     username = Column(String, ForeignKey('users.name'))
     email = Column(String, ForeignKey("users.email"))
@@ -37,4 +49,11 @@ class student(Base):
     institution_name = Column(String, ForeignKey("institutions.name"))
 
     user = relationship("User", foreign_keys=[user_id], back_populates="student_role")
-    institution = relationship("Institution", foreign_keys=[institution_id], back_populates="student_roles")
+
+    # FIX: Added primaryjoin
+    institution = relationship(
+        "Institution",
+        primaryjoin="student.institution_id == Institution.id",
+        foreign_keys=[institution_id],
+        back_populates="student_roles"
+    )
