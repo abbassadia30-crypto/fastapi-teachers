@@ -33,7 +33,7 @@ class Institution(Base):
     messages = relationship("Message", back_populates="institution")
     admin = relationship("Admin", back_populates="institution")
     teacher = relationship("Teacher", back_populates="institution")
-    student = relationship("Student", back_populates="institution")
+    student = relationship("student", back_populates="institution")
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
@@ -84,4 +84,4 @@ class User(Base):
     messages = relationship("Message", back_populates="user")
     admin = relationship("Admin", back_populates="user")
     teacher = relationship("Teacher", back_populates="user")
-    student = relationship("Student", back_populates="user")
+    student = relationship("student", back_populates="user")

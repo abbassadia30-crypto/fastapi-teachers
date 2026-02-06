@@ -14,7 +14,7 @@ from .admin.document import (
 from .admin.dashboard import Student, Staff, Teacher
 # CORRECTED: Added the import for the new Message model
 from .admin.chat import Message
-from .admin.role import Admin , Student , Teacher
+from .admin.role import Admin , student , Teacher
 # Ensure all are available for main.py
 __all__ = [
     "Base", "User", "Institution", "Syllabus",
@@ -24,5 +24,5 @@ __all__ = [
     "Voucher", "AcademicResult", "PaperVault",
     "AttendanceLog", "IndividualAttendance",
     # CORRECTED: Exposed the Message model
-    "Message" , "Admin" , "Teacher", "Student"
+    "Message" , "Admin" , "Teacher", "student"
 ]
