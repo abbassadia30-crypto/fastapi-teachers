@@ -10,6 +10,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/capacitor-cordova-android-plugins/android.capacitor-cordova-android-plugins.iml" filepath="$PROJECT_DIR$/.idea/modules/capacitor-cordova-android-plugins/android.capacitor-cordova-android-plugins.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/-1037285343/android.capacitor-preferences.iml" filepath="$PROJECT_DIR$/.idea/modules/-1037285343/android.capacitor-preferences.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/app.iml" filepath="$PROJECT_DIR$/.idea/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/capacitor.iml" filepath="$PROJECT_DIR$/.idea/modules/capacitor.iml" />
     </modules>
   </component>
 </project>

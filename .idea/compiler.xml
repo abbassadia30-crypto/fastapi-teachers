@@ -8,6 +8,7 @@
       <module name="android.capacitor-community-sqlite" target="17" />
       <module name="android.capacitor-cordova-android-plugins" target="17" />
       <module name="android.capacitor-preferences" target="17" />
+      <module name="capacitor" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>
