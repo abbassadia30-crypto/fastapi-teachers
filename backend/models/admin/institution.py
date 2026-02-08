@@ -1,9 +1,10 @@
 import uuid
 from sqlalchemy import Text, Column, Integer, String, Boolean, Float, JSON, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from backend.models.base import Base
+from backend.models.base import Base, TimestampMixin
 
-class Institution(Base):
+
+class Institution(Base , TimestampMixin):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
@@ -57,23 +58,3 @@ class College(Institution):
     code = Column(String)
     uni = Column(String)
     __mapper_args__ = {"polymorphic_identity": "college"}
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
-    role = Column(String, default="unassigned")
-    target_group = Column(String, nullable=True)
-    is_verified = Column(Boolean, default=False)
-    otp_code = Column(String, nullable=True)
-    otp_created_at = Column(DateTime(timezone=True), nullable=True)
-    has_institution = Column(Boolean, default=False)
-    institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
-
-    bio = relationship("UserBio", back_populates="user", uselist=False)
-    owned_institution = relationship("Institution", back_populates="owner",
-                                     foreign_keys=[Institution.owner_id], uselist=False)
-    profile = relationship("Profile", back_populates="owner", uselist=False)
-    employed_at = relationship("Institution", foreign_keys=[institution_id])
