@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@capacitor-community/speech-recognition": "^7.0.1",
-    "@capacitor-community/sqlite": "^7.0.3",
+    "@capacitor-community/sqlite": "^8.0.0",
     "@capacitor/android": "^8.0.0",
     "@capacitor/cli": "^8.0.0",
     "@capacitor/core": "^8.0.0",
@@ -13,10 +13,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "sync": "npm run build && npx cap sync android",
+    "open": "npx cap open android"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "devDependencies": {
+    "vite": "^7.3.1"
+  }
 }
