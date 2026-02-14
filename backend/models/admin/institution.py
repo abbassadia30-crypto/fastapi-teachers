@@ -20,7 +20,7 @@ class Institution(Base , TimestampMixin):
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
     
     # Back-populates for Role models (Upper Case)
-    owners = relationship("Owner", back_populates="institution")
+    owner = relationship("Owner",back_populates="institution",uselist=False,foreign_keys="[Owner.institution_id]")
     admins = relationship("Admin", back_populates="institution")
     teachers = relationship("Teacher", back_populates="institution")
     students = relationship("Student", back_populates="institution")
