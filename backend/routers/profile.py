@@ -8,7 +8,7 @@ from backend.routers import auth
 from backend import database
 from .auth import get_current_user
 from backend.database import get_db
-from backend.models.admin.institution import User
+from backend.models.User import User
 from backend.models.admin.profile import UserBio, Profile
 from backend.schemas.admin.profile import ProfileOut, ProfileUpdate
 
