@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
 
@@ -6,11 +6,22 @@ class User(Base, TimestampMixin):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String, nullable=False)
+    user_name = Column(String, unique=True, index=True, nullable=False)
     user_email = Column(String, unique=True, index=True, nullable=False)
     user_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     phone = Column(String , nullable=False)
+    type = Column(String(50))
+
+    # Relationships
+    owned_institution = relationship("Institution", back_populates="owner", uselist=False)
+    owner_role = relationship("Owner", back_populates="user", uselist=False)
+    admin_role = relationship("Admin", back_populates="user", uselist=False)
+    teacher_role = relationship("Teacher", back_populates="user", uselist=False)
+    student_role = relationship("Student", back_populates="user", uselist=False)
+    bio = relationship("UserBio", back_populates="user", uselist=False)
+    profile = relationship("Profile", back_populates="owner", uselist=False)
+
     __mapper_args__ = {
         "polymorphic_on": type,
         "polymorphic_identity": "user"
@@ -67,4 +78,3 @@ class Verification(User):
     __mapper_args__ = {
         "polymorphic_identity": "verified_user"
     }
-

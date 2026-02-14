@@ -7,8 +7,8 @@ class Owner(Base):
     id = Column(Integer, primary_key=True)
     # Social/User Links
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
-    user_name = Column(String , ForeignKey('users.username'), nullable=False)
-    email = Column(String , ForeignKey('users.email'), nullable=False)
+    user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
+    email = Column(String , ForeignKey('users.user_email'), nullable=False)
     # Professional/Institution Link
     # Unique=True ensures an institution can only ever have ONE owner
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
@@ -22,8 +22,8 @@ class Admin(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-    user_name = Column(String , ForeignKey('users.username'), nullable=False)
-    email = Column(String , ForeignKey('users.email'), nullable=False)
+    user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
+    email = Column(String , ForeignKey('users.user_email'), nullable=False)
     # Relationships
     user = relationship("User", back_populates="admin_role")
     institution = relationship("Institution", back_populates="admins")
@@ -33,17 +33,17 @@ class Teacher(Base):
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-    user_name = Column(String , ForeignKey('users.username'), nullable=False)
-    email = Column(String , ForeignKey('users.email'), nullable=False)
+    user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
+    email = Column(String , ForeignKey('users.user_email'), nullable=False)
     user = relationship("User", back_populates="teacher_role")
     institution = relationship("Institution", back_populates="teachers")
 
 class Student(Base):
     __tablename__ = "student"
     id = Column(Integer, primary_key=True)
-    user_name = Column(String , ForeignKey('users.username'), nullable=False)
-    email = Column(String , ForeignKey('users.email'), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
+    user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
+    email = Column(String , ForeignKey('users.user_email'), nullable=False)
     user = relationship("User", back_populates="student_role")
     institution = relationship("Institution", back_populates="students")
