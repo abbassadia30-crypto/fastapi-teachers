@@ -12,7 +12,7 @@ from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token
 from backend.models.admin.institution import Institution
-from backend.models.User import User
+from backend.models.User import User , Block
 
 load_dotenv()
 
@@ -140,6 +140,16 @@ async def login(
 
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
+
+    ban_status = db.query(Block).filter(Block.user_id == ceredentials.id).first()
+
+    if ban_status:
+        # We include the reason so you can show it in your red sign box
+        reason = ban_status.ban_reason or "Violation of community standards"
+        raise HTTPException(
+            status_code=403,
+            detail=f"Your account is suspended. Reason: {reason}"
+        )
 
     # Generate Token
     access_token = create_access_token(data={"sub": user.email})
