@@ -67,7 +67,6 @@ class Transaction(Base):
     __tablename__ = "finance_transactions"
     id = Column(Integer, primary_key=True, index=True)
     institution_id = Column(String, ForeignKey("institutions.institution_id"))
-    # Removed user_id as per instructions: Transactions are related to institution, not user
     template_id = Column(Integer, ForeignKey("finance_templates.id"))
     amount = Column(Float)
     status = Column(String, default="unpaid")
@@ -106,7 +105,7 @@ class AcademicResult(Base):
 
     exam_title = Column(String, nullable=False)
     target_class = Column(String)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=True)
+    student_id = Column(Integer, ForeignKey("student.id"), nullable=True)
     student_name = Column(String, nullable=False)
     father_name = Column(String)
     marks_data = Column(JSON)
@@ -158,7 +157,7 @@ class IndividualAttendance(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     institution_id = Column(String, ForeignKey("institutions.institution_id"))
-    student_id = Column(String, ForeignKey("students.id"), index=True)
+    student_id = Column(Integer, ForeignKey("student.id"), index=True)
     log_id = Column(Integer, ForeignKey("attendance_logs.id"))
     status = Column(String)
     date = Column(Date, index=True)

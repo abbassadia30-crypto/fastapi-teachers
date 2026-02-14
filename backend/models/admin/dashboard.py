@@ -19,7 +19,7 @@ class student(Base):
     is_active = Column(Boolean, default=True)
 
     institution_id = Column(Integer, ForeignKey("institutions.id"))
-    institution = relationship("Institution", back_populates="students")
+    institution = relationship("Institution", back_populates="student_records")
 
 class teacher(Base):
     __tablename__ = "teacher_records"
@@ -33,7 +33,7 @@ class teacher(Base):
     extra_details = Column(JSON, nullable=True)  # For those flexible fields
 
     institution_id = Column(Integer, ForeignKey("institutions.id"), index=True)
-    institution = relationship("Institution", back_populates="teachers")
+    institution = relationship("Institution", back_populates="teacher_records")
 
 class Staff(Base):
     __tablename__ = "staff"
@@ -49,6 +49,4 @@ class Staff(Base):
 
     institution_id = Column(Integer, ForeignKey("institutions.id"))
 
-    # RECOMMENDED ADDITION:
-    # This allows you to access institution details easily: staff.institution.name
     institution = relationship("Institution", back_populates="staff_members")

@@ -18,9 +18,19 @@ class Institution(Base , TimestampMixin):
     description = Column(Text, nullable=True)
 
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
-    students = relationship("student", back_populates="institution")
+    
+    # Back-populates for Role models (Upper Case)
+    owners = relationship("Owner", back_populates="institution")
+    admins = relationship("Admin", back_populates="institution")
+    teachers = relationship("Teacher", back_populates="institution")
+    students = relationship("Student", back_populates="institution")
+    
+    # Back-populates for Dashboard models (Lower Case)
+    student_records = relationship("student", back_populates="institution")
+    teacher_records = relationship("teacher", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
-    teachers = relationship("teacher", back_populates="institution")
+    
+    # Other documents
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
     notices = relationship("Notice", back_populates="institution")
