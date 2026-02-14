@@ -15,6 +15,7 @@ class Owner(Base):
     institution_name = Column(String , ForeignKey('institutions.name'), nullable=False)
     # Relationships
     user = relationship("User", back_populates="owner_role", foreign_keys=[user_id])
+
     institution = relationship("Institution",back_populates="owner",foreign_keys=[institution_id])
 
 class Admin(Base):
