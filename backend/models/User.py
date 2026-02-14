@@ -15,10 +15,13 @@ class User(Base, TimestampMixin):
 
     # Relationships
     owned_institution = relationship("Institution", back_populates="owner", uselist=False)
-    owner_role = relationship("Owner", back_populates="user", uselist=False)
-    admin_role = relationship("Admin", back_populates="user", uselist=False)
-    teacher_role = relationship("Teacher", back_populates="user", uselist=False)
-    student_role = relationship("Student", back_populates="user", uselist=False)
+    
+    # Relationships with explicit foreign keys to resolve ambiguity
+    owner_role = relationship("Owner", back_populates="user", foreign_keys="[Owner.user_id]", uselist=False)
+    admin_role = relationship("Admin", back_populates="user", foreign_keys="[Admin.user_id]", uselist=False)
+    teacher_role = relationship("Teacher", back_populates="user", foreign_keys="[Teacher.user_id]", uselist=False)
+    student_role = relationship("Student", back_populates="user", foreign_keys="[Student.user_id]", uselist=False)
+
     bio = relationship("UserBio", back_populates="user", uselist=False)
     profile = relationship("Profile", back_populates="owner", uselist=False)
 

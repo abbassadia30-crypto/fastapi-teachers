@@ -14,7 +14,7 @@ class Owner(Base):
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
     institution_name = Column(String , ForeignKey('institutions.name'), nullable=False)
     # Relationships
-    user = relationship("User", back_populates="owner_role")
+    user = relationship("User", back_populates="owner_role", foreign_keys=[user_id])
     institution = relationship("Institution", back_populates="owner")
 
 class Admin(Base):
@@ -25,7 +25,7 @@ class Admin(Base):
     user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
     email = Column(String , ForeignKey('users.user_email'), nullable=False)
     # Relationships
-    user = relationship("User", back_populates="admin_role")
+    user = relationship("User", back_populates="admin_role", foreign_keys=[user_id])
     institution = relationship("Institution", back_populates="admins")
 
 class Teacher(Base):
@@ -35,7 +35,7 @@ class Teacher(Base):
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
     email = Column(String , ForeignKey('users.user_email'), nullable=False)
-    user = relationship("User", back_populates="teacher_role")
+    user = relationship("User", back_populates="teacher_role", foreign_keys=[user_id])
     institution = relationship("Institution", back_populates="teachers")
 
 class Student(Base):
@@ -45,5 +45,5 @@ class Student(Base):
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
     email = Column(String , ForeignKey('users.user_email'), nullable=False)
-    user = relationship("User", back_populates="student_role")
+    user = relationship("User", back_populates="student_role", foreign_keys=[user_id])
     institution = relationship("Institution", back_populates="students")

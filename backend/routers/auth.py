@@ -134,6 +134,7 @@ async def login(
 ):
     user = db.query(User).filter(User.email == credentials.email).first()
 
+
     if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
