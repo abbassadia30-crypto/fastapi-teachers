@@ -13,9 +13,9 @@ from .admin.document import (
     AttendanceLog, IndividualAttendance
 )
 # CORRECTED: Importing the uppercase classes from dashboard
-from .admin.dashboard import Staff, Student, Teacher
+from .admin.dashboard import Staff, student, teacher
 # CORRECTED: Importing the new lowercase role classes
-from .admin.role import Owner, Admin
+from .admin.role import Owner, Admin , Teacher , Student
 
 # --- 3. All Exports ---
 __all__ = [
@@ -24,6 +24,6 @@ __all__ = [
     "Profile", "Syllabus", "DateSheet", "Notice", 
     "Transaction", "FinanceTemplate", "Voucher", 
     "AcademicResult", "PaperVault", "AttendanceLog", 
-    "IndividualAttendance", "Student", "Staff", "Teacher",
-    "Owner", "Admin"
+    "IndividualAttendance", "student", "Staff", "teacher",
+    "Owner", "Admin" , "Teacher" , "Student"
 ]
