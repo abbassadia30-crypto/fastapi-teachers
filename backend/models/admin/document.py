@@ -67,7 +67,7 @@ class Transaction(Base):
     __tablename__ = "finance_transactions"
     id = Column(Integer, primary_key=True, index=True)
     institution_id = Column(String, ForeignKey("institutions.institution_id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
+    # Removed user_id as per instructions: Transactions are related to institution, not user
     template_id = Column(Integer, ForeignKey("finance_templates.id"))
     amount = Column(Float)
     status = Column(String, default="unpaid")
@@ -75,8 +75,6 @@ class Transaction(Base):
     voucher_no = Column(String, unique=True)
 
     institution = relationship("Institution", back_populates="transactions")
-    # ADDED: Relationship to User
-    user = relationship("User", back_populates="transactions")
 
 class Voucher(Base):
     __tablename__ = "vouchers"
