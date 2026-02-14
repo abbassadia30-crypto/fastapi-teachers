@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException,status
 from sqlalchemy.orm import Session
 from backend import database
 from backend.routers.auth import get_current_user
-from backend.models.admin.institution import Institution, User, School, Academy, College
+from backend.models.admin.institution import Institution, School, Academy, College
 from backend.schemas.admin.institution import SchoolSchema, AcademySchema, CollegeSchema
+from backend.models.User import User
 
 router = APIRouter(prefix="/ready", tags=["Institution creation"])
 

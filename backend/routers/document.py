@@ -5,7 +5,8 @@ from backend.models.admin.document import Syllabus, DateSheet, Notice, Voucher, 
     IndividualAttendance, AttendanceLog
 from backend.routers.auth import get_current_user, get_verified_inst
 from backend.database import get_db
-from backend.models.admin.institution import Institution, User
+from backend.models.admin.institution import Institution
+from backend.models.User import User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
     NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit, \
     StaffAttendanceSubmit

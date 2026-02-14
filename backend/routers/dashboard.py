@@ -4,8 +4,9 @@ from backend.routers.auth import get_current_user
 from .. import database
 from backend.database import get_db
 from backend.models.admin.dashboard import Student , Staff , Teacher
-from  backend.models.admin.institution import User, Institution
+from  backend.models.admin.institution import Institution
 from backend.schemas.admin.dashboard import AdmissionPayload, Student_update, TeacherCreate, TeacherListResponse, StaffCreate,StaffResponse, StaffListResponse, EmployeeUpdate, StaffUpdate
+from backend.models.User import User
 
 router = APIRouter(
     prefix="/dashboard",
