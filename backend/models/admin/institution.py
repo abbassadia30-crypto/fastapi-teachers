@@ -18,9 +18,9 @@ class Institution(Base , TimestampMixin):
     description = Column(Text, nullable=True)
 
     owner = relationship("User", back_populates="owned_institution", foreign_keys=[owner_id])
-    students = relationship("Student", back_populates="institution")
+    students = relationship("student", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
-    teachers = relationship("Teacher", back_populates="institution")
+    teachers = relationship("teacher", back_populates="institution")
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
     notices = relationship("Notice", back_populates="institution")

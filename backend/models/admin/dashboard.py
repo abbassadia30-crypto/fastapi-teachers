@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship, DeclarativeBase
 from sqlalchemy.sql import func
 from backend.models.base import Base
 
-class Student(Base):
+class student(Base):
     __tablename__ = "students"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
@@ -21,7 +21,7 @@ class Student(Base):
     institution_id = Column(Integer, ForeignKey("institutions.id"))
     institution = relationship("Institution", back_populates="students")
 
-class Teacher(Base):
+class teacher(Base):
     __tablename__ = "teacher_records"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
