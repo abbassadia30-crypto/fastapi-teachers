@@ -4,12 +4,12 @@ from sqlalchemy.orm import relationship
 from backend.models.base import Base, TimestampMixin
 
 
-class Institution(Base , TimestampMixin):
+class Institution(Base, TimestampMixin):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
-    owner_id = Column(Integer, ForeignKey("users.id"))
-    institution_id = Column(String, unique=True, index=True, nullable=False,
-                            default=lambda: str(uuid.uuid4().hex[:8].upper()))
+    internal_id = Column(String, unique=True, index=True, nullable=False,
+                         default=lambda: str(uuid.uuid4().hex[:8].upper()))
+
     type = Column(String(50))
     name = Column(String, nullable=False)
     address = Column(String)
@@ -19,18 +19,26 @@ class Institution(Base , TimestampMixin):
 
     inst_ref = Column(String(8), unique=True, index=True, nullable=False)
     join_key = Column(String(10), unique=True, nullable=False)
-    # Back-populates for Role models (Upper Case)
-    owner = relationship("Owner",back_populates="institution",uselist=False,foreign_keys="[Owner.institution_id]")
-    admins = relationship("Admin", back_populates="institution")
-    teachers = relationship("Teacher", back_populates="institution")
-    students = relationship("Student", back_populates="institution")
-    
-    # Back-populates for Dashboard models (Lower Case)
+
+    # 👑 THE CORE ROLES
+    # Note: 'foreign_keys' is used to resolve the ambiguity from the previous error.
+    owner = relationship("Owner", back_populates="institution", uselist=False,
+                         foreign_keys="Owner.institution_id")
+
+    admins = relationship("Admin", back_populates="institution",
+                          foreign_keys="Admin.institution_id")
+
+    teachers = relationship("Teacher", back_populates="institution",
+                            foreign_keys="Teacher.institution_id")
+
+    students = relationship("Student", back_populates="institution",
+                            foreign_keys="Student.institution_id")
+
+    # 📑 RECORDS & LOGS (Dashboard Models)
+    # Ensure 'student' and 'teacher' (lowercase) are correctly mapped in those files
     student_records = relationship("student", back_populates="institution")
     teacher_records = relationship("teacher", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
-    
-    # Other documents
     syllabi = relationship("Syllabus", back_populates="institution")
     datesheets = relationship("DateSheet", back_populates="institution")
     notices = relationship("Notice", back_populates="institution")

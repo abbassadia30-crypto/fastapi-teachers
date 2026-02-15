@@ -10,76 +10,58 @@ class User(Base, TimestampMixin):
     user_email = Column(String, unique=True, index=True, nullable=False)
     user_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    phone = Column(String , nullable=True)
+    phone = Column(String, nullable=True)
     type = Column(String(50))
 
-# Inside the User class
-    owner_role = relationship("Owner", back_populates="user", foreign_keys="Owner.id", uselist=False)
-    admin_role = relationship("Admin", back_populates="user", foreign_keys="Admin.id", uselist=False)
-    teacher_role = relationship("Teacher", back_populates="user", foreign_keys="Teacher.id", uselist=False)
-    student_role = relationship("Student", back_populates="user", foreign_keys="Student.id", uselist=False)
+    # Removed: owner_role, admin_role, etc.
+    # Inheritance handles this! If user.type is 'admin',
+    # SQLAlchemy treats the object as an Admin automatically.
 
     bio = relationship("UserBio", back_populates="user", uselist=False)
-    profile = relationship("Profile", back_populates="owner", uselist=False)
 
     @property
     def institution_id(self):
-        """Logic to find the ID without crashing"""
-        if self.type == "owner" and self.owner_role:
-            return self.owner_role.institution_id
-        if self.type == "admin" and self.admin_role:
-            return self.admin_role.institution_id
-        if self.type == "teacher" and self.teacher_role:
-            return self.teacher_role.institution_id
-        if self.type == "student" and self.student_role:
-            return self.student_role.institution_id
-        return None
+        """Logic to find the ID without crashing.
+        Because of inheritance, 'self' will actually be an instance
+        of Owner, Admin, etc., if it's already loaded."""
+        # This is high-end: check if the attribute exists on the current object
+        return getattr(self, "institution_id", None)
 
     __mapper_args__ = {
         "polymorphic_on": type,
         "polymorphic_identity": "user"
     }
 
-class Owner(User): # Inherit from User, not Base
+class Owner(User):
     __tablename__ = "owner"
-    # id here acts as both PK and FK to users.id
+    # Shared Primary Key with User table
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
 
-    # Relationships
-    user = relationship("User", back_populates="owner_role", foreign_keys=[id])
+    # We only define the relationship to the INSTITUTION here
     institution = relationship("Institution", back_populates="owner")
 
     __mapper_args__ = {
         "polymorphic_identity": "owner",
     }
 
-# --- ADMIN ROLE (Joined Table) ---
-class Admin(User): # Inherit from User, not Base
+class Admin(User):
     __tablename__ = "admin"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
-    user = relationship("User", back_populates="admin_role", foreign_keys=[id])
     institution = relationship("Institution", back_populates="admins")
 
     __mapper_args__ = {
         "polymorphic_identity": "admin",
     }
 
-# backend/models/admin/role.py
-
 class Teacher(User):
     __tablename__ = "teacher"
-    # The 'id' is both the Primary Key for this table
-    # and a Foreign Key to the 'users' table id.
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-
-    # High-end addition: Specialization or Department for Teachers
     department = Column(String(100), nullable=True)
 
-    user = relationship("User", back_populates="teacher_role", foreign_keys=[id])
     institution = relationship("Institution", back_populates="teachers")
 
     __mapper_args__ = {
@@ -90,11 +72,8 @@ class Student(User):
     __tablename__ = "student"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-
-    # Student specific data
     roll_number = Column(String(50), nullable=True)
 
-    user = relationship("User", back_populates="student_role", foreign_keys=[id])
     institution = relationship("Institution", back_populates="students")
 
     __mapper_args__ = {

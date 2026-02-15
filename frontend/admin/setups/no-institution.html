@@ -174,6 +174,7 @@
 
             if (response.status === 401) {
                 showError("Session expired. Please re-login.");
+                window.location.href = "../../index.html";
                 return;
             }
 
