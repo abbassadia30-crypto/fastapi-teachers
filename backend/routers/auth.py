@@ -12,7 +12,7 @@ from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token
 from backend.models.admin.institution import Institution
-from backend.models.User import User , UserBan
+from backend.models.User import User , UserBan , Verification
 
 load_dotenv()
 
