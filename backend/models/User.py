@@ -21,6 +21,19 @@ class User(Base, TimestampMixin):
     bio = relationship("UserBio", back_populates="user", uselist=False)
     profile = relationship("Profile", back_populates="owner", uselist=False)
 
+    @property
+    def institution_id(self):
+        """Logic to find the ID without crashing"""
+        if self.type == "owner" and self.owner_role:
+            return self.owner_role.institution_id
+        if self.type == "admin" and self.admin_role:
+            return self.admin_role.institution_id
+        if self.type == "teacher" and self.teacher_role:
+            return self.teacher_role.institution_id
+        if self.type == "student" and self.student_role:
+            return self.student_role.institution_id
+        return None
+
     __mapper_args__ = {
         "polymorphic_on": type,
         "polymorphic_identity": "user"

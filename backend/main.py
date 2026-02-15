@@ -20,9 +20,6 @@ logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
 
 app = FastAPI()
-# ... include routers ...
-
-# ... (rest of your middleware and router includes)
 
 app.include_router(auth.router)
 app.include_router(institution.router)
@@ -34,7 +31,7 @@ app.include_router(central_vault.router)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # For production, replace "*" with your app's URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

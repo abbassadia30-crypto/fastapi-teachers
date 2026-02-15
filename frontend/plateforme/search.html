@@ -206,112 +206,85 @@
 </nav>
 
 <script>
-  function showNotify(msg, type) {
-    const box = document.getElementById('sign-box');
-    box.innerText = msg;
-    box.className = type === 'success' ? 'sign-green' : 'sign-red';
-    box.style.display = 'block';
+  const API_BASE = "https://fastapi-teachers.onrender.com";
+  let currentTab = 'user';
+  let searchTimeout;
 
-    if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-      Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
-    }
-    setTimeout(() => box.style.display = 'none', 3000);
-  }
-
+  // 1. Tab Switching Logic
   function switchTab(type) {
+    currentTab = type;
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('tab-' + type).classList.add('active');
 
-    const feed = document.getElementById('feed');
-    if(type === 'inst') {
-      feed.innerHTML = `
-            <div class="profile-card">
-                <h3 style="color:var(--primary);">Global Institution Search</h3>
-                <span class="label-style">Filter</span>
-                <div class="field-box">Search by ID, Location, or Name</div>
-            </div>`;
-    } else {
-      feed.innerHTML = `
-            <div class="profile-card">
-                <h3 style="color:var(--primary);">User & Peer Search</h3>
-                <span class="label-style">Category</span>
-                <div class="field-box">Teachers, Students, and Admins</div>
-            </div>`;
-    }
+    // Clear search bar when switching tabs for a clean UI
+    document.getElementById('globalSearch').value = '';
+    renderCards();
   }
 
-  // Capacitor orientation and UI lock (Recommended for Real Apps)
-  window.addEventListener('resize', () => {
-    if(document.activeElement.tagName === 'INPUT') {
-      document.querySelector('.bottom-nav').style.display = 'none';
-      document.querySelector('.back-dash').style.display = 'none';
-    } else {
-      document.querySelector('.bottom-nav').style.display = 'flex';
-      document.querySelector('.back-dash').style.display = 'block';
-    }
+  // 2. High-End Debounced Search
+  document.getElementById('globalSearch').addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      renderCards(e.target.value);
+    }, 500); // Wait 500ms after user stops typing
   });
 
-  // Sample Data (Replace with your fetch calls later)
-  const sampleData = {
-    user: [
-      { name: "Ahmed Ali", role: "Teacher", subject: "Mathematics", email: "ahmed@inst.com" },
-      { name: "Sara Khan", role: "Student", subject: "Grade 10", email: "sara@inst.com" }
-    ],
-    inst: [
-      { name: "Oxford Academy", type: "School", owner: "Dr. Smith", ref: "82736415" },
-      { name: "City College", type: "College", owner: "Prof. Jamal", ref: "10293847" }
-    ]
-  };
-
-  function switchTab(type) {
-    // UI Update
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById('tab-' + type).classList.add('active');
-
-    renderCards(type);
-  }
-
-  function renderCards(type) {
+  // 3. Core Rendering Function
+  async function renderCards(searchTerm = '') {
     const feed = document.getElementById('feed');
-    feed.innerHTML = ''; // Clear previous
+    feed.innerHTML = '<div class="profile-card"><div class="data-line">Syncing with Institution Server...</div></div>';
 
-    const data = sampleData[type];
+    try {
+      const endpoint = currentTab === 'user' ? '/explore/users' : '/explore/institutions';
+      const url = new URL(`${API_BASE}${endpoint}`);
+      if (searchTerm) url.searchParams.append('query', searchTerm);
 
-    data.forEach(item => {
-      const card = document.createElement('div');
-      card.className = 'profile-card';
+      const response = await fetch(url);
+      const data = await response.json();
 
-      if (type === 'user') {
-        card.innerHTML = `
-                <div class="card-title">${item.name}</div>
-                <div class="data-line"><strong>Role:</strong> ${item.role}</div>
-                <div class="data-line"><strong>Subject:</strong> ${item.subject}</div>
-                <button class="view-btn" onclick="showFullDetails('${item.name}', '${item.email}')">VIEW PROFILE</button>
-            `;
-      } else {
-        card.innerHTML = `
-                <div class="card-title">${item.name}</div>
-                <div class="data-line"><strong>Type:</strong> ${item.type}</div>
-                <div class="data-line"><strong>Owner:</strong> ${item.owner}</div>
-                <div class="data-line"><strong>ID:</strong> ${item.ref}</div>
-                <button class="view-btn" onclick="showFullDetails('${item.name}', 'Ref: ${item.ref}')">VIEW INSTITUTION</button>
-            `;
+      feed.innerHTML = ''; // Clear loading
+
+      if (!data || data.length === 0) {
+        feed.innerHTML = `<div class="profile-card"><div class="data-line">No ${currentTab}s found matching your search.</div></div>`;
+        return;
       }
-      feed.appendChild(card);
-    });
+
+      data.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'profile-card';
+
+        if (currentTab === 'user') {
+          card.innerHTML = `
+                    <div class="card-title">${item.name}</div>
+                    <span class="label-style">${item.role}</span>
+                    <div class="data-line"><strong>ID:</strong> ${item.email}</div>
+                    <button class="view-btn" onclick="showFullDetails('${item.name}', 'Role: ${item.role}')">VIEW PEER</button>
+                `;
+        } else {
+          card.innerHTML = `
+                    <div class="card-title">${item.name}</div>
+                    <span class="label-style">${item.type}</span>
+                    <div class="data-line"><strong>Head:</strong> ${item.owner}</div>
+                    <div class="data-line"><strong>Ref:</strong> ${item.ref}</div>
+                    <button class="view-btn" onclick="handleJoinRequest('${item.ref}', '${item.name}')">JOIN REQUEST</button>
+                `;
+        }
+        feed.appendChild(card);
+      });
+    } catch (error) {
+      console.error(error);
+      showNotify("Server Connection Failed", "error");
+    }
   }
 
-  function showFullDetails(title, info) {
-    // Real App Method: Use a "Green Sign Box" to show the extra data
-    showNotify(`${title}: ${info}`, 'success');
-
-    // In your real app, this would open a new page or a Modal
-    // window.location.href = `details.html?id=${title}`;
+  // 4. Join Request Placeholder (Real App Action)
+  function handleJoinRequest(ref, name) {
+    showNotify(`Requesting to join ${name}...`, 'success');
+    // Future: Call /request-to-join API here
   }
 
-  // Initial Load
-  window.onload = () => renderCards('user');
-
+  // Initial Run
+  window.onload = () => renderCards();
 </script>
 </body>
 </html>

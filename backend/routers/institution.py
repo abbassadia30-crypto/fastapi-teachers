@@ -11,31 +11,25 @@ router = APIRouter(
     prefix="/institution",
     tags=["Institution Management"]
 )
-
-# --- Role Selection (Step 2 of Onboarding) ---
-
 @router.patch("/update-role")
 async def update_user_role(
         payload: RoleUpdate,
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Validate allowed roles
-    if payload.role not in ["admin", "teacher", "student"]:
-        raise HTTPException(status_code=400, detail="Invalid role selection")
+    # 1. Update the 'type' for polymorphism
+    current_user.type = payload.role
 
-    current_user.role = payload.role
-
-    current_user.has_institution = False
-
+    # 2. Save change
+    db.add(current_user)
     db.commit()
-    db.refresh(current_user) # Important to get updated state
+    db.refresh(current_user)
 
+    # 3. Safe response
     return {
         "status": "success",
-        "role": current_user.role,
-        "has_institution": current_user.has_institution,
-        "institution_id": current_user.institution_id
+        "role": current_user.type,
+        "institution_id": current_user.institution_id # Now calls the @property above
     }
 
 import string
