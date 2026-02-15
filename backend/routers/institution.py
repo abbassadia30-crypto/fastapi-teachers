@@ -24,34 +24,26 @@ async def initialize_user_role(
     role_map = {"admin": Admin, "teacher": Teacher, "student": Student, "owner": Owner}
     new_role_type = payload.role.lower()
 
-    # 1. Logic Check: If they are NOT an owner, they NEED an institution
+    # Get the ID if it exists, otherwise it stays None
     target_inst_id = getattr(current_user, "last_active_institution_id", None)
 
-    if new_role_type != "owner" and target_inst_id is None:
-        # Check if the payload sent an institution_id (from a join link)
-        # payload.institution_id would need to be added to your Pydantic model
-        raise HTTPException(
-            status_code=400,
-            detail="Institution ID required for this role. Please use a join link."
-        )
-
-    # 2. Use the INSERT fix from before
     RoleClass = role_map[new_role_type]
     existing_role = db.query(RoleClass).filter(RoleClass.id == current_user.id).first()
 
     if not existing_role:
         from sqlalchemy import insert
-        # We pass target_inst_id (which might be None for Owners, and that's okay)
+        # Even if target_inst_id is None, this will now succeed because we made the column nullable
         stmt = insert(RoleClass).values(id=current_user.id, institution_id=target_inst_id)
         db.execute(stmt)
 
-        # 3. Auto-create profile
+        # Initialize the professional profile
         new_profile = Profile(professional_title=f"New {new_role_type.capitalize()}")
         setattr(new_profile, f"{new_role_type}_id", current_user.id)
         db.add(new_profile)
 
     current_user.type = new_role_type
     db.commit()
+
     return {"status": "success", "role": new_role_type}
 
 @router.patch("/update-role")
