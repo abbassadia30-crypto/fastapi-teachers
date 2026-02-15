@@ -1,5 +1,5 @@
 from .base import Base
-from .User import User, UserBan, Report, Block, Verification
+from .User import User, UserBan, Report, Block, Verification , Owner, Admin , Teacher , Student
 from .admin.institution import Institution, School, Academy, College
 from .admin.profile import UserBio, Profile
 from .admin.document import (
@@ -8,7 +8,6 @@ from .admin.document import (
     AttendanceLog, IndividualAttendance
 )
 from .admin.dashboard import Staff, student, teacher
-from .admin.role import Owner, Admin , Teacher , Student
 
 __all__ = [
     "Base", "User", "UserBan", "Report", "Block", "Verification",
