@@ -9,8 +9,6 @@ class Owner(Base):
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     user_name = Column(String , ForeignKey('users.user_name'), nullable=False)
     email = Column(String , ForeignKey('users.user_email'), nullable=False)
-    # Professional/Institution Link
-    # Unique=True ensures an institution can only ever have ONE owner
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
     institution_name = Column(String , ForeignKey('institutions.name'), nullable=False)
     # Relationships

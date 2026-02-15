@@ -26,12 +26,7 @@ async def update_user_role(
 
     current_user.role = payload.role
 
-    # Logic: If they pick admin, ensure they are flagged for the setup pathway
-    if payload.role == "admin":
-        current_user.has_institution = False
-    else:
-        # Teachers/Students are usually invited, so they might not need a 'setup'
-        current_user.has_institution = True
+    current_user.has_institution = False
 
     db.commit()
     db.refresh(current_user) # Important to get updated state

@@ -30,3 +30,11 @@ class Token(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class Joining(BaseModel):
+    request_message = str
+    sent_by = int
+    sent_to = int
+
+class Approval(BaseModel):
+    request_id = int
+    Approval = boolean
