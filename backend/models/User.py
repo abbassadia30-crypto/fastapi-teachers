@@ -10,6 +10,7 @@ class User(Base, TimestampMixin):
     user_email = Column(String, unique=True, index=True, nullable=False)
     user_password = Column(String, nullable=False)
     type = Column(String(50)) # Discriminator
+    phone = Column(String, nullable=True)
 
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)
