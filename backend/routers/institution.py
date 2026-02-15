@@ -13,6 +13,67 @@ router = APIRouter(
 )
 # backend/routers/institution.py
 
+@router.post("/initialize-role")
+async def initialize_user_role(
+        payload: RoleUpdate,
+        db: Session = Depends(database.get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # 1. Identify the chosen role class
+    role_map = {
+        "admin": Admin,
+        "teacher": Teacher,
+        "student": Student,
+        "owner": Owner
+    }
+
+    new_role_type = payload.role.lower()
+    if new_role_type not in role_map:
+        raise HTTPException(status_code=400, detail="Invalid role selection")
+
+    # 2. Safety Check: If user is still 'verified_user', they are ready for initialization
+    # We use their current institution context (perhaps saved during join_key phase)
+    # If not found, we assume they are creating a new institution (Owner)
+    target_inst_id = getattr(current_user, "last_active_institution_id", None)
+
+    # 3. Create the Role Record
+    RoleClass = role_map[new_role_type]
+
+    # Check if they already have this role to prevent duplicates
+    existing_role = db.query(RoleClass).filter_by(id=current_user.id).first()
+
+    if not existing_role:
+        new_role_entry = RoleClass(
+            id=current_user.id,
+            institution_id=target_inst_id
+        )
+        db.add(new_role_entry)
+
+        # 4. Create the Role-Specific Profile automatically
+        new_profile = Profile(
+            professional_title=f"New {new_role_type.capitalize()}",
+            institutional_bio="Professional bio not yet set."
+        )
+        # Link the profile to the correct ID based on the role
+        setattr(new_profile, f"{new_role_type}_id", current_user.id)
+        db.add(new_profile)
+
+    # 5. Update the Base User Identity
+    current_user.type = new_role_type
+
+    try:
+        db.commit()
+        db.refresh(current_user)
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to initialize profile")
+
+    return {
+        "status": "success",
+        "message": f"Welcome! You are now a {new_role_type}",
+        "role": new_role_type
+    }
+
 @router.patch("/update-role")
 async def update_user_role(
         payload: RoleUpdate,

@@ -14,7 +14,7 @@ class User(Base, TimestampMixin):
 
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)
-
+    last_active_institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
 # REMOVED: profile = relationship("Profile", ...)
 # Because a user might have 3 different profiles for 3 different roles.
 

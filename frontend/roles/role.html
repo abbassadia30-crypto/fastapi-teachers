@@ -92,13 +92,14 @@
 
     async function setRole(roleName) {
         const loader = document.getElementById('loading');
-        loader.style.display = 'flex';
+        if(loader) loader.style.display = 'flex';
 
         try {
             const token = await AppStorage.get('institutionToken');
 
-            const response = await fetch(`${API_BASE}/institution/update-role`, {
-                method: 'PATCH',
+            // Changed from PATCH /update-role to POST /initialize-role for first-time setup
+            const response = await fetch(`${API_BASE}/institution/initialize-role`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -110,24 +111,28 @@
 
             if (response.ok) {
                 await AppStorage.set('user_role', roleName);
-                showNotify(`Profile synchronized as ${roleName}`, "success");
 
-                // 🏛️ EASY-TO-EDIT REDIRECT LOGIC
+                // Success Feedback - Perfection!
+                showNotify(`Account synchronized: ${roleName.toUpperCase()} mode active`, "success");
+
                 setTimeout(() => {
                     if (roleName === 'admin') {
                         window.location.href = "../admin/setups/no-institution.html";
+                    } else if (roleName === 'owner') {
+                        window.location.href = "../owner/setup/create-institution.html";
                     } else {
                         window.location.href = `../${roleName}/dashboard/dashboard.html`;
                     }
-                }, 1200);
+                }, 1500);
 
             } else {
-                showNotify(result.detail || "Selection failed", "error");
+                showNotify(result.detail || "Initialization failed", "error");
             }
         } catch (error) {
-            showNotify("Connection Error", "error");
+            showNotify("Connection lost. Check your internet.", "error");
+            console.error("Initialization Error:", error);
         } finally {
-            loader.style.display = 'none';
+            if(loader) loader.style.display = 'none';
         }
     }
 
