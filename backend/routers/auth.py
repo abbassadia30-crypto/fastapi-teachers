@@ -115,18 +115,17 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
             v_user.verified_at = None
         target_name = existing_user.user_name
     else:
-        # Create new record using the Verification subclass
-        new_v_user = Verification(
-            user_name=user.name,
-            user_email=str(user.email),
-            user_password=hashed_pwd,
-            phone=user.phone,
-            otp_code=otp,
-            is_verified=False,
-            type="verified_user" # Polymorphic identity
-        )
-        db.add(new_v_user)
-        target_name = user.name
+       new_v_user = Verification(
+    user_name=user.name,
+    user_email=str(user.email),
+    user_password=hashed_pwd,
+    phone=None, # This will now be None without crashing
+    otp_code=otp,
+    is_verified=False,
+    type="verified_user"
+)
+    db.add(new_v_user)
+    target_name = user.name
 
     db.commit()
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
