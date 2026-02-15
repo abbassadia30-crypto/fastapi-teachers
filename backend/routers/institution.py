@@ -11,26 +11,36 @@ router = APIRouter(
     prefix="/institution",
     tags=["Institution Management"]
 )
+# backend/routers/institution.py
+
 @router.patch("/update-role")
 async def update_user_role(
         payload: RoleUpdate,
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Update the 'type' for polymorphism
-    current_user.type = payload.role
+    # Determine which institution the user is currently interacting with
+    # In a perfect app, this comes from the header or a session context
+    target_inst_id = current_user.last_active_institution_id
 
-    # 2. Save change
-    db.add(current_user)
+    new_role_type = payload.role.lower()
+
+    # Create role record if it doesn't exist (Traveling Logic)
+    if new_role_type == "admin":
+        existing = db.query(Admin).filter_by(user_id=current_user.id, institution_id=target_inst_id).first()
+        if not existing:
+            db.add(Admin(user_id=current_user.id, institution_id=target_inst_id))
+
+    elif new_role_type == "teacher":
+        existing = db.query(Teacher).filter_by(user_id=current_user.id, institution_id=target_inst_id).first()
+        if not existing:
+            db.add(Teacher(user_id=current_user.id, institution_id=target_inst_id))
+
+    # Update the "Current View" for the Capacitor App
+    current_user.type = new_role_type
+
     db.commit()
-    db.refresh(current_user)
-
-    # 3. Safe response
-    return {
-        "status": "success",
-        "role": current_user.type,
-        "institution_id": current_user.institution_id # Now calls the @property above
-    }
+    return {"status": "success", "active_role": current_user.type}
 
 import string
 import random

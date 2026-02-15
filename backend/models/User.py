@@ -2,84 +2,81 @@ from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, T
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
 
+# --- SHARED BASE FOR DATA ---
 class User(Base, TimestampMixin):
     __tablename__ = "users"
-
     id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String, unique=True, index=True, nullable=False)
     user_email = Column(String, unique=True, index=True, nullable=False)
     user_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    phone = Column(String, nullable=True)
-    type = Column(String(50))
+    type = Column(String(50)) # Discriminator
 
-    # Removed: owner_role, admin_role, etc.
-    # Inheritance handles this! If user.type is 'admin',
-    # SQLAlchemy treats the object as an Admin automatically.
+    # Inside the User Class
+@property
+def active_institution_id(self):
+    """Perfectly safe property that checks the subclass dictionary directly"""
+    # This looks at the specialized attributes of the subclass (Owner, Admin, etc)
+    for role_attr in ['owner', 'admin', 'teacher', 'student']:
+        role_obj = getattr(self, role_attr, None) # This won't recurse
+        if role_obj and hasattr(role_obj, 'institution_id'):
+            return role_obj.institution_id
+    return None
 
+    # Global Bio (Personal) - Every human has one
+# Inside the User class
     bio = relationship("UserBio", back_populates="user", uselist=False)
-    profile = relationship("Profile", back_populates="owner", uselist=False)
-
-    @property
-    def institution_id(self):
-        """Logic to find the ID without crashing.
-        Because of inheritance, 'self' will actually be an instance
-        of Owner, Admin, etc., if it's already loaded."""
-        # This is high-end: check if the attribute exists on the current object
-        return getattr(self, "institution_id", None)
+    profiles = relationship("Profile", back_populates="owner") # List of all professional identities
 
     __mapper_args__ = {
         "polymorphic_on": type,
         "polymorphic_identity": "user"
     }
 
+# --- SPECIFIC ROLES ---
+
 class Owner(User):
     __tablename__ = "owner"
-    # Shared Primary Key with User table
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
 
-    # We only define the relationship to the INSTITUTION here
+    # Role-Specific Data
+    profile = relationship("Profile", back_populates="owner_role", uselist=False)
     institution = relationship("Institution", back_populates="owner")
 
-    __mapper_args__ = {
-        "polymorphic_identity": "owner",
-    }
+    __mapper_args__ = {"polymorphic_identity": "owner"}
 
 class Admin(User):
     __tablename__ = "admin"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
+    # Role-Specific Data
+    profile = relationship("Profile", back_populates="admin_role", uselist=False)
     institution = relationship("Institution", back_populates="admins")
 
-    __mapper_args__ = {
-        "polymorphic_identity": "admin",
-    }
+    __mapper_args__ = {"polymorphic_identity": "admin"}
 
 class Teacher(User):
     __tablename__ = "teacher"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-    department = Column(String(100), nullable=True)
 
+    # Role-Specific Data
+    profile = relationship("Profile", back_populates="teacher_role", uselist=False)
     institution = relationship("Institution", back_populates="teachers")
 
-    __mapper_args__ = {
-        "polymorphic_identity": "teacher",
-    }
+    __mapper_args__ = {"polymorphic_identity": "teacher"}
 
 class Student(User):
     __tablename__ = "student"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
-    roll_number = Column(String(50), nullable=True)
 
+    # Role-Specific Data
+    profile = relationship("Profile", back_populates="student_role", uselist=False)
     institution = relationship("Institution", back_populates="students")
 
-    __mapper_args__ = {
-        "polymorphic_identity": "student",
-    }
+    __mapper_args__ = {"polymorphic_identity": "student"}
 
 class UserBan(Base, TimestampMixin):
     __tablename__ = "user_bans"
