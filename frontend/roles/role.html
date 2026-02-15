@@ -71,14 +71,23 @@
     const API_BASE = "https://fastapi-teachers.onrender.com";
 
     function showNotify(msg, type = 'success') {
-        const bar = document.getElementById('notification-bar');
+        const bar = document.getElementById('notification-bar'); // Ensure this ID exists in your HTML
         bar.innerText = msg;
-        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
 
+        // Apply the specific green/red classes we defined in the <head>
+        bar.className = type === 'success' ? 'status-box status-green' : 'status-box status-red';
+        bar.style.display = 'block';
+
+        // Real App Haptics for Capacitor
         if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+            const hapticType = type === 'success' ? 'SUCCESS' : 'ERROR';
+            Capacitor.Plugins.Haptics.notification({ type: hapticType });
         }
-        setTimeout(() => { bar.className = ''; }, 3500);
+
+        setTimeout(() => {
+            bar.style.display = 'none';
+            bar.className = 'status-box';
+        }, 3500);
     }
 
     async function setRole(roleName) {

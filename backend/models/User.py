@@ -12,20 +12,19 @@ class User(Base, TimestampMixin):
     type = Column(String(50)) # Discriminator
 
     # Inside the User Class
-@property
-def active_institution_id(self):
-    """Perfectly safe property that checks the subclass dictionary directly"""
-    # This looks at the specialized attributes of the subclass (Owner, Admin, etc)
-    for role_attr in ['owner', 'admin', 'teacher', 'student']:
-        role_obj = getattr(self, role_attr, None) # This won't recurse
-        if role_obj and hasattr(role_obj, 'institution_id'):
-            return role_obj.institution_id
-    return None
-
-    # Global Bio (Personal) - Every human has one
-# Inside the User class
     bio = relationship("UserBio", back_populates="user", uselist=False)
-    profiles = relationship("Profile", back_populates="owner") # List of all professional identities
+
+# REMOVED: profile = relationship("Profile", ...)
+# Because a user might have 3 different profiles for 3 different roles.
+
+    @property
+    def active_profile(self):
+      """Logic to fetch the profile of the current active role"""
+      if self.type == "owner" and self.owner: return self.owner.profile
+      if self.type == "admin" and self.admin: return self.admin.profile
+      if self.type == "teacher" and self.teacher: return self.teacher.profile
+      if self.type == "student" and self.student: return self.student.profile
+      return None
 
     __mapper_args__ = {
         "polymorphic_on": type,
@@ -40,7 +39,8 @@ class Owner(User):
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
 
     # Role-Specific Data
-    profile = relationship("Profile", back_populates="owner_role", uselist=False)
+    profile = relationship("Profile", back_populates="owner_role", uselist=False,
+                       foreign_keys="Profile.owner_id") # Explicitly link to owner_id
     institution = relationship("Institution", back_populates="owner")
 
     __mapper_args__ = {"polymorphic_identity": "owner"}
@@ -51,7 +51,8 @@ class Admin(User):
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     # Role-Specific Data
-    profile = relationship("Profile", back_populates="admin_role", uselist=False)
+    profile = relationship("Profile", back_populates="admin_role", uselist=False,
+                       foreign_keys="Profile.admin_id") # Explicitly link to admin_id
     institution = relationship("Institution", back_populates="admins")
 
     __mapper_args__ = {"polymorphic_identity": "admin"}
@@ -62,7 +63,8 @@ class Teacher(User):
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     # Role-Specific Data
-    profile = relationship("Profile", back_populates="teacher_role", uselist=False)
+    profile = relationship("Profile", back_populates="teacher_role", uselist=False,
+                       foreign_keys="Profile.teacher_id") # Explicitly link to teacher_id
     institution = relationship("Institution", back_populates="teachers")
 
     __mapper_args__ = {"polymorphic_identity": "teacher"}
@@ -73,7 +75,8 @@ class Student(User):
     institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     # Role-Specific Data
-    profile = relationship("Profile", back_populates="student_role", uselist=False)
+    profile = relationship("Profile", back_populates="student_role", uselist=False,
+                       foreign_keys="Profile.student_id") # Explicitly link to student_id
     institution = relationship("Institution", back_populates="students")
 
     __mapper_args__ = {"polymorphic_identity": "student"}

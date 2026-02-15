@@ -19,28 +19,38 @@ async def update_user_role(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Determine which institution the user is currently interacting with
-    # In a perfect app, this comes from the header or a session context
     target_inst_id = current_user.last_active_institution_id
-
     new_role_type = payload.role.lower()
 
-    # Create role record if it doesn't exist (Traveling Logic)
+    # 1. Ensure role record exists
     if new_role_type == "admin":
-        existing = db.query(Admin).filter_by(user_id=current_user.id, institution_id=target_inst_id).first()
-        if not existing:
-            db.add(Admin(user_id=current_user.id, institution_id=target_inst_id))
-
+        role_cls = Admin
     elif new_role_type == "teacher":
-        existing = db.query(Teacher).filter_by(user_id=current_user.id, institution_id=target_inst_id).first()
-        if not existing:
-            db.add(Teacher(user_id=current_user.id, institution_id=target_inst_id))
+        role_cls = Teacher
+    # ... and so on
 
-    # Update the "Current View" for the Capacitor App
+    existing = db.query(role_cls).filter_by(id=current_user.id).first()
+    if not existing:
+        new_role_record = role_cls(id=current_user.id, institution_id=target_inst_id)
+        db.add(new_role_record)
+        db.flush() # Sync with DB to get IDs ready
+
+    # 2. Travel the user
     current_user.type = new_role_type
-
     db.commit()
-    return {"status": "success", "active_role": current_user.type}
+    db.refresh(current_user)
+
+    # 3. Use the @property for the response
+    active_prof = current_user.active_profile
+
+    return {
+        "status": "success",
+        "active_role": current_user.type,
+        "profile": {
+            "title": active_prof.professional_title if active_prof else "Member",
+            "bio": active_prof.institutional_bio if active_prof else ""
+        }
+    }
 
 import string
 import random

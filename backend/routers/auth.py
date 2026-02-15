@@ -79,6 +79,8 @@ def send_email_task(email: str, name: str, code: str, subject="Your Verification
     except Exception as e:
         print(f"Resend Email Error: {e}")
 
+
+
 def get_verified_inst(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not current_user.institution_id:
         raise HTTPException(status_code=400, detail="User not linked to an institution")
@@ -94,6 +96,21 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
     return inst # This is now a verified Institution object
 
 # --- Routes ---
+# backend/routers/users.py
+
+@router.get("/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    # The @property magic happens here
+    profile = current_user.active_profile
+
+    return {
+        "username": current_user.user_name,
+        "active_role": current_user.type,
+        "personal_name": current_user.bio.full_name,
+        # Professional data specific to the role:
+        "professional_title": profile.professional_title if profile else "No Title Set",
+        "institutional_bio": profile.institutional_bio if profile else ""
+    }
 
 @router.post("/signup")
 async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
