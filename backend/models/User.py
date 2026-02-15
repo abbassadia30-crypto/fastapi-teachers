@@ -10,7 +10,7 @@ class User(Base, TimestampMixin):
     user_email = Column(String, unique=True, index=True, nullable=False)
     user_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
-    phone = Column(String , nullable=False)
+    phone = Column(String , nullable=True)
     type = Column(String(50))
 
     owner_role = relationship("Owner", back_populates="user", foreign_keys="[Owner.user_id]", uselist=False)
