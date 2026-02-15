@@ -15,7 +15,7 @@ class Conversation(Base, TimestampMixin):
     chat_type = Column(Enum(ChatType), default=ChatType.ONE_TO_ONE)
 
     # Professional Scope: Link to the Institution
-    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=True)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     # Relationships
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")

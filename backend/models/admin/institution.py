@@ -49,6 +49,7 @@ class Institution(Base, TimestampMixin):
     papers = relationship("PaperVault", back_populates="institution")
     attendance_logs = relationship("AttendanceLog", back_populates="institution")
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
+    profile = relationship("Profile", back_populates="owner", uselist=False)
 
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
