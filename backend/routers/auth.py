@@ -51,7 +51,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         # 🏛️ This now works because credentials_exception is in scope
         raise credentials_exception
 
-    user = db.query(User).filter(User.email == email).first()
+    user = db.query(User).filter(User.user_email == email).first()
     if user is None:
         raise credentials_exception
 
@@ -97,95 +97,69 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 
 @router.post("/signup")
 async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == str(user.email)).first()
+    # Look for user in the base table
+    existing_user = db.query(User).filter(User.user_email == str(user.email)).first()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
     hashed_pwd = hash_password(user.password)
 
     if existing_user:
-        if existing_user.is_verified:
-            raise HTTPException(status_code=400, detail="Email already registered.")
-        existing_user.otp_code = otp
-        existing_user.password = hashed_pwd
-        existing_user.otp_created_at = datetime.now(timezone.utc)
-        target_name = existing_user.name
+        # Check if they have a verification record
+        v_user = db.query(Verification).filter(Verification.id == existing_user.id).first()
+        if v_user and v_user.is_verified:
+            raise HTTPException(status_code=400, detail="Email already registered and verified.")
+
+        # Update existing verification record
+        if v_user:
+            v_user.otp_code = otp
+            v_user.user_password = hashed_pwd
+            v_user.verified_at = None
+        target_name = existing_user.user_name
     else:
-        # FIXED: Handling missing institution_id safely
-        new_user = User(
-            name=user.name,
-            email=str(user.email), # FIXED: Convert EmailStr to str
-            password=hashed_pwd,
-            institution_id=user.institution_id, # This now works because it's in UserCreate
-            has_institution=False, # New users start with False
+        # Create new record using the Verification subclass
+        new_v_user = Verification(
+            user_name=user.name,
+            user_email=str(user.email),
+            user_password=hashed_pwd,
+            phone=user.phone,
             otp_code=otp,
-            otp_created_at=datetime.now(timezone.utc),
-            is_verified=False
+            is_verified=False,
+            type="verified_user" # Polymorphic identity
         )
-        db.add(new_user)
+        db.add(new_v_user)
         target_name = user.name
 
     db.commit()
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
-    return {"status": "success", "message": "OTP sent to your email."}
+    return {"status": "success", "message": "Verification code sent to email."}
 
 @router.post("/login", response_model=Token)
-async def login(
-        credentials: LoginSchema,
-        db: Session = Depends(database.get_db) # Ensure this is a FastAPI Depends
-):
-    user = db.query(User).filter(User.email == credentials.email).first()
+async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
+    # Query through base User model
+    user = db.query(User).filter(User.user_email == credentials.email).first()
 
-
-    if not user or not verify_password(credentials.password, user.password):
+    if not user or not verify_password(credentials.password, user.user_password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    if not user.is_verified:
+    # Check verification status (accessible via the linked verification table)
+    v_info = db.query(Verification).filter(Verification.id == user.id).first()
+    if not v_info or not v_info.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
 
-    ban_status = db.query(UserBan).filter(UserBan.user_id == ceredentials.id).first()
-
+    # Check for Bans
+    ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
     if ban_status:
-        # We include the reason so you can show it in your red sign box
         reason = ban_status.ban_reason or "Violation of community standards"
-        raise HTTPException(
-            status_code=403,
-            detail=f"Your account is suspended. Reason: {reason}"
-        )
+        raise HTTPException(status_code=403, detail=f"Account suspended: {reason}")
 
-    # Generate Token
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(data={"sub": user.user_email})
 
-    # Return structure optimized for your JS logic
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "role": user.role or "unassigned",
-        "user": user.name,
-        "institution_id": user.institution_id  # Returns null if not set
+        "role": user.type or "unassigned",
+        "user": user.user_name,
+        "institution_id": getattr(user, 'institution_id', None)
     }
-
-@router.post("/forgot-password")
-async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(database.get_db)):
-    email = payload.get("email")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="Email not found")
-
-    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    user.otp_code, user.otp_created_at = otp, datetime.now(timezone.utc)
-    db.commit()
-
-    background_tasks.add_task(send_email_task, email, user.name, otp, "Password Reset Code")
-    return {"message": "Reset code sent"}
-
-@router.post("/reset-password")
-async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(database.get_db)):
-    user = db.query(User).filter(User.email == payload.get("email")).first()
-    if not user or user.otp_code != payload.get("otp"):
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    user.password, user.otp_code = hash_password(payload.get("new_password")), None
-    db.commit()
-    return {"message": "Password updated"}
 
 @router.post("/verify-action")
 async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)):
@@ -193,34 +167,55 @@ async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)
     otp_received = payload.get("otp")
     action = payload.get("action") # 'signup' or 'reset'
 
-    user = db.query(User).filter(User.email == email).first()
+    # Must query Verification to access otp_code
+    v_user = db.query(Verification).filter(Verification.user_email == email).first()
 
-    if not user:
+    if not v_user:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    if not user.otp_code or user.otp_code != otp_received:
+
+    if not v_user.otp_code or v_user.otp_code != otp_received:
         raise HTTPException(status_code=400, detail="Invalid verification code")
 
-    # We need a token to secure the NEXT step
-    temp_token = create_access_token(data={"sub": user.email})
+    temp_token = create_access_token(data={"sub": v_user.user_email})
 
     if action == "signup":
-        user.is_verified = True
-        user.otp_code = None 
+        v_user.is_verified = True
+        v_user.verified_at = datetime.now(timezone.utc)
+        v_user.otp_code = None
         msg = "Account verified successfully."
-
     elif action == "reset":
-        # We don't change the password here, just confirm the OTP is dead
-        user.otp_code = None 
+        v_user.otp_code = None
         msg = "OTP verified. Proceed to reset password."
-
     else:
         raise HTTPException(status_code=400, detail="Invalid action type")
 
     db.commit()
-    # Return the token so the frontend can use it for the next route
-    return {
-        "status": "success", 
-        "message": msg, 
-        "access_token": temp_token
-    }
+    return {"status": "success", "message": msg, "access_token": temp_token}
+
+@router.post("/forgot-password")
+async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):
+    email = payload.get("email")
+    v_user = db.query(Verification).filter(Verification.user_email == email).first()
+
+    if not v_user:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+    v_user.otp_code = otp
+    db.commit()
+
+    background_tasks.add_task(send_email_task, email, v_user.user_name, otp, "Password Reset Code")
+    return {"message": "Reset code sent"}
+
+@router.post("/reset-password")
+async def reset_password_confirm(payload: dict = Body(...), db: Session = Depends(get_db)):
+    # We query Verification to ensure we can clear the OTP
+    v_user = db.query(Verification).filter(Verification.user_email == payload.get("email")).first()
+
+    if not v_user:
+        raise HTTPException(status_code=400, detail="Invalid request")
+
+    v_user.user_password = hash_password(payload.get("new_password"))
+    v_user.otp_code = None
+    db.commit()
+    return {"message": "Password updated successfully"}

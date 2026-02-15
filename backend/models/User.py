@@ -7,8 +7,8 @@ class User(Base, TimestampMixin):
 
     id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password = Column(String, nullable=False)
+    user_email = Column(String, unique=True, index=True, nullable=False)
+    user_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     phone = Column(String , nullable=False)
     type = Column(String(50))
