@@ -18,7 +18,7 @@ class student(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     is_active = Column(Boolean, default=True)
 
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     institution = relationship("Institution", back_populates="student_records")
 
 class teacher(Base):
@@ -32,7 +32,7 @@ class teacher(Base):
     is_active = Column(Boolean, default=True)
     extra_details = Column(JSON, nullable=True)  # For those flexible fields
 
-    institution_id = Column(Integer, ForeignKey("institutions.id"), index=True)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     institution = relationship("Institution", back_populates="teacher_records")
 
 class Staff(Base):
@@ -47,6 +47,6 @@ class Staff(Base):
     # This is perfect as is
     extra_details = Column(JSON, nullable=True, default={})
 
-    institution_id = Column(Integer, ForeignKey("institutions.id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     institution = relationship("Institution", back_populates="staff_members")

@@ -7,8 +7,8 @@ from backend.models.base import Base, TimestampMixin
 class Institution(Base, TimestampMixin):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
-    internal_id = Column(String, unique=True, index=True, nullable=False,
-                         default=lambda: str(uuid.uuid4().hex[:8].upper()))
+    inst_uuid = Column(String, unique=True, index=True, nullable=False,
+                       default=lambda: str(uuid.uuid4().hex[:8].upper()))
 
     type = Column(String(50))
     name = Column(String, nullable=False)

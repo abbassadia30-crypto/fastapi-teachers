@@ -7,7 +7,7 @@ from backend.models.base import Base
 class Syllabus(Base):
     __tablename__ = "Syllabus"
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     name = Column(String, nullable=False)
     subject = Column(String)
     targets = Column(JSON)
@@ -21,7 +21,7 @@ class Syllabus(Base):
 class DateSheet(Base):
     __tablename__ = "datesheets"
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     title = Column(String, nullable=False)
     target = Column(String, nullable=False)
     exams = Column(JSON, nullable=False)
@@ -34,7 +34,7 @@ class DateSheet(Base):
 class Notice(Base):
     __tablename__ = "institution_notices"
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     title = Column(String, nullable=False)
     message = Column(String, nullable=False)
     language = Column(String, default="en")
@@ -51,7 +51,7 @@ class VoucherMode(str, enum.Enum):
 class FinanceTemplate(Base):
     __tablename__ = "finance_templates"
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     target_group = Column(String)
     billing_month = Column(String)
     mode = Column(String)
@@ -66,7 +66,7 @@ class FinanceTemplate(Base):
 class Transaction(Base):
     __tablename__ = "finance_transactions"
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     template_id = Column(Integer, ForeignKey("finance_templates.id"))
     amount = Column(Float)
     status = Column(String, default="unpaid")
@@ -79,7 +79,7 @@ class Voucher(Base):
     __tablename__ = "vouchers"
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     recipient_type = Column(String)
     name = Column(String, nullable=False)
@@ -101,7 +101,7 @@ class AcademicResult(Base):
     __tablename__ = "academic_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     exam_title = Column(String, nullable=False)
     target_class = Column(String)
@@ -120,7 +120,7 @@ class PaperVault(Base):
     __tablename__ = "paper_vault"
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_ref = Column(String, ForeignKey("institutions.institution_id"))
+    institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     subject = Column(String, nullable=False)
     target_class = Column(String)
     paper_type = Column(String)
@@ -138,7 +138,7 @@ class AttendanceLog(Base):
     __tablename__ = "attendance_logs"
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     section_identifier = Column(String, index=True)
     custom_section_name = Column(String, nullable=True)
     log_date = Column(Date, index=True)
@@ -156,7 +156,7 @@ class IndividualAttendance(Base):
     __tablename__ = "individual_attendance"
 
     id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(String, ForeignKey("institutions.institution_id"))
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     student_id = Column(Integer, ForeignKey("student.id"), index=True)
     log_id = Column(Integer, ForeignKey("attendance_logs.id"))
     status = Column(String)
