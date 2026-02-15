@@ -18,6 +18,7 @@ class User(Base, TimestampMixin):
     # SQLAlchemy treats the object as an Admin automatically.
 
     bio = relationship("UserBio", back_populates="user", uselist=False)
+    profile = relationship("Profile", back_populates="owner", uselist=False)
 
     @property
     def institution_id(self):

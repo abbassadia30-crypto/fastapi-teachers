@@ -20,8 +20,7 @@ class Institution(Base, TimestampMixin):
     inst_ref = Column(String(8), unique=True, index=True, nullable=False)
     join_key = Column(String(10), unique=True, nullable=False)
 
-    # 👑 THE CORE ROLES
-    # Note: 'foreign_keys' is used to resolve the ambiguity from the previous error.
+    # 👑 THE CORE ROLES (Inherited from User)
     owner = relationship("Owner", back_populates="institution", uselist=False,
                          foreign_keys="Owner.institution_id")
 
@@ -34,8 +33,7 @@ class Institution(Base, TimestampMixin):
     students = relationship("Student", back_populates="institution",
                             foreign_keys="Student.institution_id")
 
-    # 📑 RECORDS & LOGS (Dashboard Models)
-    # Ensure 'student' and 'teacher' (lowercase) are correctly mapped in those files
+    # 📑 RECORDS & DOCUMENTS
     student_records = relationship("student", back_populates="institution")
     teacher_records = relationship("teacher", back_populates="institution")
     staff_members = relationship("Staff", back_populates="institution")
@@ -49,8 +47,8 @@ class Institution(Base, TimestampMixin):
     papers = relationship("PaperVault", back_populates="institution")
     attendance_logs = relationship("AttendanceLog", back_populates="institution")
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
-    profile = relationship("Profile", back_populates="owner", uselist=False)
 
+    # ❌ REMOVED: profile relationship. Access profiles via institution.admins[x].profile
 
     __mapper_args__ = {"polymorphic_identity": "institution", "polymorphic_on": type}
 
