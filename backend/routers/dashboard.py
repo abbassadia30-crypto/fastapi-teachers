@@ -90,28 +90,40 @@ async def get_students(
 @router.get("/check-ownership")
 async def check_institution_ownership(
         current_user: User = Depends(get_current_user),
-        db: Session = Depends(database.get_db)
+        db: Session = Depends(get_db)
 ):
-    # Quick exit for users who haven't started setup
-    if not current_user.has_institution or current_user.institution_id is None:
+    # 1. Check if the user has an Owner role record
+    # This is more reliable than a boolean 'has_institution'
+    from backend.models.admin.institution import Owner # Ensure import is correct
+
+    owner_record = db.query(Owner).filter(Owner.user_id == current_user.id).first()
+
+    if not owner_record or not owner_record.institution_id:
         return {
             "has_institution": False,
+            "status": "setup_required",
             "redirect": "/admin/setups/no-institution.html"
         }
 
-    # Verify the institution exists in the DB
+    # 2. Verify the linked institution
     institution = db.query(Institution).filter(
-        Institution.id == current_user.institution_id
+        Institution.id == owner_record.institution_id
     ).first()
 
     if not institution:
-        # Data integrity fallback: if ID exists but record is gone
-        return {"has_institution": False, "redirect": "/admin/setups/no-institution.html"}
+        # Fallback: Record exists but institution was deleted
+        return {
+            "has_institution": False,
+            "status": "integrity_error",
+            "redirect": "/admin/setups/no-institution.html"
+        }
 
+    # 3. Success - User is a verified owner
     return {
         "has_institution": True,
         "institution_name": institution.name,
         "institution_type": institution.type,
+        "role": "owner",
         "redirect": "/admin/dashboard/dashboard.html"
     }
 
