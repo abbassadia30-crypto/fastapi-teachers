@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Body, HTTPException
 from sqlalchemy.orm import Session
 
 from backend import database  # Use relative imports for core files
-from backend.dependencies import get_current_user
+from backend.routers.auth import get_current_user
 from backend.models.admin.institution import  School, Academy, College
 from backend.schemas.User.login import RoleUpdate
 from backend.models.User import User

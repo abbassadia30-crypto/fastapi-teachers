@@ -16,6 +16,59 @@
       --glass: rgba(255, 255, 255, 0.9);
     }
 
+    /* Grid Layout for Cards */
+    .feed-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* Professional Grid */
+      gap: 12px;
+      padding: 15px;
+    }
+
+    .profile-card {
+      background: white;
+      border-radius: 15px;
+      padding: 12px;
+      margin-bottom: 0; /* Managed by grid gap */
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #efefef;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s;
+    }
+
+    .profile-card:active { transform: scale(0.96); } /* Capacitor touch feedback */
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .data-line {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 4px;
+      line-height: 1.3;
+    }
+
+    .data-line strong { color: #333; }
+
+    .view-btn {
+      margin-top: auto;
+      background: #f0f7ff;
+      color: var(--primary);
+      border: none;
+      padding: 6px;
+      border-radius: 8px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
     body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 120px; color: var(--text); overflow-x: hidden; }
 
     /* 📸 WhatsApp Style Status Bar */
@@ -197,6 +250,68 @@
       document.querySelector('.back-dash').style.display = 'block';
     }
   });
+
+  // Sample Data (Replace with your fetch calls later)
+  const sampleData = {
+    user: [
+      { name: "Ahmed Ali", role: "Teacher", subject: "Mathematics", email: "ahmed@inst.com" },
+      { name: "Sara Khan", role: "Student", subject: "Grade 10", email: "sara@inst.com" }
+    ],
+    inst: [
+      { name: "Oxford Academy", type: "School", owner: "Dr. Smith", ref: "82736415" },
+      { name: "City College", type: "College", owner: "Prof. Jamal", ref: "10293847" }
+    ]
+  };
+
+  function switchTab(type) {
+    // UI Update
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById('tab-' + type).classList.add('active');
+
+    renderCards(type);
+  }
+
+  function renderCards(type) {
+    const feed = document.getElementById('feed');
+    feed.innerHTML = ''; // Clear previous
+
+    const data = sampleData[type];
+
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'profile-card';
+
+      if (type === 'user') {
+        card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="data-line"><strong>Role:</strong> ${item.role}</div>
+                <div class="data-line"><strong>Subject:</strong> ${item.subject}</div>
+                <button class="view-btn" onclick="showFullDetails('${item.name}', '${item.email}')">VIEW PROFILE</button>
+            `;
+      } else {
+        card.innerHTML = `
+                <div class="card-title">${item.name}</div>
+                <div class="data-line"><strong>Type:</strong> ${item.type}</div>
+                <div class="data-line"><strong>Owner:</strong> ${item.owner}</div>
+                <div class="data-line"><strong>ID:</strong> ${item.ref}</div>
+                <button class="view-btn" onclick="showFullDetails('${item.name}', 'Ref: ${item.ref}')">VIEW INSTITUTION</button>
+            `;
+      }
+      feed.appendChild(card);
+    });
+  }
+
+  function showFullDetails(title, info) {
+    // Real App Method: Use a "Green Sign Box" to show the extra data
+    showNotify(`${title}: ${info}`, 'success');
+
+    // In your real app, this would open a new page or a Modal
+    // window.location.href = `details.html?id=${title}`;
+  }
+
+  // Initial Load
+  window.onload = () => renderCards('user');
+
 </script>
 </body>
 </html>
