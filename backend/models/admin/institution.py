@@ -17,6 +17,8 @@ class Institution(Base , TimestampMixin):
     is_active = Column(Boolean, default=True)
     description = Column(Text, nullable=True)
 
+    inst_ref = Column(String(8), unique=True, index=True, nullable=False)
+    join_key = Column(String(10), unique=True, nullable=False)
     # Back-populates for Role models (Upper Case)
     owner = relationship("Owner",back_populates="institution",uselist=False,foreign_keys="[Owner.institution_id]")
     admins = relationship("Admin", back_populates="institution")
