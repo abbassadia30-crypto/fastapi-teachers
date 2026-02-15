@@ -138,21 +138,21 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     # Query through base User model
-    user = db.query(User).filter(User.user_email == credentials.email).first()
+    #user = db.query(User).filter(User.user_email == credentials.email).first()
 
-    if not user or not verify_password(credentials.password, user.user_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials.")
+    #if not user or not verify_password(credentials.password, user.user_password):
+     #   raise HTTPException(status_code=401, detail="Invalid credentials.")
 
     # Check verification status (accessible via the linked verification table)
-    v_info = db.query(Verification).filter(Verification.id == user.id).first()
-    if not v_info or not v_info.is_verified:
-        raise HTTPException(status_code=403, detail="Please verify your email first.")
+    #v_info = db.query(Verification).filter(Verification.id == user.id).first()
+    #if not v_info or not v_info.is_verified:
+       # raise HTTPException(status_code=403, detail="Please verify your email first.")
 
     # Check for Bans
-    ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
-    if ban_status:
-        reason = ban_status.ban_reason or "Violation of community standards"
-        raise HTTPException(status_code=403, detail=f"Account suspended: {reason}")
+    #ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
+    #if ban_status:
+     #   reason = ban_status.ban_reason or "Violation of community standards"
+      #  raise HTTPException(status_code=403, detail=f"Account suspended: {reason}")
 
     access_token = create_access_token(data={"sub": user.user_email})
 
