@@ -21,7 +21,6 @@ async def initialize_user_role(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Map strings to the imported Classes
     role_map = {
         "admin": Admin,
         "teacher": Teacher,
@@ -33,50 +32,40 @@ async def initialize_user_role(
     if new_role_type not in role_map:
         raise HTTPException(status_code=400, detail="Invalid role selection")
 
-    # 2. Get the target institution
-    # If they are an owner, they might not have an ID yet (they create it next)
-    # If they are joining an institution, this should have been set during join_key verification
+    # 1. Update the base User type first
+    current_user.type = new_role_type
     target_inst_id = getattr(current_user, "last_active_institution_id", None)
 
-    # 3. Create the Role-Specific Entry
+    # 2. Check if the specific role table already has this ID
     RoleClass = role_map[new_role_type]
-
-    # Check if role record already exists to prevent integrity errors
     existing_role = db.query(RoleClass).filter(RoleClass.id == current_user.id).first()
 
     if not existing_role:
-        # Note: institution_id can be Null for Owners until they finish the 'Create Institution' screen
-        new_role_entry = RoleClass(
-            id=current_user.id,
-            institution_id=target_inst_id
-        )
-        db.add(new_role_entry)
-        db.flush() # Send to DB to ensure we can link the profile
+        # THE FIX: Use an INSERT statement for the child table only
+        # This prevents SQLAlchemy from trying to re-insert into the 'users' table
+        from sqlalchemy import insert
+        stmt = insert(RoleClass).values(id=current_user.id, institution_id=target_inst_id)
+        db.execute(stmt)
 
-        # 4. Create the Role-Specific Profile
-        # This ensures the user never sees a 'None' profile error in the app
+        # 3. Create the Role-Specific Profile
         new_profile = Profile(
             professional_title=f"New {new_role_type.capitalize()}",
             institutional_bio=f"Institutional bio for {current_user.user_name}"
         )
-
-        # Manually set the correct foreign key for the profile
+        # Link to the role-specific column in Profile
         setattr(new_profile, f"{new_role_type}_id", current_user.id)
         db.add(new_profile)
-
-    # 5. Finalize the User Type
-    current_user.type = new_role_type
 
     try:
         db.commit()
     except Exception as e:
         db.rollback()
         print(f"Commit Error: {e}")
-        raise HTTPException(status_code=500, detail="Database sync failed")
+        raise HTTPException(status_code=500, detail="Database integrity sync failed")
 
     return {
         "status": "success",
-        "message": f"Welcome! Profile initialized as {new_role_type}",
+        "message": f"Profile initialized as {new_role_type}",
         "role": new_role_type
     }
 
