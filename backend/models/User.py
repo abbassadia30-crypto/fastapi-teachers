@@ -37,7 +37,7 @@ class User(Base, TimestampMixin):
 class Owner(User):
     __tablename__ = "owner"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=False)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=True)
 
     # Role-Specific Data
     profile = relationship("Profile", back_populates="owner_role", uselist=False,
@@ -49,7 +49,7 @@ class Owner(User):
 class Admin(User):
     __tablename__ = "admin"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=True)
 
     # Role-Specific Data
     profile = relationship("Profile", back_populates="admin_role", uselist=False,
@@ -61,7 +61,7 @@ class Admin(User):
 class Teacher(User):
     __tablename__ = "teacher"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=True)
 
     # Role-Specific Data
     profile = relationship("Profile", back_populates="teacher_role", uselist=False,
@@ -73,7 +73,7 @@ class Teacher(User):
 class Student(User):
     __tablename__ = "student"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=True)
 
     # Role-Specific Data
     profile = relationship("Profile", back_populates="student_role", uselist=False,

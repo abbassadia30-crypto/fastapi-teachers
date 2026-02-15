@@ -21,53 +21,38 @@ async def initialize_user_role(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    role_map = {
-        "admin": Admin,
-        "teacher": Teacher,
-        "student": Student,
-        "owner": Owner
-    }
-
+    role_map = {"admin": Admin, "teacher": Teacher, "student": Student, "owner": Owner}
     new_role_type = payload.role.lower()
-    if new_role_type not in role_map:
-        raise HTTPException(status_code=400, detail="Invalid role selection")
 
-    # 1. Update the base User type first
-    current_user.type = new_role_type
+    # 1. Logic Check: If they are NOT an owner, they NEED an institution
     target_inst_id = getattr(current_user, "last_active_institution_id", None)
 
-    # 2. Check if the specific role table already has this ID
+    if new_role_type != "owner" and target_inst_id is None:
+        # Check if the payload sent an institution_id (from a join link)
+        # payload.institution_id would need to be added to your Pydantic model
+        raise HTTPException(
+            status_code=400,
+            detail="Institution ID required for this role. Please use a join link."
+        )
+
+    # 2. Use the INSERT fix from before
     RoleClass = role_map[new_role_type]
     existing_role = db.query(RoleClass).filter(RoleClass.id == current_user.id).first()
 
     if not existing_role:
-        # THE FIX: Use an INSERT statement for the child table only
-        # This prevents SQLAlchemy from trying to re-insert into the 'users' table
         from sqlalchemy import insert
+        # We pass target_inst_id (which might be None for Owners, and that's okay)
         stmt = insert(RoleClass).values(id=current_user.id, institution_id=target_inst_id)
         db.execute(stmt)
 
-        # 3. Create the Role-Specific Profile
-        new_profile = Profile(
-            professional_title=f"New {new_role_type.capitalize()}",
-            institutional_bio=f"Institutional bio for {current_user.user_name}"
-        )
-        # Link to the role-specific column in Profile
+        # 3. Auto-create profile
+        new_profile = Profile(professional_title=f"New {new_role_type.capitalize()}")
         setattr(new_profile, f"{new_role_type}_id", current_user.id)
         db.add(new_profile)
 
-    try:
-        db.commit()
-    except Exception as e:
-        db.rollback()
-        print(f"Commit Error: {e}")
-        raise HTTPException(status_code=500, detail="Database integrity sync failed")
-
-    return {
-        "status": "success",
-        "message": f"Profile initialized as {new_role_type}",
-        "role": new_role_type
-    }
+    current_user.type = new_role_type
+    db.commit()
+    return {"status": "success", "role": new_role_type}
 
 @router.patch("/update-role")
 async def update_user_role(
