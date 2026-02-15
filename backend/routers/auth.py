@@ -97,36 +97,40 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 
 @router.post("/signup")
 async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # Look for user in the base table
+    # 1. Base query
     existing_user = db.query(User).filter(User.user_email == str(user.email)).first()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
     hashed_pwd = hash_password(user.password)
 
     if existing_user:
-        # Check if they have a verification record
+        # --- ALL THIS MUST BE INSIDE THE 'IF' ---
         v_user = db.query(Verification).filter(Verification.id == existing_user.id).first()
+
         if v_user and v_user.is_verified:
             raise HTTPException(status_code=400, detail="Email already registered and verified.")
 
-        # Update existing verification record
         if v_user:
             v_user.otp_code = otp
             v_user.user_password = hashed_pwd
             v_user.verified_at = None
-        target_name = existing_user.user_name
-    else:
-       new_v_user = Verification(
-    user_name=user.name,
-    user_email=str(user.email),
-    user_password=hashed_pwd,
-    phone=None, # This will now be None without crashing
-    otp_code=otp,
-    is_verified=False,
-    type="verified_user"
-)
-    db.add(new_v_user)
-    target_name = user.name
 
+        target_name = existing_user.user_name
+
+    else:
+        # --- ALL THIS MUST BE INSIDE THE 'ELSE' ---
+        new_v_user = Verification(
+            user_name=user.name,
+            user_email=str(user.email),
+            user_password=hashed_pwd,
+            phone=None,
+            otp_code=otp,
+            is_verified=False,
+            type="verified_user"
+        )
+        db.add(new_v_user)
+        target_name = user.name
+
+        # --- THIS RUNS AFTER EITHER IF OR ELSE IS FINISHED ---
     db.commit()
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "Verification code sent to email."}

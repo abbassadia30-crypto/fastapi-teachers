@@ -191,7 +191,6 @@
             btn.innerText = "Creating Account...";
 
 
-
             try {
                 const response = await fetch(`${API_BASE}/auth/signup`, {
                     method: 'POST',
@@ -203,32 +202,35 @@
                     })
                 });
 
+                // Capture the result ONCE
                 const result = await response.json();
 
-                // Inside handleSignup(event)
                 if (response.ok) {
-                    // Only redirect if the backend confirms mail was sent
                     Notification.show("OTP Sent! Check your email.", "success");
 
+                    // Note: Ensure AppStorage is defined for Capacitor
                     await AppStorage.set('pendingEmail', email);
                     await AppStorage.set('isPasswordReset', 'false');
 
-                    // Add a slightly longer delay to let the user see the success sign
                     setTimeout(() => {
                         window.location.href = "verify.html";
                     }, 2500);
                 } else {
-                    // If the server says OK but result has an error (e.g., SMTP failure)
-                    const result = await response.json();
+                    // FIXED: Use 'result' directly, don't call response.json() again
                     if (result.status === "email_failed") {
-                        Notification.show("Account created, but OTP failed to send. Try resending.", "error");
+                        Notification.show("Account created, but OTP failed to send.", "error");
                     } else {
-                        Notification.show(result.detail || "Signup failed", "error");
+                        // Show specific detail from Pydantic or FastAPI
+                        const errorDetail = result.detail || "Signup failed";
+                        Notification.show(Array.isArray(errorDetail) ? errorDetail[0].msg : errorDetail, "error");
                     }
                     btn.disabled = false;
-                    btn.innerText = originalText;}
-                } catch (error) {
-                Notification.show("Check your internet connection.", "error");
+                    btn.innerText = originalText;
+                }
+            } catch (error) {
+                // This now only triggers if the server is actually down
+                console.error("Fetch Error:", error);
+                Notification.show("Institution server is unreachable.", "error");
                 btn.disabled = false;
                 btn.innerText = originalText;
             }
