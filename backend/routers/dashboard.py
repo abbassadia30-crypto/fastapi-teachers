@@ -94,7 +94,7 @@ async def check_institution_ownership(
 ):
     # 1. Check if the user has an Owner role record
     # This is more reliable than a boolean 'has_institution'
-    from backend.models.admin.institution import Owner # Ensure import is correct
+    from backend.models.User import Owner # Ensure import is correct
 
     owner_record = db.query(Owner).filter(Owner.user_id == current_user.id).first()
 

@@ -175,6 +175,10 @@
             if (response.status === 401) {
                 showError("Session expired. Please re-login.");
                 window.location.href = "../../index.html";
+                await AppStorage.remove('institutionToken');
+                await AppStorage.remove('user_role');
+                await AppStorage.remove('institution_id');
+                await AppStorage.remove('rememberedEmail');
                 return;
             }
 

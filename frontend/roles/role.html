@@ -111,19 +111,12 @@
 
             if (response.ok) {
                 await AppStorage.set('user_role', roleName);
-                showNotify(`Success! Entering ${roleName} setup...`, "success");
+                showNotify(`Account synchronized: ${roleName.toUpperCase()} mode active`, "success");
 
                 setTimeout(() => {
-                    if (roleName === 'owner') {
-                        window.location.href = "../owner/setup/create-institution.html";
-                    } else if (roleName === 'admin' || roleName === 'teacher') {
-                        // If they don't have an institution yet, they must join one
-                        window.location.href = "../shared/join-institution.html";
-                    } else {
-                        window.location.href = `../${roleName}/dashboard/dashboard.html`;
-                    }
+                        window.location.href = `../${roleName}/setups/no-institution.html`;
                 }, 1500);
-            } else {
+            }else {
                 showNotify(result.detail || "Initialization failed", "error");
             }
         } catch (error) {
