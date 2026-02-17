@@ -134,7 +134,7 @@ class Verification(User):
         "polymorphic_identity": "verified_user"
     }
 
-class Profile(Base):
+class Auth_id(Base):
     __tablename__ = "profiles"
 
     id = Column(Integer, primary_key=True, index=True)

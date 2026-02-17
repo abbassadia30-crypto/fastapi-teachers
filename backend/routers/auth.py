@@ -12,7 +12,7 @@ from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token , UserExistenceResponse
 from backend.models.admin.institution import Institution
-from backend.models.User import User , UserBan , Verification , Profile
+from backend.models.User import User , UserBan , Verification , Auth_id
 
 load_dotenv()
 
@@ -252,8 +252,8 @@ async def sync_user_state(
     if role and role != "verified_user":
         # Look for a record where [role]_id matches the current_user.id
         # Example: getattr(Profile, "teacher_id")
-        profile = db.query(Profile).filter(
-            getattr(Profile, f"{role}_id") == current_user.id
+        profile = db.query(Auth_id).filter(
+            getattr(Auth_id, f"{role}_id") == current_user.id
         ).first()
         has_profile = profile is not None
 
