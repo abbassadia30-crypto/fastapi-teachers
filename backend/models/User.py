@@ -135,7 +135,7 @@ class Verification(User):
     }
 
 class Auth_id(Base):
-    __tablename__ = "profiles"
+    __tablename__ = "Auth_ids"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
