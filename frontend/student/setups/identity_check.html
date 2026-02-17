@@ -2,9 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Student Identity</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #e50914; --bg: #141414; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+
+        .form-card {
+            width: 85%; max-width: 380px; background: #1f1f1f; padding: 30px; border-radius: 25px;
+            animation: blurIn 0.8s ease; /* Student Animation */
+        }
+        @keyframes blurIn { from { filter: blur(10px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+
+        input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #2a2a2a; color: white; box-sizing: border-box; }
+        input:focus { border-color: var(--accent); outline: none; }
+        .btn { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+    </style>
 </head>
 <body>
-
+<div class="form-card">
+    <div style="font-size: 40px; margin-bottom: 10px;">🎓</div>
+    <h1>Student Identity</h1>
+    <p style="color: #888; font-size: 13px;">Create your profile to join your <b>institution</b>.</p>
+    <form onsubmit="handleStudent(event)">
+        <input type="text" id="name" placeholder="Full Name" required>
+        <input type="tel" id="phone" placeholder="Parent Contact / Phone" required>
+        <button type="submit" class="btn" id="btn">Finalize Student Profile</button>
+    </form>
+</div>
+<script src="../../js/storage.js"></script>
+<script>
+    async function handleStudent(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn');
+        try {
+            const token = await AppStorage.get('institutionToken');
+            const res = await fetch('https://fastapi-teachers.onrender.com/profile/create', {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ full_name: document.getElementById('name').value, phone_number: document.getElementById('phone').value, bio: "Verified Student" })
+            });
+            if(res.ok) window.location.href = "verify_sync.html";
+        } catch(err) { console.log(err); }
+    }
+</script>
 </body>
 </html>

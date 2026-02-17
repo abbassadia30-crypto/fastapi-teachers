@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 from .. import database
 from backend.database import get_db
-from backend.schemas.User.login import UserCreate , LoginSchema , Token
+from backend.schemas.User.login import UserCreate , LoginSchema , Token , UserExistenceResponse
 from backend.models.admin.institution import Institution
 from backend.models.User import User , UserBan , Verification
 
@@ -239,3 +239,24 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
     v_user.otp_code = None
     db.commit()
     return {"message": "Password updated successfully"}
+
+@router.get("/sync-state")
+async def sync_user_state(
+        db: Session = Depends(database.get_db),
+        current_user: User = Depends(get_current_user)
+):
+    role = current_user.type
+    # A user has an identity if a Profile record exists linked to their role ID
+    has_profile = False
+    if role and role != "verified_user":
+        # Dynamic check for owner_id, admin_id, teacher_id, etc.
+        profile = db.query(Profile).filter(
+            getattr(Profile, f"{role}_id") == current_user.id
+        ).first()
+        has_profile = profile is not None
+
+    return {
+        "user_role": role,
+        "institution_id": current_user.last_active_institution_id,
+        "has_identity": has_profile
+    }

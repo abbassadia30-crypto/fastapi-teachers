@@ -29,3 +29,13 @@ class Token(BaseModel):
     institution_id: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+# backend/schemas/user.py
+class UserExistenceResponse(BaseModel):
+    exists: bool
+    target: str
+    role: Optional[str] = None  # Add this!
+    suggestion: Optional[str] = "Try logging in if you already have an account."
+
+    class Config:
+        from_attributes = True

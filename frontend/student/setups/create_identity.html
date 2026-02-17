@@ -2,9 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Founder Identity - Starlight</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: #141414; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        .content { width: 85%; max-width: 400px; }
+        .icon-circle { width: 80px; height: 80px; background: #e50914; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(229, 9, 20, 0.4); }
+        h1 { font-size: 24px; margin-bottom: 10px; }
+        p { color: #b3b3b3; font-size: 14px; margin-bottom: 40px; line-height: 1.6; }
+        .btn { width: 100%; padding: 16px; background: white; color: black; border: none; border-radius: 12px; font-weight: 600; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .btn:active { transform: scale(0.95); }
+    </style>
 </head>
 <body>
 
+<div class="content">
+    <div class="icon-circle" style="background: #e50914;">🎓</div>
+    <h1>Student Identity</h1>
+    <p>Setting up your profile connects you to your classes, grades, and <b>institution</b> resources.</p>
+    <button class="btn" onclick="window.location.href='identity_form.html'">Get Started</button>
+</div>
+
+<script src="../../js/storage.js"></script>
+<script src="../../js/check.js"></script>
 </body>
 </html>

@@ -172,16 +172,6 @@
                 }
             });
 
-            if (response.status === 401) {
-                showError("Session expired. Please re-login.");
-                window.location.href = "../../index.html";
-                await AppStorage.remove('institutionToken');
-                await AppStorage.remove('user_role');
-                await AppStorage.remove('institution_id');
-                await AppStorage.remove('rememberedEmail');
-                return;
-            }
-
             const data = await response.json();
 
             if (data.has_institution === true) {
@@ -198,6 +188,60 @@
             document.body.style.opacity = '1';
         }
     };
+
+    window.onload = async () => {
+        // 1. Check if the token exists in Capacitor storage
+        const userEmail = await AppStorage.get('user_email'); // Assuming you store this at login
+
+        if (!userEmail) {
+            window.location.href = "../../index.html";
+            return;
+        }
+
+        // 2. Run the existence check immediately on load
+        if (userEmail) {
+            const isStillValid = await verifyUser(userEmail);
+
+            if (!isStillValid) {
+                // If the user was deleted or email changed, force logout
+                showNotify("Session invalid. Please re-authenticate.", "error");
+                await AppStorage.clear();
+                setTimeout(() => {
+                    window.location.href = "../../index.html";
+                }, 2000);
+            }
+        }
+    };
+
+    async function verifyUser(identifier) {
+        const loader = document.getElementById('loading');
+        if (loader) loader.style.display = 'flex';
+
+        try {
+            // We use the email/identifier to check the DB directly
+            const response = await fetch(`${API_BASE}/auth/check-existence?email=${identifier}`);
+
+            if (!response.ok) throw new Error("Network response was not ok");
+
+            const data = await response.json();
+
+            if (data.exists) {
+                console.log("User verified: Active in Database");
+                return true;
+            } else {
+                showNotify("No account found with this email.", "error");
+                await AppStorage.remove("user_email")
+                return false;
+            }
+        } catch (error) {
+            showNotify("Server unreachable. Checking offline mode...", "error");
+            console.error("Verification Error:", error);
+            // In a perfect app, you might return true here if you support offline access
+            return false;
+        } finally {
+            if (loader) loader.style.display = 'none';
+        }
+    }
 </script>
 </body>
 </html>

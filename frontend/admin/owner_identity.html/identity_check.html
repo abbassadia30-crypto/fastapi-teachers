@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Verifying Identity | InstitutionManager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* CSS in Head as per instructions */
+        :root {
+            --primary: #43a047;
+            --secondary: #263238;
+            --bg: #ffffff;
+            --danger: #e53935;
+            --warning: #ffa000;
+            --text-dim: #666666;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg);
+            display: flex; align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
+        }
+
+        .success-card { text-align: center; padding: 30px; max-width: 400px; width: 90%; }
+
+        .checkmark-circle {
+            width: 90px; height: 90px; background: #f1f8e9;
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 20px;
+            font-size: 45px; transition: 0.5s;
+            animation: scaleUp 0.5s ease-out;
+        }
+
+        @keyframes scaleUp {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        h1 { color: var(--secondary); font-size: 22px; margin: 0 0 10px; font-weight: 600; }
+        p { color: var(--text-dim); font-size: 14px; margin-bottom: 25px; line-height: 1.5; }
+
+        .loading-dots:after {
+            content: '.';
+            animation: dots 1.5s steps(5, end) infinite;
+        }
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+        }
+
+        #final-sign {
+            position: fixed; bottom: 40px; left: 50%;
+            transform: translateX(-50%); background: var(--secondary);
+            color: white; padding: 14px 28px; border-radius: 50px;
+            font-weight: 600; font-size: 13px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: 0.4s; display: flex; align-items: center; gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="success-card">
+    <div class="checkmark-circle" id="status-icon">&#9881;</div>
+    <h1 id="status-title">Verifying Identity</h1>
+    <p id="status-desc">Please wait while we sync your <b>identity</b> credentials with the database.</p>
+
+    <div id="loader-text" style="color: #999; font-size: 13px;">
+        Synchronizing profile<span class="loading-dots"></span>
+    </div>
+</div>
+
+<div id="final-sign">Security Check In Progress</div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+    const sign = document.getElementById('final-sign');
+    const statusIcon = document.getElementById('status-icon');
+    const statusTitle = document.getElementById('status-title');
+
+    async function gatekeeper() {
+        const token = await AppStorage.get('institutionToken');
+
+        if (!token) {
+            sign.style.background = "var(--danger)";
+            sign.innerText = "Session Missing";
+            setTimeout(() => window.location.href = "../../index.html", 2000);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/institution/sync-state`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Store updated state
+                await AppStorage.set('institution_id', data.institution_id);
+                await AppStorage.set('user_role', data.user_role);
+
+                if (data.institution_id) {
+                    // Success: Identity found and already linked to institution
+                    statusIcon.innerHTML = "&#10003;"; // Checkmark
+                    statusIcon.style.color = "var(--primary)";
+                    statusTitle.innerText = "Identity Verified";
+                    sign.style.background = "var(--primary)";
+                    sign.innerText = "Access Granted";
+
+                    setTimeout(() => {
+                        window.location.href = "../dashboard/dashboard.html";
+                    }, 2000);
+                } else {
+                    // Identity exists, but needs to setup/join an institution
+                    statusIcon.innerText = "!";
+                    statusIcon.style.color = "var(--warning)";
+                    statusTitle.innerText = "Profile Ready";
+                    sign.style.background = "var(--warning)";
+                    sign.innerText = "Institutional Setup Required";
+
+                    setTimeout(() => {
+                        window.location.href = "../setups/no-institution.html";
+                    }, 2500);
+                }
+            }
+        } catch (error) {
+            sign.style.background = "var(--danger)";
+            sign.innerText = "Connection Error";
+            setTimeout(() => window.location.reload(), 5000);
+        }
+    }
+
+    window.onload = gatekeeper;
+</script>
+</body>
+</html>

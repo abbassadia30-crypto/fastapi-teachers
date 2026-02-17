@@ -2,9 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Syncing Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; text-align: center; }
+        .gear { font-size: 50px; animation: ping 1.5s infinite; }
+        @keyframes ping { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+        #sign { position: fixed; bottom: 30px; background: #263238; color: white; padding: 12px 25px; border-radius: 50px; font-weight: 600; font-size: 14px; transition: 0.4s; }
+    </style>
 </head>
 <body>
+<div class="gear">⚙️</div>
+<h1 style="color: #263238; font-size: 22px;">Verifying Identity</h1>
+<p style="color: #666; font-size: 14px;">Please wait while we sync your <b>identity</b>.</p>
+<div id="sign">🏛️ Security Check...</div>
 
+<script src="../../js/storage.js"></script>
+<script>
+    async function gatekeeper() {
+        const token = await AppStorage.get('institutionToken');
+        try {
+            const res = await fetch(`https://fastapi-teachers.onrender.com/institution/sync-state`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                await AppStorage.set('institution_id', data.institution_id);
+                const sign = document.getElementById('sign');
+                if (data.institution_id) {
+                    sign.style.background = "#43a047"; sign.innerText = "✓ Identity Verified";
+                    setTimeout(() => window.location.href = "../dashboard/dashboard.html", 2000);
+                } else {
+                    sign.style.background = "#ffa000"; sign.innerText = "⚠️ Institutional Setup Required";
+                    setTimeout(() => window.location.href = "../setups/no-institution.html", 2000);
+                }
+            }
+        } catch (e) { document.getElementById('sign').innerText = "🌐 Connection Error"; }
+    }
+    window.onload = gatekeeper;
+</script>
 </body>
 </html>
