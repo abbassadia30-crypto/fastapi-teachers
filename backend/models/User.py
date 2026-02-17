@@ -133,3 +133,15 @@ class Verification(User):
     __mapper_args__ = {
         "polymorphic_identity": "verified_user"
     }
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+
+    # These columns allow your getattr(Profile, f"{role}_id") logic to work
+    owner_id = Column(Integer, nullable=True)
+    admin_id = Column(Integer, nullable=True)
+    teacher_id = Column(Integer, nullable=True)
+    student_id = Column(Integer, nullable=True)

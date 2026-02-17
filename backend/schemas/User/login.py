@@ -30,12 +30,10 @@ class Token(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-# backend/schemas/user.py
-class UserExistenceResponse(BaseModel):
-    exists: bool
-    target: str
-    role: Optional[str] = None  # Add this!
-    suggestion: Optional[str] = "Try logging in if you already have an account."
+class SyncStateResponse(BaseModel):
+    user_role: Optional[str]
+    institution_id: Optional[int]
+    has_identity: bool
 
     class Config:
         from_attributes = True

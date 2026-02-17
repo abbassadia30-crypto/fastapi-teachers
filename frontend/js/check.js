@@ -17,7 +17,7 @@ async function checkUserExistence() {
 
         // 2. REMOTE SYNC (The Truth from DB)
         // We do this to handle Reinstalls, Deletions, or Role Changes
-        const response = await fetch(`${API_BASE}/institution/sync-state`, {
+        const response = await fetch(`${API_BASE}/auth/sync-state`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 

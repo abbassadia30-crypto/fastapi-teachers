@@ -12,7 +12,7 @@ from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token , UserExistenceResponse
 from backend.models.admin.institution import Institution
-from backend.models.User import User , UserBan , Verification
+from backend.models.User import User , UserBan , Verification , Profile
 
 load_dotenv()
 
@@ -240,21 +240,24 @@ async def reset_password_confirm(payload: dict = Body(...), db: Session = Depend
     db.commit()
     return {"message": "Password updated successfully"}
 
-@router.get("/sync-state")
+@router.get("/sync-state", response_model=SyncStateResponse)
 async def sync_user_state(
         db: Session = Depends(database.get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user) # Logic: Get user from token
 ):
-    role = current_user.type
-    # A user has an identity if a Profile record exists linked to their role ID
+    role = current_user.type # e.g., 'owner', 'admin', 'teacher', 'student'
+
+    # 1. Check for the Identity Anchor
     has_profile = False
     if role and role != "verified_user":
-        # Dynamic check for owner_id, admin_id, teacher_id, etc.
+        # Look for a record where [role]_id matches the current_user.id
+        # Example: getattr(Profile, "teacher_id")
         profile = db.query(Profile).filter(
             getattr(Profile, f"{role}_id") == current_user.id
         ).first()
         has_profile = profile is not None
 
+    # 2. Return data exactly as checking.js expects
     return {
         "user_role": role,
         "institution_id": current_user.last_active_institution_id,
