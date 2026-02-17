@@ -5,7 +5,17 @@
     <title>Founder Identity - Starlight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <script src="../../js/storage.js"></script>
+    <script src="../../js/checking.js"></script>
     <style>
+        body {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        body.state-verified {
+            opacity: 1;
+        }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #141414; color: white; display: flex; align-items: center; justify-content: center; height: 100vh; text-align: center; }
         .content { width: 85%; max-width: 400px; }
         .icon-circle { width: 80px; height: 80px; background: #e50914; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px; box-shadow: 0 0 20px rgba(229, 9, 20, 0.4); }
@@ -23,8 +33,5 @@
     <p>Setting up your profile connects you to your classes, grades, and <b>institution</b> resources.</p>
     <button class="btn" onclick="window.location.href='identity_form.html'">Get Started</button>
 </div>
-
-<script src="../../js/storage.js"></script>
-<script src="../../js/check.js"></script>
 </body>
 </html>

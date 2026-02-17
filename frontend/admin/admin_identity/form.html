@@ -2,48 +2,52 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Student Identity</title>
+    <title>Admin Identity</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --accent: #e50914; --bg: #141414; }
+        :root { --accent: #e87d0d; --bg: #141414; }
         body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
 
         .form-card {
             width: 85%; max-width: 380px; background: #1f1f1f; padding: 30px; border-radius: 25px;
-            animation: blurIn 0.8s ease; /* Student Animation */
+            animation: slideUp 0.6s ease-out; /* Admin Animation */
         }
-        @keyframes blurIn { from { filter: blur(10px); opacity: 0; } to { filter: blur(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
         input { width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; border: 1px solid #333; background: #2a2a2a; color: white; box-sizing: border-box; }
         input:focus { border-color: var(--accent); outline: none; }
         .btn { width: 100%; padding: 16px; background: var(--accent); color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        #notify { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); background: #e53935; padding: 12px 20px; border-radius: 50px; transition: 0.5s; }
+        .show { top: 20px !important; }
     </style>
 </head>
 <body>
+<div id="notify"></div>
 <div class="form-card">
-    <div style="font-size: 40px; margin-bottom: 10px;">🎓</div>
-    <h1>Student Identity</h1>
-    <p style="color: #888; font-size: 13px;">Create your profile to join your <b>institution</b>.</p>
-    <form onsubmit="handleStudent(event)">
+    <div style="font-size: 40px; margin-bottom: 10px;">⚙️</div>
+    <h1>Staff Profile</h1>
+    <p style="color: #888; font-size: 13px;">Enter your details to manage the <b>institution</b>.</p>
+    <form onsubmit="handleAdmin(event)">
         <input type="text" id="name" placeholder="Full Name" required>
-        <input type="tel" id="phone" placeholder="Parent Contact / Phone" required>
-        <button type="submit" class="btn" id="btn">Finalize Student Profile</button>
+        <input type="tel" id="phone" placeholder="Contact Number" required>
+        <button type="submit" class="btn" id="btn">Finalize Staff Profile</button>
     </form>
 </div>
 <script src="../../js/storage.js"></script>
 <script>
-    async function handleStudent(e) {
+    async function handleAdmin(e) {
         e.preventDefault();
         const btn = document.getElementById('btn');
+        btn.innerText = "Syncing...";
         try {
             const token = await AppStorage.get('institutionToken');
             const res = await fetch('https://fastapi-teachers.onrender.com/profile/create', {
                 method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ full_name: document.getElementById('name').value, phone_number: document.getElementById('phone').value, bio: "Verified Student" })
+                body: JSON.stringify({ full_name: document.getElementById('name').value, phone_number: document.getElementById('phone').value, bio: "Institution Administrator" })
             });
-            if(res.ok) window.location.href = "verify_sync.html";
-        } catch(err) { console.log(err); }
+            if(res.ok) window.location.href = "../owner_identity/identity_check.html";
+        } catch(err) { btn.innerText = "Error - Try Again"; }
     }
 </script>
 </body>
