@@ -70,6 +70,20 @@ async function checkUserExistence() {
                 document.body.classList.add('state-verified');
             }
         }
+        else {
+            // Logic: The token is dead or user doesn't exist in DB
+            console.warn("Unauthorized: Clearing stale credentials.");
+            await AppStorage.remove('user_email');
+            await AppStorage.remove('institutionToken');
+
+            // If we are already on index.html, reveal it so they can log in.
+            // If not, send them there.
+            if (window.location.pathname.endsWith('index.html')) {
+                document.body.classList.add('state-verified');
+            } else {
+                window.location.href = "../index.html";
+            }
+        }
     } catch (e) {
         console.warn("Reality Check: Server Wake-up or Offline. Trusting Local Storage.");
         document.body.classList.add('state-verified');
