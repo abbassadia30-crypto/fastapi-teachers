@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* CSS in Head as requested */
         :root {
             --primary: #e50914;
             --bg: #141414;
@@ -20,47 +19,53 @@
             margin: 0; background: var(--bg);
             display: flex; align-items: center; justify-content: center;
             min-height: 100vh; color: var(--text-main);
+            padding: 20px 0; /* Space for scrolling on small screens */
         }
 
         .form-card {
-            width: 90%; max-width: 400px;
+            width: 90%; max-width: 420px;
             background: var(--card-bg);
-            padding: 40px 30px; border-radius: 30px;
+            padding: 30px; border-radius: 30px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
         }
 
-        h1 { font-size: 24px; margin-bottom: 10px; font-weight: 600; }
-        p { color: var(--text-dim); font-size: 14px; margin-bottom: 30px; }
+        h1 { font-size: 22px; margin: 10px 0 5px 0; font-weight: 600; }
+        p { color: var(--text-dim); font-size: 13px; margin-bottom: 25px; }
 
-        .input-group { text-align: left; margin-bottom: 20px; }
-        label { display: block; font-size: 12px; color: var(--text-dim); margin-bottom: 8px; margin-left: 5px; }
+        .input-group { text-align: left; margin-bottom: 15px; }
+        label { display: block; font-size: 11px; color: var(--text-dim); margin-bottom: 5px; margin-left: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
 
-        input, textarea {
-            width: 100%; padding: 15px; border-radius: 12px; border: 1px solid #333;
+        input, textarea, select {
+            width: 100%; padding: 14px; border-radius: 12px; border: 1px solid #333;
             background: #2a2a2a; color: white; box-sizing: border-box;
             font-family: 'Poppins', sans-serif; outline: none; transition: 0.3s;
+            font-size: 14px;
         }
 
-        input:focus, textarea:focus { border-color: var(--primary); background: #333; }
+        input:focus, textarea:focus, select:focus { border-color: var(--primary); background: #333; }
 
         .btn {
             width: 100%; padding: 16px; background: var(--primary);
             color: white; border: none; border-radius: 12px;
             font-weight: 600; cursor: pointer; transition: 0.3s;
-            margin-top: 10px;
+            margin-top: 20px; font-size: 16px;
         }
 
         .btn:active { transform: scale(0.98); }
         .btn:disabled { background: #555; cursor: not-allowed; }
 
-        /* Sign Box for errors */
         #notify-sign {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             background: #e53935; color: white; padding: 12px 25px;
             border-radius: 50px; font-weight: 600; transition: 0.5s; z-index: 3000;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .show-notify { top: 20px !important; }
+
+        /* Grid for small inputs */
+        .row { display: flex; gap: 10px; }
+        .row .input-group { flex: 1; }
     </style>
 </head>
 <body>
@@ -68,32 +73,58 @@
 <div id="notify-sign">⚠️ Error Message</div>
 
 <div class="form-card">
-    <div style="font-size: 40px; margin-bottom: 10px;">👤</div>
-    <h1>Personal Profile</h1>
-    <p>Set up your identity as the <b>Institution</b> Owner.</p>
+    <div style="font-size: 40px;">👑</div>
+    <h1>Founder Identity</h1>
+    <p>Complete your <b>institution</b> owner profile.</p>
 
     <form id="identityForm" onsubmit="handleIdentitySubmit(event)">
         <div class="input-group">
-            <label>Full Name</label>
-            <input type="text" id="fullName" placeholder="e.g. Dr. John Doe" required>
+            <label>Legal Full Name</label>
+            <input type="text" id="fullName" placeholder="Johnathan Doe" required>
         </div>
 
         <div class="input-group">
-            <label>Phone Number</label>
+            <label>Contact Number</label>
             <input type="tel" id="phoneNumber" placeholder="+1 234 567 890" required>
         </div>
 
+        <div class="row">
+            <div class="input-group">
+                <label>Gender</label>
+                <select id="gender" required>
+                    <option value="" disabled selected>Select</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label>Date of Birth</label>
+                <input type="date" id="dob" required>
+            </div>
+        </div>
+
         <div class="input-group">
-            <label>Professional Title</label>
-            <input type="text" id="title" value="Institution Founder" readonly>
+            <label>National ID / CNIC</label>
+            <input type="text" id="nationalId" placeholder="ID Number for verification" required>
+        </div>
+
+        <div class="input-group">
+            <label>Residential Address</label>
+            <textarea id="address" rows="2" placeholder="Street, City, Country" required></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>Authorized Title</label>
+            <input type="text" id="title" value="Institution Founder & Owner" readonly>
         </div>
 
         <button type="submit" class="btn" id="submitBtn">Finalize Identity</button>
     </form>
 </div>
 
-<script src="../../js/storage.js"></script>
-<script src="../../js/check.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../js/check.js"></script>
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
@@ -102,22 +133,26 @@
         const sign = document.getElementById('notify-sign');
         sign.innerText = msg;
         sign.classList.add('show-notify');
-
-        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-            Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
-        }
-
         setTimeout(() => sign.classList.remove('show-notify'), 3000);
     }
 
     async function handleIdentitySubmit(event) {
         event.preventDefault();
         const btn = document.getElementById('submitBtn');
-        const fullName = document.getElementById('fullName').value.trim();
-        const phone = document.getElementById('phoneNumber').value.trim();
+
+        // Collect Data
+        const payload = {
+            full_name: document.getElementById('fullName').value.trim(),
+            phone_number: document.getElementById('phoneNumber').value.trim(),
+            gender: document.getElementById('gender').value,
+            dob: document.getElementById('dob').value,
+            national_id: document.getElementById('nationalId').value.trim(),
+            address: document.getElementById('address').value.trim(),
+            bio: "Authorized Institution Owner"
+        };
 
         btn.disabled = true;
-        btn.innerText = "Saving Profile...";
+        btn.innerText = "Syncing with Server...";
 
         try {
             const token = await AppStorage.get('institutionToken');
@@ -128,27 +163,23 @@
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    full_name: fullName,
-                    phone_number: phone,
-                    bio: "Institution Owner & Founder"
-                })
+                body: JSON.stringify(payload)
             });
 
             if (response.ok) {
-                // ✅ Update local check state
+                // Perfect sync: Update local storage for the guard
                 await AppStorage.set('owner_identity', 'verified');
 
-                // Proceed to Part 3: The Verifying Workspace Page (The Guard)
+                // Redirection to the next step (Sync/Verify page)
                 window.location.href = "verify_sync.html";
             } else {
                 const data = await response.json();
-                showNotify(data.detail || "Failed to save profile");
+                showNotify(data.detail || "Database rejected profile");
                 btn.disabled = false;
                 btn.innerText = "Finalize Identity";
             }
         } catch (error) {
-            showNotify("Connection error to Render");
+            showNotify("Connection error: Render is unreachable");
             btn.disabled = false;
             btn.innerText = "Finalize Identity";
         }

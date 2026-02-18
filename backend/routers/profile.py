@@ -100,3 +100,50 @@ def get_all_profiles(db: Session = Depends(get_db)):
 
     # Do NOT return a comma; return only the profiles list
     return profiles
+
+@router.post("/create", response_model=schemas.AuthIdResponse)
+async def create_identity(
+        payload: schemas.AuthIdCreate,
+        db: Session = Depends(database.get_db),
+        current_user: models.User = Depends(get_current_user)
+):
+    role_type = current_user.type  # e.g., 'owner', 'admin'
+
+    # 1. Verification: Check if this user already has an Auth_id for their role
+    # We dynamically filter based on the user's current role column
+    role_col = getattr(models.Auth_id, f"{role_type}_id")
+    existing = db.query(models.Auth_id).filter(role_col == current_user.id).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Identity already exists for this account."
+        )
+
+    # 2. Create the new Identity record
+    new_identity = models.Auth_id(
+        full_name=payload.full_name,
+        phone_number=payload.phone_number,
+        gender=payload.gender,
+        dob=payload.dob,
+        national_id=payload.national_id,
+        address=payload.address,
+        bio=payload.bio
+    )
+
+    # 3. Dynamic Assignment: Link the identity to the specific role table
+    setattr(new_identity, f"{role_type}_id", current_user.id)
+
+    try:
+        db.add(new_identity)
+        db.commit()
+        db.refresh(new_identity)
+        return new_identity
+    except Exception as e:
+        db.rollback()
+        # Log the actual error for debugging
+        print(f"Database Error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Could not save identity. Check if ID already exists."
+        )

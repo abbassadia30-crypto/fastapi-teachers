@@ -138,10 +138,16 @@ class Auth_id(Base):
     __tablename__ = "Auth_ids"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    full_name = Column(String(100), nullable=False)
+    phone_number = Column(String(20), nullable=False)
+    gender = Column(String(20), nullable=False)
+    dob = Column(Date, nullable=False)
+    national_id = Column(String(50), nullable=False)
+    address = Column(Text, nullable=False)
+    bio = Column(Text, nullable=True)
 
-    # These columns allow your getattr(Profile, f"{role}_id") logic to work
-    owner_id = Column(Integer, nullable=True)
-    admin_id = Column(Integer, nullable=True)
-    teacher_id = Column(Integer, nullable=True)
-    student_id = Column(Integer, nullable=True)
+# Logic: Link to specific role tables
+    owner_id = Column(Integer, ForeignKey("owners.id"), nullable=True, unique=True)
+    admin_id = Column(Integer, ForeignKey("admins.id"), nullable=True, unique=True)
+    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=True, unique=True)
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, unique=True)

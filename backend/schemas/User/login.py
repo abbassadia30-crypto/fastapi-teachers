@@ -37,3 +37,20 @@ class SyncStateResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class AuthIdCreate(BaseModel):
+    full_name: str
+    phone_number: str
+    gender: str
+    dob: date
+    national_id: str
+    address: str
+    bio: Optional[str] = None
+
+class AuthIdResponse(BaseModel):
+    id: int
+    full_name: str
+    message: str = "Identity verified and synced"
+
+    class Config:
+        from_attributes = True
