@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from typing import Optional
+from datetime import date
 
 class UserCreate(BaseModel):
     name: str = Field(..., min_length=2)
