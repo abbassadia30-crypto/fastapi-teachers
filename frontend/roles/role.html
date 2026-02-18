@@ -5,10 +5,8 @@
     <title>Who is using? - Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <script src="../../js/storage.js"></script>
-    <!-- IMPORTANT: We are NOT loading checking.js here anymore -->
-    <!-- <script src="../../js/checking.js"></script> -->
-
+    <script src="../js/storage.js"></script>
+    <script src="../capacitor.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -21,80 +19,46 @@
             height: 100vh;
             color: white;
             overflow: hidden;
-            opacity: 1;                    /* Always visible – no guard */
+            opacity: 0; /* Hidden initially for session check */
+            transition: opacity 0.4s;
         }
-        h1 {
-            font-weight: 400;
-            font-size: 26px;
-            margin-bottom: 40px;
-        }
-        .profile-container {
-            display: flex;
-            gap: 20px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-        .profile-card {
-            text-align: center;
-            cursor: pointer;
-            transition: 0.3s;
-            width: 100px;
-        }
-        .profile-card:active {
-            transform: scale(0.9);
-            opacity: 0.7;
-        }
+        body.ready { opacity: 1; }
+
+        h1 { font-weight: 400; font-size: 26px; margin-bottom: 40px; }
+
+        .profile-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+
+        .profile-card { text-align: center; cursor: pointer; transition: 0.3s; width: 100px; }
+        .profile-card:active { transform: scale(0.9); opacity: 0.7; }
+
         .icon-box {
-            width: 90px;
-            height: 90px;
-            border-radius: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 45px;
-            margin-bottom: 10px;
-            transition: 0.3s;
+            width: 90px; height: 90px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 45px; margin-bottom: 10px; transition: 0.3s;
         }
         .student { background: #e50914; }
         .teacher  { background: #2b5de4; }
         .admin    { background: #e87d0d; }
-        .name {
-            color: #b3b3b3;
-            font-size: 14px;
-            font-weight: 600;
-        }
+
+        .name { color: #b3b3b3; font-size: 14px; font-weight: 600; }
+
         #notification-bar {
-            position: fixed;
-            top: -100px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 400px;
-            padding: 15px;
-            border-radius: 12px;
-            color: white;
-            text-align: center;
-            transition: 0.5s;
-            z-index: 3000;
-            font-weight: 600;
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
+            color: white; text-align: center; transition: 0.5s; z-index: 3000; font-weight: 600;
         }
         .show-notify { top: 20px !important; }
         .bg-green { background: #43a047; }
         .bg-red   { background: #e53935; }
+
         .loading-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,0.95);
+            z-index: 2000; justify-content: center; align-items: center; flex-direction: column;
         }
     </style>
 </head>
-<body>
+<body id="mainBody">
 
 <div id="notification-bar"></div>
 
@@ -113,7 +77,7 @@
         <div class="icon-box teacher">👨‍🏫</div>
         <div class="name">Teacher</div>
     </div>
-    <div class="profile-card" onclick="setRole('admin')">
+    <div class="profile-card" onclick="setRole('admin/owner')">
         <div class="icon-box admin">⚙️</div>
         <div class="name">Admin/Owner</div>
     </div>
@@ -121,6 +85,43 @@
 
 <script>
     const API_URL = "https://fastapi-teachers.onrender.com";
+
+    async function checkExistingSession() {
+        if (typeof AppStorage === 'undefined' || !AppStorage.get) {
+            setTimeout(checkExistingSession, 30);
+            return;
+        }
+
+        try {
+            const token = await AppStorage.get('user_email');
+            const inst_token = await AppStorage.get('institutionToken');
+            const role = await AppStorage.get('user_role');
+            const Identity = await AppStorage.get(`${role}_identity`);
+
+            // If everything is present, skip this page
+            if (token && inst_token && role && Identity) {
+                window.location.replace(`../${role}/dashboard/dashboard.html`);
+                return;
+            }
+            else if (token && role && !Identity) {
+                if (role === 'admins') path = "management.html"
+                else if (role === 'teacher' || role === 'student') path = `../${role}/setups/create_identity.html`
+                window.location.replace(path);
+                return;
+            }
+            else if (!token || !inst_token) {
+                window.location.replace("../index.html");
+            }
+            else {
+                // Stay here and let them pick a role
+                document.body.classList.add('ready');
+            }
+        } catch (e) {
+            document.body.classList.add('ready');
+        }
+    }
+
+    checkExistingSession();
 
     const Notification = {
         el: document.getElementById('notification-bar'),
@@ -137,7 +138,7 @@
 
         try {
             const token = await AppStorage.get('institutionToken');
-            if (!token) throw new Error("No token");
+            if (!token) throw new Error("Session expired. Please login again.");
 
             const response = await fetch(`${API_URL}/institution/initialize-role`, {
                 method: 'POST',
@@ -154,24 +155,22 @@
                 throw new Error(result.detail || "Role initialization failed");
             }
 
-            // Success path
+            // Save the role locally
             await AppStorage.set('user_role', roleName);
-            Notification.show(`Initialized as ${roleName.charAt(0).toUpperCase() + roleName.slice(1)}`, "success");
+            Notification.show(`Initialized as ${roleName}`, "success");
 
-            // Clean redirect – NO call to checkUserExistence here
             setTimeout(() => {
                 if (roleName === 'admin' || roleName === 'owner') {
-                    window.location.href = "../management_type.html";   // your choice page
+                    // Logic: Admins/Owners choose management style first
+                    window.location.href = "management_type.html";
                 } else {
-                    // student / teacher → go directly to identity creation or dashboard
-                    // You can later make this smarter with local has_identity check
-                    window.location.href = `../../${roleName}/${roleName}_identity/create_identity.html`;
+                    // Teachers/Students go to identity setup
+                    window.location.href = `../../${roleName}/setups/create_identity.html`;
                 }
             }, 1200);
 
         } catch (error) {
-            Notification.show(error.message || "Connection Error", "error");
-            console.error(error);
+            Notification.show(error.message, "error");
         } finally {
             loader.style.display = 'none';
         }

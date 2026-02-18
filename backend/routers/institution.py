@@ -21,7 +21,7 @@ async def initialize_user_role(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    role_map = {"admin": Admin, "teacher": Teacher, "student": Student, "owner": Owner}
+    role_map = {"admin": Admin, "teacher": Teacher, "student": Student, "owner": Owner , "owner/admin" : Admin}
     new_role_type = payload.role.lower()
 
     # Get the ID if it exists, otherwise it stays None

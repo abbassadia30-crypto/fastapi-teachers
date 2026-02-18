@@ -66,9 +66,8 @@
     </div>
 </div>
 
-<script src="../../capacitor.js"></script>
-<script src="../../js/storage.js"></script>
-<script src="../../js/check.js"></script>
+<script src="../capacitor.js"></script>
+<script src="../js/storage.js"></script>
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
 
@@ -87,9 +86,9 @@
         try {
             const token = await AppStorage.get('institutionToken');
 
-            // Re-sync with backend to set the specific type
-            const response = await fetch(`${API_BASE}/institution/initialize-role`, {
-                method: 'POST',
+            // 1. Update the Backend using the PATCH route you provided
+            const response = await fetch(`${API_BASE}/institution/update-role`, {
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -97,19 +96,21 @@
                 body: JSON.stringify({ role: finalRole })
             });
 
+            const result = await response.json();
+
             if (response.ok) {
-                // Update local storage so check.js knows who we are now
+                // 2. CRITICAL: Update AppStorage so future checks use the new role
                 await AppStorage.set('user_role', finalRole);
 
                 showNotify(`Authority set: ${finalRole.toUpperCase()}`, "success");
 
                 setTimeout(() => {
-                    // Direct to identity creation after authority is confirmed
-                    window.location.href = `../admin/${finalRole}_identity.html`;
+                    // 3. Logic: Redirect to the specific folder
+                    // Assumes folder: admin/owner_identity/ or admin/admin_identity/
+                    window.location.href = `admin/${finalRole}_identity/create_identity.html`;
                 }, 1500);
             } else {
-                const err = await response.json();
-                showNotify(err.detail || "Authority update failed", "error");
+                showNotify(result.detail || "Update failed", "error");
             }
         } catch (error) {
             showNotify("Connection Error", "error");
