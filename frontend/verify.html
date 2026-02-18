@@ -140,7 +140,7 @@
                         await AppStorage.remove('pendingEmail');
 
                         // Redirecting to Role selection as per institution flow
-                        setTimeout(() => { window.location.href = "../../roles/role.html"; }, 1500);
+                        setTimeout(() => { window.location.href = "index.html"; }, 1500);
                     }
                 } else {
                     showBar(result.detail || "Invalid OTP. Please try again.", "error");
