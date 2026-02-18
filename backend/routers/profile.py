@@ -105,7 +105,7 @@ def get_all_profiles(db: Session = Depends(get_db)):
 async def create_identity(
         payload: AuthIdCreate,
         db: Session = Depends(database.get_db),
-        current_user: models.User = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
     role_type = current_user.type  # e.g., 'owner', 'admin'
 
