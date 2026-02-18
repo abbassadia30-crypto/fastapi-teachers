@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm.attributes import flag_modified
-
+from backend.User.login import AuthIdResponse , AuthIdCreate
 from backend.routers import auth
 from backend import database
 from .auth import get_current_user
 from backend.database import get_db
-from backend.models.User import User
+from backend.models.User import User , Auth_id
 from backend.models.admin.profile import UserBio, Profile
 from backend.schemas.admin.profile import ProfileOut, ProfileUpdate
 
@@ -101,9 +101,9 @@ def get_all_profiles(db: Session = Depends(get_db)):
     # Do NOT return a comma; return only the profiles list
     return profiles
 
-@router.post("/create", response_model=schemas.AuthIdResponse)
+@router.post("/create", response_model=AuthIdResponse)
 async def create_identity(
-        payload: schemas.AuthIdCreate,
+        payload: AuthIdCreate,
         db: Session = Depends(database.get_db),
         current_user: models.User = Depends(get_current_user)
 ):
@@ -111,8 +111,8 @@ async def create_identity(
 
     # 1. Verification: Check if this user already has an Auth_id for their role
     # We dynamically filter based on the user's current role column
-    role_col = getattr(models.Auth_id, f"{role_type}_id")
-    existing = db.query(models.Auth_id).filter(role_col == current_user.id).first()
+    role_col = getattr(Auth_id, f"{role_type}_id")
+    existing = db.query(Auth_id).filter(role_col == current_user.id).first()
 
     if existing:
         raise HTTPException(
@@ -121,7 +121,7 @@ async def create_identity(
         )
 
     # 2. Create the new Identity record
-    new_identity = models.Auth_id(
+    new_identity = Auth_id(
         full_name=payload.full_name,
         phone_number=payload.phone_number,
         gender=payload.gender,
