@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Dict, Optional
 from pydantic import BaseModel
 from sqlalchemy.orm.attributes import flag_modified
-from backend.User.login import AuthIdResponse , AuthIdCreate
+from backend.schemas.User.login import AuthIdResponse , AuthIdCreate
 from backend.routers import auth
 from backend import database
 from .auth import get_current_user
