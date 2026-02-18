@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text , Date
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text, Date
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
 
@@ -15,8 +15,6 @@ class User(Base, TimestampMixin):
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)
     last_active_institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
-# REMOVED: profile = relationship("Profile", ...)
-# Because a user might have 3 different profiles for 3 different roles.
 
     @property
     def active_profile(self):
@@ -44,6 +42,8 @@ class Owner(User):
                        foreign_keys="Profile.owner_id") # Explicitly link to owner_id
     institution = relationship("Institution", back_populates="owner")
 
+    auth_id = relationship("Auth_id", back_populates="owner", uselist=False)
+
     __mapper_args__ = {"polymorphic_identity": "owner"}
 
 class Admin(User):
@@ -55,6 +55,8 @@ class Admin(User):
     profile = relationship("Profile", back_populates="admin_role", uselist=False,
                        foreign_keys="Profile.admin_id") # Explicitly link to admin_id
     institution = relationship("Institution", back_populates="admins")
+
+    auth_id = relationship("Auth_id", back_populates="admin", uselist=False)
 
     __mapper_args__ = {"polymorphic_identity": "admin"}
 
@@ -68,6 +70,8 @@ class Teacher(User):
                        foreign_keys="Profile.teacher_id") # Explicitly link to teacher_id
     institution = relationship("Institution", back_populates="teachers")
 
+    auth_id = relationship("Auth_id", back_populates="teacher", uselist=False)
+
     __mapper_args__ = {"polymorphic_identity": "teacher"}
 
 class Student(User):
@@ -79,6 +83,8 @@ class Student(User):
     profile = relationship("Profile", back_populates="student_role", uselist=False,
                        foreign_keys="Profile.student_id") # Explicitly link to student_id
     institution = relationship("Institution", back_populates="students")
+
+    auth_id = relationship("Auth_id", back_populates="student", uselist=False)
 
     __mapper_args__ = {"polymorphic_identity": "student"}
 
@@ -146,8 +152,16 @@ class Auth_id(Base):
     address = Column(Text, nullable=False)
     bio = Column(Text, nullable=True)
 
-# Logic: Link to specific role tables
-    owner_id = Column(Integer, ForeignKey("owners.id"), nullable=True, unique=True)
-    admin_id = Column(Integer, ForeignKey("admins.id"), nullable=True, unique=True)
-    teacher_id = Column(Integer, ForeignKey("teachers.id"), nullable=True, unique=True)
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=True, unique=True)
+    # Logic: Link to specific role tables
+    # Note: Foreign keys should point to the table name and column, not the class name.
+    # The table names are 'owner', 'admin', 'teacher', 'student'.
+    owner_id = Column(Integer, ForeignKey("owner.id"), nullable=True, unique=True)
+    admin_id = Column(Integer, ForeignKey("admin.id"), nullable=True, unique=True)
+    teacher_id = Column(Integer, ForeignKey("teacher.id"), nullable=True, unique=True)
+    student_id = Column(Integer, ForeignKey("student.id"), nullable=True, unique=True)
+
+    # Relationships
+    owner = relationship("Owner", back_populates="auth_id")
+    admin = relationship("Admin", back_populates="auth_id")
+    teacher = relationship("Teacher", back_populates="auth_id")
+    student = relationship("Student", back_populates="auth_id")
