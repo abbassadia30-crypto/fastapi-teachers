@@ -6,41 +6,97 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="../../js/storage.js"></script>
-    <script src="../../js/checking.js"></script> <style>
-    body { font-family: 'Poppins', sans-serif; margin: 0; background: #141414; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: white; overflow: hidden; opacity: 0; transition: opacity 0.2s; }
+    <!-- IMPORTANT: We are NOT loading checking.js here anymore -->
+    <!-- <script src="../../js/checking.js"></script> -->
 
-    /* State verified logic */
-    body.state-verified { opacity: 1; }
-
-    h1 { font-weight: 400; font-size: 26px; margin-bottom: 40px; }
-    .profile-container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-    .profile-card { text-align: center; cursor: pointer; transition: 0.3s; width: 100px; }
-    .profile-card:active { transform: scale(0.9); opacity: 0.7; }
-
-    .icon-box { width: 90px; height: 90px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 45px; margin-bottom: 10px; transition: 0.3s; }
-    .student { background: #e50914; }
-    .teacher { background: #2b5de4; }
-    .admin { background: #e87d0d; }
-
-    .name { color: #b3b3b3; font-size: 14px; font-weight: 600; }
-
-    #notification-bar {
-        position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-        width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-        color: white; text-align: center; transition: 0.5s; z-index: 3000; font-weight: 600;
-    }
-    .show-notify { top: 20px !important; }
-    .bg-green { background: #43a047; }
-    .bg-red { background: #e53935; }
-
-    .loading-overlay {
-        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center;
-        align-items: center; flex-direction: column;
-    }
-</style>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background: #141414;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            color: white;
+            overflow: hidden;
+            opacity: 1;                    /* Always visible – no guard */
+        }
+        h1 {
+            font-weight: 400;
+            font-size: 26px;
+            margin-bottom: 40px;
+        }
+        .profile-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .profile-card {
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            width: 100px;
+        }
+        .profile-card:active {
+            transform: scale(0.9);
+            opacity: 0.7;
+        }
+        .icon-box {
+            width: 90px;
+            height: 90px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 45px;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+        .student { background: #e50914; }
+        .teacher  { background: #2b5de4; }
+        .admin    { background: #e87d0d; }
+        .name {
+            color: #b3b3b3;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        #notification-bar {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            padding: 15px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            transition: 0.5s;
+            z-index: 3000;
+            font-weight: 600;
+        }
+        .show-notify { top: 20px !important; }
+        .bg-green { background: #43a047; }
+        .bg-red   { background: #e53935; }
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+    </style>
 </head>
-<body class="state-verified"> <div id="notification-bar"></div>
+<body>
+
+<div id="notification-bar"></div>
 
 <div id="loading" class="loading-overlay">
     <div style="font-size: 14px; letter-spacing: 1px;">Synchronizing Profile...</div>
@@ -81,8 +137,8 @@
 
         try {
             const token = await AppStorage.get('institutionToken');
+            if (!token) throw new Error("No token");
 
-            // Sync with backend
             const response = await fetch(`${API_URL}/institution/initialize-role`, {
                 method: 'POST',
                 headers: {
@@ -94,29 +150,28 @@
 
             const result = await response.json();
 
-            if (response.ok) {
-                // Update local storage
-                await AppStorage.set('user_role', roleName);
-                Notification.show(`Initialized as ${roleName}`, "success");
-
-                setTimeout(() => {
-                    // Logic: If admin, go to specialized choice. Else, let checking.js route.
-                    if (roleName === 'admin') {
-                        window.location.href = "management_type.html";
-                    } else {
-                        // Trigger universal checking
-                        if (typeof checkUserExistence === 'function') {
-                            checkUserExistence();
-                        } else {
-                            window.location.href = `../../${roleName}/${roleName}_identity/create_identity.html`;
-                        }
-                    }
-                }, 1500);
-            } else {
-                Notification.show(result.detail || "Setup Failed", "error");
+            if (!response.ok) {
+                throw new Error(result.detail || "Role initialization failed");
             }
+
+            // Success path
+            await AppStorage.set('user_role', roleName);
+            Notification.show(`Initialized as ${roleName.charAt(0).toUpperCase() + roleName.slice(1)}`, "success");
+
+            // Clean redirect – NO call to checkUserExistence here
+            setTimeout(() => {
+                if (roleName === 'admin' || roleName === 'owner') {
+                    window.location.href = "../management_type.html";   // your choice page
+                } else {
+                    // student / teacher → go directly to identity creation or dashboard
+                    // You can later make this smarter with local has_identity check
+                    window.location.href = `../../${roleName}/${roleName}_identity/create_identity.html`;
+                }
+            }, 1200);
+
         } catch (error) {
-            Notification.show("Connection Error", "error");
+            Notification.show(error.message || "Connection Error", "error");
+            console.error(error);
         } finally {
             loader.style.display = 'none';
         }

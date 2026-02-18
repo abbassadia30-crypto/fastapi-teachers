@@ -5,9 +5,11 @@
     <title>Institution Login</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-    <script src="js/check.js"></script>
+    <script src="capacitor.js"></script>
+    <script src="js/storage.js"></script>
     <style>
         /* Logic: Login page is always visible, no opacity: 0 here */
+        /* This prevents flicker on pages that use check.js */
         body {
             font-family: 'Poppins', sans-serif;
             margin: 0;
@@ -74,11 +76,40 @@
     </form>
     <p class="footer-text">New to the institution? <a href="signup.html">Create Account</a></p>
 </div>
-
-<script src="capacitor.js"></script>
-<script src="js/storage.js"></script>
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
+
+    // 1. GATED REDIRECT ON LOAD with Capacitor Readiness Check
+    async function checkExistingSession() {
+        // Strict Check: Wait if AppStorage isn't defined yet
+        if (typeof AppStorage === 'undefined' || !AppStorage.get) {
+            console.log("Waiting for Storage...");
+            setTimeout(checkExistingSession, 50);
+            return;
+        }
+
+        const token = await AppStorage.get('user_email');
+        const inst_token = await AppStorage.get('institutionToken');
+        const role = await AppStorage.get('user_role');
+        const Identity = await AppStorage.get(`${role}_identity`);
+
+        console.log("Session Check:", { token, inst_token, role, Identity });
+
+        if (token && inst_token && role && Identity) {
+            window.location.href = `${role}/dashboard/dashboard.html`;
+        }
+        else if (token && role && Identity && !inst_token) {
+            window.location.href = `${role}/setups/no-institution.html`;
+        }
+        else if (token && role && !Identity && !inst_token) {
+            window.location.href = `${role}/${role}_identity/create_identity.html`;
+        }
+        else if (token && !inst_token && !role && !Identity) {
+            window.location.href = `roles/role.html`;
+        }
+    }
+
+    window.onload = checkExistingSession;
 
     const Notification = {
         el: document.getElementById('notification-bar'),
@@ -89,6 +120,7 @@
         }
     };
 
+    // 2. THE LOGIN HANDLER (Fixed to save institutionToken)
     async function handleLogin(event) {
         event.preventDefault();
         const btn = document.getElementById('loginBtn');
@@ -108,13 +140,12 @@
             const data = await response.json();
 
             if (response.ok) {
-                await AppStorage.set('institutionToken', data.access_token);
+                // Save BOTH keys strictly
                 await AppStorage.set('user_email', emailInput);
+                await AppStorage.set('institutionToken', data.access_token);
 
                 Notification.show("Login Successful!", "success");
 
-                // After login, we go to a page that DOES have check.js
-                // It will then decide where the user belongs.
                 setTimeout(() => {
                     window.location.href = "roles/role.html";
                 }, 1200);
@@ -125,8 +156,10 @@
                 btn.innerText = "Login";
             }
         } catch (error) {
+            console.error("Login Error:", error);
             Notification.show("Server Unreachable", "error");
             btn.disabled = false;
+            btn.innerText = "Login";
         }
     }
 </script>

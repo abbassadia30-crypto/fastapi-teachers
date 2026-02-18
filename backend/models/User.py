@@ -14,9 +14,8 @@ class User(Base, TimestampMixin):
 
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)
+    verification = relationship("Verification", back_populates="user", uselist=False, cascade="all, delete-orphan")
     last_active_institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
-# REMOVED: profile = relationship("Profile", ...)
-# Because a user might have 3 different profiles for 3 different roles.
 
     @property
     def active_profile(self):
@@ -120,19 +119,14 @@ class Block(Base, TimestampMixin):
     # If block_type is 'institution', we need to know which one
     institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)
 
-class Verification(User):
+class Verification(Base, TimestampMixin):
     __tablename__ = "verification"
-
-    # In Joined Inheritance, this ID is the link to the User table
-    id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id'), unique=True, nullable=False)
     is_verified = Column(Boolean, default=False)
     verified_at = Column(DateTime, nullable=True)
     otp_code = Column(String, nullable=True)
-
-    __mapper_args__ = {
-        "polymorphic_identity": "verified_user"
-    }
+    user = relationship("User", back_populates="verification")
 
 class Auth_id(Base):
     __tablename__ = "Auth_ids"

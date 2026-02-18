@@ -1,101 +1,135 @@
-// js/checking.js
+// js/check.js
 const API_BASE = "https://fastapi-teachers.onrender.com";
 
-async function checkUserExistence() {
-    try {
-        // 1. Fetch Local State
-        const email = await AppStorage.get('user_email');
-        const token = await AppStorage.get('institutionToken');
+// ────────────────────────────────────────────────
+// Fast local decision – no await, no promises
+// ────────────────────────────────────────────────
+function getLocalTargetPath() {
+    const email    = AppStorage.getSync ? AppStorage.getSync('user_email')    : null;
+    const token    = AppStorage.getSync ? AppStorage.getSync('institutionToken') : null;
+    const role     = AppStorage.getSync ? AppStorage.getSync('user_role')     : null;
+    const instID   = AppStorage.getSync ? AppStorage.getSync('institution_id') : null;
+    const hasIden  = AppStorage.getSync ? AppStorage.getSync(`${role}_identity`) === "verified" : false;
 
-        // SECURITY GATE: If no credentials, force back to login
-        if (!email || !token) {
-            if (!window.location.pathname.endsWith('index.html')) {
-                window.location.href = "../../index.html";
+    if (!email || !token) {
+        return "index.html";
+    }
+
+    if (!role || role === "verified_user") {
+        return "roles/role.html";
+    }
+
+    const base = (role === "owner" || role === "admin") ? "admin" : role;
+
+    if (hasIden && instID) {
+        return `${base}/dashboard/dashboard.html`;
+    }
+    if (hasIden && !instID) {
+        return `${base}/setups/no-institution.html`;
+    }
+
+    // no identity yet
+    const folder = (role === "owner") ? "owner_identity" : "admin_identity";
+    return (role === "owner" || role === "admin")
+        ? `admin/${folder}/create_identity.html`
+        : `${role}/setups/create_identity.html`;
+}
+
+// ────────────────────────────────────────────────
+// Background validation – never blocks UI
+// ────────────────────────────────────────────────
+async function silentBackendSync() {
+    const token = await AppStorage.get('institutionToken');
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/sync-state`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+            // Token invalid → logout
+            await AppStorage.clearAll?.(); // or implement your own clear function
+            if (!window.location.pathname.includes('index.html')) {
+                window.location.replace('../index.html');
             }
             return;
         }
 
-        // 2. REMOTE SYNC (The Truth from DB)
-        // We do this to handle Reinstalls, Deletions, or Role Changes
-        const response = await fetch(`${API_BASE}/auth/sync-state`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const server = await res.json();
 
-        if (response.ok) {
-            const server = await response.json();
+        let changed = false;
 
-            // Sync local storage with Server truth
-            await AppStorage.set("user_role", server.user_role);
-            await AppStorage.set("institution_id", server.institution_id);
+        const localRole = await AppStorage.get('user_role');
+        if (server.user_role !== localRole) {
+            await AppStorage.set('user_role', server.user_role);
+            changed = true;
+        }
 
-            // Handle Identity Token sync
+        const localInst = await AppStorage.get('institution_id');
+        if (server.institution_id !== localInst) {
+            await AppStorage.set('institution_id', server.institution_id);
+            changed = true;
+        }
+
+        const identityKey = `${server.user_role}_identity`;
+        const localHasIden = (await AppStorage.get(identityKey)) === "verified";
+
+        if (server.has_identity !== localHasIden) {
             if (server.has_identity) {
-                await AppStorage.set(`${server.user_role}_identity`, "verified");
+                await AppStorage.set(identityKey, "verified");
             } else {
-                await AppStorage.remove(`${server.user_role}_identity`);
+                await AppStorage.remove(identityKey);
             }
+            changed = true;
+        }
 
-            // 3. NAVIGATION LOGIC (The "State Machine")
-            const role = server.user_role;
-            const instID = server.institution_id;
-            const hasIden = server.has_identity;
-
-            let targetPath = "";
-
-            if (!role || role === "verified_user") {
-                targetPath = "roles/role.html";
-            }
-            else if (!hasIden) {
-                // Determine folder structure based on role
-                const idFolder = (role === 'owner' || role === 'admin') ? `${role}_identity` : 'setups';
-                targetPath = `${role}/${idFolder}/create_identity.html`;
-            }
-            else if (!instID) {
-                // UNIVERSAL HANDLER: Everyone goes here if they have no institution
-                targetPath = `${role}/setups/no-institution.html`;
-            }
-            else {
-                // FULL ACCESS
-                targetPath = `${role}/dashboard/dashboard.html`;
-            }
-
-            // 4. THE REALITY REDIRECT
-            // We use includes to check if the current page is where they belong
-            if (!window.location.href.includes(targetPath)) {
-                console.log(`State mismatch detected. Bouncing to: ${targetPath}`);
-                // Use absolute-style pathing for Capacitor stability
-                window.location.href = `../../${targetPath}?token=${email}`;
-            } else {
-                // If they are where they belong, reveal the content
-                document.body.classList.add('state-verified');
+        if (changed) {
+            const expected = getLocalTargetPath();
+            if (!window.location.pathname.includes(expected)) {
+                window.location.replace(`../../${expected}`);
             }
         }
-        else {
-            // Logic: The token is dead or user doesn't exist in DB
-            console.warn("Unauthorized: Clearing stale credentials.");
-            await AppStorage.remove('user_email');
-            await AppStorage.remove('institutionToken');
-
-            // If we are already on index.html, reveal it so they can log in.
-            // If not, send them there.
-            if (window.location.pathname.endsWith('index.html')) {
-                document.body.classList.add('state-verified');
-            } else {
-                window.location.href = "../index.html";
-            }
-        }
-    } catch (e) {
-        console.warn("Reality Check: Server Wake-up or Offline. Trusting Local Storage.");
-        document.body.classList.add('state-verified');
+    } catch (err) {
+        // Offline → local wins
+        console.debug("[silent sync] offline / failed → using local state", err);
     }
 }
 
-// 5. AUTO-EXECUTION
-document.addEventListener('DOMContentLoaded', () => {
-    // Inject a tiny bit of CSS to prevent flicker
-    const style = document.createElement('style');
-    style.innerHTML = `body { opacity: 0; transition: opacity 0.2s; } body.state-verified { opacity: 1; }`;
-    document.head.appendChild(style);
+// ────────────────────────────────────────────────
+// Main entry point – called on every page
+// ────────────────────────────────────────────────
+function initializePage() {
+    const currentPath = window.location.pathname.toLowerCase();
+    const isLoginPage =
+        currentPath.endsWith('index.html') ||
+        currentPath === '/' ||
+        currentPath === '' ||
+        currentPath.endsWith('/');
 
-    checkUserExistence();
-});
+    // 1. Login page → always show immediately + background check only
+    if (isLoginPage) {
+        document.body.classList.add('state-verified');
+        silentBackendSync(); // fire & forget
+        return;
+    }
+
+    // 2. Protected pages → decide target + redirect if wrong
+    const target = getLocalTargetPath();
+
+    if (!currentPath.includes(target.toLowerCase())) {
+        window.location.replace(`../../${target}`);
+        return;
+    }
+
+    // Correct page → reveal + background sync
+    document.body.classList.add('state-verified');
+    silentBackendSync();
+}
+
+// Execute when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePage);
+} else {
+    initializePage();
+}
