@@ -3,8 +3,11 @@ from firebase_admin import messaging, credentials
 import os
 
 # Initialize Firebase here (Safe and centralized)
-base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-cred_path = os.path.join(base_dir, "firebase-adminsdk.json")
+
+# This gets the directory where 'backend' folder lives (the project root)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# For Render, this should point to /opt/render/project/src/
+cred_path = os.path.join(BASE_DIR, "firebase-adminsdk.json")
 
 if not firebase_admin._apps:
     try:
