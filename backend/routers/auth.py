@@ -98,6 +98,31 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 # --- Routes ---
 # backend/routers/users.py
 
+@router.patch("/update-fcm")
+async def update_fcm(
+        payload: dict,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # ESSENTIAL 1: Email is verified by 'get_current_user' (the token)
+
+    # ESSENTIAL 2: Role Check
+    if not current_user.type:
+        raise HTTPException(status_code=403, detail="Role not selected yet.")
+
+    # ESSENTIAL 3: Identity Check
+    # We check if a record exists in the Auth_ids table for this user
+    role_id_attr = f"{current_user.type}_id"
+    identity = db.query(Auth_id).filter(getattr(Auth_id, role_id_attr) == current_user.id).first()
+
+    if not identity:
+        # We allow the token update anyway so we can send "Finish your setup" reminders!
+        print(f"User {current_user.email} has no identity yet, but token saved.")
+
+    current_user.fcm_token = payload.get("fcm_token")
+    db.commit()
+    return {"status": "success"}
+
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
     # The @property magic happens here
@@ -154,22 +179,31 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
 
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
-    # Query through base User model
+    # 1. Identity Check
     user = db.query(User).filter(User.user_email == credentials.email).first()
 
     if not user or not verify_password(credentials.password, user.user_password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # Check verification status (accessible via the linked verification table)
+    # 2. Verification Check (Linked via polymorphic ID)
     v_info = db.query(Verification).filter(Verification.id == user.id).first()
     if not v_info or not v_info.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
 
-    # Check for Bans
+    # 3. Ban Check
     ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
     if ban_status:
-         reason = ban_status.ban_reason or "Violation of community standards"
-         raise HTTPException(status_code=403, detail=f"Account suspended: {reason}")
+        raise HTTPException(status_code=403, detail=f"Account suspended: {ban_status.ban_reason}")
+
+    # 4. Role-Specific Identity Check (Auth_id)
+    # This checks if the user has completed their 'Auth_id' profile
+    has_identity = False
+    if user.type:
+        # Check if an Auth_id record exists pointing to this user's specific role ID
+        role_attr = f"{user.type}_id"
+        identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
+        if identity_record:
+            has_identity = True
 
     access_token = create_access_token(data={"sub": user.user_email})
 
@@ -178,7 +212,8 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
         "token_type": "bearer",
         "role": user.type or "unassigned",
         "user": user.user_name,
-        "institution_id": getattr(user, 'institution_id', None)
+        "institution_id": user.last_active_institution_id,
+        "identity": has_identity
     }
 
 @router.post("/verify-action")

@@ -116,21 +116,22 @@
             const inst_token = await AppStorage.get('institutionToken');
             const role = await AppStorage.get('user_role');
             const Identity = await AppStorage.get(`${role}_identity`);
+            const auth_token = await AppStorage.get('auth_token')
 
-            if (token && inst_token && role && Identity) {
+            if ((token && auth_token) && inst_token && role && Identity) {
                 window.location.replace(`${role}/dashboard/dashboard.html`);
             }
-            else if (token && role && Identity && !inst_token) {
+            else if ((token && auth_token) && role && Identity && !inst_token) {
                 window.location.replace(`${role}/setups/no-institution.html`);
             }
-            else if (token && role && !Identity) {
+            else if ((token && auth_token) && role && !Identity) {
                 // Simplified Identity path logic
                 const path = (role === "owner" || role === "admin")
                     ? `admin/${role}_identity/create_identity.html`
                     : `${role}/setups/create_identity.html`;
                 window.location.replace(path);
             }
-            else if (token && !role) {
+            else if ((token && auth_token) && !role) {
                 window.location.replace("roles/role.html");
             }
             else {
@@ -171,10 +172,30 @@
             const data = await response.json();
 
             if (response.ok) {
+                // 1. Core Auth
                 await AppStorage.set('user_email', emailInput);
-                await AppStorage.set('institutionToken', data.access_token);
+                await AppStorage.set('auth_token', data.access_token);
+
+                // 2. Role Status
+                if (data.role && data.role !== "unassigned") {
+                    await AppStorage.set('user_role', data.role);
+                }
+
+                // 3. Identity Status (Critical for your redirection logic)
+                if (data.identity === true) {
+                    await AppStorage.set(`${data.role}_identity`, 'verified');
+                }
+
+                // 4. Institution Status
+                if (data.institution_id) {
+                    await AppStorage.set('institution_id', data.institution_id);
+                    await AppStorage.set('institutionToken', 'verified');
+                }
+
                 Notification.show("Login Successful!", "success");
-                setTimeout(() => { window.location.href = "roles/role.html"; }, 1000);
+
+                // 5. Trigger the Routing Logic immediately
+                setTimeout(() => { checkExistingSession(); }, 1000);
             } else {
                 Notification.show(data.detail || "Invalid Credentials", "error");
                 btn.disabled = false;

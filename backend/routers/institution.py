@@ -160,3 +160,40 @@ async def setup_workspace(
         db.rollback()
         # In a real app, log the error 'e' here
         raise HTTPException(status_code=500, detail="Failed to create institution")
+
+@router.get("/sync-state")
+async def get_sync_state(
+        db: Session = Depends(database.get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # 1. Check Role Essential
+    if not current_user.type:
+        return JSONResponse(status_code=400, content={"error": "role_missing"})
+
+    # 2. Check Identity Essential (Auth_id table)
+    role_type = current_user.type
+    role_col = getattr(models.Auth_id, f"{role_type}_id")
+    identity = db.query(models.Auth_id).filter(role_col == current_user.id).first()
+
+    if not identity:
+        return JSONResponse(status_code=400, content={"error": "identity_missing"})
+
+    # 3. Check Institution Essential
+    inst_id = getattr(current_user, "last_active_institution_id", None)
+
+    # Trigger Push Notification only if identity is verified but inst_id is the final step
+    if current_user.fcm_token:
+        try:
+            send_push_to_user(
+                current_user.fcm_token,
+                "Profile Synchronized! ✨",
+                f"Hello {identity.full_name}, your identity is verified. Proceeding to workspace."
+            )
+        except Exception as e:
+            print(f"Push failed: {e}")
+
+    return {
+        "user_role": role_type,
+        "institution_id": inst_id,
+        "full_name": identity.full_name
+    }

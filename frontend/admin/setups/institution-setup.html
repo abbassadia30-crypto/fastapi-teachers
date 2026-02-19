@@ -114,7 +114,8 @@
                 sign.innerText = `🏛️ ${data.institution_name} Ready`;
 
                 await AppStorage.set('current_institution_name', data.institution_name);
-
+                await AppStorage.set('institutionToken' , 'verified')
+                await AppStorage.set('institution_id' , data.institution_id)
                 if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
                     Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
                 }

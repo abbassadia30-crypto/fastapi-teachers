@@ -11,6 +11,7 @@ class User(Base, TimestampMixin):
     user_password = Column(String, nullable=False)
     type = Column(String(50)) # Discriminator
     phone = Column(String, nullable=True)
+    fcm_token = Column(String, nullable=True)
 
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)

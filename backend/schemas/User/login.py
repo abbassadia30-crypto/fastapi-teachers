@@ -18,18 +18,17 @@ class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
-class RoleUpdate(BaseModel):
-    role: str
-    email: str | None = None
-
 class Token(BaseModel):
     access_token: str
     token_type: str
-    role: str
+    role: Optional[str] = "unassigned"
     user: str
     institution_id: Optional[int] = None
+    identity: bool # Tells frontend if Auth_id exists
 
-    model_config = ConfigDict(from_attributes=True)
+class RoleUpdate(BaseModel):
+    role: str
+    email: str | None = None
 
 class SyncStateResponse(BaseModel):
     user_role: Optional[str]

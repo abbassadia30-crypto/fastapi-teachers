@@ -5,8 +5,43 @@ from backend.routers.auth import get_current_user
 from backend.models.admin.institution import Institution, School, Academy, College
 from backend.schemas.admin.institution import SchoolSchema, AcademySchema, CollegeSchema
 from backend.models.User import User
+from ..main import send_push_to_user  # Import your FCM function
 
 router = APIRouter(prefix="/ready", tags=["Institution creation"])
+
+@router.get("/check-essentials")
+async def check_essentials(
+        db: Session = Depends(database.get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # 1. Essential: Role Check
+    if not current_user.type:
+        return JSONResponse(status_code=400, content={"missing": "role"})
+
+    # 2. Essential: Identity Check (Auth_id table)
+    role_type = current_user.type
+    role_col = getattr(models.Auth_id, f"{role_type}_id")
+    identity = db.query(models.Auth_id).filter(role_col == current_user.id).first()
+
+    if not identity:
+        return JSONResponse(status_code=400, content={"missing": "identity"})
+
+    # 3. Trigger "Setup Complete" Notification
+    if current_user.fcm_token:
+        try:
+            send_push_to_user(
+                current_user.fcm_token,
+                "Setup Successful! 🎉",
+                f"Welcome {identity.full_name}, your {role_type} workspace is ready."
+            )
+        except Exception as e:
+            print(f"Notification Error: {e}")
+
+    return {
+        "status": "ready",
+        "role": current_user.type,
+        "full_name": identity.full_name
+    }
 
 @router.post("/create-school", status_code=status.HTTP_201_CREATED)
 async def create_school(
