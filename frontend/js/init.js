@@ -29,19 +29,24 @@ async function initializePush() {
 }
 
 async function syncTokenWithBackend(token) {
-    const authToken = await AppStorage.get('user_email');
-    if (!authToken) return;
+    // FIX: Use the actual JWT access token, not the email
+    const jwtToken = await AppStorage.get('auth_token');
+    if (!jwtToken) return;
 
     try {
-        await fetch(`${API_BASE}/auth/update-fcm`, {
+        const response = await fetch(`${API_BASE}/auth/update-fcm`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${authToken}`
+                'Authorization': `Bearer ${jwtToken}` // Valid JWT
             },
             body: JSON.stringify({ fcm_token: token })
         });
-        await AppStorage.set('fcm_token', token);
+
+        if(response.ok) {
+            await AppStorage.set('fcm_token', token);
+            console.log("FCM Token Synced Successfully");
+        }
     } catch (e) {
         console.error("Token sync failed", e);
     }

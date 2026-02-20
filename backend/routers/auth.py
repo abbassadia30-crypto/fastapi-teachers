@@ -13,6 +13,7 @@ from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncStateResponse
 from backend.models.admin.institution import Institution
 from backend.models.User import User , UserBan , Verification , Auth_id
+from firebase_admin import messaging
 
 load_dotenv()
 
@@ -99,29 +100,26 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 # backend/routers/users.py
 
 @router.patch("/update-fcm")
-async def update_fcm(
-        payload: dict,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    # ESSENTIAL 1: Email is verified by 'get_current_user' (the token)
-
-    # ESSENTIAL 2: Role Check
-    if not current_user.type:
-        raise HTTPException(status_code=403, detail="Role not selected yet.")
-
-    # ESSENTIAL 3: Identity Check
-    # We check if a record exists in the Auth_ids table for this user
-    role_id_attr = f"{current_user.type}_id"
-    identity = db.query(Auth_id).filter(getattr(Auth_id, role_id_attr) == current_user.id).first()
-
-    if not identity:
-        # We allow the token update anyway so we can send "Finish your setup" reminders!
-        print(f"User {current_user.email} has no identity yet, but token saved.")
-
-    current_user.fcm_token = payload.get("fcm_token")
+async def update_fcm(payload: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    fcm_token = payload.get("fcm_token")
+    current_user.fcm_token = fcm_token
     db.commit()
-    return {"status": "success"}
+
+    # TEST TRIGGER: Send a welcome notification immediately
+    if fcm_token:
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title="System Ready",
+                body=f"Welcome to the Institution Console, {current_user.user_name}!"
+            ),
+            token=fcm_token,
+        )
+        try:
+            messaging.send(message)
+        except Exception as e:
+            print(f"FCM Error: {e}")
+
+    return {"status": "token_updated"}
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
