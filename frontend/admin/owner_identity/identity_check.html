@@ -85,8 +85,7 @@
     const statusTitle = document.getElementById('status-title');
 
     async function gatekeeper() {
-        // 1. Check for Token first
-        const token = await AppStorage.get('auth_token'); // Use master auth_token
+        const token = await AppStorage.get('auth_token');
 
         if (!token) {
             sign.style.background = "var(--danger)";
@@ -96,7 +95,6 @@
         }
 
         try {
-            // 2. Perform Sync BEFORE asking for permissions
             const response = await fetch(`${API_BASE}/institution/sync-state`, {
                 method: 'GET',
                 headers: {'Authorization': `Bearer ${token}`}
@@ -105,22 +103,25 @@
             if (response.ok) {
                 const data = await response.json();
 
-                // Save state immediately
+                // Save core data
                 await AppStorage.set('institution_id', data.institution_id);
                 await AppStorage.set('user_role', data.user_role);
 
-                // 3. UI Update (Success state)
+                // UI Update
                 statusIcon.innerHTML = "&#10003;";
                 statusIcon.style.color = "var(--primary)";
                 statusTitle.innerText = "Identity Verified";
                 sign.style.background = "var(--primary)";
                 sign.innerText = "Access Granted";
 
-                // 4. NOW handle notifications safely
-                await setupNotificationsSilently();
+                // ⚡ RELIABLE NOTIFICATION TRIGGER
+                // We initialize here so the token is ready before dashboard load
+                if (typeof initializePush === 'function') {
+                    console.log("Gatekeeper: Triggering real-time alert sync...");
+                    await initializePush();
+                }
 
                 setTimeout(() => {
-                    // Use REPLACE to avoid the back-button loop
                     window.location.replace(`../dashboard/dashboard.html`);
                 }, 2000);
             } else {
