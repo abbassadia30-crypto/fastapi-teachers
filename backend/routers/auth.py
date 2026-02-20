@@ -311,3 +311,40 @@ async def sync_user_state(
         "institution_id": current_user.last_active_institution_id,
         "has_identity": has_profile
     }
+
+
+@router.get("/auth/manual-push/{email}")
+async def manual_push(email: str, db: Session = Depends(get_db)):
+    # 1. Find the user and their token
+    user = db.query(User).filter(User.email == email).first()
+
+    if not user:
+        return {"status": "error", "message": "User not found"}
+    if not user.fcm_token:
+        return {"status": "error", "message": "This user has no FCM token in DB"}
+
+    # 2. Construct the message
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title="Super Console Alert",
+            body="This is a manual test from the FastAPI backend! 🚀"
+        ),
+        android=messaging.AndroidConfig(
+            priority='high',
+            notification=messaging.AndroidNotification(
+                channel_id='institution_alerts' # Matches your init.js
+            ),
+        ),
+        token=user.fcm_token,
+    )
+
+    # 3. Send and return response
+    try:
+        response = messaging.send(message)
+        return {
+            "status": "success",
+            "message_id": response,
+            "target_token": user.fcm_token[:15] + "..." # Security check
+        }
+    except Exception as e:
+        return {"status": "failed", "error": str(e)}
