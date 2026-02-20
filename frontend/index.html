@@ -22,6 +22,16 @@
             transition: opacity 0.4s ease-in-out;
         }
 
+        /* Add hover/active state for links */
+        a:active { opacity: 0.6; }
+
+        /* Optional: Style for a future reset modal if you want to keep it on one page */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); display: none; align-items: center;
+            justify-content: center; z-index: 4000;
+        }
+
         /* 2. The "Pre-reveal" Loader */
         #app-gate-loader {
             position: fixed;
@@ -92,13 +102,23 @@
         <div class="input-group">
             <input type="email" id="email" placeholder="Institution Email" required>
         </div>
-        <div class="input-group">
+        <div class="input-group" style="margin-bottom: 5px;">
             <input type="password" id="password" placeholder="Password" required>
         </div>
+
+        <div style="text-align: right; margin-bottom: 20px;">
+            <a href="forgot-password.html"
+               style="color: #666; font-size: 11px; text-decoration: none; font-weight: 600; cursor: pointer;">
+                Forgot Password?
+            </a>
+        </div>
+
         <button type="submit" class="btn" id="loginBtn">Login</button>
     </form>
+
     <p style="font-size: 12px; margin-top: 15px; color: #666;">
-        New to the institution? <a href="signup.html" style="color: #0288d1; text-decoration: none; font-weight: 600;">Create Account</a>
+        New to the <b>institution</b>?
+        <a href="signup.html" style="color: #0288d1; text-decoration: none; font-weight: 600;">Create Account</a>
     </p>
 </div>
 
