@@ -18,7 +18,39 @@ Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
 
-app = FastAPI()
+import os
+import json
+import firebase_admin
+from fastapi import FastAPI
+from firebase_admin import credentials
+from backend.routers import auth, institution, profile # Your actual router paths
+
+# 1. PLACE IT HERE (Global Scope)
+def init_firebase():
+    if not firebase_admin._apps:
+        # We look for the Environment Variable you set in Render
+        cred_json = os.getenv("FIREBASE_JSON")
+        if cred_json:
+            try:
+                cred_dict = json.loads(cred_json)
+                cred = credentials.Certificate(cred_dict)
+                firebase_admin.initialize_app(cred)
+                print("✅ Firebase initialized via Env Var")
+            except Exception as e:
+                print(f"❌ Firebase Init Error: {e}")
+        else:
+            print("⚠️ FIREBASE_JSON not found. Notifications will fail.")
+
+# Execute immediately on startup
+init_firebase()
+
+app = FastAPI(title="Starlight Institution Manager")
+
+# Include your routers below
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
+# ... rest of your code
+
+app = FastAPI(title="Starlight Institution Manager")
 
 app.include_router(auth.router)
 app.include_router(institution.router)
