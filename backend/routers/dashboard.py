@@ -277,13 +277,6 @@ def remove_staff(
     db.commit()
     return {"status": "success", "message": "Staff record deleted successfully"}
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from backend.database import get_db
-from backend.models import User, Institution, Owner  # Adjust based on your model file
-from backend.auth_utils import get_current_user # Your JWT dependency
-
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/check-ownership")
 async def check_ownership(
