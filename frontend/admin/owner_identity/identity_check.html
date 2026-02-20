@@ -106,6 +106,7 @@
                 // Save core data
                 await AppStorage.set('institution_id', data.institution_id);
                 await AppStorage.set('user_role', data.user_role);
+                await AppStorage.set('institutionToken' , 'verified');
 
                 // UI Update
                 statusIcon.innerHTML = "&#10003;";

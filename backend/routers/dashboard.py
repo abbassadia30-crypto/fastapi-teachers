@@ -276,3 +276,44 @@ def remove_staff(
     db.delete(staff)
     db.commit()
     return {"status": "success", "message": "Staff record deleted successfully"}
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from backend.database import get_db
+from backend.models import User, Institution, Owner  # Adjust based on your model file
+from backend.auth_utils import get_current_user # Your JWT dependency
+
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+
+@router.get("/check-ownership")
+async def check_ownership(
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    """
+    Validates that the current user is an owner and returns their
+    linked institution name for the Super Console dashboard.
+    """
+
+    # 1. Verify User is an Owner
+    if current_user.type != "owner":
+        raise HTTPException(status_code=403, detail="Access denied. Owner role required.")
+
+    # 2. Check for linked Institution
+    # Logic: Search for an institution where this user's ID is the owner_id
+    institution = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
+
+    if not institution:
+        return {
+            "has_institution": False,
+            "institution_name": None,
+            "user_role": current_user.type
+        }
+
+    # 3. Success: Return details for the Admin Portal
+    return {
+        "has_institution": True,
+        "institution_name": institution.name,
+        "institution_id": institution.id,
+        "user_role": current_user.type
+    }
