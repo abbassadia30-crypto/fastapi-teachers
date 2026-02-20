@@ -176,18 +176,30 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
     db.commit()
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "Verification code sent to email."}
-
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
-    # 1. Fetch User (Base User Model)
+    # 1. Fetch User
     user = db.query(User).filter(User.user_email == credentials.email).first()
 
     if not user or not verify_password(credentials.password, user.user_password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # 2. Verification Check (Updated for Relationship Logic)
-    # We check the linked 'verification' table via the relationship
-    if not user.verification_status or not user.verification_status.is_verified:
+    # 2. Verification Check (Fixed for Inheritance)
+    # If the user is a 'Verification' object, check its status.
+    # If it's a base 'User', check if it's verified (depending on your signup logic)
+
+    is_verified = False
+    if isinstance(user, Verification):
+        is_verified = user.is_verified
+    elif hasattr(user, 'is_verified'): # Fallback if model changes
+        is_verified = user.is_verified
+    else:
+        # If it's a base User, we look for the linked Verification record manually
+        v_record = db.query(Verification).filter(Verification.id == user.id).first()
+        if v_record:
+            is_verified = v_record.is_verified
+
+    if not is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
 
     # 3. Ban Check
@@ -195,17 +207,13 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     if ban_status:
         raise HTTPException(status_code=403, detail=f"Account suspended: {ban_status.ban_reason}")
 
-    # 4. Identity Check (The fix for AttributeError)
+    # 4. Identity Check
     has_identity = False
-
-    # We only run the dynamic attribute check if the user HAS a specific role.
-    # New users have the type 'user', which doesn't have an 'Auth_id' column.
     institutional_roles = ["owner", "admin", "teacher", "student"]
 
+    # We use 'user.type' because inheritance sets this automatically
     if user.type in institutional_roles:
-        role_attr = f"{user.type}_id" # e.g., 'owner_id'
-
-        # Double-check that the attribute exists on the Auth_id model before querying
+        role_attr = f"{user.type}_id"
         if hasattr(Auth_id, role_attr):
             identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
             if identity_record:
