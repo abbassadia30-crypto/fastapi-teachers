@@ -85,55 +85,65 @@
     const statusTitle = document.getElementById('status-title');
 
     async function gatekeeper() {
-        const token = await AppStorage.get('institutionToken');
+        // 1. Check for Token first
+        const token = await AppStorage.get('auth_token'); // Use master auth_token
 
         if (!token) {
             sign.style.background = "var(--danger)";
             sign.innerText = "Session Missing";
-            setTimeout(() => window.location.href = "../../index.html", 2000);
+            setTimeout(() => window.location.replace("../../index.html"), 2000);
             return;
         }
 
         try {
+            // 2. Perform Sync BEFORE asking for permissions
             const response = await fetch(`${API_BASE}/institution/sync-state`, {
                 method: 'GET',
                 headers: {'Authorization': `Bearer ${token}`}
             });
 
-            const data = await response.json();
-
             if (response.ok) {
+                const data = await response.json();
+
+                // Save state immediately
                 await AppStorage.set('institution_id', data.institution_id);
                 await AppStorage.set('user_role', data.user_role);
 
-                if (data.institution_id) {
-                    statusIcon.innerHTML = "&#10003;";
-                    statusIcon.style.color = "var(--primary)";
-                    statusTitle.innerText = "Identity Verified";
-                    sign.style.background = "var(--primary)";
-                    sign.innerText = "Access Granted";
+                // 3. UI Update (Success state)
+                statusIcon.innerHTML = "&#10003;";
+                statusIcon.style.color = "var(--primary)";
+                statusTitle.innerText = "Identity Verified";
+                sign.style.background = "var(--primary)";
+                sign.innerText = "Access Granted";
 
-                    // Haptic Success
-                    if (window.Capacitor && Capacitor.isPluginAvailable('Haptics')) {
-                        Capacitor.Plugins.Haptics.notification({type: 'SUCCESS'});
-                    }
+                // 4. NOW handle notifications safely
+                await setupNotificationsSilently();
 
-                    setTimeout(() => {
-                        // Logic: Ensure pathing is correct for the specific role
-                        window.location.href = `../${data.user_role}/setups/no-institution.html`;
-                    }, 2000);
-                } else {
-                    // ... your existing warning logic ...
-                }
+                setTimeout(() => {
+                    // Use REPLACE to avoid the back-button loop
+                    window.location.replace(`../${data.user_role}/dashboard/dashboard.html`);
+                }, 2000);
             } else {
-                // If backend says 400 (Identity missing), send back to creation
-                window.location.href = "create_identity.html";
+                window.location.replace("create_identity.html");
             }
-        } catch
-            (error) {
+        } catch (error) {
             sign.style.background = "var(--danger)";
-            sign.innerText = "Connection Error";
+            sign.innerText = "Connection Error - Retrying";
             setTimeout(() => window.location.reload(), 5000);
+        }
+    }
+
+    async function setupNotificationsSilently() {
+        try {
+            if (window.Capacitor && window.Capacitor.isPluginAvailable('PushNotifications')) {
+                const perm = await Capacitor.Plugins.PushNotifications.checkPermissions();
+                if (perm.receive !== 'granted') {
+                    // Don't 'await' the request here, or it might freeze the UI
+                    Capacitor.Plugins.PushNotifications.requestPermissions();
+                }
+            }
+        } catch (e) {
+            console.warn("Notification setup skipped or failed.");
         }
     }
     window.onload = gatekeeper;

@@ -117,80 +117,75 @@
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    const sign = document.getElementById('final-sign');
-    const statusIcon = document.getElementById('status-icon');
-    const statusTitle = document.getElementById('status-title');
 
-    async function gatekeeper() {
-        // 1. Get the primary Auth Token (used to identify the user session)
-        const token = await AppStorage.get('auth_token');
+    function showNotify(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        }
+        setTimeout(() => { bar.className = ""; }, 3000);
+    }
+
+    window.onload = async () => {
+        const token = await AppStorage.get('institutionToken');
+        const cachedName = await AppStorage.get('current_institution_name');
 
         if (!token) {
-            sign.style.background = "#e53935"; // var(--danger)
-            sign.innerText = "Session Missing";
-            setTimeout(() => window.location.replace("../../index.html"), 2000);
+            window.location.replace("../../index.html");
             return;
         }
 
+        // ⚡ Step 1: Instant Render from Cache
+        if (cachedName) {
+            document.getElementById('institution-display').innerText = cachedName;
+            document.getElementById('admin-welcome').innerText = "Management Overview";
+            document.body.style.display = 'flex';
+        }
+
         try {
-            // 🛡️ Step 2: Query the specialized sync-state endpoint
-            const response = await fetch(`${API_BASE}/institution/sync-state`, {
+            // 🛡️ Step 2: Background Sync
+            const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
                 method: 'GET',
-                headers: {'Authorization': `Bearer ${token}`}
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
-            const data = await response.json();
-
             if (response.ok) {
-                // Update local storage with the latest truth from the server
-                await AppStorage.set('user_role', data.user_role);
+                const data = await response.json();
+                if (data.has_institution) {
+                    document.getElementById('institution-display').innerText = data.institution_name;
+                    await AppStorage.set('current_institution_name', data.institution_name);
 
-                if (data.institution_id) {
-                    // ✅ CASE 1: Full Access (Institution Exists)
-                    await AppStorage.set('institution_id', data.institution_id);
-                    await AppStorage.set('institutionToken', 'verified');
-
-                    statusIcon.innerHTML = "&#10003;";
-                    statusIcon.style.color = "#0288d1"; // var(--primary)
-                    statusTitle.innerText = "Identity Confirmed";
-                    sign.style.background = "#0288d1";
-                    sign.innerText = "Access Granted";
-
-                    if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-                        Capacitor.Plugins.Haptics.notification({type: 'SUCCESS'});
+                    if (!cachedName) {
+                        document.getElementById('admin-welcome').innerText = "Management Overview";
+                        document.body.style.display = 'flex';
                     }
-
-                    setTimeout(() => {
-                        // Head straight to the dashboard
-                        window.location.replace(`../dashboard/dashboard.html`);
-                    }, 1500);
-
                 } else {
-                    // ⚠️ CASE 2: Identity exists but no Institution yet
-                    statusIcon.innerHTML = "!";
-                    statusTitle.innerText = "Profile Ready";
-                    sign.innerText = "Finalizing Setup...";
-
-                    setTimeout(() => {
-                        window.location.replace(`../setups/no-institution.html`);
-                    }, 1500);
+                    window.location.replace("../setups/no-institution.html");
                 }
-            } else if (response.status === 404 || response.status === 400) {
-                // ❌ CASE 3: Identity (Auth_id) is missing
-                sign.innerText = "Identity Missing";
-                setTimeout(() => window.location.replace("create_identity.html"), 1500);
-            } else {
-                throw new Error("Server Error");
             }
-        } catch (error) {
-            sign.style.background = "#e53935";
-            sign.innerText = "Connection Error";
-            // Retry logic for poor internet connections (common in some areas)
-            setTimeout(() => window.location.reload(), 5000);
+            else if (response.status === 401) {
+                // 🔴 Step 3: KILL THE LOOP
+                // Clear everything so Login page doesn't redirect back here
+                await AppStorage.remove('institutionToken');
+                await AppStorage.remove('current_institution_name');
+                await AppStorage.remove('user_role');
+                window.location.replace("../../index.html");
+            }
+        } catch (err) {
+            console.error("Sync Error:", err);
+            // Offline fallback
+            if (!cachedName) {
+                showNotify("Working Offline", "error");
+                document.getElementById('institution-display').innerText = "Offline Admin";
+                document.body.style.display = 'flex';
+            }
         }
-    }
-
-    window.onload = gatekeeper;
+    };
 </script>
 </body>
 </html>
