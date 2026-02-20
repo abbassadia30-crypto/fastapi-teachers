@@ -179,15 +179,15 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
 
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
-    # 1. Identity Check
+    # 1. Fetch User (Base User Model)
     user = db.query(User).filter(User.user_email == credentials.email).first()
 
     if not user or not verify_password(credentials.password, user.user_password):
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # 2. Verification Check (Linked via polymorphic ID)
-    v_info = db.query(Verification).filter(Verification.id == user.id).first()
-    if not v_info or not v_info.is_verified:
+    # 2. Verification Check (Updated for Relationship Logic)
+    # We check the linked 'verification' table via the relationship
+    if not user.verification_status or not user.verification_status.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
 
     # 3. Ban Check
@@ -195,22 +195,28 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     if ban_status:
         raise HTTPException(status_code=403, detail=f"Account suspended: {ban_status.ban_reason}")
 
-    # 4. Role-Specific Identity Check (Auth_id)
-    # This checks if the user has completed their 'Auth_id' profile
+    # 4. Identity Check (The fix for AttributeError)
     has_identity = False
-    if user.type:
-        # Check if an Auth_id record exists pointing to this user's specific role ID
-        role_attr = f"{user.type}_id"
-        identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
-        if identity_record:
-            has_identity = True
+
+    # We only run the dynamic attribute check if the user HAS a specific role.
+    # New users have the type 'user', which doesn't have an 'Auth_id' column.
+    institutional_roles = ["owner", "admin", "teacher", "student"]
+
+    if user.type in institutional_roles:
+        role_attr = f"{user.type}_id" # e.g., 'owner_id'
+
+        # Double-check that the attribute exists on the Auth_id model before querying
+        if hasattr(Auth_id, role_attr):
+            identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
+            if identity_record:
+                has_identity = True
 
     access_token = create_access_token(data={"sub": user.user_email})
 
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "role": user.type or "unassigned",
+        "role": user.type or "user",
         "user": user.user_name,
         "institution_id": user.last_active_institution_id,
         "identity": has_identity
