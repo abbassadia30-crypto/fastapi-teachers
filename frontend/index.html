@@ -132,32 +132,46 @@
         }
 
         try {
-            const token = await AppStorage.get('user_email');
-            const inst_token = await AppStorage.get('institutionToken');
+            const email = await AppStorage.get('user_email');
+            const auth_token = await AppStorage.get('auth_token');
             const role = await AppStorage.get('user_role');
-            const Identity = await AppStorage.get(`${role}_identity`);
-            const auth_token = await AppStorage.get('auth_token')
+            const inst_token = await AppStorage.get('institutionToken');
 
-            if ((token && auth_token) && inst_token && role && Identity) {
-                window.location.replace(`${role}/dashboard/dashboard.html`);
+            // Use a consistent key for identity to avoid role-name confusion
+            const identityStatus = await AppStorage.get(`${role}_identity`);
+
+            // If not logged in at all, show login page
+            if (!email || !auth_token) {
+                document.body.classList.add('ready');
+                return;
             }
-            else if ((token && auth_token) && role && Identity && !inst_token) {
-                window.location.replace(`${role}/setups/no-institution.html`);
+
+            // 1. If user hasn't picked a role yet (Default is "user" or "verified_user")
+            if (!role || role === "user" || role === "verified_user") {
+                window.location.replace("roles/role.html");
+                return;
             }
-            else if ((token && auth_token) && role && !Identity) {
-                // Simplified Identity path logic
+
+            // 2. If role is picked but Identity (Auth_id) is missing
+            if (!identityStatus) {
                 const path = (role === "owner" || role === "admin")
                     ? `admin/${role}_identity/create_identity.html`
                     : `${role}/setups/create_identity.html`;
                 window.location.replace(path);
+                return;
             }
-            else if ((token && auth_token) && !role) {
-                window.location.replace("roles/role.html");
+
+            // 3. If Identity is done but no Institution linked
+            if (!inst_token) {
+                window.location.replace(`${role}/setups/no-institution.html`);
+                return;
             }
-            else {
-                document.body.classList.add('ready');
-            }
+
+            if (role === 'owner' || role === 'admin') window.location.replace("admin/dashboard/dashboard.html")
+            else window.location.replace(`${role}/dashboard/dashboard.html`);
+
         } catch (e) {
+            console.error("Routing Error:", e);
             document.body.classList.add('ready');
         }
     }

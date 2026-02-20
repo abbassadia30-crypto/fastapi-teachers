@@ -124,7 +124,7 @@
 </div>
 
 <script src="../../js/storage.js"></script>
-<script src="../../js/check.js"></script>
+<script src="../../capacitors.js"></script>
 
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
@@ -171,7 +171,7 @@
                 await AppStorage.set('owner_identity', 'verified');
 
                 // Redirection to the next step (Sync/Verify page)
-                window.location.href = "verify_sync.html";
+                window.location.href = "identity_check.html";
             } else {
                 const data = await response.json();
                 showNotify(data.detail || "Database rejected profile");

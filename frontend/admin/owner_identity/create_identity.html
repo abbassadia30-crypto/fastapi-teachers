@@ -22,7 +22,18 @@
     <h1>Founder's Identity</h1>
     <p>As the Institution Owner, your profile will be the face of this institution for staff and students. Let's set up your official identity.</p>
 
-    <button class="btn" onclick="window.location.href='form.html'">Start Setup</button>
+    <button class="btn" onclick="navigateToForm()">Start Setup</button>
 </div>
+<script>
+    function navigateToForm() {
+        // Optional: Add haptic feedback for that premium Android feel
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+            Capacitor.Plugins.Haptics.impact({ style: 'MEDIUM' });
+        }
+
+        // Use ./ to ensure the WebView stays within the app package
+        window.location.href = "./form.html";
+    }
+</script>
 </body>
 </html>

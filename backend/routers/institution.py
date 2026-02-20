@@ -172,8 +172,8 @@ async def get_sync_state(
 
     # 2. Check Identity Essential (Auth_id table)
     role_type = current_user.type
-    role_col = getattr(models.Auth_id, f"{role_type}_id")
-    identity = db.query(models.Auth_id).filter(role_col == current_user.id).first()
+    role_col = getattr(Auth_id, f"{role_type}_id")
+    identity = db.query(Auth_id).filter(role_col == current_user.id).first()
 
     if not identity:
         return JSONResponse(status_code=400, content={"error": "identity_missing"})
