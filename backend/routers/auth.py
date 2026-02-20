@@ -313,7 +313,7 @@ async def sync_user_state(
     }
 
 
-@router.get("/auth/manual-push/{email}")
+@router.get("/manual-push/{email}")
 async def manual_push(email: str, db: Session = Depends(get_db)):
     # 1. Find the user and their token
     user = db.query(User).filter(User.user_email == email).first()
