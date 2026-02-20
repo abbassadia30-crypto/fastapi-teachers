@@ -6,7 +6,7 @@ from backend.routers.auth import get_current_user
 from backend.models.admin.institution import  School, Academy, College
 from backend.schemas.User.login import RoleUpdate
 from backend.models.User import User
-from backend.models.User import User, Admin, Teacher, Student, Owner
+from backend.models.User import User, Admin, Teacher, Student, Owner , Auth_id
 from backend.models.admin.profile import Profile # Ensure this path is correct
 
 router = APIRouter(
