@@ -135,6 +135,7 @@ async def get_me(current_user: User = Depends(get_current_user)):
         "institutional_bio": profile.institutional_bio if profile else ""
     }
 
+
 @router.post("/signup")
 async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
     # 1. Base query
