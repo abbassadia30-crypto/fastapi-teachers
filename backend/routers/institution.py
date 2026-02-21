@@ -193,7 +193,7 @@ async def get_sync_state(
 
 @router.get("/verify-setup-eligibility")
 async def verify_setup_eligibility(
-        db: Session = Depends(get_db),
+        db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
     # 1. Check if Account exists (get_current_user already handles this via JWT)
