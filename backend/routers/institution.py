@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Body, status
 from sqlalchemy.orm import Session
-
+from auth import send_email_task
 from backend import database  # Use relative imports for core files
 from backend.routers.auth import get_current_user
 from backend.models.admin.institution import  School, Academy, College
