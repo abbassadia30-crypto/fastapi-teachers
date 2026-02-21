@@ -43,22 +43,30 @@ async def check_essentials(
         "full_name": identity.full_name
     }
 
+import secrets
+import string
+
 @router.post("/create-school", status_code=status.HTTP_201_CREATED)
 async def create_school(
         payload: SchoolSchema,
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Verification: Get the Owner record for the current user
+    # 1. Verification Logic
     owner_record = db.query(Owner).filter(Owner.id == current_user.id).first()
+    if not owner_record or owner_record.institution_id:
+        raise HTTPException(status_code=400, detail="User already linked to an institution.")
 
-    if not owner_record:
-        raise HTTPException(status_code=403, detail="Only verified owners can create institutions.")
+    # 🏛️ 2. GENERATE CUSTOM KEYS
+    # Ref: 8-digit long integer (e.g., 82749102)
+    # We use a range that ensures it is always 8 digits
+    generated_ref = str(secrets.randbelow(90000000) + 10000000)
 
-    if owner_record.institution_id:
-        raise HTTPException(status_code=400, detail="User already owns an institution.")
+    # Join Key: 10 chars (Mix of Uppercase Letters and Digits)
+    alphabet = string.ascii_uppercase + string.digits
+    generated_join_key = ''.join(secrets.choice(alphabet) for _ in range(10))
 
-    # 2. Map payload to School Model (which inherits from Institution)
+    # 3. Final Mapping
     new_school = School(
         name=payload.name,
         description=payload.description,
@@ -67,26 +75,33 @@ async def create_school(
         email=str(payload.email) if payload.email else None,
         principal_name=payload.principal_name,
         campus=payload.campus,
-        website=payload.website
+        website=payload.website,
+        # 🏛️ Applied specific requirements
+        inst_ref=generated_ref,
+        join_key=generated_join_key
     )
 
-    db.add(new_school)
-    db.flush() # Generate new_school.id
+    try:
+        db.add(new_school)
+        db.flush()
 
-    # 🏛️ THE BRIDGE: Link the Owner to the Institution
-    owner_record.institution_id = new_school.id
+        # Establish relationships
+        owner_record.institution_id = new_school.id
+        current_user.last_active_institution_id = new_school.id
 
-    # 🏛️ Update the User's last active marker for universal routing
-    current_user.last_active_institution_id = new_school.id
+        db.commit()
+        db.refresh(new_school)
 
-    db.commit()
-    db.refresh(new_school)
-
-    return {
-        "status": "success",
-        "message": "Institution registered",
-        "institution_id": new_school.id # Or new_school.inst_uuid if you prefer
-    }
+        return {
+            "status": "success",
+            "institution_id": new_school.id,
+            "reference_number": new_school.inst_ref,
+            "admission_key": new_school.join_key
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Deployment Error: {e}")
+        raise HTTPException(status_code=500, detail="Institutional keys collision. Please try again.")
 
 @router.post("/create-academy", status_code=status.HTTP_201_CREATED)
 async def create_academy(
