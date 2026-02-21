@@ -49,31 +49,35 @@ async def create_school(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Validation
-    existing = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
-    if existing:
+    # 1. Verification: Get the Owner record for the current user
+    owner_record = db.query(Owner).filter(Owner.id == current_user.id).first()
+
+    if not owner_record:
+        raise HTTPException(status_code=403, detail="Only verified owners can create institutions.")
+
+    if owner_record.institution_id:
         raise HTTPException(status_code=400, detail="User already owns an institution.")
 
-    # 2. Map payload to School Model
+    # 2. Map payload to School Model (which inherits from Institution)
     new_school = School(
-        owner_id=current_user.id,
         name=payload.name,
         description=payload.description,
         type="school",
         address=payload.address,
-        email=str(payload.email) if payload.email else None, # Explicitly cast to string
+        email=str(payload.email) if payload.email else None,
         principal_name=payload.principal_name,
         campus=payload.campus,
         website=payload.website
     )
 
-    # 3. Save School first to generate its ID
     db.add(new_school)
-    db.flush()  # This allows us to access new_school.id before the final commit
+    db.flush() # Generate new_school.id
 
-    # 4. Link User to the new institution
-    current_user.has_institution = True
-    current_user.institution_id = new_school.id
+    # 🏛️ THE BRIDGE: Link the Owner to the Institution
+    owner_record.institution_id = new_school.id
+
+    # 🏛️ Update the User's last active marker for universal routing
+    current_user.last_active_institution_id = new_school.id
 
     db.commit()
     db.refresh(new_school)
@@ -81,7 +85,7 @@ async def create_school(
     return {
         "status": "success",
         "message": "Institution registered",
-        "institution_id": new_school.institution_id # This is the UUID string
+        "institution_id": new_school.id # Or new_school.inst_uuid if you prefer
     }
 
 @router.post("/create-academy", status_code=status.HTTP_201_CREATED)

@@ -155,7 +155,7 @@
         btn.innerText = "Syncing with Server...";
 
         try {
-            const token = await AppStorage.get('institutionToken');
+            const token = await AppStorage.get('auth_token');
 
             const response = await fetch(`${API_BASE}/profile/create`, {
                 method: 'POST',

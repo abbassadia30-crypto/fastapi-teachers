@@ -74,7 +74,7 @@
     // --- 1. SESSION INITIALIZATION ---
     window.onload = async () => {
         try {
-            authToken = await AppStorage.get('institutionToken');
+            authToken = await AppStorage.get('auth_token');
             if (!authToken) {
                 showSign("Unauthorized: Please Login", "error");
                 setTimeout(() => { window.location.href = "../../index.html"; }, 2000);
