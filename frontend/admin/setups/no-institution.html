@@ -137,15 +137,15 @@
 
             // 1. Role Check
             if (!role || role === "user" || role === "verified_user") {
-                window.location.replace("roles/role.html");
+                window.location.replace("../roles/role.html");
                 return;
             }
 
             // 2. Identity Check (Auth_id table)
             if (!hasIdentity) {
                 const identityPath = (role === "owner" || role === "admin")
-                    ? `admin/${role}_identity/create_identity.html`
-                    : `${role}/setups/create_identity.html`;
+                    ? `../admin/${role}_identity/create_identity.html`
+                    : `../${role}/setups/create_identity.html`;
                 window.location.replace(identityPath);
                 return;
             }
@@ -154,8 +154,8 @@
             // If they have identity but already have an institution, go to dashboard
             if (verification.institution_id) {
                 const dashPath = (role === 'owner' || role === 'admin')
-                    ? `admin/dashboard/dashboard.html`
-                    : `${role}/dashboard/dashboard.html`;
+                    ? `../admin/dashboard/dashboard.html`
+                    : `../${role}/dashboard/dashboard.html`;
                 window.location.replace(dashPath);
                 return;
             }

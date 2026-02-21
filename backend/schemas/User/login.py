@@ -17,6 +17,7 @@ class VerifyOTP(BaseModel):
 class LoginSchema(BaseModel):
     email: EmailStr
     password: str
+    fcm_token: Optional[str] = None
 
 class Token(BaseModel):
     access_token: str
@@ -24,7 +25,8 @@ class Token(BaseModel):
     role: Optional[str] = "unassigned"
     user: str
     institution_id: Optional[int] = None
-    identity: bool # Tells frontend if Auth_id exists
+    identity: bool
+    model_config = {"from_attributes": True}
 
 class RoleUpdate(BaseModel):
     role: str

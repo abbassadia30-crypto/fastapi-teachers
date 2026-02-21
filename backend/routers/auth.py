@@ -12,7 +12,7 @@ from .. import database
 from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncStateResponse
 from backend.models.admin.institution import Institution
-from backend.models.User import User , UserBan , Verification , Auth_id
+from backend.models.User import User , UserBan , Verification , Auth_id  , SecurityLog
 from firebase_admin import messaging
 
 load_dotenv()
@@ -180,43 +180,69 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     # 1. Fetch User
     user = db.query(User).filter(User.user_email == credentials.email).first()
 
-    if not user or not verify_password(credentials.password, user.user_password):
+    if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials.")
 
-    # 2. Verification Check (Fixed for Inheritance)
-    # If the user is a 'Verification' object, check its status.
-    # If it's a base 'User', check if it's verified (depending on your signup logic)
+    # 🏛️ 2. BRUTE FORCE PROTECTION (6 Attempts Logic)
+    sec_log = db.query(SecurityLog).filter(SecurityLog.user_id == user.id).first()
 
-    is_verified = False
-    if isinstance(user, Verification):
-        is_verified = user.is_verified
-    elif hasattr(user, 'is_verified'): # Fallback if model changes
-        is_verified = user.is_verified
-    else:
-        # If it's a base User, we look for the linked Verification record manually
-        v_record = db.query(Verification).filter(Verification.id == user.id).first()
-        if v_record:
-            is_verified = v_record.is_verified
+    if sec_log and sec_log.blocked_until and sec_log.blocked_until > datetime.utcnow():
+        wait_time = sec_log.blocked_until - datetime.utcnow()
+        hours = int(wait_time.total_seconds() // 3600)
+        minutes = int((wait_time.total_seconds() % 3600) // 60)
+        raise HTTPException(
+            status_code=403,
+            detail=f"Too many attempts. Blocked for {hours}h {minutes}m."
+        )
 
-    if not is_verified:
+    # 3. Credential Verification
+    if not verify_password(credentials.password, user.user_password):
+        # 🏛️ Handle Failure: Increment attempts
+        if not sec_log:
+            sec_log = SecurityLog(user_id=user.id, attempts=1)
+            db.add(sec_log)
+        else:
+            sec_log.attempts += 1
+            sec_log.last_attempt = datetime.utcnow()
+            if sec_log.attempts >= 6:
+                sec_log.blocked_until = datetime.utcnow() + timedelta(days=1)
+
+        db.commit()
+        remaining = 6 - (sec_log.attempts if sec_log.attempts < 6 else 6)
+        raise HTTPException(
+            status_code=401,
+            detail=f"Invalid credentials. {remaining} attempts left."
+        )
+
+    # 4. Verification Check
+    v_record = db.query(Verification).filter(Verification.id == user.id).first()
+    if not v_record or not v_record.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email first.")
 
-    # 3. Ban Check
+    # 5. Ban Check
     ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
     if ban_status:
         raise HTTPException(status_code=403, detail=f"Account suspended: {ban_status.ban_reason}")
 
-    # 4. Identity Check
+    # 🏛️ 6. SUCCESS: Reset Security & Save FCM Token
+    if sec_log:
+        sec_log.attempts = 0
+        sec_log.blocked_until = None
+
+    # Update FCM Token from the request (Ensure credentials schema includes fcm_token)
+    if hasattr(credentials, 'fcm_token') and credentials.fcm_token:
+        user.fcm_token = credentials.fcm_token
+
+    db.commit()
+
+    # 7. Identity Check
     has_identity = False
     institutional_roles = ["owner", "admin", "teacher", "student"]
-
-    # We use 'user.type' because inheritance sets this automatically
     if user.type in institutional_roles:
         role_attr = f"{user.type}_id"
-        if hasattr(Auth_id, role_attr):
-            identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
-            if identity_record:
-                has_identity = True
+        identity_record = db.query(Auth_id).filter(getattr(Auth_id, role_attr) == user.id).first()
+        if identity_record:
+            has_identity = True
 
     access_token = create_access_token(data={"sub": user.user_email})
 

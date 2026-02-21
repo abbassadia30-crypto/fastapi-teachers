@@ -174,3 +174,12 @@ class Auth_id(Base):
     admin = relationship("Admin", back_populates="auth_id")
     teacher = relationship("Teacher", back_populates="auth_id")
     student = relationship("Student", back_populates="auth_id")
+
+
+class SecurityLog(Base):
+    __tablename__ = "security_logs"
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    attempts = Column(Integer, default=0)
+    blocked_until = Column(DateTime, nullable=True)
+    last_attempt = Column(DateTime, default=datetime.utcnow)

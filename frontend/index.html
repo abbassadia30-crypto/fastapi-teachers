@@ -227,6 +227,9 @@
         const emailInput = document.getElementById('email').value.trim();
         const passwordInput = document.getElementById('password').value;
 
+        // 🏛️ Get FCM Token from Storage (set during Capacitor app init)
+        const fcmToken = await AppStorage.get('fcm_token') || null;
+
         btn.disabled = true;
         btn.innerText = "Authenticating...";
 
@@ -234,43 +237,64 @@
             const response = await fetch(`${API_BASE}/auth/login`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ email: emailInput, password: passwordInput })
+                body: JSON.stringify({
+                    email: emailInput,
+                    password: passwordInput,
+                    fcm_token: fcmToken // ⚡ Syncing device for future alerts
+                })
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // 1. Core Auth
+                // 🏛️ HYDRATION: Saving all pillars of the Institution App
                 await AppStorage.set('user_email', emailInput);
                 await AppStorage.set('auth_token', data.access_token);
+                await AppStorage.set('user_name', data.user);
 
-                // 2. Role Status
-                if (data.role && data.role !== "unassigned") {
-                    await AppStorage.set('user_role', data.role);
-                }
+                // Role Management
+                const role = data.role || "user";
+                await AppStorage.set('user_role', role);
 
-                // 3. Identity Status (Critical for your redirection logic)
+                // Identity Management (Boolean)
                 if (data.identity) {
-                    await AppStorage.set(`${data.role}_identity`, data.identity);
+                    await AppStorage.set(`${role}_identity`, true);
                 }
 
+                // Institution Link
+                if (data.institution_id) {
+                    await AppStorage.set('institution_id', data.institution_id);
+                }
 
-                if (data.institution_id) await AppStorage.set('institution_id', data.institution_id);
+                // 🏛️ Green Sign Box (Success)
+                showSignBox("Login Successful! Access Granted.", "green");
 
+                // ⚡ Move to Gatekeeper/Dashboard after a short delay
+                setTimeout(() => { checkExistingSession(); }, 1200);
 
-                Notification.show("Login Successful!", "success");
-
-                // 5. Trigger the Routing Logic immediately
-                setTimeout(() => { checkExistingSession(); }, 1000);
             } else {
-                Notification.show(data.detail || "Invalid Credentials", "error");
+                // 🏛️ Red Sign Box (Handling 401 Unauthorized or 403 Blocked)
+                // This will show: "Invalid credentials. 3 attempts left" or "Blocked for 24h"
+                showSignBox(data.detail || "Authentication Failed", "red");
                 btn.disabled = false;
                 btn.innerText = "Login";
             }
         } catch (error) {
-            Notification.show("Server Unreachable", "error");
+            showSignBox("Institutional Server Unreachable", "red");
             btn.disabled = false;
             btn.innerText = "Login";
+        }
+    }
+
+    // 🏛️ Helper to ensure we follow your "No Alerts" rule
+    function showSignBox(message, color) {
+        const sign = document.getElementById('error-sign'); // Ensure this ID exists in your HTML
+        if (sign) {
+            sign.innerText = message;
+            sign.style.background = color === "green" ? "#27ae60" : "#e53935";
+            sign.style.display = "block";
+            // Auto-hide after 5 seconds
+            setTimeout(() => { sign.style.display = "none"; }, 5000);
         }
     }
 </script>

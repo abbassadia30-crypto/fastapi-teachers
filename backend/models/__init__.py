@@ -1,5 +1,5 @@
 from .base import Base
-from .User import User, UserBan, Report, Block, Verification , Owner, Admin , Teacher , Student , Auth_id
+from .User import User, UserBan, Report, Block, Verification , Owner, Admin , Teacher , Student , Auth_id ,SecurityLog
 from .admin.institution import Institution, School, Academy, College
 from .admin.profile import UserBio, Profile
 from .admin.document import (
@@ -16,5 +16,5 @@ __all__ = [
     "Transaction", "FinanceTemplate", "Voucher", 
     "AcademicResult", "PaperVault", "AttendanceLog", 
     "IndividualAttendance", "student", "Staff", "teacher",
-    "Owner", "Admin" , "Teacher" , "Student" , "Auth_id"
+    "Owner", "Admin" , "Teacher" , "Student" , "Auth_id" , "SecurityLog"
 ]
