@@ -41,7 +41,10 @@ class Owner(User):
     # Role-Specific Data
     profile = relationship("Profile", back_populates="owner_role", uselist=False,
                        foreign_keys="Profile.owner_id") # Explicitly link to owner_id
-    institution = relationship("Institution", back_populates="owner")
+
+    institution = relationship("Institution",
+                           back_populates="owner",
+                           foreign_keys=[institution_id])
 
     auth_id = relationship("Auth_id", back_populates="owner", uselist=False)
 

@@ -16,13 +16,15 @@ class Institution(Base, TimestampMixin):
     email = Column(String)
     is_active = Column(Boolean, default=True)
     description = Column(Text, nullable=True)
-    owner_id = Column(Integer , ForeignKey("owner.id"))
+    owner_id = Column(Integer, ForeignKey("owner.id"))
     inst_ref = Column(String(8), unique=True, index=True, nullable=False)
     join_key = Column(String(10), unique=True, nullable=False)
 
     # 👑 THE CORE ROLES (Inherited from User)
-    owner = relationship("Owner", back_populates="institution", uselist=False,
-                         foreign_keys="Owner.institution_id")
+    owner = relationship("Owner",
+                     back_populates="institution",
+                     uselist=False,
+                     foreign_keys=[owner_id])
 
     admins = relationship("Admin", back_populates="institution",
                           foreign_keys="Admin.institution_id")
