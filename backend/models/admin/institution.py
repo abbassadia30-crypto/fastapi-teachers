@@ -17,7 +17,6 @@ class Institution(Base, TimestampMixin):
     is_active = Column(Boolean, default=True)
     description = Column(Text, nullable=True)
     owner_id = Column(Integer , ForeignKey("owner.id"))
-
     inst_ref = Column(String(8), unique=True, index=True, nullable=False)
     join_key = Column(String(10), unique=True, nullable=False)
 
