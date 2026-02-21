@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="capacitor.js"></script>
     <script src="js/storage.js"></script>
+    <script src="js/init.js"></script>
     <style>
         /* 1. Global Reset & Hidden State */
         body {
@@ -228,7 +229,7 @@
         const passwordInput = document.getElementById('password').value;
 
         // 🏛️ Get FCM Token from Storage (set during Capacitor app init)
-        const fcmToken = await AppStorage.get('fcm_token') || null;
+        const fcmToken = await AppStorage.get('fcm_token');
 
         btn.disabled = true;
         btn.innerText = "Authenticating...";

@@ -175,6 +175,7 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
     db.commit()
     background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
     return {"status": "success", "message": "Verification code sent to email."}
+
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     # 1. Fetch User
@@ -215,9 +216,13 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
         )
 
     # 4. Verification Check
-    v_record = db.query(Verification).filter(Verification.id == user.id).first()
-    if not v_record or not v_record.is_verified:
-        raise HTTPException(status_code=403, detail="Please verify your email first.")
+        is_verified = db.query(Verification.is_verified).filter(Verification.id == user.id).scalar()
+
+        if not is_verified:
+            raise HTTPException(
+        status_code=403,
+        detail="Institutional access requires email verification."
+    )
 
     # 5. Ban Check
     ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
