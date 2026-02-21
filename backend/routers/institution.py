@@ -163,37 +163,75 @@ async def setup_workspace(
 
 @router.get("/sync-state")
 async def get_sync_state(
+        background_tasks: BackgroundTasks,
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. Check Role Essential
+    # 1. Logic Gates
     if not current_user.type:
         return JSONResponse(status_code=400, content={"error": "role_missing"})
 
-    # 2. Check Identity Essential (Auth_id table)
-    role_type = current_user.type
-    role_col = getattr(Auth_id, f"{role_type}_id")
+    role_col = getattr(Auth_id, f"{current_user.type}_id")
     identity = db.query(Auth_id).filter(role_col == current_user.id).first()
 
     if not identity:
         return JSONResponse(status_code=400, content={"error": "identity_missing"})
 
-    # 3. Check Institution Essential
-    inst_id = getattr(current_user, "last_active_institution_id", None)
-
-    # Trigger Push Notification only if identity is verified but inst_id is the final step
-    if current_user.fcm_token:
-        try:
-            send_push_to_user(
-                current_user.fcm_token,
-                "Profile Synchronized! ✨",
-                f"Hello {identity.full_name}, your identity is verified. Proceeding to workspace."
-            )
-        except Exception as e:
-            print(f"Push failed: {e}")
+    # 2. Formal Email (The only communication sent now)
+    background_tasks.add_task(
+        send_email_task,
+        current_user.user_email,
+        identity.full_name,
+        "Your identity verification is complete. Your institutional profile is now active."
+    )
 
     return {
-        "user_role": role_type,
-        "institution_id": inst_id,
+        "user_role": current_user.type,
+        "institution_id": getattr(current_user, "last_active_institution_id", None),
+        "full_name": identity.full_name
+    }
+
+@router.get("/verify-setup-eligibility")
+async def verify_setup_eligibility(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # 1. Check if Account exists (get_current_user already handles this via JWT)
+    if not current_user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # 2. Check for Role
+    if not current_user.type or current_user.type in ["user", "verified_user"]:
+        return {
+            "exists": True,
+            "role_assigned": False,
+            "identity_verified": False,
+            "has_institution": False
+        }
+
+    # 3. Check for Identity (Auth_id table)
+    role_type = current_user.type
+    # Dynamically get the column (e.g., owner_id, admin_id)
+    role_col = getattr(Auth_id, f"{role_type}_id")
+    identity = db.query(Auth_id).filter(role_col == current_user.id).first()
+
+    if not identity:
+        return {
+            "exists": True,
+            "role_assigned": True,
+            "role": role_type,
+            "identity_verified": False,
+            "has_institution": False
+        }
+
+    # 4. Check for existing Institution
+    has_inst = current_user.last_active_institution_id is not None
+
+    return {
+        "exists": True,
+        "role_assigned": True,
+        "role": role_type,
+        "identity_verified": True,
+        "has_institution": has_inst,
         "full_name": identity.full_name
     }

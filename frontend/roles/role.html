@@ -135,22 +135,75 @@
         }
 
         try {
-            const token = await AppStorage.get('user_email');
-            const inst_token = await AppStorage.get('institutionToken');
-            const role = await AppStorage.get('user_role');
-            const Identity = await AppStorage.get(`${role}_identity`);
+            const [email, auth_token, role, inst_id] = await Promise.all([
+                AppStorage.get('user_email'),
+                AppStorage.get('auth_token'),
+                AppStorage.get('user_role'),
+                AppStorage.get('institution_id')
+            ]);
 
-            if (token && inst_token && role && Identity) {
-                window.location.replace(`../${role}/dashboard/dashboard.html`);
-            } else {
-                document.body.classList.add('ready');
+            const identityStatus = await AppStorage.get(`${role}_identity`);
+
+            if (!email && !auth_token) {
+                window.location.replace("../index.html");
+                return;
             }
+
+            if (!role || role === "user" || role === "verified_user") {
+                document.body.classList.add('ready');
+                return;
+            }
+
+            // 2. If role is picked but Identity (Auth_id) is missing
+            if (!identityStatus) {
+                const path = (role === "owner" || role === "admin")
+                    ? `../admin/${role}_identity/create_identity.html`
+                    : `../${role}/setups/create_identity.html`;
+                window.location.replace(path);
+                return;
+            }
+
+            if (role === 'owner' || role === 'admin') {
+                if (identityStatus) {
+                    window.location.replace("../admin/dashboard/dashboard.html")
+                    return;
+                } else {
+                    window.location.replace(`../admin/${role}_identity.html`)
+                    return;
+                }
+            }
+            else
+            {
+                if (identityStatus){
+                    window.location.replace(`../${role}/dashboard/dashboard.html`)
+                    return;
+                }
+                else {
+                    window.location.replace(`../${role}/${role}_identity/create_identity.html`)
+                    return;
+                }
+            }
+
+            // 3. If Identity is done but no Institution linked
+            if (inst_token) {
+                window.location.replace(`../${role}/dashboard/dashboard.html`);
+                return;
+            }
+            else
+            {
+                window.location.replace(`../${role}/setups/no-institution.html`);
+                return;
+            }
+
+
         } catch (e) {
+            console.error("Routing Error:", e);
             document.body.classList.add('ready');
         }
     }
 
     checkExistingSession();
+
 
     const Notification = {
         el: document.getElementById('notification-bar'),

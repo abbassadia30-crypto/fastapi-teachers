@@ -16,7 +16,6 @@
             justify-content: center;
             height: 100vh;
             color: #333;
-            /* Initially hidden to check ownership silently */
             opacity: 0;
             transition: opacity 0.4s ease;
         }
@@ -45,7 +44,7 @@
             margin: 0 auto 20px;
         }
 
-        h1 { font-size: 24px; margin: 0 0 10px; color: #1a1a1a; }
+        h1 { font-size: 22px; margin: 0 0 10px; color: #1a1a1a; }
         p { color: #666; line-height: 1.6; margin-bottom: 30px; font-size: 14px; }
 
         .btn-group { display: flex; flex-direction: column; gap: 12px; }
@@ -60,35 +59,9 @@
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            display: block;
             transition: 0.3s;
         }
 
-        .btn-search {
-            background: #2b5de4;
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .btn-back {
-            margin-top: 20px;
-            background: transparent;
-            color: #888;
-            border: none;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        /* Red Sign Box for errors (Replaces alerts) */
         #error-sign {
             display: none;
             position: fixed;
@@ -102,7 +75,7 @@
             font-weight: bold;
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             z-index: 2000;
-            width: 80%;
+            width: 85%;
             text-align: center;
         }
     </style>
@@ -111,14 +84,13 @@
 
 <div id="error-sign"></div>
 
-<div class="setup-card" id="card-content">
+<div class="setup-card">
     <div class="icon-circle">🏛️</div>
     <h1>Workspace Required</h1>
-    <p>Welcome, Admin. To start managing your <b>institution</b>, you need to either create a new workspace or search for an existing one on the platform.</p>
+    <p>Welcome, Admin. To start managing your <b>institution</b>, you need to create a new workspace on the platform.</p>
 
     <div class="btn-group">
         <a href="setup-type.html" class="btn-setup">Create New Institution</a>
-        <a href="../../plateforme/search.html" class="btn-search">Search Platform</a>
     </div>
 </div>
 
@@ -128,123 +100,115 @@
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
 
-    function showError(msg) {
+    function showSignBox(msg) {
         const sign = document.getElementById('error-sign');
         sign.innerText = msg;
         sign.style.display = 'block';
-
-        // Ensure user can see something if a critical error occurs
         document.body.style.opacity = '1';
-
-        if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
-            Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
-        }
-
-        // Auto-redirect after error as per your original logic
-        setTimeout(() => { window.location.href = "../../index.html"; }, 2500);
     }
 
-
-    window.onload = async () => {
-        let authToken;
-        try {
-            authToken = await AppStorage.get('institutionToken');
-        } catch (e) {
-            console.error("Storage error");
-        }
-
-        if (!authToken) {
-            showError("No session found. Redirecting...");
+    async function checkExistingSession() {
+        if (typeof AppStorage === 'undefined' || !AppStorage.get) {
+            setTimeout(checkExistingSession, 50);
             return;
         }
 
         try {
-            const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
+            const email = await AppStorage.get('user_email');
+            const token = await AppStorage.get('auth_token');
+
+            if (!email || !token) {
+                window.location.replace("../../index.html");
+                return;
+            }
+
+            // 🏛️ Verification Masterstroke: Check existence and hydrate role/identity
+            const verification = await verifyUserAndIdentity(email, token);
+
+            if (!verification.exists) {
+                showSignBox("Account not found. Redirecting...");
+                await AppStorage.clear();
+                setTimeout(() => window.location.replace("../../index.html"), 2000);
+                return;
+            }
+
+            const role = verification.role;
+            const hasIdentity = verification.identity;
+
+            // 1. Role Check
+            if (!role || role === "user" || role === "verified_user") {
+                window.location.replace("roles/role.html");
+                return;
+            }
+
+            // 2. Identity Check (Auth_id table)
+            if (!hasIdentity) {
+                const identityPath = (role === "owner" || role === "admin")
+                    ? `admin/${role}_identity/create_identity.html`
+                    : `${role}/setups/create_identity.html`;
+                window.location.replace(identityPath);
+                return;
+            }
+
+            // 3. Institution Check
+            // If they have identity but already have an institution, go to dashboard
+            if (verification.institution_id) {
+                const dashPath = (role === 'owner' || role === 'admin')
+                    ? `admin/dashboard/dashboard.html`
+                    : `${role}/dashboard/dashboard.html`;
+                window.location.replace(dashPath);
+                return;
+            }
+
+            // 🏛️ If all yes (Email, Role, Identity) but NO institution, stay here.
+            document.body.style.opacity = '1';
+
+        } catch (e) {
+            console.error("Routing Error:", e);
+            document.body.style.opacity = '1';
+        }
+    }
+
+    async function verifyUserAndIdentity(email, token) {
+        try {
+            const res = await fetch(`${API_BASE}/institution/verify-setup-eligibility`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 }
             });
 
-            const data = await response.json();
+            if (!res.ok) return { exists: false };
 
-            if (data.has_institution === true) {
-                // User owns an institution -> Save name and go to dashboard
-                await AppStorage.set('current_institution_name', data.institution_name);
-                window.location.href = "../dashboard/dashboard.html";
-            } else {
-                // User has no institution -> Reveal setup options
-                document.body.style.opacity = '1';
+            const data = await res.json();
+
+            // 🏛️ Re-sync AppStorage with the latest DB state
+            if (data.role) await AppStorage.set('user_role', data.role);
+            if (data.identity_verified) {
+                await AppStorage.set(`${data.role}_identity`, true);
             }
-        } catch (err) {
-            console.error("Network check failed:", err);
-            // On network failure, show page so they can try manual buttons/search
-            document.body.style.opacity = '1';
-        }
-    };
 
-    window.onload = async () => {
-        // 1. Check if the token exists in Capacitor storage
-        const userEmail = await AppStorage.get('user_email'); // Assuming you store this at login
-
-        if (!userEmail) {
-            window.location.href = "../../index.html";
-            return;
-        }
-
-        // 2. Run the existence check immediately on load
-        if (userEmail) {
-            const isStillValid = await verifyUser(userEmail);
-
-            if (!isStillValid) {
-                // If the user was deleted or email changed, force logout
-                showNotify("Session invalid. Please re-authenticate.", "error");
-                await AppStorage.clear();
-                setTimeout(() => {
-                    window.location.href = "../../index.html";
-                }, 2000);
-            }
-        }
-    };
-
-    async function verifyUser(identifier) {
-        const loader = document.getElementById('loading');
-        if (loader) loader.style.display = 'flex';
-
-        try {
-            const response = await fetch(`${API_BASE}/auth/check-existence?email=${identifier}`);
-            if (!response.ok) throw new Error("Server Error");
-
-            const data = await response.json();
-
-            if (data.exists) {
-                // 🏛️ HYDRATION: Store everything for offline use
-                const info = data.user_data;
-                await AppStorage.set('user_name', info.name);
-                await AppStorage.set('user_role', info.role);
-                await AppStorage.set('inst_id', info.institution_id);
-                await AppStorage.set('last_sync', new Date().toISOString());
-
-                console.log("Super Console: Offline state hydrated.");
-                return true;
-            } else {
-                // Account gone (DB wipe)
-                showNotify("Account session lost. Please log in again.", "error");
-                await AppStorage.clear();
-                return false;
-            }
-        } catch (error) {
-            // 🚀 THE OFFLINE MASTERSTROKE:
-            // If the network fails, we DON'T log them out.
-            // We let them use the data already in storage.
-            console.warn("Offline Mode: Using cached storage data.");
+            return {
+                exists: data.exists,
+                role: data.role,
+                identity: data.identity_verified,
+                institution_id: data.has_institution // If true, the main script will redirect them to dashboard
+            };
+        } catch (e) {
+            // 🚀 Offline Masterstroke: Use cache if the network fails
+            console.warn("Network unreachable, using local cache.");
             const cachedRole = await AppStorage.get('user_role');
-            return !!cachedRole; // Return true if we have cached data
-        } finally {
-            if (loader) loader.style.display = 'none';
+            const cachedIdentity = await AppStorage.get(`${cachedRole}_identity`);
+            return {
+                exists: !!cachedRole,
+                role: cachedRole,
+                identity: !!cachedIdentity
+            };
         }
     }
+
+    checkExistingSession();
 </script>
 </body>
 </html>

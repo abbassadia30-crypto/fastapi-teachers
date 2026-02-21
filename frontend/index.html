@@ -132,21 +132,20 @@
         }
 
         try {
-            const email = await AppStorage.get('user_email');
-            const auth_token = await AppStorage.get('auth_token');
-            const role = await AppStorage.get('user_role');
-            const inst_token = await AppStorage.get('institutionToken');
+            const [email, auth_token, role, inst_id] = await Promise.all([
+                AppStorage.get('user_email'),
+                AppStorage.get('auth_token'),
+                AppStorage.get('user_role'),
+                AppStorage.get('institution_id')
+            ]);
 
-            // Use a consistent key for identity to avoid role-name confusion
             const identityStatus = await AppStorage.get(`${role}_identity`);
 
-            // If not logged in at all, show login page
-            if (!email || !auth_token) {
+            if (!email && !auth_token) {
                 document.body.classList.add('ready');
                 return;
             }
 
-            // 1. If user hasn't picked a role yet (Default is "user" or "verified_user")
             if (!role || role === "user" || role === "verified_user") {
                 window.location.replace("roles/role.html");
                 return;
@@ -161,14 +160,38 @@
                 return;
             }
 
+            if (role === 'owner' || role === 'admin') {
+                if (identityStatus) {
+                    window.location.replace("admin/dashboard/dashboard.html")
+                    return;
+                } else {
+                    window.location.replace(`admin/${role}_identity.html`)
+                    return;
+                }
+            }
+            else
+            {
+                if (identityStatus){
+                    window.location.replace(`${role}/dashboard/dashboard.html`)
+                    return;
+                }
+                else {
+                    window.location.replace(`${role}/${role}_identity/create_identity.html`)
+                    return;
+                }
+            }
+
             // 3. If Identity is done but no Institution linked
-            if (!inst_token) {
+            if (inst_token) {
+                window.location.replace(`${role}/dashboard/dashboard.html`);
+                return;
+            }
+            else
+            {
                 window.location.replace(`${role}/setups/no-institution.html`);
                 return;
             }
 
-            if (role === 'owner' || role === 'admin') window.location.replace("admin/dashboard/dashboard.html")
-            else window.location.replace(`${role}/dashboard/dashboard.html`);
 
         } catch (e) {
             console.error("Routing Error:", e);
@@ -216,15 +239,13 @@
                 }
 
                 // 3. Identity Status (Critical for your redirection logic)
-                if (data.identity === true) {
-                    await AppStorage.set(`${data.role}_identity`, 'verified');
+                if (data.identity) {
+                    await AppStorage.set(`${data.role}_identity`, data.identity);
                 }
 
-                // 4. Institution Status
-                if (data.institution_id) {
-                    await AppStorage.set('institution_id', data.institution_id);
-                    await AppStorage.set('institutionToken', 'verified');
-                }
+
+                if (data.institution_id) await AppStorage.set('institution_id', data.institution_id);
+
 
                 Notification.show("Login Successful!", "success");
 

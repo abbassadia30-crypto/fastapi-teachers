@@ -79,16 +79,20 @@
 <script src="../../js/storage.js"></script>
 <script src="../../js/init.js"></script>
 <script>
+
     const API_BASE = "https://fastapi-teachers.onrender.com";
     const sign = document.getElementById('final-sign');
     const statusIcon = document.getElementById('status-icon');
     const statusTitle = document.getElementById('status-title');
 
+    /**
+     * 🏛️ Gatekeeper: Synchronizes identity and sets up the device.
+     */
     async function gatekeeper() {
         const token = await AppStorage.get('auth_token');
 
         if (!token) {
-            sign.style.background = "var(--danger)";
+            sign.style.background = "#e74c3c"; // Red sign box
             sign.innerText = "Session Missing";
             setTimeout(() => window.location.replace("../../index.html"), 2000);
             return;
@@ -97,55 +101,75 @@
         try {
             const response = await fetch(`${API_BASE}/institution/sync-state`, {
                 method: 'GET',
-                headers: {'Authorization': `Bearer ${token}`}
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
 
             if (response.ok) {
                 const data = await response.json();
 
-                // Save core data
+                // 🏛️ Identity Logic: Hydrating Storage for the Super Console
                 await AppStorage.set('institution_id', data.institution_id);
                 await AppStorage.set('user_role', data.user_role);
-                await AppStorage.set('institutionToken' , 'verified');
+                // Mark identity boolean for our universal routing
+                await AppStorage.set(`${data.user_role}_identity`, true);
 
-                // UI Update
+                // UI Update - Success State
                 statusIcon.innerHTML = "&#10003;";
-                statusIcon.style.color = "var(--primary)";
+                statusIcon.style.color = "#27ae60";
                 statusTitle.innerText = "Identity Verified";
-                sign.style.background = "var(--primary)";
+                sign.style.background = "#27ae60"; // Green sign box
                 sign.innerText = "Access Granted";
 
-                // ⚡ RELIABLE NOTIFICATION TRIGGER
-                // We initialize here so the token is ready before dashboard load
-                if (typeof initializePush === 'function') {
-                    console.log("Gatekeeper: Triggering real-time alert sync...");
-                    await initializePush();
-                }
+                // ⚡ SILENT PERMISSION REQUEST
+                // We ask for permission for FUTURE notifications (Wallet/Alerts)
+                // but we DO NOT send a push right now (Email handles the record).
+                setupNotificationsForFuture();
 
                 setTimeout(() => {
-                    window.location.replace(`../setups/no-institution.html`);
-                }, 2000);
+                    // 🏛️ Routing Logic:
+                    // If institution is already linked, go to Dashboard.
+                    // If not, go to the 'no-institution' setup page.
+                    if (data.institution_id) {
+                        window.location.replace(`../dashboard/dashboard.html`);
+                    } else {
+                        window.location.replace(`../setups/no-institution.html`);
+                    }
+                }, 2500);
+
             } else {
+                // Identity not found in Auth_id table
                 window.location.replace("create_identity.html");
             }
         } catch (error) {
-            sign.style.background = "var(--danger)";
+            console.error("Sync Error:", error);
+            sign.style.background = "#e74c3c";
             sign.innerText = "Connection Error - Retrying";
+            // Auto-retry after 5 seconds for unstable connections
             setTimeout(() => window.location.reload(), 5000);
         }
     }
 
-    async function setupNotificationsSilently() {
+    /**
+     * 🏛️ Future-Proofing: Requests permission for real-time alerts.
+     */
+    async function setupNotificationsForFuture() {
         try {
             if (window.Capacitor && window.Capacitor.isPluginAvailable('PushNotifications')) {
-                const perm = await Capacitor.Plugins.PushNotifications.checkPermissions();
+                const { PushNotifications } = Capacitor.Plugins;
+
+                const perm = await PushNotifications.checkPermissions();
+
                 if (perm.receive !== 'granted') {
-                    // Don't 'await' the request here, or it might freeze the UI
-                    Capacitor.Plugins.PushNotifications.requestPermissions();
+                    // Trigger the native OS permission dialog (Android/iOS)
+                    // We don't 'await' this so the UI transition remains smooth
+                    PushNotifications.requestPermissions();
                 }
             }
         } catch (e) {
-            console.warn("Notification setup skipped or failed.");
+            console.warn("Notification permission engine skipped.");
         }
     }
 
