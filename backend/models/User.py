@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, DateTime, Text, Date
 from sqlalchemy.orm import relationship
 from .base import Base, TimestampMixin
+from datetime import datetime
 
 # --- SHARED BASE FOR DATA ---
 class User(Base, TimestampMixin):
