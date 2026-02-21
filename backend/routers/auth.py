@@ -348,3 +348,28 @@ async def manual_push(email: str, db: Session = Depends(get_db)):
         }
     except Exception as e:
         return {"status": "failed", "error": str(e)}
+
+@router.get("/check-existence")
+async def check_existence(email: str, db: Session = Depends(get_db)):
+    """
+    Super Console Hydration:
+    Returns full user state to enable offline functionality.
+    """
+    user = db.query(User).filter(User.user_email == email).first()
+
+    if not user:
+        return {"exists": False}
+
+    # Gather data for offline persistence
+    return {
+        "exists": True,
+        "user_data": {
+            "name": user.user_name,
+            "email": user.user_email,
+            "role": user.type,
+            "institution_id": user.last_active_institution_id,
+            "fcm_token": user.fcm_token,
+            # Add any other flags needed for UI branching
+            "is_verified": True
+        }
+    }
