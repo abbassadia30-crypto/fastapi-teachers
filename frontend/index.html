@@ -162,8 +162,14 @@
 
             if (role === 'owner' || role === 'admin') {
                 if (identityStatus) {
-                    window.location.replace("admin/dashboard/dashboard.html")
-                    return;
+                    if (inst_id) {
+                        window.location.replace("admin/dashboard/dashboard.html")
+                        return;
+                    }
+                    else {
+                        window.location.replace("admin/setups/no-institution.html")
+                        return;
+                    }
                 } else {
                     window.location.replace(`admin/${role}_identity.html`)
                     return;
@@ -172,8 +178,13 @@
             else
             {
                 if (identityStatus){
-                    window.location.replace(`${role}/dashboard/dashboard.html`)
-                    return;
+                    if (inst_id) {
+                        window.location.replace(`${role}/dashboard/dashboard.html`)
+                        return;
+                    }
+                    else {
+                        window.location.replace("plateforme/search.html")
+                    }
                 }
                 else {
                     window.location.replace(`${role}/${role}_identity/create_identity.html`)

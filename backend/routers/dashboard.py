@@ -284,17 +284,35 @@ async def check_ownership(
         db: Session = Depends(get_db)
 ):
     """
-    Validates that the current user is an owner and returns their
-    linked institution name for the Super Console dashboard.
+    🏛️ Super Console: Validates that the current user is an owner
+    and returns their linked institution details.
     """
 
     # 1. Verify User is an Owner
     if current_user.type != "owner":
-        raise HTTPException(status_code=403, detail="Access denied. Owner role required.")
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied. Owner role required."
+        )
 
     # 2. Check for linked Institution
-    # Logic: Search for an institution where this user's ID is the owner_id
-    institution = db.query(Institution).filter(Institution.owner_id == current_user.id).first()
+    # 🏛️ REFINED LOGIC: We look at the Owner table (which inherits from User)
+    # because that is where the 'institution_id' now lives.
+    owner_record = db.query(Owner).filter(Owner.id == current_user.id).first()
+
+    # Safety check: if they have the 'owner' type but no Owner record
+    if not owner_record:
+        return {
+            "has_institution": False,
+            "institution_name": None,
+            "user_role": current_user.type
+        }
+
+    # 3. Retrieve Institution Details
+    # If owner_record.institution_id exists, we fetch the Institution object
+    institution = None
+    if owner_record.institution_id:
+        institution = db.query(Institution).filter(Institution.id == owner_record.institution_id).first()
 
     if not institution:
         return {
@@ -303,10 +321,12 @@ async def check_ownership(
             "user_role": current_user.type
         }
 
-    # 3. Success: Return details for the Admin Portal
+    # 4. Success: Return details for the Admin Portal
     return {
         "has_institution": True,
         "institution_name": institution.name,
         "institution_id": institution.id,
-        "user_role": current_user.type
+        "institution_uuid": institution.inst_uuid, # Useful for frontend routing
+        "user_role": current_user.type,
+        "full_name": current_user.user_name
     }
