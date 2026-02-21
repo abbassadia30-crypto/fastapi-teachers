@@ -66,15 +66,16 @@
 
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
-
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    let authToken = null;
+    let authToken = null; // This MUST be the JWT, not the email
 
     // --- 1. SESSION INITIALIZATION ---
     window.onload = async () => {
         try {
+            // 🏛️ FIX: Fetch the actual JWT token
             authToken = await AppStorage.get('auth_token');
+
             if (!authToken) {
                 showSign("Unauthorized: Please Login", "error");
                 setTimeout(() => { window.location.href = "../../index.html"; }, 2000);
@@ -84,11 +85,13 @@
         }
     };
 
-    // --- 2. SIGN BOX (Custom UI) ---
+    // --- 2. SIGN BOX ---
     function showSign(msg, type = 'success') {
         const sign = document.getElementById('status-sign');
+        if(!sign) return;
         sign.innerText = msg;
         sign.style.display = 'block';
+        // Red or Green sign box as per instructions
         sign.style.background = type === 'success' ? '#2e7d32' : '#c62828';
 
         if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
@@ -104,21 +107,18 @@
     document.getElementById('schoolForm').onsubmit = async function(event) {
         event.preventDefault();
 
-        // Safety check fixed: we NEED authToken to be present to proceed
         if (!authToken) {
             showSign("Session expired. Please re-login.", "error");
             return;
         }
 
         const btn = document.getElementById("submitBtn");
-        const originalText = "Register Institution";
         btn.disabled = true;
         btn.innerText = "Registering...";
 
         const payload = {
-            institution_type: "formal",
-            description: document.getElementById('schDesc').value.trim(),
             name: document.getElementById('schName').value.trim(),
+            description: document.getElementById('schDesc').value.trim(),
             campus: document.getElementById('schCampus').value.trim(),
             principal_name: document.getElementById('schPrincipal').value.trim(),
             address: document.getElementById('schAddress').value.trim(),
@@ -131,7 +131,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
+                    'Authorization': `Bearer ${authToken}` // Correct JWT used here
                 },
                 body: JSON.stringify(payload)
             });
@@ -140,20 +140,21 @@
 
             if (res.ok) {
                 showSign("🏛️ Institution Registered!", "success");
-                // Store updated info for the success gatekeeper
-                await AppStorage.set('current_institution_name', payload.name);
+
+                // 🏛️ Real App Sync: Save the new Institution ID
                 await AppStorage.set('institution_id', result.institution_id);
+                await AppStorage.set('current_institution_name', payload.name);
 
                 setTimeout(() => location.href = "institution-setup.html", 2000);
             } else {
                 showSign(result.detail || "Registration failed", "error");
                 btn.disabled = false;
-                btn.innerText = originalText;
+                btn.innerText = "Register Institution";
             }
         } catch (e) {
             showSign("Connection Error: Server Offline", "error");
             btn.disabled = false;
-            btn.innerText = originalText;
+            btn.innerText = "Register Institution";
         }
     };
 </script>

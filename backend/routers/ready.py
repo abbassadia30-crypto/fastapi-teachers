@@ -4,7 +4,7 @@ from backend import database
 from backend.routers.auth import get_current_user
 from backend.models.admin.institution import Institution, School, Academy, College
 from backend.schemas.admin.institution import SchoolSchema, AcademySchema, CollegeSchema
-from backend.models.User import User
+from backend.models.User import User , Owner
 from backend.routers.__init__ import send_push_to_user  # Import your FCM function
 
 router = APIRouter(prefix="/ready", tags=["Institution creation"])
