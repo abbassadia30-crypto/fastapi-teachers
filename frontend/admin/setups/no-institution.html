@@ -117,7 +117,7 @@
             const email = await AppStorage.get('user_email');
             const token = await AppStorage.get('auth_token');
 
-            if (!email || !token) {
+            if (!email && !token) {
                 window.location.replace("../../index.html");
                 return;
             }
@@ -169,6 +169,8 @@
         }
     }
 
+    checkExistingSession();
+
     async function verifyUserAndIdentity(email, token) {
         try {
             const res = await fetch(`${API_BASE}/institution/verify-setup-eligibility`, {
@@ -208,7 +210,6 @@
         }
     }
 
-    checkExistingSession();
 </script>
 </body>
 </html>
