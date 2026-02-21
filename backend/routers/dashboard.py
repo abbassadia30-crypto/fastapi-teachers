@@ -13,6 +13,7 @@ router = APIRouter(
     tags=["dashboard Management"]
 )
 
+
 @router.post("/admit-student")
 async def admit_student(
     data: AdmissionPayload,
