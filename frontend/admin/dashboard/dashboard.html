@@ -129,7 +129,7 @@
     }
 
     window.onload = async () => {
-        const token = await AppStorage.get('institutionToken');
+        const token = await AppStorage.get('auth_token');
         const cachedName = await AppStorage.get('current_institution_name');
 
         if (!token) {

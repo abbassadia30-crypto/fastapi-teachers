@@ -264,32 +264,54 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
 async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)):
     email = payload.get("email")
     otp_received = payload.get("otp")
-    action = payload.get("action") # 'signup' or 'reset'
+    action = payload.get("action")
 
-    # Must query Verification to access otp_code
     v_user = db.query(Verification).filter(Verification.user_email == email).first()
-
     if not v_user:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Identity not found.")
 
+    # 🏛️ 1. CHECK FOR EXISTING BLOCK
+    sec_log = db.query(SecurityLog).filter(SecurityLog.user_id == v_user.id).first()
+
+    if sec_log and sec_log.blocked_until and sec_log.blocked_until > datetime.utcnow():
+        wait_time = sec_log.blocked_until - datetime.utcnow()
+        hours, remainder = divmod(int(wait_time.total_seconds()), 3600)
+        minutes, _ = divmod(remainder, 60)
+        raise HTTPException(
+            status_code=403,
+            detail=f"Security Block: Please wait {hours}h {minutes}m."
+        )
+
+    # 🏛️ 2. OTP VALIDATION
     if not v_user.otp_code or v_user.otp_code != otp_received:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
+        # Handle Failure
+        if not sec_log:
+            sec_log = SecurityLog(user_id=v_user.id, attempts=1)
+            db.add(sec_log)
+        else:
+            sec_log.attempts += 1
+            sec_log.last_attempt = datetime.utcnow()
 
-    temp_token = create_access_token(data={"sub": v_user.user_email})
+            if sec_log.attempts >= 3:
+                sec_log.blocked_until = datetime.utcnow() + timedelta(days=1)
 
-    if action == "signup":
-        v_user.is_verified = True
-        v_user.verified_at = datetime.now(timezone.utc)
-        v_user.otp_code = None
-        msg = "Account verified successfully."
-    elif action == "reset":
-        v_user.otp_code = None
-        msg = "OTP verified. Proceed to reset password."
-    else:
-        raise HTTPException(status_code=400, detail="Invalid action type")
+        db.commit()
 
+        # 🏛️ Calculate remaining attempts for the UI
+        remaining = 3 - sec_log.attempts
+        if remaining > 0:
+            raise HTTPException(status_code=400, detail=f"Invalid OTP. {remaining} attempts remaining.")
+        else:
+            raise HTTPException(status_code=403, detail="Too many failed attempts. Account locked for 24h.")
+
+    # 🏛️ 3. SUCCESS: Reset security logs
+    if sec_log:
+        sec_log.attempts = 0
+        sec_log.blocked_until = None
+
+    # ... rest of your verification logic (is_verified = True, etc) ...
     db.commit()
-    return {"status": "success", "message": msg, "access_token": temp_token}
+    return {"status": "success", "message": "Verification Successful"}
 
 @router.post("/forgot-password")
 async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):

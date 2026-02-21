@@ -42,7 +42,7 @@
         <p>Please enter the 6-digit OTP sent to <br><b id="display-email">your email</b></p>
         
         <input type="text" id="otp" class="otp-input" placeholder="000000" maxlength="6">
-        
+        <p id="attempt-counter" style="font-size: 11px; color: #e53935; font-weight: 600; margin-top: 10px; display: none;"></p>
         <button id="mainBtn" class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
         
         <p style="margin-top: 20px;"><a href="index.html" style="color: #0288d1; text-decoration: none;">Back to Login</a></p>
@@ -91,68 +91,54 @@
         }
 
         // --- 3. OTP HANDLER ---
-        async function handleVerify() {
-            const otpInput = document.getElementById('otp');
-            const otp = otpInput.value.trim();
-            const btn = document.getElementById('mainBtn');
-
-            if (otp.length < 6) {
-                showBar("Please enter the full 6-digit code", "error");
-                return;
-            }
+        <script>
+            async function handleVerify(event) {
+            event.preventDefault();
+            const btn = document.getElementById('verifyBtn');
+            const counterText = document.getElementById('attempt-counter');
+            const otpValue = document.getElementById('otpInput').value.trim();
+            const email = await AppStorage.get('pendingEmail');
 
             btn.disabled = true;
-            const originalText = btn.innerText;
             btn.innerText = "Verifying...";
 
-
-
             try {
-                const response = await fetch(`${API_BASE}/auth/verify-action`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: email,
-                        otp: otp,
-                        action: isResetFlow ? 'reset' : 'signup'
-                    })
-                });
+            const response = await fetch(`${API_BASE}/auth/verify-action`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+            email: email,
+            otp: otpValue,
+            action: 'signup'
+        })
+        });
 
-                const result = await response.json();
+            const data = await response.json();
 
-                if (response.ok) {
-                    showBar("Identity Confirmed!", "success");
+            if (response.ok) {
+            // 🏛️ SUCCESS MOTIF
+            btn.style.background = "#43a047";
+            btn.innerText = "Redirecting...";
+            Notification.show("OTP Verified!", "success");
 
-                    if (isResetFlow) {
-                        // Logic for Password Reset Path
-                        await AppStorage.set('resetEmail', email);
-                        await AppStorage.set('passwordResetAuthorized', 'true');
-                        await AppStorage.remove('isPasswordReset');
-                        await AppStorage.remove('pendingEmail');
+            setTimeout(() => { window.location.href = "roles/role.html"; }, 1500);
+        } else {
+            // 🏛️ SHOW REMAINING ATTEMPTS
+            Notification.show(data.detail, "error");
 
-                        setTimeout(() => { window.location.href = "reset-password.html"; }, 1500);
-                    } else {
-                        // Logic for New Registration Path
-                        await AppStorage.set('userEmail', email);
-                        if (result.access_token) {
-                            await AppStorage.set('institutionToken', result.access_token);
-                        }
-                        await AppStorage.remove('pendingEmail');
+            // Extra UI Polish: Show a warning under the input
+            if (data.detail.includes("attempts remaining")) {
+            counterText.innerText = data.detail;
+            counterText.style.display = "block";
+        }
 
-                        // Redirecting to Role selection as per institution flow
-                        setTimeout(() => { window.location.href = "index.html"; }, 1500);
-                    }
-                } else {
-                    showBar(result.detail || "Invalid OTP. Please try again.", "error");
-                    btn.disabled = false;
-                    btn.innerText = originalText;
-                    otpInput.value = ""; // Security: Clear input on failure
-                }
-            } catch (e) {
-                showBar("Institution server is unreachable.", "error");
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }
+            btn.disabled = false;
+            btn.innerText = "Verify OTP";
+        }
+        } catch (error) {
+            Notification.show("Server Connection Lost", "error");
+            btn.disabled = false;
+        }
         }
     </script>
 </body>
