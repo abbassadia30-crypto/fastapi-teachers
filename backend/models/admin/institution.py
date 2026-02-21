@@ -21,10 +21,12 @@ class Institution(Base, TimestampMixin):
     join_key = Column(String(10), unique=True, nullable=False)
 
     # 👑 THE CORE ROLES (Inherited from User)
-    owner = relationship("Owner",
-                     back_populates="institution",
-                     uselist=False,
-                     foreign_keys=[owner_id])
+    owner = relationship(
+        "Owner",
+        back_populates="institution",
+        uselist=False,
+        foreign_keys=[owner_id]
+    )
 
     admins = relationship("Admin", back_populates="institution",
                           foreign_keys="Admin.institution_id")

@@ -36,15 +36,19 @@ class User(Base, TimestampMixin):
 class Owner(User):
     __tablename__ = "owner"
     id = Column(Integer, ForeignKey('users.id'), primary_key=True)
-    institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=True)
 
     # Role-Specific Data
     profile = relationship("Profile", back_populates="owner_role", uselist=False,
                        foreign_keys="Profile.owner_id") # Explicitly link to owner_id
 
-    institution = relationship("Institution",
-                           back_populates="owner",
-                           foreign_keys=[institution_id])
+    institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=True)
+
+    institution = relationship(
+    "Institution",
+    back_populates="owner",
+    uselist=False, # This ensures One-to-One
+    foreign_keys=[institution_id]
+)
 
     auth_id = relationship("Auth_id", back_populates="owner", uselist=False)
 
