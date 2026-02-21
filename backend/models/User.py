@@ -43,12 +43,13 @@ class Owner(User):
 
     institution_id = Column(Integer, ForeignKey('institutions.id'), unique=True, nullable=True)
 
+    # 🏛️ This is the "Child" side
     institution = relationship(
-    "Institution",
-    back_populates="owner",
-    uselist=False, # This ensures One-to-One
-    foreign_keys=[institution_id]
-)
+        "Institution",
+        back_populates="owner",
+        uselist=False,
+        foreign_keys=[institution_id]
+    )
 
     auth_id = relationship("Auth_id", back_populates="owner", uselist=False)
 
