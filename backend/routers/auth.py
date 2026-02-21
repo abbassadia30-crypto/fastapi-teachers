@@ -260,58 +260,59 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
         "identity": has_identity
     }
 
+# 🏛️ VERIFY LOGIC (10 Attempts Limit)
 @router.post("/verify-action")
 async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)):
     email = payload.get("email")
     otp_received = payload.get("otp")
-    action = payload.get("action")
 
     v_user = db.query(Verification).filter(Verification.user_email == email).first()
-    if not v_user:
-        raise HTTPException(status_code=404, detail="Identity not found.")
-
-    # 🏛️ 1. CHECK FOR EXISTING BLOCK
     sec_log = db.query(SecurityLog).filter(SecurityLog.user_id == v_user.id).first()
 
+    # Check for existing block
     if sec_log and sec_log.blocked_until and sec_log.blocked_until > datetime.utcnow():
-        wait_time = sec_log.blocked_until - datetime.utcnow()
-        hours, remainder = divmod(int(wait_time.total_seconds()), 3600)
-        minutes, _ = divmod(remainder, 60)
-        raise HTTPException(
-            status_code=403,
-            detail=f"Security Block: Please wait {hours}h {minutes}m."
-        )
+        raise HTTPException(status_code=403, detail="Security Block: Try again in 24h.")
 
-    # 🏛️ 2. OTP VALIDATION
-    if not v_user.otp_code or v_user.otp_code != otp_received:
-        # Handle Failure
+    if v_user.otp_code != otp_received:
         if not sec_log:
             sec_log = SecurityLog(user_id=v_user.id, attempts=1)
             db.add(sec_log)
         else:
             sec_log.attempts += 1
-            sec_log.last_attempt = datetime.utcnow()
-
-            if sec_log.attempts >= 3:
+            if sec_log.attempts >= 10: # 🏛️ 10 Times Limit
                 sec_log.blocked_until = datetime.utcnow() + timedelta(days=1)
 
         db.commit()
+        remaining = 10 - sec_log.attempts
+        raise HTTPException(status_code=400, detail=f"Invalid OTP. {remaining} attempts left.")
 
-        # 🏛️ Calculate remaining attempts for the UI
-        remaining = 3 - sec_log.attempts
-        if remaining > 0:
-            raise HTTPException(status_code=400, detail=f"Invalid OTP. {remaining} attempts remaining.")
-        else:
-            raise HTTPException(status_code=403, detail="Too many failed attempts. Account locked for 24h.")
-
-    # 🏛️ 3. SUCCESS: Reset security logs
-    if sec_log:
-        sec_log.attempts = 0
-        sec_log.blocked_until = None
-
-    # ... rest of your verification logic (is_verified = True, etc) ...
+    # Success logic...
     db.commit()
-    return {"status": "success", "message": "Verification Successful"}
+    return {"status": "success", "message": "Verified"}
+
+# 🏛️ RESEND LOGIC (5 Times Limit)
+@router.post("/resend-otp")
+async def resend_otp(payload: dict = Body(...), db: Session = Depends(get_db)):
+    email = payload.get("email")
+    v_user = db.query(Verification).filter(Verification.user_email == email).first()
+    sec_log = db.query(SecurityLog).filter(SecurityLog.user_id == v_user.id).first()
+
+    if sec_log and sec_log.resend_count >= 5: # 🏛️ 5 Times Limit
+        raise HTTPException(status_code=403, detail="Resend limit reached (5/5). Try again in 24h.")
+
+    # Generate new OTP and send email...
+    new_otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
+    v_user.otp_code = new_otp
+
+    if not sec_log:
+        sec_log = SecurityLog(user_id=v_user.id, resend_count=1)
+        db.add(sec_log)
+    else:
+        sec_log.resend_count += 1
+
+    db.commit()
+    return {"status": "success", "message": f"Code resent. ({sec_log.resend_count}/5)"}
+
 
 @router.post("/forgot-password")
 async def forgot_password(payload: dict = Body(...), background_tasks: BackgroundTasks = None, db: Session = Depends(get_db)):

@@ -6,140 +6,145 @@
     <title>Verify Account | Institution Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* All CSS kept in head for the institution app */
+        /* Institution App Styling */
         body { font-family: 'Poppins', sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .verify-card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
-        h2 { color: #0288d1; margin-bottom: 10px; }
-        p { color: #666; font-size: 14px; margin-bottom: 25px; }
-        
-        .otp-input { 
-            width: 100%; padding: 15px; letter-spacing: 10px; font-size: 24px; 
-            text-align: center; border: 2px solid #ddd; border-radius: 10px; 
-            box-sizing: border-box; margin-bottom: 20px; font-weight: bold;
+        .verify-card { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 380px; text-align: center; }
+
+        h2 { color: #0288d1; margin-bottom: 10px; font-weight: 600; }
+        .email-display-box { background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #eee; }
+
+        .otp-input {
+            width: 100%; padding: 15px; letter-spacing: 10px; font-size: 24px;
+            text-align: center; border: 2px solid #ddd; border-radius: 12px;
+            box-sizing: border-box; margin-bottom: 10px; font-weight: bold;
         }
-        .otp-input:focus { border-color: #0288d1; outline: none; }
-        
-        .verify-btn { width: 100%; padding: 12px; background: #0288d1; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 16px; transition: 0.3s; }
-        .verify-btn:disabled { background: #ccc; cursor: not-allowed; }
-        
-        #notification-bar { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; 
-            color: white; font-weight: 600; text-align: center; 
-            transition: 0.4s ease-in-out; z-index: 1000; 
-        }
-        /* Red/Green Sign Boxes as requested */
+
+        .verify-btn { width: 100%; padding: 14px; background: #0288d1; color: white; border: none; border-radius: 12px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .verify-btn:disabled { background: #ccc; }
+
+        /* Secondary Action Buttons */
+        .action-row { display: flex; justify-content: space-between; margin-top: 20px; }
+        .text-btn { color: #0288d1; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; padding: 5px; }
+        .text-btn:hover { text-decoration: underline; }
+        .edit-btn { color: #e53935; } /* Red for 'Correction' action */
+
+        #notification-bar { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; padding: 15px; border-radius: 12px; color: white; font-weight: 600; text-align: center; transition: 0.4s ease-in-out; z-index: 1000; }
         .bg-red { background: #ef5350; top: 20px !important; border: 1px solid #b71c1c; }
-        .bg-green { background: #66bb6a; top: 20px !important; border: 1px solid #388e3c; }
+        .bg-green { background: #43a047; top: 20px !important; border: 1px solid #1b5e20; }
+
+        #attempt-counter { font-size: 11px; color: #e53935; font-weight: 600; margin-bottom: 15px; display: none; }
     </style>
 </head>
 <body>
 
-    <div id="notification-bar"></div>
+<div id="notification-bar"></div>
 
-    <div class="verify-card">
-        <h2>Verify Email</h2>
-        <p>Please enter the 6-digit OTP sent to <br><b id="display-email">your email</b></p>
-        
-        <input type="text" id="otp" class="otp-input" placeholder="000000" maxlength="6">
-        <p id="attempt-counter" style="font-size: 11px; color: #e53935; font-weight: 600; margin-top: 10px; display: none;"></p>
-        <button id="mainBtn" class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
-        
-        <p style="margin-top: 20px;"><a href="index.html" style="color: #0288d1; text-decoration: none;">Back to Login</a></p>
+<div class="verify-card">
+    <h2>Verify Identity</h2>
+    <div class="email-display-box">
+        <p style="margin:0; font-size: 11px; color: #888;">SENT TO</p>
+        <b id="display-email" style="font-size: 14px; color: #333;">...</b>
     </div>
 
-    <script src="capacitor.js"></script>
-    <script src="js/storage.js"></script>
+    <input type="text" id="otp" class="otp-input" placeholder="000000" maxlength="6" inputmode="numeric">
+    <p id="attempt-counter"></p>
 
-    <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
-        let email = null;
-        let isResetFlow = false;
+    <button id="mainBtn" class="verify-btn" onclick="handleVerify()">Verify & Activate</button>
 
-        // --- 1. INITIALIZATION ---
-        window.onload = async () => {
-            // Fetch context from Capacitor storage
-            email = await AppStorage.get('pendingEmail');
-            const resetFlag = await AppStorage.get('isPasswordReset');
-            isResetFlow = (resetFlag === 'true');
+    <div class="action-row">
+        <span class="text-btn edit-btn" onclick="editEmail()">Edit Email</span>
+        <span class="text-btn" id="resendBtn" onclick="handleResend()">Resend Code</span>
+    </div>
+</div>
 
-            if (!email) {
-                showBar("Session lost. Please restart process.", "error");
-                setTimeout(() => { window.location.href = "login.html"; }, 2000);
-            }
-        };
+<script src="js/storage.js"></script>
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+    let userEmail = null;
 
-        // --- 2. NOTIFICATION SYSTEM (Sign Box) ---
-        function showBar(msg, type) {
-            const bar = document.getElementById('notification-bar');
-            if(!bar) return;
-
-            bar.innerText = msg;
-            // Applying your required styles
-            bar.style.display = 'block';
-            bar.className = type === 'error' ? 'sign-box bg-red' : 'sign-box bg-green';
-
-            // Native Haptic feedback for professional feel
-            if (window.AppHaptics) {
-                window.AppHaptics.notification(type === 'error' ? 'ERROR' : 'SUCCESS');
-            }
-
-            setTimeout(() => {
-                bar.style.display = 'none';
-                bar.className = "";
-            }, 4000);
+    window.onload = async () => {
+        userEmail = await AppStorage.get('pendingEmail');
+        if (userEmail) {
+            document.getElementById('display-email').innerText = userEmail;
+        } else {
+            window.location.href = "signup.html";
         }
+    };
 
-        // --- 3. OTP HANDLER ---
-        <script>
-            async function handleVerify(event) {
-            event.preventDefault();
-            const btn = document.getElementById('verifyBtn');
-            const counterText = document.getElementById('attempt-counter');
-            const otpValue = document.getElementById('otpInput').value.trim();
-            const email = await AppStorage.get('pendingEmail');
+    function showBar(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'error' ? 'bg-red' : 'bg-green';
+        setTimeout(() => { bar.className = ""; }, 4000);
+    }
 
-            btn.disabled = true;
-            btn.innerText = "Verifying...";
+    // 🏛️ EDIT EMAIL: Clears state and goes back
+    async function editEmail() {
+        await AppStorage.remove('pendingEmail');
+        window.location.href = "signup.html";
+    }
 
-            try {
+    async function handleVerify() {
+        const btn = document.getElementById('mainBtn');
+        const otpVal = document.getElementById('otp').value.trim();
+        const counterText = document.getElementById('attempt-counter');
+
+        btn.disabled = true;
+        btn.innerText = "Authenticating...";
+
+        try {
             const response = await fetch(`${API_BASE}/auth/verify-action`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-            email: email,
-            otp: otpValue,
-            action: 'signup'
-        })
-        });
-
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: userEmail, otp: otpVal, action: 'signup' })
+            });
             const data = await response.json();
 
             if (response.ok) {
-            // 🏛️ SUCCESS MOTIF
-            btn.style.background = "#43a047";
-            btn.innerText = "Redirecting...";
-            Notification.show("OTP Verified!", "success");
-
-            setTimeout(() => { window.location.href = "roles/role.html"; }, 1500);
-        } else {
-            // 🏛️ SHOW REMAINING ATTEMPTS
-            Notification.show(data.detail, "error");
-
-            // Extra UI Polish: Show a warning under the input
-            if (data.detail.includes("attempts remaining")) {
-            counterText.innerText = data.detail;
-            counterText.style.display = "block";
-        }
-
-            btn.disabled = false;
-            btn.innerText = "Verify OTP";
-        }
-        } catch (error) {
-            Notification.show("Server Connection Lost", "error");
+                btn.style.background = "#43a047";
+                btn.innerText = "Access Granted!";
+                window.location.href = "roles/role.html";
+            } else {
+                showBar(data.detail, "error");
+                // Show 10 attempts limit countdown
+                counterText.innerText = data.detail;
+                counterText.style.display = "block";
+                btn.disabled = false;
+                btn.innerText = "Verify & Activate";
+            }
+        } catch (e) {
+            showBar("Server Error", "error");
             btn.disabled = false;
         }
+    }
+
+    async function handleResend() {
+        const resendBtn = document.getElementById('resendBtn');
+        resendBtn.style.pointerEvents = "none";
+        resendBtn.style.opacity = "0.5";
+
+        try {
+            const response = await fetch(`${API_BASE}/resend-otp`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ email: userEmail })
+            });
+            const data = await response.json();
+
+            if (response.ok) {
+                showBar(data.message, "success"); // Shows (X/5) count from backend
+                setTimeout(() => {
+                    resendBtn.style.pointerEvents = "auto";
+                    resendBtn.style.opacity = "1";
+                }, 30000); // 30s Cool-down
+            } else {
+                showBar(data.detail, "error");
+            }
+        } catch (e) {
+            resendBtn.style.pointerEvents = "auto";
+            resendBtn.style.opacity = "1";
         }
-    </script>
+    }
+</script>
 </body>
 </html>
