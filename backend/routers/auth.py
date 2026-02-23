@@ -278,12 +278,12 @@ async def verify_action(payload: dict = Body(...), db: Session = Depends(get_db)
             sec_log = SecurityLog(user_id=v_user.id, attempts=1)
             db.add(sec_log)
         else:
-            sec_log.attempts += 1
-            if sec_log.attempts >= 10: # 🏛️ 10 Times Limit
+            sec_log.reesend_count += 1
+            if sec_log.resend_count >= 10: # 🏛️ 10 Times Limit
                 sec_log.blocked_until = datetime.utcnow() + timedelta(days=1)
 
         db.commit()
-        remaining = 10 - sec_log.attempts
+        remaining = 10 - sec_log.resend_count
         raise HTTPException(status_code=400, detail=f"Invalid OTP. {remaining} attempts left.")
 
     # Success logic...
