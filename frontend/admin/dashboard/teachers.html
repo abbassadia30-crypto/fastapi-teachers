@@ -32,9 +32,10 @@
 
         /* Grid */
         .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: auto; }
-        .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; transition: transform 0.2s; }
+        .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; transition: 0.2s; cursor: pointer; }
+        .teacher-card:active { transform: scale(0.98); }
 
-        .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+        .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 10; }
         .btn-action { border: none; background: #f8fafc; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 14px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .btn-action:hover { background: #edf2f7; }
 
@@ -53,6 +54,11 @@
         .btn-confirm { background: var(--primary); color: white; }
         .btn-cancel { background: #f1f3f4; color: var(--text); }
         .btn-delete { background: var(--danger); color: white; }
+
+        /* Info Display in View Modal */
+        .info-group { margin-bottom: 15px; background: #f8fafc; padding: 12px; border-radius: 12px; }
+        .info-label { font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 4px; display: block; }
+        .info-value { font-size: 15px; font-weight: 600; color: var(--text); }
     </style>
 </head>
 <body>
@@ -69,6 +75,16 @@
 </div>
 
 <div class="container" id="facultyGrid"></div>
+
+<div id="viewModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; color: var(--primary); border-bottom: 2px solid var(--bg); padding-bottom: 10px;">Faculty Profile</h3>
+        <div id="viewContainer"></div>
+        <div class="modal-btns">
+            <button class="btn-modal btn-cancel" style="flex: 1;" onclick="closeModals()">Close</button>
+        </div>
+    </div>
+</div>
 
 <div id="editModal" class="modal">
     <div class="modal-content">
@@ -134,7 +150,6 @@
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             const result = await res.json();
-            // Backend returns { rows: [...] }
             allFaculty = result.rows || [];
             renderGrid(allFaculty);
         } catch (err) {
@@ -149,10 +164,10 @@
             return;
         }
         grid.innerHTML = data.map(t => `
-            <div class="teacher-card">
+            <div class="teacher-card" onclick="openView('${t.id}')">
                 <div class="actions">
-                    <button class="btn-action" onclick="openEdit('${t.id}')">✏️</button>
-                    <button class="btn-action" style="color:var(--danger);" onclick="deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')">🗑️</button>
+                    <button class="btn-action" onclick="event.stopPropagation(); openEdit('${t.id}')">✏️</button>
+                    <button class="btn-action" style="color:var(--danger);" onclick="event.stopPropagation(); deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')">🗑️</button>
                 </div>
                 <span class="subject">${t.designation || 'Faculty Member'}</span>
                 <span class="name">${t.name}</span>
@@ -168,8 +183,47 @@
         `).join('');
     }
 
+    // --- 👁️ VIEW LOGIC ---
+    function openView(id) {
+        const t = allFaculty.find(x => String(x.id) === String(id));
+        if(!t) return;
+
+        let extrasHtml = '';
+        if(t.extra_details && Object.keys(t.extra_details).length > 0) {
+            extrasHtml = `<h4 style="margin: 20px 0 10px; color: var(--muted); font-size: 12px; border-bottom: 1px solid #eee;">ADDITIONAL INFO</h4>`;
+            Object.entries(t.extra_details).forEach(([key, val]) => {
+                extrasHtml += `
+                    <div class="info-group">
+                        <span class="info-label">${key}</span>
+                        <div class="info-value">${val}</div>
+                    </div>`;
+            });
+        }
+
+        document.getElementById('viewContainer').innerHTML = `
+            <div class="info-group">
+                <span class="info-label">Full Name</span>
+                <div class="info-value">${t.name}</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Designation</span>
+                <div class="info-value">${t.designation || 'N/A'}</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Contact</span>
+                <div class="info-value">${t.phone || 'N/A'}</div>
+            </div>
+            <div class="info-group">
+                <span class="info-label">Monthly Salary</span>
+                <div class="info-value">${Number(t.salary || 0).toLocaleString()} PKR</div>
+            </div>
+            ${extrasHtml}
+        `;
+        document.getElementById('viewModal').style.display = 'flex';
+    }
+
+    // --- ✏️ EDIT LOGIC ---
     function openEdit(id) {
-        // Find teacher using strict string comparison for IDs
         const t = allFaculty.find(x => String(x.id) === String(id));
         if(!t) return;
 
@@ -204,18 +258,28 @@
         extraDiv.appendChild(row);
     }
 
+    function addNewFacultyRow() {
+        const container = document.getElementById('editExtraContainer');
+        const div = document.createElement('div');
+        div.className = "dynamic-faculty-row";
+        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
+        div.innerHTML = `
+            <div style="flex:1"><label class="label" style="font-size: 9px;">FIELD</label><input type="text" class="new-key modal-input" style="margin:0;"></div>
+            <div style="flex:1"><label class="label" style="font-size: 9px;">VALUE</label><input type="text" class="new-val modal-input" style="margin:0;"></div>
+            <button type="button" onclick="this.parentElement.remove()" style="background:#fff1f0; border:1px solid #ffa39e; padding:8px 12px; border-radius:8px; height:42px;">✕</button>`;
+        container.appendChild(div);
+    }
+
     async function saveEdit() {
         const id = document.getElementById('editId').value;
         const btn = document.getElementById('saveEditBtn');
         if (btn.disabled) return;
 
         const extras = {};
-        // Get existing edited extras
         document.querySelectorAll('.extra-field').forEach(inp => {
             const key = inp.getAttribute('data-key');
             if(key) extras[key] = inp.value.trim();
         });
-        // Get newly added rows
         document.querySelectorAll('.dynamic-faculty-row').forEach(row => {
             const k = row.querySelector('.new-key').value.trim();
             const v = row.querySelector('.new-val').value.trim();
@@ -235,10 +299,7 @@
         try {
             const res = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
                 body: JSON.stringify(body)
             });
             if(res.ok) {
@@ -251,6 +312,13 @@
         } catch(e) { showSign("Network Error", false); }
         btn.disabled = false;
         btn.innerText = "Update";
+    }
+
+    // --- 🗑️ DELETE LOGIC ---
+    function deleteTeacher(id, name) {
+        document.getElementById('deleteTargetId').value = id;
+        document.getElementById('deleteTargetName').innerText = name;
+        document.getElementById('deleteModal').style.display = 'flex';
     }
 
     async function executeDelete() {
@@ -276,6 +344,7 @@
     function closeModals() {
         document.getElementById('editModal').style.display = 'none';
         document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('viewModal').style.display = 'none';
     }
 
     function filterFaculty() {
@@ -287,17 +356,7 @@
         renderGrid(filtered);
     }
 
-    function addNewFacultyRow() {
-        const container = document.getElementById('editExtraContainer');
-        const div = document.createElement('div');
-        div.className = "dynamic-faculty-row";
-        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
-        div.innerHTML = `
-            <div style="flex:1"><label class="label" style="font-size: 9px;">FIELD</label><input type="text" class="new-key modal-input" style="margin:0;"></div>
-            <div style="flex:1"><label class="label" style="font-size: 9px;">VALUE</label><input type="text" class="new-val modal-input" style="margin:0;"></div>
-            <button type="button" onclick="this.parentElement.remove()" style="background:#fff1f0; border:1px solid #ffa39e; padding:8px 12px; border-radius:8px; height:42px;">✕</button>`;
-        container.appendChild(div);
-    }
+    window.onclick = (e) => { if(e.target.className === 'modal') closeModals(); };
 </script>
 </body>
 </html>

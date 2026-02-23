@@ -167,15 +167,16 @@ async def delete_teacher(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(teacher).filter(
+    # Rename the variable to 'record' or 'target' to avoid shadowing the class 'teacher'
+    record = db.query(teacher).filter(
         teacher.id == teacher_id,
         teacher.institution_id == current_user.institution_id
     ).first()
 
-    if not teacher:
+    if not record:
         raise HTTPException(status_code=404, detail="Teacher record not found")
 
-    db.delete(teacher)
+    db.delete(record)
     db.commit()
     return {"status": "success", "message": "Teacher removed"}
 
