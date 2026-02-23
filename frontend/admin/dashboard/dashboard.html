@@ -172,7 +172,7 @@
             else if (response.status === 401) {
                 // 🔴 Step 3: KILL THE LOOP
                 // Clear everything so Login page doesn't redirect back here
-                await AppStorage.remove('institutionToken');
+                await AppStorage.remove('auth_token');
                 await AppStorage.remove('current_institution_name');
                 await AppStorage.remove('user_role');
                 window.location.replace("../../index.html");

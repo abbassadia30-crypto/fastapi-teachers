@@ -24,7 +24,7 @@ async def admit_student(
     new_student = student(
         **data.dict(),
         institution_id=current_user.institution_id,
-        admitted_by=current_user.email
+        admitted_by=current_user.user_email
     )
     db.add(new_student)
     db.commit()
