@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pattern Security | Super Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #38bdf8;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --border: #334155;
+            --text-dim: #94a3b8;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            background: var(--bg); color: white; font-family: 'Poppins', sans-serif;
+            display: flex; flex-direction: column; align-items: center;
+            min-height: 100vh; margin: 0; touch-action: none; overflow: hidden;
+        }
+
+        /* 🏛️ Management View */
+        #management-view, #setup-view {
+            display: none; flex-direction: column; align-items: center;
+            width: 100%; animation: fadeIn 0.3s ease-out;
+        }
+
+        .menu-card {
+            background: var(--card-bg); padding: 35px 25px; border-radius: 28px;
+            border: 1px solid var(--border); width: 85%; max-width: 380px; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); margin-top: 15vh;
+        }
+
+        /* Canvas Style */
+        #pattern-container {
+            margin-top: 20px; position: relative; padding: 10px;
+            background: rgba(30, 41, 59, 0.5); border-radius: 35px; border: 1px solid var(--border);
+        }
+        canvas { border-radius: 24px; cursor: crosshair; touch-action: none; }
+
+        .instruction { margin: 30px 20px 10px; font-size: 18px; color: var(--primary); font-weight: 600; text-align: center; }
+
+        /* Buttons */
+        .p-btn {
+            padding: 16px; border-radius: 16px; border: none; font-weight: 600;
+            cursor: pointer; transition: 0.2s; font-size: 14px; width: 100%; margin-top: 12px;
+        }
+        .action-btn { background: var(--primary); color: #0f172a; }
+        .danger-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
+        .cancel-link { background: none; color: var(--text-dim); margin-top: 20px; }
+
+        /* 🚨 Sign Box (Mandatory) */
+        #sign {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            padding: 18px; border-radius: 15px; width: 85%; max-width: 350px;
+            text-align: center; font-weight: 600; z-index: 2000; transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        #sign.active { top: 30px; }
+        .bg-red { background: var(--danger); color: white; }
+        .bg-green { background: var(--success); color: white; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="sign"></div>
+
+<div id="management-view">
+    <div class="menu-card">
+        <div style="font-size: 50px; margin-bottom: 10px;">🛡️</div>
+        <h2 style="color: var(--primary); margin: 0;">Pattern Protected</h2>
+        <p style="color: var(--text-dim); font-size: 14px; margin-top: 10px;">Institutional security is active.</p>
+        <button class="p-btn action-btn" onclick="startWorkflow('CHANGE')">Change Pattern</button>
+        <button class="p-btn danger-btn" onclick="startWorkflow('REMOVE')">Disable Security</button>
+    </div>
+    <button class="p-btn cancel-link" onclick="location.replace('../security.html')">Go Back</button>
+</div>
+
+<div id="setup-view">
+    <div class="instruction" id="msg">Draw Pattern</div>
+    <div id="pattern-container">
+        <canvas id="canvas" width="300" height="300"></canvas>
+    </div>
+    <button id="cancel-op" class="p-btn cancel-link" onclick="location.reload()">Cancel</button>
+</div>
+
+<script src="../js/storage.js"></script>
+<script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const msg = document.getElementById('msg');
+    const setupView = document.getElementById('setup-view');
+    const managementView = document.getElementById('management-view');
+
+    let dots = [];
+    let path = [];
+    let isDrawing = false;
+    let storedPattern = null;
+    let tempPattern = null;
+    let mode = "CREATE"; // CREATE, CONFIRM, VERIFY_CHANGE, VERIFY_REMOVE
+
+    window.onload = async () => {
+        const saved = await AppStorage.get('local_pattern');
+        if (saved) {
+            storedPattern = atob(saved);
+            showView('management');
+        } else {
+            mode = "CREATE";
+            showView('setup');
+            updateUI();
+        }
+        initGrid();
+    };
+
+    function showView(v) {
+        managementView.style.display = v === 'management' ? 'flex' : 'none';
+        setupView.style.display = v === 'setup' ? 'flex' : 'none';
+    }
+
+    function startWorkflow(type) {
+        mode = (type === 'CHANGE') ? "VERIFY_CHANGE" : "VERIFY_REMOVE";
+        showView('setup');
+        updateUI();
+    }
+
+    function updateUI() {
+        if (mode === "CREATE") msg.innerText = "Draw New Pattern";
+        if (mode === "CONFIRM") msg.innerText = "Draw Again to Confirm";
+        if (mode.startsWith("VERIFY")) msg.innerText = "Draw Current Pattern";
+    }
+
+    function initGrid() {
+        dots = [];
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                dots.push({ x: j * 100 + 50, y: i * 100 + 50, id: i * 3 + j });
+            }
+        }
+        draw();
+    }
+
+    function draw(mouseX, mouseY) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Lines
+        if (path.length > 0) {
+            ctx.beginPath();
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.moveTo(dots[path[0]].x, dots[path[0]].y);
+            path.forEach(id => ctx.lineTo(dots[id].x, dots[id].y));
+            if (isDrawing && mouseX) ctx.lineTo(mouseX, mouseY);
+            ctx.stroke();
+        }
+
+        // Dots
+        dots.forEach(dot => {
+            const active = path.includes(dot.id);
+            ctx.beginPath();
+            ctx.arc(dot.x, dot.y, active ? 12 : 8, 0, Math.PI * 2);
+            ctx.fillStyle = active ? '#38bdf8' : '#334155';
+            ctx.fill();
+        });
+    }
+
+    // Input Logic
+    const getCoords = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
+    };
+
+    const handleStart = () => { isDrawing = true; path = []; draw(); };
+    const handleMove = (e) => {
+        if (!isDrawing) return;
+        const pos = getCoords(e);
+        dots.forEach(dot => {
+            const dist = Math.sqrt((pos.x - dot.x)**2 + (pos.y - dot.y)**2);
+            if (dist < 25 && !path.includes(dot.id)) {
+                path.push(dot.id);
+                if (window.Capacitor) Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
+            }
+        });
+        draw(pos.x, pos.y);
+    };
+
+    const handleEnd = () => {
+        if (!isDrawing) return;
+        isDrawing = false;
+        if (path.length < 4) {
+            showSign("At least 4 dots required", "error");
+            path = []; draw(); return;
+        }
+        processPattern(path.join(''));
+    };
+
+    async function processPattern(drawn) {
+        if (mode === "VERIFY_CHANGE" || mode === "VERIFY_REMOVE") {
+            if (drawn === storedPattern) {
+                if (mode === "VERIFY_REMOVE") {
+                    await AppStorage.remove('local_pattern');
+                    await AppStorage.remove('security_type');
+                    showSign("Security Disabled", "success");
+                    setTimeout(() => window.location.replace("../security.html"), 1000);
+                } else {
+                    showSign("Identity Verified", "success");
+                    mode = "CREATE";
+                    path = []; draw(); updateUI();
+                }
+            } else {
+                showSign("Incorrect Pattern", "error");
+                path = []; draw();
+            }
+        }
+        else if (mode === "CREATE") {
+            tempPattern = drawn;
+            mode = "CONFIRM";
+            showSign("Now Confirm It", "success");
+            path = []; draw(); updateUI();
+        }
+        else if (mode === "CONFIRM") {
+            if (drawn === tempPattern) {
+                await AppStorage.set('local_pattern', btoa(drawn));
+                await AppStorage.set('type', 'pattern');
+                showSign("Pattern Secured", "success");
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showSign("Mismatch! Try again", "error");
+                mode = "CREATE";
+                path = []; draw(); updateUI();
+            }
+        }
+    }
+
+    function showSign(m, type) {
+        const s = document.getElementById('sign');
+        s.innerText = m;
+        s.className = type === 'success' ? 'bg-green active' : 'bg-red active';
+        setTimeout(() => s.classList.remove('active'), 2500);
+    }
+
+    canvas.addEventListener('mousedown', handleStart);
+    canvas.addEventListener('touchstart', handleStart);
+    window.addEventListener('mousemove', handleMove);
+    window.addEventListener('touchmove', handleMove);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchend', handleEnd);
+</script>
+</body>
+</html>

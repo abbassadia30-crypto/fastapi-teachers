@@ -124,7 +124,7 @@
         resendBtn.style.opacity = "0.5";
 
         try {
-            const response = await fetch(`${API_BASE}/resend-otp`, {
+            const response = await fetch(`${API_BASE}/auth/resend-otp`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ email: userEmail })

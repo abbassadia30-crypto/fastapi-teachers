@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Security Settings | Super Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --success: #22c55e; --danger: #ef4444; }
+        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; }
+
+        .header { margin-top: 40px; text-align: center; }
+        .header h2 { color: var(--primary); margin: 0; }
+
+        .setup-card {
+            background: var(--card); border-radius: 24px; padding: 25px;
+            margin-top: 30px; border: 1px solid #334155; text-align: center;
+        }
+
+        .toggle-box {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 15px; margin-top: 20px;
+        }
+
+        /* 🚨 Custom Red/Green Sign Box */
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 85%; padding: 15px; border-radius: 12px; text-align: center;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; font-weight: 600;
+        }
+        .bg-red { background: var(--danger); top: 20px !important; }
+        .bg-green { background: var(--success); top: 20px !important; }
+
+        .p-btn {
+            background: var(--primary); color: #0f172a; border: none;
+            padding: 15px 30px; border-radius: 12px; font-weight: 600;
+            width: 100%; margin-top: 25px; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<div class="header">
+    <h2>Institution Security</h2>
+    <p style="color: #94a3b8;">Manage your biometric access</p>
+</div>
+
+<div class="setup-card">
+    <div style="font-size: 50px; margin-bottom: 10px;">🧬</div>
+    <h3>Touch ID / Face ID</h3>
+    <p style="color: #94a3b8; font-size: 13px;">Use your device biometrics for instant access to the Super Console.</p>
+
+    <button class="p-btn" id="bioBtn" onclick="setupBiometrics()">Enable Biometric Lock</button>
+</div>
+
+<script src="js/storage.js"></script>
+<script>
+    async function setupBiometrics() {
+        try {
+            // 🏛️ Rule 1: Must have a PIN first as backup
+            const pass = await AppStorage.get('type');
+            if (!pass) {
+                showSign("Please set a PIN backup first", "error");
+                return;
+            }
+
+            // 🏛️ Rule 2: Check Hardware
+            const result = await Capacitor.Plugins.NativeBiometric.isAvailable();
+            if (!result.isAvailable) {
+                showSign("Biometric hardware not supported", "error");
+                return;
+            }
+
+            // 🏛️ Rule 3: Verify user right now
+            const verified = await Capacitor.Plugins.NativeBiometric.verify({
+                reason: "Enable biometric access for this institution",
+                title: "Confirm Identity",
+                subtitle: "Any registered finger will work"
+            });
+
+            if (verified) {
+                await AppStorage.set('security_type', 'biometric');
+                showSign("Biometric Lock Active", "success");
+                setTimeout(() => location.reload(), 1200);
+            }
+        } catch (err) {
+            showSign("Biometric Setup Cancelled", "error");
+        }
+    }
+
+    function showSign(m, type) {
+        const b = document.getElementById('notification-bar');
+        b.innerText = m;
+        b.className = type === 'success' ? 'bg-green' : 'bg-red';
+        if (window.Capacitor) Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
+        setTimeout(() => { b.className = ""; }, 3000);
+    }
+</script>
+</body>
+</html>

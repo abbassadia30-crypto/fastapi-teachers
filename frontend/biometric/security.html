@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #0f172a; /* Deep security blue/black */
+            --bg: #0f172a;
             --card: #1e293b;
             --text: #f8fafc;
             --primary: #38bdf8;
@@ -26,24 +26,20 @@
 
         .container { padding: 20px; max-width: 500px; margin: 0 auto; }
 
-        /* Security Cards */
         .sec-card { background: var(--card); border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
         .sec-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: var(--primary); font-weight: 600; font-size: 14px; text-transform: uppercase; }
 
-        /* Rows */
         .sec-row { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid var(--border); }
         .sec-row:last-child { border-bottom: none; }
         .label-group { display: flex; flex-direction: column; }
         .main-label { font-size: 14px; font-weight: 500; }
         .sub-label { font-size: 11px; color: #94a3b8; margin-top: 2px; }
 
-        /* Inputs & Selects */
         select, input {
             background: #0f172a; color: white; border: 1px solid var(--border);
             padding: 8px 12px; border-radius: 8px; font-family: inherit; font-size: 13px;
         }
 
-        /* Toggle Switch */
         .switch { position: relative; width: 40px; height: 22px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #475569; transition: .4s; border-radius: 34px; }
@@ -51,7 +47,6 @@
         input:checked + .slider { background-color: var(--primary); }
         input:checked + .slider:before { transform: translateX(18px); }
 
-        /* Sign Box */
         #sign-box {
             display: none; margin-bottom: 15px; padding: 12px; border-radius: 8px;
             text-align: center; font-size: 13px; font-weight: 600;
@@ -60,6 +55,16 @@
         .sign-green { background: rgba(34, 197, 94, 0.2); color: var(--success); border: 1px solid var(--success); }
 
         .btn-action { background: var(--primary); color: #0f172a; border: none; padding: 10px 16px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 12px; }
+
+        /* 🏛️ Biometric Icon Style */
+        .bio-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .bio-btn {
+            background: #0f172a; border: 1px solid var(--border); color: white;
+            padding: 12px; border-radius: 12px; font-size: 11px; font-weight: 600;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .bio-btn:active { background: var(--primary); color: var(--bg); }
     </style>
 </head>
 <body>
@@ -71,6 +76,23 @@
 
 <div class="container">
     <div id="sign-box"></div>
+
+    <div class="sec-card">
+        <div class="sec-header">🛡️ Identity Verification</div>
+        <div class="label-group" style="margin-bottom: 15px;">
+            <span class="main-label">Multi-Factor Authentication</span>
+            <span class="sub-label">Choose your preferred institutional access method</span>
+        </div>
+
+        <div class="bio-grid">
+            <div class="bio-btn" onclick="location.replace('finger_setup.html')">🖐️ Fingerprint</div>
+            <div class="bio-btn" onclick="triggerAuth('face_setup.html')">👤 Face ID</div>
+            <div class="bio-btn" onclick="location.replace('pattern_setup.html')">🟦 Pattern</div>
+            <div class="bio-btn" onclick="location.replace('pin_setup.html')">🔢 Secure PIN</div>
+        </div>
+
+        <button class="btn-action" style="width:100%; margin-top:15px; background: #475569; color: white;" onclick="triggerAuth('OTP')">Generate 4 Security OTPs</button>
+    </div>
 
     <div class="sec-card">
         <div class="sec-header">🛡️ Active Sessions</div>
@@ -152,22 +174,43 @@
         box.style.display = 'block';
         box.className = type === 'success' ? 'sign-green' : 'sign-red';
 
-        // Capacitor Haptics
         if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
             Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
         }
         setTimeout(() => box.style.display = 'none', 4000);
     }
 
+    // 🏛️ Advanced Auth Trigger
+    async function triggerAuth(type) {
+        if (type === 'OTP') {
+            const codes = Array.from({length: 4}, () => Math.floor(1000 + Math.random() * 9000)).join(" - ");
+            showSign("Security Codes Generated: " + codes, "success");
+            return;
+        }
+
+        // Logic for Biometrics via Capacitor
+        if (window.Capacitor && window.Capacitor.isPluginAvailable('NativeBiometric')) {
+            try {
+                const result = await Capacitor.Plugins.NativeBiometric.verify({
+                    reason: "Access Institution Super Console",
+                    title: "Security Check",
+                    subtitle: "Authenticate via " + type
+                });
+                showSign(type + " Authenticated", "success");
+            } catch (e) {
+                showSign(type + " Failed or Unavailable", "error");
+            }
+        } else {
+            showSign(type + " Simulation: Access Granted", "success");
+        }
+    }
+
     async function changeEmail() {
         const email = document.getElementById('new-email').value;
         if(!email.includes('@')) return showSign("Invalid email format", "error");
-
-        // Real dev tip: Here you would trigger a FastAPI endpoint to send a verification code
         showSign("Verification link sent to " + email, "success");
     }
 
-    // Role Screen Pin Logic Toggle
     document.getElementById('role-pin').addEventListener('change', (e) => {
         const status = e.target.checked ? "Enabled" : "Disabled";
         showSign("Role Screen PIN " + status, "success");

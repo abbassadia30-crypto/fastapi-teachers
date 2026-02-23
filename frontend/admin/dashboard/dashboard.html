@@ -131,6 +131,7 @@
     window.onload = async () => {
         const token = await AppStorage.get('auth_token');
         const cachedName = await AppStorage.get('current_institution_name');
+        await AppStorage.set('dome' , true)
 
         if (!token) {
             window.location.replace("../../index.html");

@@ -219,7 +219,7 @@
         loader.style.display = 'flex';
 
         try {
-            const token = await AppStorage.get('institutionToken');
+            const token = await AppStorage.get('auth_token');
             if (!token) throw new Error("Session expired.");
 
             const response = await fetch(`${API_URL}/institution/initialize-role`, {

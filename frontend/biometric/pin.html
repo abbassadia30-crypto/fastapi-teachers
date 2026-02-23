@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PIN Authority | Institution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #38bdf8;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* 💎 Header */
+        .header { text-align: center; margin-bottom: 40px; animation: slideDown 0.5s ease; }
+        .header h2 { color: var(--primary); margin: 0; font-size: 26px; letter-spacing: 1px; }
+        .header p { color: #94a3b8; font-size: 14px; margin-top: 5px; }
+
+        /* 🔘 PIN Dots */
+        .pin-display { display: flex; gap: 20px; margin-bottom: 50px; }
+        .dot {
+            width: 16px; height: 16px;
+            border: 2px solid #334155;
+            border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dot.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            transform: scale(1.2);
+        }
+
+        /* ⌨️ Keypad */
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 85px);
+            gap: 20px;
+            justify-content: center;
+        }
+        .key {
+            width: 85px; height: 85px;
+            background: var(--card);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.1s;
+            border: 1px solid #334155;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .key:active {
+            background: var(--primary);
+            color: #0f172a;
+            transform: scale(0.9);
+            border-color: var(--primary);
+        }
+        .key.empty { background: transparent; border: none; cursor: default; }
+        .key.del { font-size: 20px; color: #94a3b8; }
+
+        /* 🚨 Sign Box (Mandatory) */
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 400px; padding: 16px; border-radius: 15px;
+            text-align: center; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000; font-weight: 600;
+        }
+        .bg-red { background: var(--danger); top: 30px !important; color: white; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); }
+        .bg-green { background: var(--success); top: 30px !important; color: white; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3); }
+
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .shake { animation: shake 0.3s ease-in-out; }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<div class="header">
+    <h2 id="main-title">Authority Check</h2>
+    <p id="main-sub">Enter 6-digit PIN to proceed</p>
+</div>
+
+<div class="pin-display" id="pinDisplay">
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+</div>
+
+<div class="keypad">
+    <div class="key" onclick="pressKey('1')">1</div><div class="key" onclick="pressKey('2')">2</div><div class="key" onclick="pressKey('3')">3</div>
+    <div class="key" onclick="pressKey('4')">4</div><div class="key" onclick="pressKey('5')">5</div><div class="key" onclick="pressKey('6')">6</div>
+    <div class="key" onclick="pressKey('7')">7</div><div class="key" onclick="pressKey('8')">8</div><div class="key" onclick="pressKey('9')">9</div>
+    <div class="key empty"></div><div class="key" onclick="pressKey('0')">0</div>
+    <div class="key del" onclick="deleteKey()">⌫</div>
+</div>
+
+<script src="js/storage.js"></script>
+<script>
+    let currentPin = "";
+    let storedPin = null;
+
+    window.onload = async () => {
+        // 🏛️ Load PIN from local storage instead of API
+        const saved = await AppStorage.get('local_pin');
+        const role = await AppStorage.get('user_role');
+        storedPin = atob(saved); // Decode Base64
+    };
+
+    function pressKey(num) {
+        if (currentPin.length < 6) {
+            currentPin += num;
+            updateDots();
+
+            if (window.Capacitor) {
+                Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
+            }
+
+            if (currentPin.length === 6) {
+                setTimeout(verifyLocally, 200);
+            }
+        }
+    }
+
+    function deleteKey() {
+        if (currentPin.length > 0) {
+            currentPin = currentPin.slice(0, -1);
+            updateDots();
+        }
+    }
+
+    function updateDots() {
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, index) => {
+            dot.classList.toggle('active', index < currentPin.length);
+        });
+    }
+
+    function verifyLocally() {
+        if (currentPin === storedPin) {
+            showSign("Identity Verified", "success");
+
+            // Visual feedback on title
+            const title = document.getElementById('main-title');
+            title.innerText = "Access Granted";
+            title.style.color = "#22c55e";
+
+            if (window.Capacitor) {
+                Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
+            }
+
+            setTimeout(() => {
+                window.location.href = `../${role}/dashboard/dashboard.html`;
+            }, 800);
+        } else {
+            showSign("Incorrect PIN", "error");
+
+            // Shake effect on dots
+            const display = document.getElementById('pinDisplay');
+            display.classList.add('shake');
+            setTimeout(() => display.classList.remove('shake'), 400);
+
+            if (window.Capacitor) {
+                Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
+            }
+
+            currentPin = "";
+            updateDots();
+        }
+    }
+
+    function showSign(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'bg-green' : 'bg-red';
+        setTimeout(() => { bar.className = ""; }, 3000);
+    }
+</script>
+</body>
+</html>

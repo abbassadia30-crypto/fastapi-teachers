@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PIN Security | Super Console</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* 🏛️ Institution Management System - Security Styles */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #0f172a;
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            justify-content: center;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Views */
+        #management-view, #setup-view {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .menu-card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 24px;
+            border: 1px solid #334155;
+            width: 85%;
+            max-width: 350px;
+            text-align: center;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+        }
+
+        /* 💎 Security Dots */
+        .dot-container { display: flex; gap: 15px; margin-bottom: 40px; }
+        .dot {
+            width: 16px; height: 16px;
+            border: 2px solid #475569;
+            border-radius: 50%;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dot.fill {
+            background: #38bdf8;
+            border-color: #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+            transform: scale(1.2);
+        }
+
+        /* ⌨️ Keypad */
+        .keypad { display: grid; grid-template-columns: repeat(3, 80px); gap: 20px; }
+        .key {
+            width: 80px; height: 80px;
+            background: #1e293b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid #334155;
+            transition: 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .key:active { background: #334155; transform: scale(0.9); border-color: #38bdf8; }
+
+        /* 🚨 Custom Red/Green Sign Boxes (Required) */
+        #notification-bar {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 85%;
+            max-width: 400px;
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 1000;
+            font-weight: 600;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+        }
+        .sign-red { background: #ef4444; color: white; top: 30px !important; }
+        .sign-green { background: #22c55e; color: white; top: 30px !important; }
+
+        .p-btn {
+            padding: 14px 24px;
+            border-radius: 12px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 14px;
+            margin-top: 12px;
+            transition: 0.3s;
+        }
+        .action-btn { background: #38bdf8; color: #0f172a; }
+        .danger-btn { background: #334155; color: #ef4444; border: 1px solid #ef4444; }
+    </style>
+</head>
+<body>
+
+<div id="notification-bar"></div>
+
+<div id="management-view">
+    <div class="menu-card">
+        <div style="font-size: 50px; margin-bottom: 15px;">🛡️</div>
+        <h2 style="color: #38bdf8; margin: 0;">Super Console</h2>
+        <p style="color: #94a3b8; font-size: 14px; margin: 15px 0;">Institution security is currently active.</p>
+        <button class="p-btn action-btn" onclick="initiateFlow('CHANGE')">Change Security PIN</button>
+        <button class="p-btn danger-btn" onclick="initiateFlow('REMOVE')">Disable PIN Lock</button>
+    </div>
+    <button class="p-btn" style="background:none; color:#64748b; margin-top:20px;" onclick="window.location.replace('../security.html')">← Back to Dashboard</button>
+</div>
+
+<div id="setup-view">
+    <div style="text-align: center; margin-bottom: 30px;">
+        <h2 id="step-title" style="color: #38bdf8; margin: 0;">Security</h2>
+        <p id="step-sub" style="color: #94a3b8; font-size: 13px;">Please proceed</p>
+    </div>
+
+    <div class="dot-container">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <div class="keypad">
+        <div class="key" onclick="press('1')">1</div><div class="key" onclick="press('2')">2</div><div class="key" onclick="press('3')">3</div>
+        <div class="key" onclick="press('4')">4</div><div class="key" onclick="press('5')">5</div><div class="key" onclick="press('6')">6</div>
+        <div class="key" onclick="press('7')">7</div><div class="key" onclick="press('8')">8</div><div class="key" onclick="press('9')">9</div>
+        <div class="key" style="visibility:hidden"></div><div class="key" onclick="press('0')">0</div><div class="key" onclick="backspace()">⌫</div>
+    </div>
+
+    <button id="cancel-btn" class="p-btn" style="background:none; color:#64748b; margin-top: 30px;" onclick="location.reload()">Cancel Operation</button>
+</div>
+
+<script>
+    /* Note: AppStorage is expected to be defined in your storage.js.
+       Example implementation: const AppStorage = { get: ..., set: ..., remove: ... };
+    */
+
+    let currentInput = "";
+    let tempPin = ""; // Stores first entry during CREATE mode
+    let workflow = ""; // "CREATE", "VERIFY_FOR_CHANGE", "VERIFY_FOR_REMOVE", "CONFIRM_NEW"
+    let savedPin = null;
+
+    window.onload = async () => {
+        try {
+            const raw = await AppStorage.get('local_pin');
+            if (raw) {
+                savedPin = atob(raw);
+                showScreen('management');
+            } else {
+                startCreateFlow();
+            }
+        } catch (e) {
+            startCreateFlow(); // Fallback
+        }
+    };
+
+    function showScreen(screen) {
+        document.getElementById('management-view').style.display = screen === 'management' ? 'flex' : 'none';
+        document.getElementById('setup-view').style.display = screen === 'setup' ? 'flex' : 'none';
+    }
+
+    function startCreateFlow() {
+        workflow = "CREATE";
+        updateText("Create PIN", "Choose a 6-digit security code");
+        showScreen('setup');
+        document.getElementById('cancel-btn').style.visibility = savedPin ? "visible" : "hidden";
+    }
+
+    function initiateFlow(type) {
+        if (type === 'CHANGE') {
+            workflow = "VERIFY_FOR_CHANGE";
+            updateText("Confirm Identity", "Enter current PIN to change");
+        } else {
+            workflow = "VERIFY_FOR_REMOVE";
+            updateText("Disable Security", "Enter current PIN to remove lock");
+        }
+        showScreen('setup');
+    }
+
+    function updateText(t, s) {
+        document.getElementById('step-title').innerText = t;
+        document.getElementById('step-sub').innerText = s;
+    }
+
+    function press(n) {
+        if (currentInput.length < 6) {
+            currentInput += n;
+            renderDots();
+            haptic('LIGHT');
+
+            if (currentInput.length === 6) {
+                setTimeout(processLogic, 250);
+            }
+        }
+    }
+
+    function backspace() {
+        currentInput = currentInput.slice(0, -1);
+        renderDots();
+    }
+
+    function renderDots() {
+        const dots = document.querySelectorAll('.dot');
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('fill', i < currentInput.length);
+        });
+    }
+
+    async function processLogic() {
+        const input = currentInput;
+        currentInput = "";
+        renderDots();
+
+        // 1. CREATE NEW PIN (Step 1)
+        if (workflow === "CREATE") {
+            tempPin = input;
+            workflow = "CONFIRM_NEW";
+            showSign("Code Entered", "success");
+            updateText("Confirm PIN", "Please enter the code again");
+        }
+
+        // 2. CONFIRM NEW PIN (Step 2)
+        else if (workflow === "CONFIRM_NEW") {
+            if (input === tempPin) {
+                await finalizeSecurity(input);
+            } else {
+                showSign("PIN Mismatch", "error");
+                startCreateFlow();
+            }
+        }
+
+        // 3. VERIFY FOR CHANGE OR REMOVAL
+        else if (workflow === "VERIFY_FOR_CHANGE") {
+            if (input === savedPin) {
+                showSign("Identity Verified", "success");
+                startCreateFlow();
+            } else {
+                showSign("Incorrect PIN", "error");
+            }
+        }
+        else if (workflow === "VERIFY_FOR_REMOVE") {
+            if (input === savedPin) {
+                await removeSecurity();
+            } else {
+                showSign("Incorrect PIN", "error");
+            }
+        }
+    }
+
+    async function finalizeSecurity(pin) {
+        await AppStorage.set('local_pin', btoa(pin));
+        await AppStorage.set('type', 'pin');
+        showSign("Security PIN Active", "success");
+        setTimeout(() => location.reload(), 1000);
+    }
+
+    async function removeSecurity() {
+        await AppStorage.remove('local_pin');
+        await AppStorage.remove('type');
+        showSign("Security Disabled", "success");
+        setTimeout(() => location.replace("../security.html"), 1000);
+    }
+
+    function showSign(msg, type) {
+        const bar = document.getElementById('notification-bar');
+        bar.innerText = msg;
+        bar.className = type === 'success' ? 'sign-green' : 'sign-red';
+
+        if (type === 'error') haptic('ERROR');
+        else haptic('SUCCESS');
+
+        setTimeout(() => { bar.className = ""; }, 2500);
+    }
+
+    function haptic(type) {
+        if (window.Capacitor && Capacitor.Plugins.Haptics) {
+            if (type === 'LIGHT') Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
+            else Capacitor.Plugins.Haptics.notification({ type: type });
+        }
+    }
+</script>
+
+<script>
+    if (typeof AppStorage === 'undefined') {
+        window.AppStorage = {
+            get: async (key) => localStorage.getItem(key),
+            set: async (key, val) => localStorage.setItem(key, val),
+            remove: async (key) => localStorage.removeItem(key)
+        };
+    }
+</script>
+
+</body>
+</html>
