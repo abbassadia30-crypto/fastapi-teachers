@@ -144,7 +144,7 @@
 
             const identityStatus = await AppStorage.get(`${role}_identity`);
 
-            if (!email && !auth_token) {
+            if (!email || !auth_token) {
                 document.body.classList.add('ready');
                 return;
             }

@@ -17,7 +17,7 @@
 
         body { font-family: 'Poppins', sans-serif; background: var(--bg); margin: 0; padding-bottom: 50px; color: var(--text); -webkit-tap-highlight-color: transparent; }
 
-        /* 🟢 / 🔴 Sign Box */
+        /* 🏛️ Sign Box */
         #signBox { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; font-weight: 700; display: none; z-index: 3000; animation: slideIn 0.3s ease-out; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
         @keyframes slideIn { from { transform: translateX(110%); } to { transform: translateX(0); } }
         .sign-green { background: #e8f5e9; color: var(--success); border: 2px solid var(--success); display: block !important; }
@@ -33,7 +33,6 @@
         /* Grid */
         .container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; max-width: 1400px; margin: auto; }
         .teacher-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-top: 6px solid var(--primary); position: relative; transition: transform 0.2s; }
-        .teacher-card:active { transform: scale(0.98); }
 
         .actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
         .btn-action { border: none; background: #f8fafc; padding: 10px; border-radius: 50%; cursor: pointer; font-size: 14px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
@@ -75,22 +74,16 @@
     <div class="modal-content">
         <h3 style="margin-top:0; color: var(--primary);">Update Faculty</h3>
         <input type="hidden" id="editId">
-
         <label class="label" style="font-size: 11px;">FULL NAME</label>
         <input type="text" id="editName" class="modal-input">
-
         <label class="label" style="font-size: 11px;">DESIGNATION / SUBJECT</label>
         <input type="text" id="editDesignation" class="modal-input">
-
         <label class="label" style="font-size: 11px;">CONTACT NUMBER</label>
         <input type="text" id="editPhone" class="modal-input">
-
         <label class="label" style="font-size: 11px;">SALARY (PKR)</label>
         <input type="number" id="editSalary" class="modal-input">
-
         <div id="editExtraContainer"></div>
-        <button type="button" onclick="addNewFacultyRow()"
-                style="width:100%; background:#f0f7ff; color:var(--primary); border:1.5px dashed var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:12px; margin-bottom:15px; cursor:pointer;">
+        <button type="button" onclick="addNewFacultyRow()" style="width:100%; background:#f0f7ff; color:var(--primary); border:1.5px dashed var(--primary); padding:10px; border-radius:12px; font-weight:600; font-size:12px; margin-bottom:15px; cursor:pointer;">
             + Add Custom Information
         </button>
         <div class="modal-btns">
@@ -117,61 +110,49 @@
 <script src="../../js/storage.js"></script>
 <script>
     const API = "https://fastapi-teachers.onrender.com";
-    let authToken = null;
     let allFaculty = [];
+    let authToken = "";
 
     window.onload = async () => {
         authToken = await AppStorage.get('auth_token');
-        if (!authToken) return window.location.href = "login.html";
+        if (!authToken) return window.location.href = "../../index.html";
         await fetchFaculty();
     };
 
-    // --- 1. NOTIFICATION SYSTEM ---
     function showSign(msg, isSuccess) {
         const box = document.getElementById('signBox');
         if(!box) return;
         box.innerText = msg;
         box.className = isSuccess ? "sign-green" : "sign-red";
         box.style.display = 'block';
-
-        if (window.AppHaptics) {
-            window.AppHaptics.notification(isSuccess ? 'SUCCESS' : 'ERROR');
-        }
-
-        setTimeout(() => {
-            box.style.display = 'none';
-        }, 3000);
+        setTimeout(() => box.style.display = 'none', 3000);
     }
 
-    // --- 2. DATA FETCHING ---
     async function fetchFaculty() {
         try {
             const res = await fetch(`${API}/dashboard/teacher-list`, {
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
-            if (res.status === 401) window.location.href = "login.html";
-
             const result = await res.json();
-            // Handle the StaffListResponse schema (rows key)
-            allFaculty = result.rows || result || [];
+            // Backend returns { rows: [...] }
+            allFaculty = result.rows || [];
             renderGrid(allFaculty);
         } catch (err) {
             showSign("Sync Error: Institution Offline", false);
         }
     }
 
-    // --- 3. UI RENDERING ---
     function renderGrid(data) {
         const grid = document.getElementById('facultyGrid');
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--muted);">No faculty records found.</div>`;
             return;
         }
         grid.innerHTML = data.map(t => `
             <div class="teacher-card">
                 <div class="actions">
-                    <button class="btn-action" onclick="openEdit(${t.id})" title="Edit">✏️</button>
-                    <button class="btn-action" style="color:var(--danger);" onclick="deleteTeacher(${t.id}, '${t.name}')" title="Delete">🗑️</button>
+                    <button class="btn-action" onclick="openEdit('${t.id}')">✏️</button>
+                    <button class="btn-action" style="color:var(--danger);" onclick="deleteTeacher('${t.id}', '${t.name.replace(/'/g, "\\'")}')">🗑️</button>
                 </div>
                 <span class="subject">${t.designation || 'Faculty Member'}</span>
                 <span class="name">${t.name}</span>
@@ -181,25 +162,15 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">Monthly Salary</span>
-                    <span class="value">${Number(t.salary).toLocaleString()} PKR</span>
+                    <span class="value">${Number(t.salary || 0).toLocaleString()} PKR</span>
                 </div>
             </div>
         `).join('');
     }
 
-    function filterFaculty() {
-        const q = document.getElementById('searchInput').value.toLowerCase().trim();
-        const filtered = allFaculty.filter(t =>
-            t.name.toLowerCase().includes(q) ||
-            (t.designation && t.designation.toLowerCase().includes(q)) ||
-            (t.phone && t.phone.includes(q))
-        );
-        renderGrid(filtered);
-    }
-
-    // --- 4. MODAL MANAGEMENT (Fixed Cancel logic) ---
     function openEdit(id) {
-        const t = allFaculty.find(x => x.id === id);
+        // Find teacher using strict string comparison for IDs
+        const t = allFaculty.find(x => String(x.id) === String(id));
         if(!t) return;
 
         document.getElementById('editId').value = id;
@@ -211,82 +182,44 @@
         const extraDiv = document.getElementById('editExtraContainer');
         extraDiv.innerHTML = "";
 
-        if(t.extra_details) {
+        if(t.extra_details && typeof t.extra_details === 'object') {
             Object.entries(t.extra_details).forEach(([key, val]) => {
-                extraDiv.innerHTML += `
-            <div class="existing-field-group" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;">
-                <div style="flex:1">
-                    <label class="label" style="font-size: 11px;">${key.replace(/_/g, ' ').toUpperCase()}</label>
-                    <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}" style="margin:0;">
-                </div>
-                <button type="button" onclick="this.parentElement.remove()"
-                    style="background:#f5f5f5; border:1px solid #d9d9d9; color:#595959; padding:8px 12px; border-radius:8px; cursor:pointer; margin-bottom:5px; height:42px;">
-                    ✕
-                </button>
-            </div>`;
+                addExistingExtraRow(key, val);
             });
         }
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    function closeModals() {
-        document.getElementById('editModal').style.display = 'none';
-        document.getElementById('deleteModal').style.display = 'none';
+    function addExistingExtraRow(key, val) {
+        const extraDiv = document.getElementById('editExtraContainer');
+        const row = document.createElement('div');
+        row.className = "existing-field-group";
+        row.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
+        row.innerHTML = `
+            <div style="flex:1">
+                <label class="label" style="font-size: 11px;">${key.toUpperCase()}</label>
+                <input type="text" class="modal-input extra-field" data-key="${key}" value="${val}" style="margin:0;">
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" style="background:#f5f5f5; border:1px solid #d9d9d9; padding:8px 12px; border-radius:8px; height:42px;">✕</button>`;
+        extraDiv.appendChild(row);
     }
 
-    // Close on background click only
-    window.onclick = function(event) {
-        if (event.target.className === 'modal') {
-            closeModals();
-        }
-    };
-
-    // --- 5. DYNAMIC ROWS ---
-    function addNewFacultyRow() {
-        const container = document.getElementById('editExtraContainer');
-        const div = document.createElement('div');
-        div.className = "dynamic-faculty-row";
-        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
-
-        div.innerHTML = `
-        <div style="flex:1">
-            <label class="label" style="font-size: 9px;">FIELD NAME</label>
-            <input type="text" class="modal-input new-key" placeholder="e.g. Shift" style="margin:0; font-size:13px;">
-        </div>
-        <div style="flex:1">
-            <label class="label" style="font-size: 9px;">VALUE</label>
-            <input type="text" class="modal-input new-val" placeholder="e.g. Evening" style="margin:0; font-size:13px;">
-        </div>
-        <button type="button" onclick="this.parentElement.remove()"
-            style="background:#fff1f0; border:1px solid #ffa39e; color:#f5222d; padding:8px 12px; border-radius:8px; cursor:pointer; font-size:14px; margin-bottom:5px; height:42px;">
-            ✕
-        </button>
-    `;
-        container.appendChild(div);
-    }
-
-    // --- 6. API OPERATIONS (Fixed "Connection Error" bug) ---
     async function saveEdit() {
         const id = document.getElementById('editId').value;
         const btn = document.getElementById('saveEditBtn');
-
         if (btn.disabled) return;
-        btn.disabled = true;
-        btn.innerText = "Syncing...";
 
         const extras = {};
-
-        // Collect existing fields
+        // Get existing edited extras
         document.querySelectorAll('.extra-field').forEach(inp => {
             const key = inp.getAttribute('data-key');
             if(key) extras[key] = inp.value.trim();
         });
-
-        // Collect new dynamic fields
+        // Get newly added rows
         document.querySelectorAll('.dynamic-faculty-row').forEach(row => {
-            const key = row.querySelector('.new-key').value.trim();
-            const val = row.querySelector('.new-val').value.trim();
-            if (key) extras[key] = val;
+            const k = row.querySelector('.new-key').value.trim();
+            const v = row.querySelector('.new-val').value.trim();
+            if(k) extras[k] = v;
         });
 
         const body = {
@@ -297,8 +230,10 @@
             extra_details: extras
         };
 
+        btn.disabled = true;
+        btn.innerText = "Syncing...";
         try {
-            const response = await fetch(`${API}/dashboard/teacher/${id}`, {
+            const res = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -306,52 +241,62 @@
                 },
                 body: JSON.stringify(body)
             });
-
-            if (response.ok) {
-                showSign("Faculty record updated in vault", true);
+            if(res.ok) {
+                showSign("Institution Vault Updated", true);
                 closeModals();
-                // Beat delay for DB consistency on Render
-                setTimeout(() => fetchFaculty(), 600);
+                await fetchFaculty();
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                showSign(errorData.detail || "Update failed", false);
+                showSign("Update Denied", false);
             }
-        } catch (e) {
-            console.error("Save error:", e);
-            showSign("Network unstable: Check connection", false);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "Update";
-        }
-    }
-
-    function deleteTeacher(id, name) {
-        document.getElementById('deleteTargetId').value = id;
-        document.getElementById('deleteTargetName').innerText = name;
-        document.getElementById('deleteModal').style.display = 'flex';
+        } catch(e) { showSign("Network Error", false); }
+        btn.disabled = false;
+        btn.innerText = "Update";
     }
 
     async function executeDelete() {
         const id = document.getElementById('deleteTargetId').value;
         const btn = document.getElementById('confirmDelBtn');
-        if (btn.disabled) return;
-
         btn.disabled = true;
+        btn.innerText = "Removing...";
         try {
             const res = await fetch(`${API}/dashboard/teacher/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${authToken}` }
             });
             if(res.ok) {
-                showSign("Staff removed from institution", true);
+                showSign("Record Erased", true);
                 closeModals();
                 await fetchFaculty();
             }
-        } catch (e) {
-            showSign("Deletion failed", false);
-        } finally {
-            btn.disabled = false;
-        }
+        } catch(e) { showSign("Delete Failed", false); }
+        btn.disabled = false;
+        btn.innerText = "Remove";
+    }
+
+    function closeModals() {
+        document.getElementById('editModal').style.display = 'none';
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function filterFaculty() {
+        const q = document.getElementById('searchInput').value.toLowerCase().trim();
+        const filtered = allFaculty.filter(t =>
+            t.name.toLowerCase().includes(q) ||
+            (t.designation && t.designation.toLowerCase().includes(q))
+        );
+        renderGrid(filtered);
+    }
+
+    function addNewFacultyRow() {
+        const container = document.getElementById('editExtraContainer');
+        const div = document.createElement('div');
+        div.className = "dynamic-faculty-row";
+        div.style = "display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;";
+        div.innerHTML = `
+            <div style="flex:1"><label class="label" style="font-size: 9px;">FIELD</label><input type="text" class="new-key modal-input" style="margin:0;"></div>
+            <div style="flex:1"><label class="label" style="font-size: 9px;">VALUE</label><input type="text" class="new-val modal-input" style="margin:0;"></div>
+            <button type="button" onclick="this.parentElement.remove()" style="background:#fff1f0; border:1px solid #ffa39e; padding:8px 12px; border-radius:8px; height:42px;">✕</button>`;
+        container.appendChild(div);
     }
 </script>
 </body>

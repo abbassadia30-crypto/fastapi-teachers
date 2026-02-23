@@ -87,7 +87,7 @@
         authToken = await AppStorage.get('auth_token');
 
         try {
-            const tokenRes = await AppStorage.get("institutionToken");
+            const tokenRes = await AppStorage.get("auth_token");
             authToken = tokenRes.value || tokenRes;
         } catch (e) {
             console.error("Storage error", e);

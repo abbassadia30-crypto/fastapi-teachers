@@ -179,28 +179,31 @@ async def delete_teacher(
     db.commit()
     return {"status": "success", "message": "Teacher removed"}
 
-# 2. UPDATE Teacher
 @router.patch("/teacher/{teacher_id}")
 async def update_teacher(
         teacher_id: int,
-        data: EmployeeUpdate,
+        data: EmployeeUpdate, # Ensure your schema includes designation
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(teacher).filter(
+    # Renamed variable to teacher_obj to avoid conflict with the model class name 'teacher'
+    teacher_obj = db.query(teacher).filter(
         teacher.id == teacher_id,
         teacher.institution_id == current_user.institution_id
     ).first()
 
-    if not teacher:
+    if not teacher_obj:
         raise HTTPException(status_code=404, detail="Teacher record not found")
 
-    for key, value in data.model_dump(exclude_unset=True).items():
-        # Map designation back to subject_expertise if updated
+    # model_dump(exclude_unset=True) ensures we only update fields sent by UI
+    update_data = data.model_dump(exclude_unset=True)
+
+    for key, value in update_data.items():
         if key == "designation":
-            setattr(teacher, "subject_expertise", value)
+            # Map 'designation' back to 'subject_expertise' in the DB
+            setattr(teacher_obj, "subject_expertise", value)
         else:
-            setattr(teacher, key, value)
+            setattr(teacher_obj, key, value)
 
     db.commit()
     return {"status": "success", "message": "Record updated"}
