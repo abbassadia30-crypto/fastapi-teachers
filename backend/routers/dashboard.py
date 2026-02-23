@@ -30,48 +30,64 @@ async def admit_student(
     db.commit()
     return {"status": "success", "message": "Student added to institution"}
 
-@router.put("/edit_student/{student_id}")
-async def edit_student(
-    student_id: int, 
-    data: Student_update,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) # Security Added
-):
-    # Filter by ID AND institution_id to ensure ownership
-    student = db.query(student).filter(
-        student.id == student_id,
-        student.institution_id == current_user.institution_id
-    ).first()
-
-    if not student:
-        raise HTTPException(status_code=404, detail="Student not found in your institution")
-
-    student.name = data.name
-    student.father_name = data.father_name
-    student.section = data.section
-    student.fee = data.fee
-    student.extra_fields = data.extra_fields
-
-    db.commit()
-    return {"message": "Update successful"}
-
 @router.delete("/delete_student/{student_id}")
 async def delete_student(
-    student_id: int, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) # Security Added
+        student_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
 ):
-    student = db.query(student).filter(
+    # FIX: Use 'target' instead of 'student' for the variable name
+    target = db.query(student).filter(
         student.id == student_id,
         student.institution_id == current_user.institution_id
     ).first()
 
-    if not student:
+    if not target:
         raise HTTPException(status_code=404, detail="Student record not found")
 
-    student.is_active = False # Soft delete
+    db.delete(target) # Full removal from institution records
     db.commit()
-    return {"message": "Student deactivated"}
+    return {"status": "success", "message": "Student removed"}
+
+@router.put("/edit_student/{student_id}")
+async def edit_student(
+        student_id: int,
+        data: Student_update,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    target = db.query(student).filter(
+        student.id == student_id,
+        student.institution_id == current_user.institution_id
+    ).first()
+
+    if not target:
+        raise HTTPException(status_code=404, detail="Student not found")
+
+    target.name = data.name
+    target.father_name = data.father_name
+    target.section = data.section
+    target.fee = data.fee
+    target.extra_fields = data.extra_fields
+
+    db.commit()
+    return {"status": "success", "message": "Update successful"}
+
+@router.patch("/rename_section")
+async def rename_section(
+        old_name: str,
+        new_name: str,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # This updates the section string for all students in that class at once
+    db.query(student).filter(
+        student.section == old_name,
+        student.institution_id == current_user.institution_id
+    ).update({"section": new_name})
+
+    db.commit()
+    return {"message": "Section renamed successfully"}
 
 @router.get("/my_students")
 async def get_students(
