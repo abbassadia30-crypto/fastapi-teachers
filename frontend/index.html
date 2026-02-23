@@ -132,7 +132,6 @@
             return;
         }
 
-
         try {
             const [email, auth_token, role, inst_id] = await Promise.all([
                 AppStorage.get('user_email'),
@@ -140,8 +139,8 @@
                 AppStorage.get('user_role'),
                 AppStorage.get('institution_id')
             ]);
+            const sec_token = await AppStorage.get('local_pattern');
             const type = await AppStorage.get('type');
-            const advance = await AppStorage.get('advance_type')
 
             const identityStatus = await AppStorage.get(`${role}_identity`);
 
@@ -202,9 +201,14 @@
                     if (advance){
                         window.location.replace(`biometric/${advance}.html`)
                     }
-                    else{
-                        window.location.replace(`${role}/profile/biometric/${type}.html`)
+                    else {
+                        window.location.replace(`biometric/${type}.html`)
                     }
+                }
+                else{
+                    window.location.replace(`${role}/dashboard/dashboard.html`)
+                }
+
             }
             else
             {

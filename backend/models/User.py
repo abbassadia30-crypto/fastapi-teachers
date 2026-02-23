@@ -181,6 +181,6 @@ class SecurityLog(Base):
     __tablename__ = "security_logs"
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.id"))
-    attempts = Column(Integer, default=0)
+    resend_count = Column(Integer, default=0)
     blocked_until = Column(DateTime, nullable=True)
     last_attempt = Column(DateTime, default=datetime.utcnow)
