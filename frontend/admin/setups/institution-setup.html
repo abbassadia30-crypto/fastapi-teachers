@@ -84,7 +84,7 @@
     const statusTitle = document.getElementById('status-title');
 
     async function gatekeeper() {
-        const token = await AppStorage.get('institutionToken');
+        const token = await AppStorage.get('auth_token');
 
         if (!token) {
             sign.style.background = "var(--danger)";

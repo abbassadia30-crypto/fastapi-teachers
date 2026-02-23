@@ -150,7 +150,7 @@
     let editId = null;
 
     window.onload = async () => {
-        authToken = await AppStorage.get('institutionToken');
+        authToken = await AppStorage.get('auth_token');
         if (!authToken) {
             window.location.href = "login.html";
             return;

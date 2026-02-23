@@ -116,12 +116,12 @@
     window.onload = async () => {
         // Mocking AppStorage or using your existing storage helper
         try {
-            const tokenRes = await AppStorage.get("institutionToken");
+            const tokenRes = await AppStorage.get("auth_token");
             authToken = tokenRes.value || tokenRes;
         } catch(e) { console.error("Storage error", e); }
 
         if (!authToken) {
-            location.replace("login.html");
+            location.replace("../../index.html");
             return;
         }
         loadSections();

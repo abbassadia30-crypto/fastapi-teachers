@@ -21,7 +21,7 @@ async def admit_student(
     current_user: User = Depends(get_current_user)
 ):
 
-    new_student = Student(
+    new_student = student(
         **data.dict(),
         institution_id=current_user.institution_id,
         admitted_by=current_user.email
@@ -38,9 +38,9 @@ async def edit_student(
     current_user: User = Depends(get_current_user) # Security Added
 ):
     # Filter by ID AND institution_id to ensure ownership
-    student = db.query(Student).filter(
-        Student.id == student_id,
-        Student.institution_id == current_user.institution_id
+    student = db.query(student).filter(
+        student.id == student_id,
+        student.institution_id == current_user.institution_id
     ).first()
 
     if not student:
@@ -61,9 +61,9 @@ async def delete_student(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user) # Security Added
 ):
-    student = db.query(Student).filter(
-        Student.id == student_id,
-        Student.institution_id == current_user.institution_id
+    student = db.query(student).filter(
+        student.id == student_id,
+        student.institution_id == current_user.institution_id
     ).first()
 
     if not student:
@@ -78,9 +78,9 @@ async def get_students(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user)
 ):
-    students = db.query(Student).filter(
-        Student.institution_id == current_user.institution_id,
-        Student.is_active == True
+    students = db.query(student).filter(
+        student.institution_id == current_user.institution_id,
+        student.is_active == True
     ).all()
 
     return {
@@ -94,9 +94,9 @@ async def get_unique_sections(
         current_user: User = Depends(get_current_user)
 ):
     # This query gets distinct section names for the logged-in user's institution
-    sections = db.query(Student.section).filter(
-        Student.institution_id == current_user.institution_id,
-        Student.is_active == True
+    sections = db.query(student.section).filter(
+        student.institution_id == current_user.institution_id,
+        student.is_active == True
     ).distinct().all()
 
     return [s[0] for s in sections] # Returns a simple list of strings
@@ -111,7 +111,7 @@ async def hire_teacher(
         raise HTTPException(status_code=400, detail="Institution not identified")
 
     # Creating a dedicated Teacher record
-    new_teacher = Teacher(
+    new_teacher = teacher(
         name=data.name,
         phone=data.phone,
         salary=data.salary,
@@ -136,8 +136,8 @@ async def get_teacher_list(
         db: Session = Depends(database.get_db),
         current_user: User = Depends(get_current_user)
 ):
-    teachers = db.query(Teacher).filter(
-        Teacher.institution_id == current_user.institution_id
+    teachers = db.query(teacher).filter(
+        teacher.institution_id == current_user.institution_id
     ).all()
 
     rows = []
@@ -167,9 +167,9 @@ async def delete_teacher(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(Teacher).filter(
-        Teacher.id == teacher_id,
-        Teacher.institution_id == current_user.institution_id
+    teacher = db.query(teacher).filter(
+        teacher.id == teacher_id,
+        teacher.institution_id == current_user.institution_id
     ).first()
 
     if not teacher:
@@ -187,9 +187,9 @@ async def update_teacher(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    teacher = db.query(Teacher).filter(
-        Teacher.id == teacher_id,
-        Teacher.institution_id == current_user.institution_id
+    teacher = db.query(teacher).filter(
+        teacher.id == teacher_id,
+        teacher.institution_id == current_user.institution_id
     ).first()
 
     if not teacher:

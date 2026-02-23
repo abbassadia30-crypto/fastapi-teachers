@@ -112,7 +112,7 @@
 
     // --- 1. INITIALIZATION ---
     window.onload = async () => {
-        authToken = await AppStorage.get('institutionToken');
+        authToken = await AppStorage.get('auth_token');
 
         if (!authToken) {
             window.location.replace("../index.html");

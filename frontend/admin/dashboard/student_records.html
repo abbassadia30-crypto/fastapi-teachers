@@ -105,7 +105,7 @@
     window.onload = async () => {
         // Safe check for Capacitor Storage
         if (window.AppStorage) {
-            authToken = await AppStorage.get('institutionToken');
+            authToken = await AppStorage.get('auth_token');
         } else {
             authToken = localStorage.getItem('institutionToken');
         }

@@ -84,7 +84,7 @@
     // --- 1. SESSION GUARD (Runs on Load) ---
     window.onload = async () => {
         // We wait for the phone to give us the token
-        authToken = await AppStorage.get('institutionToken');
+        authToken = await AppStorage.get('auth_token');
 
         try {
             const tokenRes = await AppStorage.get("institutionToken");
