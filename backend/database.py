@@ -3,13 +3,21 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import os
 
-# 🏛️ Setting the path for your institution data
-# Note: On Render Free Tier, this file will be wiped whenever the app restarts
-# unless you use a "Render Blueprint" with a Persistent Disk.
-SQLALCHEMY_DATABASE_URL = "sqlite:///./institution.db"
+# 🏛️ Priority: Use PostgreSQL if available, fallback to SQLite for local testing
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
+
+# Render's DATABASE_URL often starts with 'postgres://',
+# but SQLAlchemy requires 'postgresql://'. This fix is essential:
+if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# If no DB URL is found (like on your local PC), it uses SQLite
+if not SQLALCHEMY_DATABASE_URL:
+    SQLALCHEMY_DATABASE_URL = "sqlite:///./institution.db"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
+    # check_same_thread is ONLY for SQLite
     connect_args={"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
 )
 
