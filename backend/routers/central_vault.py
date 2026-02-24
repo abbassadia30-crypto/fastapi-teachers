@@ -45,9 +45,8 @@ async def update_syllabus(
         doc_id: int,
         payload: VaultUpload,
         db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user) # Changed to Any
+        current_user: Any = Depends(get_current_user)
 ):
-    # FIX: Use dot notation .institution_id
     inst_id = getattr(current_user, "institution_id", None)
 
     doc = db.query(Syllabus).filter(
@@ -56,20 +55,26 @@ async def update_syllabus(
     ).first()
 
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found or access denied")
+        raise HTTPException(status_code=404, detail="Document not found")
 
-    # Update logic
-    doc.content = [item.model_dump() for item in payload.content]
-    doc.name = payload.name
-    doc.subject = payload.subject
-    doc.targets = payload.targets
-
+    # FIX: Remove the list comprehension and model_dump()
+    # If payload.content is already a list of dicts, just assign it.
     try:
+        if hasattr(payload.content[0], "model_dump"):
+            doc.content = [item.model_dump() for item in payload.content]
+        else:
+            doc.content = payload.content
+
+        doc.name = payload.name
+        doc.subject = payload.subject
+        doc.targets = payload.targets
+
         db.commit()
         return {"status": "success", "message": "Updated successfully"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"UPDATE ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update content")
 
 @router.post("/vault/delete-bulk")
 async def delete_syllabus_bulk(

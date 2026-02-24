@@ -213,39 +213,58 @@
     }
   }
 
+  // --- Update ONLY the openFullView function in your vault list file ---
+
   function openFullView(id) {
     const doc = syllabusVault.find(s => s.id === id);
     if (!doc) return;
     currentViewingId = id;
 
     let content = doc.content;
-    // Robust Double-Parsing for JSON strings
     if (typeof content === 'string') {
       try {
         content = JSON.parse(content);
         if (typeof content === 'string') content = JSON.parse(content);
-      } catch(e) { console.error("Parse error", e); }
+      } catch(e) { console.error("Data Parse Error", e); }
     }
 
-    let html = `<div class="template-header"><h1>${doc.name}</h1></div>`;
+    let html = `
+    <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid var(--primary); padding-bottom:10px;">
+        <h2 style="margin:0;">${doc.name}</h2>
+        <p style="color:var(--primary); font-weight:700;">${doc.subject}</p>
+    </div>`;
 
     if (Array.isArray(content)) {
-      html += content.map(sec => `
-            <div class="section-block">
-                <div class="sec-title">📚 ${sec.title || 'Untitled Section'}</div>
-                <table class="view-table">
-                    ${(sec.chapters || []).map(ch => `
-                        <tr>
-                            <td class="ch-name">${ch.name}</td>
-                            <td class="ch-topics">
-                                ${(ch.topics || []).map(t => `<span class="topic-tag">${t}</span>`).join('')}
-                            </td>
+      html += content.map(sec => {
+        const rows = (sec.chapters || []).map(ch => {
+          const topics = Array.isArray(ch.topics) ? ch.topics : [];
+          const topicHtml = topics.map(t =>
+                  `<span style="display:inline-block; background:#e3f2fd; color:#0277bd; padding:2px 8px; border-radius:4px; margin:2px; font-size:11px; font-weight:600;">${t}</span>`
+          ).join('');
+
+          return `
+                <tr>
+                    <td style="padding:10px; border:1px solid #eee; font-weight:700; width:30%; background:#fafafa;">${ch.name}</td>
+                    <td style="padding:10px; border:1px solid #eee;">${topicHtml || '<i style="color:#ccc;">Empty</i>'}</td>
+                </tr>`;
+        }).join('');
+
+        return `
+            <div style="margin-bottom:20px;">
+                <div style="background:var(--secondary); color:white; padding:8px 15px; border-radius:8px 8px 0 0; font-weight:800; font-size:13px;">📚 ${sec.title}</div>
+                <table style="width:100%; border-collapse:collapse; background:white;">
+                    <thead>
+                        <tr style="background:#f1f5f9; font-size:10px; text-align:left;">
+                            <th style="padding:8px; border:1px solid #eee;">CHAPTER</th>
+                            <th style="padding:8px; border:1px solid #eee;">TOPICS</th>
                         </tr>
-                    `).join('')}
+                    </thead>
+                    <tbody>${rows}</tbody>
                 </table>
-            </div>
-        `).join('');
+            </div>`;
+      }).join('');
     }
+
     document.getElementById('templateContent').innerHTML = html;
     document.getElementById('fullView').style.display = 'flex';
   }
