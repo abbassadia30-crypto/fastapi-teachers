@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
-
+from typing import Any
 from backend.database import get_db
 from backend.routers.auth import get_current_user
 from backend.models.admin.document import Syllabus
