@@ -2,254 +2,144 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Pattern Security | Super Console</title>
+    <title>Setup Security | Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #38bdf8;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --border: #334155;
-            --text-dim: #94a3b8;
-            --danger: #ef4444;
-            --success: #22c55e;
-        }
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --danger: #ef4444; --success: #22c55e; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; touch-action: none; }
 
-        body {
-            background: var(--bg); color: white; font-family: 'Poppins', sans-serif;
-            display: flex; flex-direction: column; align-items: center;
-            min-height: 100vh; margin: 0; touch-action: none; overflow: hidden;
-        }
+        #sign { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 16px; border-radius: 12px; width: 80%; text-align: center; font-weight: 600; transition: 0.5s; z-index: 1000; }
+        .active-sign { top: 20px !important; }
 
-        /* 🏛️ Management View */
-        #management-view, #setup-view {
-            display: none; flex-direction: column; align-items: center;
-            width: 100%; animation: fadeIn 0.3s ease-out;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { color: var(--primary); margin: 0; }
 
-        .menu-card {
-            background: var(--card-bg); padding: 35px 25px; border-radius: 28px;
-            border: 1px solid var(--border); width: 85%; max-width: 380px; text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); margin-top: 15vh;
-        }
+        #canvas-box { background: var(--card); border-radius: 40px; padding: 10px; border: 1px solid #334155; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        canvas { touch-action: none; border-radius: 30px; }
 
-        /* Canvas Style */
-        #pattern-container {
-            margin-top: 20px; position: relative; padding: 10px;
-            background: rgba(30, 41, 59, 0.5); border-radius: 35px; border: 1px solid var(--border);
-        }
-        canvas { border-radius: 24px; cursor: crosshair; touch-action: none; }
-
-        .instruction { margin: 30px 20px 10px; font-size: 18px; color: var(--primary); font-weight: 600; text-align: center; }
-
-        /* Buttons */
-        .p-btn {
-            padding: 16px; border-radius: 16px; border: none; font-weight: 600;
-            cursor: pointer; transition: 0.2s; font-size: 14px; width: 100%; margin-top: 12px;
-        }
-        .action-btn { background: var(--primary); color: #0f172a; }
-        .danger-btn { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid var(--danger); }
-        .cancel-link { background: none; color: var(--text-dim); margin-top: 20px; }
-
-        /* 🚨 Sign Box (Mandatory) */
-        #sign {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            padding: 18px; border-radius: 15px; width: 85%; max-width: 350px;
-            text-align: center; font-weight: 600; z-index: 2000; transition: 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-        #sign.active { top: 30px; }
-        .bg-red { background: var(--danger); color: white; }
-        .bg-green { background: var(--success); color: white; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .btn-row { margin-top: 30px; width: 280px; }
+        .p-btn { width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: #0f172a; }
     </style>
 </head>
 <body>
 
 <div id="sign"></div>
 
-<div id="management-view">
-    <div class="menu-card">
-        <div style="font-size: 50px; margin-bottom: 10px;">🛡️</div>
-        <h2 style="color: var(--primary); margin: 0;">Pattern Protected</h2>
-        <p style="color: var(--text-dim); font-size: 14px; margin-top: 10px;">Institutional security is active.</p>
-        <button class="p-btn action-btn" onclick="startWorkflow('CHANGE')">Change Pattern</button>
-        <button class="p-btn danger-btn" onclick="startWorkflow('REMOVE')">Disable Security</button>
-    </div>
-    <button class="p-btn cancel-link" onclick="location.replace('../security.html')">Go Back</button>
+<div class="header">
+    <h2 id="msg">Draw New Pattern</h2>
+    <p id="sub-msg">At least 4 dots required</p>
 </div>
 
-<div id="setup-view">
-    <div class="instruction" id="msg">Draw Pattern</div>
-    <div id="pattern-container">
-        <canvas id="canvas" width="300" height="300"></canvas>
-    </div>
-    <button id="cancel-op" class="p-btn cancel-link" onclick="location.reload()">Cancel</button>
+<div id="canvas-box">
+    <canvas id="canvas" width="320" height="320"></canvas>
+</div>
+
+<div class="btn-row">
+    <button class="p-btn" onclick="location.reload()" style="background: rgba(255,255,255,0.1); color: white;">Reset Setup</button>
 </div>
 
 <script src="../js/storage.js"></script>
 <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const msg = document.getElementById('msg');
-    const setupView = document.getElementById('setup-view');
-    const managementView = document.getElementById('management-view');
+    let dots = [], path = [], isDrawing = false, mode = "CREATE", tempPattern = "";
 
-    let dots = [];
-    let path = [];
-    let isDrawing = false;
-    let storedPattern = null;
-    let tempPattern = null;
-    let mode = "CREATE"; // CREATE, CONFIRM, VERIFY_CHANGE, VERIFY_REMOVE
-
-    window.onload = async () => {
-        const saved = await AppStorage.get('local_pattern');
-        if (saved) {
-            storedPattern = atob(saved);
-            showView('management');
-        } else {
-            mode = "CREATE";
-            showView('setup');
-            updateUI();
-        }
-        initGrid();
-    };
-
-    function showView(v) {
-        managementView.style.display = v === 'management' ? 'flex' : 'none';
-        setupView.style.display = v === 'setup' ? 'flex' : 'none';
-    }
-
-    function startWorkflow(type) {
-        mode = (type === 'CHANGE') ? "VERIFY_CHANGE" : "VERIFY_REMOVE";
-        showView('setup');
-        updateUI();
-    }
-
-    function updateUI() {
-        if (mode === "CREATE") msg.innerText = "Draw New Pattern";
-        if (mode === "CONFIRM") msg.innerText = "Draw Again to Confirm";
-        if (mode.startsWith("VERIFY")) msg.innerText = "Draw Current Pattern";
-    }
-
-    function initGrid() {
+    function init() {
         dots = [];
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                dots.push({ x: j * 100 + 50, y: i * 100 + 50, id: i * 3 + j });
+                dots.push({ x: j * 100 + 60, y: i * 100 + 60, id: i * 3 + j, row: i, col: j });
             }
         }
         draw();
     }
 
-    function draw(mouseX, mouseY) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 🏛️ The "Perfect" Logic: Check for jumped dots (e.g., 0 to 2 catches 1)
+    function getJumpedDots(lastId, nextId) {
+        const last = dots[lastId], next = dots[nextId];
+        const midRow = (last.row + next.row) / 2, midCol = (last.col + next.col) / 2;
+        if (Number.isInteger(midRow) && Number.isInteger(midCol)) {
+            const midDot = dots.find(d => d.row === midRow && d.col === midCol);
+            return midDot && !path.includes(midDot.id) ? midDot.id : null;
+        }
+        return null;
+    }
 
-        // Lines
+    function draw(mx, my) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
         if (path.length > 0) {
             ctx.beginPath();
-            ctx.lineWidth = 8;
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+            ctx.lineWidth = 10; ctx.strokeStyle = '#38bdf8'; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.moveTo(dots[path[0]].x, dots[path[0]].y);
             path.forEach(id => ctx.lineTo(dots[id].x, dots[id].y));
-            if (isDrawing && mouseX) ctx.lineTo(mouseX, mouseY);
+            if (isDrawing && mx) ctx.lineTo(mx, my);
             ctx.stroke();
         }
-
-        // Dots
-        dots.forEach(dot => {
-            const active = path.includes(dot.id);
-            ctx.beginPath();
-            ctx.arc(dot.x, dot.y, active ? 12 : 8, 0, Math.PI * 2);
+        dots.forEach(d => {
+            const active = path.includes(d.id);
+            ctx.beginPath(); ctx.arc(d.x, d.y, active ? 15 : 10, 0, Math.PI*2);
             ctx.fillStyle = active ? '#38bdf8' : '#334155';
-            ctx.fill();
+            if(active) { ctx.shadowBlur = 15; ctx.shadowColor = '#38bdf8'; }
+            ctx.fill(); ctx.shadowBlur = 0;
         });
     }
 
-    // Input Logic
-    const getCoords = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const ev = e.touches ? e.touches[0] : e;
-        return { x: ev.clientX - rect.left, y: ev.clientY - rect.top };
-    };
-
-    const handleStart = () => { isDrawing = true; path = []; draw(); };
     const handleMove = (e) => {
         if (!isDrawing) return;
-        const pos = getCoords(e);
-        dots.forEach(dot => {
-            const dist = Math.sqrt((pos.x - dot.x)**2 + (pos.y - dot.y)**2);
-            if (dist < 25 && !path.includes(dot.id)) {
-                path.push(dot.id);
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
+
+        dots.forEach(d => {
+            const dist = Math.sqrt((x - d.x)**2 + (y - d.y)**2);
+            if (dist < 30 && !path.includes(d.id)) { // 🧲 Magnetic Attraction Radius
+                if (path.length > 0) {
+                    const jumped = getJumpedDots(path[path.length - 1], d.id);
+                    if (jumped !== null) path.push(jumped);
+                }
+                path.push(d.id);
                 if (window.Capacitor) Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
             }
         });
-        draw(pos.x, pos.y);
+        draw(x, y);
     };
 
-    const handleEnd = () => {
-        if (!isDrawing) return;
+    const handleEnd = async () => {
         isDrawing = false;
-        if (path.length < 4) {
-            showSign("At least 4 dots required", "error");
-            path = []; draw(); return;
+        const pattern = path.join('');
+        if (pattern.length < 4) {
+            showSign("Too short!", "error"); path = []; draw(); return;
         }
-        processPattern(path.join(''));
+
+        if (mode === "CREATE") {
+            tempPattern = pattern; mode = "CONFIRM";
+            document.getElementById('msg').innerText = "Confirm Pattern";
+            showSign("Draw again to confirm", "success");
+        } else {
+            if (pattern === tempPattern) {
+                await AppStorage.set('local_pattern', btoa(pattern));
+                await AppStorage.set('security_type', 'pattern');
+                showSign("Pattern Saved Successfully", "success");
+                setTimeout(() => window.location.href = "security.html", 1200);
+            } else {
+                showSign("Mismatch! Starting over", "error");
+                mode = "CREATE"; document.getElementById('msg').innerText = "Draw New Pattern";
+            }
+        }
+        path = []; draw();
     };
 
-    async function processPattern(drawn) {
-        if (mode === "VERIFY_CHANGE" || mode === "VERIFY_REMOVE") {
-            if (drawn === storedPattern) {
-                if (mode === "VERIFY_REMOVE") {
-                    await AppStorage.remove('local_pattern');
-                    await AppStorage.remove('security_type');
-                    showSign("Security Disabled", "success");
-                    setTimeout(() => window.location.replace("../security.html"), 1000);
-                } else {
-                    showSign("Identity Verified", "success");
-                    mode = "CREATE";
-                    path = []; draw(); updateUI();
-                }
-            } else {
-                showSign("Incorrect Pattern", "error");
-                path = []; draw();
-            }
-        }
-        else if (mode === "CREATE") {
-            tempPattern = drawn;
-            mode = "CONFIRM";
-            showSign("Now Confirm It", "success");
-            path = []; draw(); updateUI();
-        }
-        else if (mode === "CONFIRM") {
-            if (drawn === tempPattern) {
-                await AppStorage.set('local_pattern', btoa(drawn));
-                await AppStorage.set('type', 'pattern');
-                showSign("Pattern Secured", "success");
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                showSign("Mismatch! Try again", "error");
-                mode = "CREATE";
-                path = []; draw(); updateUI();
-            }
-        }
+    function showSign(m, t) {
+        const s = document.getElementById('sign'); s.innerText = m;
+        s.style.background = t === 'success' ? '#22c55e' : '#ef4444';
+        s.classList.add('active-sign');
+        setTimeout(() => s.classList.remove('active-sign'), 2500);
     }
 
-    function showSign(m, type) {
-        const s = document.getElementById('sign');
-        s.innerText = m;
-        s.className = type === 'success' ? 'bg-green active' : 'bg-red active';
-        setTimeout(() => s.classList.remove('active'), 2500);
-    }
-
-    canvas.addEventListener('mousedown', handleStart);
-    canvas.addEventListener('touchstart', handleStart);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('touchmove', handleMove);
-    window.addEventListener('mouseup', handleEnd);
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; path = []; e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchmove', handleMove, {passive: false});
     window.addEventListener('touchend', handleEnd);
+    init();
 </script>
 </body>
 </html>

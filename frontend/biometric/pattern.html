@@ -2,224 +2,129 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Identity Check | Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Institution Security Gate</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary: #38bdf8;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --danger: #ef4444;
-            --success: #22c55e;
-        }
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --danger: #ef4444; --success: #22c55e; }
+        body { background: var(--bg); color: white; font-family: 'Poppins', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; touch-action: none; }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: var(--bg);
-            color: white;
-            margin: 0;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-        }
+        #sign { position: fixed; top: -100px; left: 50%; transform: translateX(-50%); padding: 16px; border-radius: 12px; width: 80%; text-align: center; font-weight: 600; transition: 0.5s; z-index: 1000; }
+        .active-sign { top: 20px !important; }
 
-        .header { margin-bottom: 30px; text-align: center; animation: fadeIn 0.5s ease; }
-        .header h2 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 600; }
-        .header p { color: #94a3b8; font-size: 14px; margin-top: 5px; }
+        #canvas-box { background: var(--card); border-radius: 40px; padding: 10px; border: 1px solid #334155; }
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
 
-        #canvas-container {
-            position: relative;
-            background: var(--card-bg);
-            border-radius: 35px;
-            padding: 10px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            border: 1px solid #334155;
-        }
-
-        canvas { touch-action: none; border-radius: 25px; }
-
-        /* 🚨 Sign Box (Required) */
-        #notification-bar {
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            width: 85%; max-width: 400px; padding: 16px; border-radius: 15px;
-            text-align: center; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 1000; font-weight: 600; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-        }
-        .bg-red { background: var(--danger); top: 30px !important; color: white; }
-        .bg-green { background: var(--success); top: 30px !important; color: white; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h2 { color: var(--primary); letter-spacing: 1px; }
     </style>
 </head>
 <body>
 
-<div id="notification-bar"></div>
+<div id="sign"></div>
 
 <div class="header">
-    <h2 id="title">Security Gate</h2>
-    <p id="subtitle">Draw pattern to access institution</p>
+    <h2 id="gate-title">Super Console</h2>
+    <p style="color: #94a3b8;">Draw pattern to unlock</p>
 </div>
 
-<div id="canvas-container">
+<div id="canvas-box">
     <canvas id="canvas" width="320" height="320"></canvas>
 </div>
 
-<script src="js/storage.js"></script>
+<script src="../js/storage.js"></script>
 <script>
-    // 🏛️ Preferences-based Logic
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
-    const title = document.getElementById('title');
+    let dots = [], path = [], isDrawing = false, storedPattern = "", userRole = "";
 
-    let dots = [];
-    let path = [];
-    let isDrawing = false;
-    let storedPattern = null;
-    let currentMouse = { x: 0, y: 0 };
+    async function init() {
+        const [p, r] = await Promise.all([AppStorage.get('local_pattern'), AppStorage.get('user_role')]);
+        storedPattern = atob(p); userRole = r || 'admin';
 
-    // Initialize Grid
-    function init() {
-        dots = [];
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                dots.push({ x: j * 100 + 60, y: i * 100 + 60, id: i * 3 + j });
+                dots.push({ x: j * 100 + 60, y: i * 100 + 60, id: i * 3 + j, row: i, col: j });
             }
         }
-        loadSecurity();
         draw();
     }
 
-    async function loadSecurity() {
-        const saved = await AppStorage.get('local_pattern');
-        if (!saved) {
-            // If no pattern exists, redirect to setup or allow entry to create one
-            window.location.href = "setup_security.html";
-            return;
+    function getJumpedDots(lastId, nextId) {
+        const last = dots[lastId], next = dots[nextId];
+        const mR = (last.row + next.row) / 2, mC = (last.col + next.col) / 2;
+        if (Number.isInteger(mR) && Number.isInteger(mC)) {
+            const mD = dots.find(d => d.row === mR && d.col === mC);
+            return mD && !path.includes(mD.id) ? mD.id : null;
         }
-        storedPattern = atob(saved);
+        return null;
     }
 
-    function draw() {
+    function draw(mx, my) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // 1. Draw connecting lines
         if (path.length > 0) {
-            ctx.beginPath();
-            ctx.lineWidth = 8;
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineJoin = 'round';
-            ctx.lineCap = 'round';
-
+            ctx.beginPath(); ctx.lineWidth = 10; ctx.strokeStyle = '#38bdf8'; ctx.lineCap = 'round';
             ctx.moveTo(dots[path[0]].x, dots[path[0]].y);
-            for (let i = 1; i < path.length; i++) {
-                ctx.lineTo(dots[path[i]].x, dots[path[i]].y);
-            }
-
-            if (isDrawing) {
-                ctx.lineTo(currentMouse.x, currentMouse.y);
-            }
+            path.forEach(id => ctx.lineTo(dots[id].x, dots[id].y));
+            if (isDrawing && mx) ctx.lineTo(mx, my);
             ctx.stroke();
         }
-
-        // 2. Draw dots
-        dots.forEach(dot => {
-            const isActive = path.includes(dot.id);
-
-            // Glow effect for active dots
-            if (isActive) {
-                ctx.shadowBlur = 15;
-                ctx.shadowColor = '#38bdf8';
-            } else {
-                ctx.shadowBlur = 0;
-            }
-
-            ctx.beginPath();
-            ctx.arc(dot.x, dot.y, isActive ? 14 : 10, 0, Math.PI * 2);
-            ctx.fillStyle = isActive ? '#38bdf8' : '#334155';
+        dots.forEach(d => {
+            const active = path.includes(d.id);
+            ctx.beginPath(); ctx.arc(d.x, d.y, active ? 14 : 10, 0, Math.PI*2);
+            ctx.fillStyle = active ? '#38bdf8' : '#334155';
             ctx.fill();
-
-            // Cleanup shadow for next dots
-            ctx.shadowBlur = 0;
         });
-
-        requestAnimationFrame(draw);
     }
-
-    const getCoords = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const ev = e.touches ? e.touches[0] : e;
-        return {
-            x: ev.clientX - rect.left,
-            y: ev.clientY - rect.top
-        };
-    };
-
-    const handleStart = (e) => {
-        isDrawing = true;
-        path = [];
-        const pos = getCoords(e);
-        currentMouse = pos;
-    };
 
     const handleMove = (e) => {
         if (!isDrawing) return;
-        const pos = getCoords(e);
-        currentMouse = pos;
+        const rect = canvas.getBoundingClientRect();
+        const ev = e.touches ? e.touches[0] : e;
+        const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
 
-        dots.forEach(dot => {
-            const dist = Math.sqrt((pos.x - dot.x)**2 + (pos.y - dot.y)**2);
-            if (dist < 25 && !path.includes(dot.id)) {
-                path.push(dot.id);
-                if (window.Capacitor) {
-                    Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
+        dots.forEach(d => {
+            const dist = Math.sqrt((x - d.x)**2 + (y - d.y)**2);
+            if (dist < 30 && !path.includes(d.id)) { // 🧲 Magnetic Attraction
+                if (path.length > 0) {
+                    const jumped = getJumpedDots(path[path.length - 1], d.id);
+                    if (jumped !== null) path.push(jumped);
                 }
+                path.push(d.id);
+                if (window.Capacitor) Capacitor.Plugins.Haptics.impact({ style: 'LIGHT' });
             }
         });
+        draw(x, y);
     };
 
     const handleEnd = async () => {
         if (!isDrawing) return;
         isDrawing = false;
-
-        const patternKey = path.join('');
-
-        if (patternKey === storedPattern) {
-            title.innerText = "Access Granted";
-            title.style.color = "#22c55e";
-            showSign("Identity Verified", "success");
-
-            if (window.Capacitor) Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
+        if (path.join('') === storedPattern) {
+            showSign("Access Granted", "success");
 
             setTimeout(() => {
-                window.location.href = `../${role}/dashboard/dashboard.html`;
+                const folder = (userRole === 'owner' || userRole === 'admin') ? 'admin' : userRole;
+                window.location.replace(`../${folder}/dashboard/dashboard.html`);
             }, 800);
         } else {
-            showSign("Invalid Pattern", "error");
-            if (window.Capacitor) Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
-            path = [];
+            showSign("Wrong Pattern", "error");
+            document.getElementById('canvas-box').classList.add('shake');
+            setTimeout(() => document.getElementById('canvas-box').classList.remove('shake'), 400);
+            path = []; draw();
         }
     };
 
-    function showSign(msg, type) {
-        const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'success' ? "bg-green" : "bg-red";
-        setTimeout(() => bar.className = "", 3000);
+    function showSign(m, t) {
+        const s = document.getElementById('sign'); s.innerText = m;
+        s.style.background = t === 'success' ? '#22c55e' : '#ef4444';
+        s.classList.add('active-sign');
+        setTimeout(() => s.classList.remove('active-sign'), 2500);
     }
 
-    // Listeners
-    canvas.addEventListener('mousedown', handleStart);
-    window.addEventListener('mousemove', handleMove);
-    window.addEventListener('mouseup', handleEnd);
-
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); handleStart(e); }, {passive: false});
-    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); handleMove(e); }, {passive: false});
+    canvas.addEventListener('touchstart', (e) => { isDrawing = true; path = []; e.preventDefault(); }, {passive: false});
+    window.addEventListener('touchmove', handleMove, {passive: false});
     window.addEventListener('touchend', handleEnd);
-
     init();
 </script>
 </body>

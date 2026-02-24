@@ -19,21 +19,25 @@ router = APIRouter(
 @router.get("/vault/list", response_model=List[SyllabusResponse])
 async def get_syllabus_list(
         db: Session = Depends(get_db),
-        current_user: dict = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user) # Changed dict to Any or your User model
 ):
-    """
-    Retrieves all syllabus documents specifically for the logged-in institution.
-    """
     try:
-        # The query remains the same.
+        # FIX: Use dot notation .institution_id instead of ["institution_id"]
+        # Also ensure your get_current_user is actually returning the owner/admin object
+        institution_id = getattr(current_user, "institution_id", None)
+
+        if not institution_id:
+            raise HTTPException(status_code=401, detail="Institution reference not found")
+
         docs = db.query(Syllabus).filter(
-            Syllabus.institution_ref == current_user["institution_id"]
+            Syllabus.institution_ref == institution_id
         ).order_by(Syllabus.created_at.desc()).all()
 
         return docs
     except Exception as e:
         print(f"VAULT FETCH ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Could not retrieve vault records")
+        # It's better to log the error specifically for debugging
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 # --- 2. UPDATE SYLLABUS ---
 @router.put("/vault/update/{doc_id}")

@@ -145,16 +145,13 @@
 
   // --- 2. AUTH & SYNC ---
   async function syncVault() {
-    console.log("Syncing Vault..."); // Debug log
+    console.log("Syncing Vault...");
     try {
+      // Ensure this key matches what you use at Login!
       const res = await AppStorage.get('institutionToken');
-      // Capacitor Storage returns an object { value: "..." }
       const token = (res && typeof res === 'object') ? res.value : res;
 
-      if (!token) {
-        console.error("No token found");
-        return notify("Session Expired", "error");
-      }
+      if (!token) return notify("Session Expired", "error");
 
       const response = await fetch(`${API_BASE}/central_vault/vault/list`, {
         method: 'GET',
@@ -164,14 +161,18 @@
         }
       });
 
+      if (response.status === 500) {
+        // This catches the 'Owner' object error from your backend
+        return notify("Backend Logic Error: Contact Support", "error");
+      }
+
       if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
 
       syllabusVault = await response.json();
-      console.log("Data Received:", syllabusVault);
       renderGrid(syllabusVault);
     } catch (e) {
       console.error("Fetch Error:", e);
-      notify("Failed to fetch vault", "error");
+      notify("Could not connect to Vault", "error");
     }
   }
 
@@ -220,55 +221,61 @@
     currentViewingId = id;
 
     let content = doc.content;
+    // --- Robust JSON Parsing ---
     if (typeof content === 'string') {
       try {
         content = JSON.parse(content);
         if (typeof content === 'string') content = JSON.parse(content);
-      } catch(e) { console.error("Parse Error", e); }
+      } catch(e) { console.error("Data Format Error", e); }
     }
 
     let html = `
-  <div style="text-align:center; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:15px;">
-    <h2 style="margin:0; color:var(--secondary);">${doc.name}</h2>
-    <small style="color:var(--muted);">Institution Record #${doc.id}</small>
-  </div>`;
+    <div style="text-align:center; margin-bottom:25px; border-bottom:3px solid var(--primary); padding-bottom:15px;">
+        <h1 style="margin:0; font-size:22px; color:var(--secondary); text-transform:uppercase;">${doc.name}</h1>
+        <p style="margin:5px 0; color:var(--primary); font-weight:700;">${doc.subject}</p>
+        <span style="font-size:10px; color:#888;">DOCUMENT ID: #INST-${doc.id}</span>
+    </div>`;
 
     if (Array.isArray(content)) {
       html += content.map(sec => {
         const rows = (sec.chapters || []).map(ch => {
-          let rawTopics = Array.isArray(ch.topics) ? ch.topics : [];
-
-          // Logic to remove any leaked '✕' and filter empties
-          let cleanTopics = rawTopics
-                  .map(t => String(t).replace(/✕/g, '').trim())
-                  .filter(t => t !== "");
-
-          let topicDisplay = cleanTopics.length > 0
-                  ? cleanTopics.map(t => `<span style="background:#e1f5fe; color:#0288d1; padding:2px 8px; border-radius:4px; margin:2px; display:inline-block; font-size:11px; font-weight:600; border:1px solid #b3e5fc;">${t}</span>`).join('')
-                  : `<i style="color:#ccc;">No topics</i>`;
+          const topics = Array.isArray(ch.topics) ? ch.topics : [];
+          const topicHtml = topics.map(t =>
+                  `<span style="display:inline-block; background:#f0f7ff; color:#0277bd; border:1px solid #b3e5fc; padding:3px 10px; border-radius:6px; margin:3px; font-size:11px; font-weight:600;">${t}</span>`
+          ).join('');
 
           return `
-        <tr style="border-bottom: 1px solid #f0f0f0;">
-          <td style="padding:12px; font-weight:700; width:35%; background:#fafafa; border-right:1px solid #eee;">${ch.name || 'Untitled'}</td>
-          <td style="padding:12px;">${topicDisplay}</td>
-        </tr>`;
+                <tr>
+                    <td style="padding:15px; border:1px solid #eee; font-weight:700; color:var(--secondary); width:30%; vertical-align:top; background:#fcfcfc;">
+                        ${ch.name || 'Untitled Chapter'}
+                    </td>
+                    <td style="padding:15px; border:1px solid #eee; vertical-align:top;">
+                        ${topicHtml || '<i style="color:#ccc;">No topics added</i>'}
+                    </td>
+                </tr>`;
         }).join('');
 
         return `
-      <div style="margin-bottom:20px; border:1px solid #ddd; border-radius:12px; overflow:hidden;">
-        <div style="background:var(--secondary); color:white; padding:10px 15px; font-weight:800; font-size:11px;">${sec.title || "Section"}</div>
-        <table style="width:100%; border-collapse:collapse; font-size:12px;">${rows}</table>
-      </div>`;
+            <div style="margin-bottom:30px;">
+                <div style="background:var(--secondary); color:white; padding:12px 20px; border-radius:10px 10px 0 0; font-weight:800; font-size:14px;">
+                    📚 ${sec.title || 'General Section'}
+                </div>
+                <table style="width:100%; border-collapse:collapse; background:white; border-radius:0 0 10px 10px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
+                    <thead>
+                        <tr style="background:#f1f5f9; text-align:left;">
+                            <th style="padding:12px 15px; border:1px solid #eee; font-size:11px; text-transform:uppercase;">Chapter</th>
+                            <th style="padding:12px 15px; border:1px solid #eee; font-size:11px; text-transform:uppercase;">Topics & Key Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                </table>
+            </div>`;
       }).join('');
-    } else {
-      html += `<div style="padding:15px;">${content}</div>`;
     }
 
     document.getElementById('templateContent').innerHTML = html;
     document.getElementById('fullView').style.display = 'flex';
   }
-
-  // --- 6. ACTIONS ---
   async function confirmBulkDelete() {
     // 1. Validation
     if (!selectedIds.size) return notify("Nothing selected", "error");

@@ -5,6 +5,10 @@
     <title>Security & Access Management</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="../js/storage.js"></script>
+    <script>
+        const role = await AppStorage.get("user_role")
+    </script>
     <style>
         :root {
             --bg: #0f172a;
@@ -70,7 +74,7 @@
 <body>
 
 <div class="app-header">
-    <button class="back-btn" onclick="history.back()">←</button>
+    <button class="back-btn" onclick="location.replace(`../${role}/profile/edit_profile.html`)">←</button>
     <h1 style="font-size: 18px; margin: 0;">Security Center</h1>
 </div>
 

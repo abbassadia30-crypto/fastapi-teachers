@@ -139,8 +139,8 @@
                 AppStorage.get('user_role'),
                 AppStorage.get('institution_id')
             ]);
-            const sec_token = await AppStorage.get('local_pattern');
-            const type = await AppStorage.get('type');
+            const type = await AppStorage.get('type')
+            const advance = await AppStorage.get("advance_type")
 
             const identityStatus = await AppStorage.get(`${role}_identity`);
 
@@ -166,8 +166,11 @@
             if (role === 'owner' || role === 'admin') {
                 if (identityStatus) {
                     if (inst_id) {
-                        window.location.replace("admin/dashboard/dashboard.html")
-                        return;
+                        if (type === "pattern" || type === "pin"){
+                            if (advance === "finger" || advance === "face") window.location.replace(`biometric/${advance}.html`)
+                            else window.location.replace(`biometric/${type}.html`)
+                        }
+                        else window.location.replace(`admin/dashboard/dashboard.html`)
                     }
                     else {
                         window.location.replace("admin/setups/no-institution.html")
@@ -178,45 +181,21 @@
                     return;
                 }
             }
-            else
-            {
-                if (identityStatus){
+            else {
+                if (identityStatus) {
                     if (inst_id) {
-                        window.location.replace(`${role}/dashboard/dashboard.html`)
-                        return;
-                    }
-                    else {
+                        if (type === "pattern" || type === "pin") {
+                            if (advance === "finger" || advance === "face") window.location.replace(`biometric/${advance}.html`)
+                            else window.location.replace(`biometric/${type}.html`)
+                        }
+                    } else {
                         window.location.replace("plateforme/search.html")
                     }
-                }
-                else {
+                } else {
                     window.location.replace(`${role}/${role}_identity/create_identity.html`)
                     return;
                 }
             }
-
-            // 3. If Identity is done but no Institution linked
-            if (inst_token) {
-                if (type){
-                    if (advance){
-                        window.location.replace(`biometric/${advance}.html`)
-                    }
-                    else {
-                        window.location.replace(`biometric/${type}.html`)
-                    }
-                }
-                else{
-                    window.location.replace(`${role}/dashboard/dashboard.html`)
-                }
-
-            }
-            else
-            {
-                window.location.replace(`${role}/setups/no-institution.html`);
-                return;
-            }
-
-
         } catch (e) {
             console.error("Routing Error:", e);
             document.body.classList.add('ready');
