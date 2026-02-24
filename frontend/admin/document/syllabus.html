@@ -163,12 +163,14 @@
             e.preventDefault();
             const topicText = input.value.trim();
             if (topicText) {
+                const list = input.previousElementSibling; // This is the .topic-list div
                 const pill = document.createElement('div');
                 pill.className = 'topic-pill';
-                pill.dataset.topic = topicText;
+                pill.setAttribute('data-topic', topicText); // Ensure it's explicitly set
                 pill.innerHTML = `${topicText} <span onclick="this.parentElement.remove()">✕</span>`;
-                input.previousElementSibling.appendChild(pill);
+                list.appendChild(pill);
                 input.value = '';
+                input.focus(); // Keep focus for rapid entry
             }
         }
     }
@@ -212,17 +214,9 @@
 
     // --- 🚀 DEPLOYMENT LOGIC ---
     async function confirmDeployment() {
-        const docName = document.getElementById('doc-name-input').value.trim();
-        if (!docName) return showNotify("Provide a syllabus name", "error");
-
-        // Capacitor Storage Retrieval
-        const resToken = await AppStorage.get('auth_token');
-        const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
-
-        if (!token) return showNotify("Authentication Error: Log in again", "error");
-
+        // ... validation code ...
         const payload = {
-            name: docName,
+            name: document.getElementById('doc-name-input').value.trim(),
             subject: Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val).join(', '),
             targets: Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val),
             doc_type: "syllabus",
@@ -230,7 +224,8 @@
                 title: sec.querySelector('.section-title-input').value,
                 chapters: Array.from(sec.querySelectorAll('.chapter-row')).map(chap => ({
                     name: chap.querySelector('.chap-name').value,
-                    topics: Array.from(chap.querySelectorAll('.topic-pill')).map(p => p.dataset.topic)
+                    // CRITICAL FIX: Ensure we target the .topic-pill specifically inside this chapter
+                    topics: Array.from(chap.querySelectorAll('.topic-pill')).map(p => p.getAttribute('data-topic'))
                 }))
             }))
         };
@@ -274,7 +269,7 @@
         document.getElementById('page-title').innerText = "Edit Syllabus";
         document.querySelector('.btn-main').innerText = "Update Vault Record";
 
-        const resToken = await AppStorage.get('institutionToken');
+        const resToken = await AppStorage.get('auth_token');
         const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
 
         try {

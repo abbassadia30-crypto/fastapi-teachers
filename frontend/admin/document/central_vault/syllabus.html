@@ -148,7 +148,7 @@
     console.log("Syncing Vault...");
     try {
       // Ensure this key matches what you use at Login!
-      const res = await AppStorage.get('institutionToken');
+      const res = await AppStorage.get('auth_token');
       const token = (res && typeof res === 'object') ? res.value : res;
 
       if (!token) return notify("Session Expired", "error");
@@ -213,69 +213,43 @@
     }
   }
 
-  // --- 5. FULL VIEW ---
-  // --- 5. FULL VIEW ---
   function openFullView(id) {
     const doc = syllabusVault.find(s => s.id === id);
     if (!doc) return;
     currentViewingId = id;
 
     let content = doc.content;
-    // --- Robust JSON Parsing ---
+    // Robust Double-Parsing for JSON strings
     if (typeof content === 'string') {
       try {
         content = JSON.parse(content);
         if (typeof content === 'string') content = JSON.parse(content);
-      } catch(e) { console.error("Data Format Error", e); }
+      } catch(e) { console.error("Parse error", e); }
     }
 
-    let html = `
-    <div style="text-align:center; margin-bottom:25px; border-bottom:3px solid var(--primary); padding-bottom:15px;">
-        <h1 style="margin:0; font-size:22px; color:var(--secondary); text-transform:uppercase;">${doc.name}</h1>
-        <p style="margin:5px 0; color:var(--primary); font-weight:700;">${doc.subject}</p>
-        <span style="font-size:10px; color:#888;">DOCUMENT ID: #INST-${doc.id}</span>
-    </div>`;
+    let html = `<div class="template-header"><h1>${doc.name}</h1></div>`;
 
     if (Array.isArray(content)) {
-      html += content.map(sec => {
-        const rows = (sec.chapters || []).map(ch => {
-          const topics = Array.isArray(ch.topics) ? ch.topics : [];
-          const topicHtml = topics.map(t =>
-                  `<span style="display:inline-block; background:#f0f7ff; color:#0277bd; border:1px solid #b3e5fc; padding:3px 10px; border-radius:6px; margin:3px; font-size:11px; font-weight:600;">${t}</span>`
-          ).join('');
-
-          return `
-                <tr>
-                    <td style="padding:15px; border:1px solid #eee; font-weight:700; color:var(--secondary); width:30%; vertical-align:top; background:#fcfcfc;">
-                        ${ch.name || 'Untitled Chapter'}
-                    </td>
-                    <td style="padding:15px; border:1px solid #eee; vertical-align:top;">
-                        ${topicHtml || '<i style="color:#ccc;">No topics added</i>'}
-                    </td>
-                </tr>`;
-        }).join('');
-
-        return `
-            <div style="margin-bottom:30px;">
-                <div style="background:var(--secondary); color:white; padding:12px 20px; border-radius:10px 10px 0 0; font-weight:800; font-size:14px;">
-                    📚 ${sec.title || 'General Section'}
-                </div>
-                <table style="width:100%; border-collapse:collapse; background:white; border-radius:0 0 10px 10px; overflow:hidden; box-shadow:0 4px 10px rgba(0,0,0,0.03);">
-                    <thead>
-                        <tr style="background:#f1f5f9; text-align:left;">
-                            <th style="padding:12px 15px; border:1px solid #eee; font-size:11px; text-transform:uppercase;">Chapter</th>
-                            <th style="padding:12px 15px; border:1px solid #eee; font-size:11px; text-transform:uppercase;">Topics & Key Points</th>
+      html += content.map(sec => `
+            <div class="section-block">
+                <div class="sec-title">📚 ${sec.title || 'Untitled Section'}</div>
+                <table class="view-table">
+                    ${(sec.chapters || []).map(ch => `
+                        <tr>
+                            <td class="ch-name">${ch.name}</td>
+                            <td class="ch-topics">
+                                ${(ch.topics || []).map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
+                    `).join('')}
                 </table>
-            </div>`;
-      }).join('');
+            </div>
+        `).join('');
     }
-
     document.getElementById('templateContent').innerHTML = html;
     document.getElementById('fullView').style.display = 'flex';
   }
+
   async function confirmBulkDelete() {
     // 1. Validation
     if (!selectedIds.size) return notify("Nothing selected", "error");

@@ -45,57 +45,49 @@ async def update_syllabus(
         doc_id: int,
         payload: VaultUpload,
         db: Session = Depends(get_db),
-        current_user: dict = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user) # Changed to Any
 ):
-    """
-    Updates a specific document. Includes security check to prevent
-    cross-institution editing.
-    """
+    # FIX: Use dot notation .institution_id
+    inst_id = getattr(current_user, "institution_id", None)
+
     doc = db.query(Syllabus).filter(
         Syllabus.id == doc_id,
-        Syllabus.institution_ref == current_user["institution_id"]
+        Syllabus.institution_ref == inst_id
     ).first()
 
     if not doc:
-        raise HTTPException(status_code=404, detail="Document not found in your institution")
+        raise HTTPException(status_code=404, detail="Document not found or access denied")
 
-    # Convert Pydantic models to dictionaries for the JSON field
+    # Update logic
     doc.content = [item.model_dump() for item in payload.content]
-    # Update other fields
     doc.name = payload.name
     doc.subject = payload.subject
     doc.targets = payload.targets
 
     try:
         db.commit()
-        return {
-            "status": "success",
-            "message": f"Syllabus '{payload.name}' updated successfully"
-        }
+        return {"status": "success", "message": "Updated successfully"}
     except Exception as e:
         db.rollback()
-        print(f"VAULT UPDATE ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database sync failed during update")
+        raise HTTPException(status_code=500, detail=str(e))
 
-# --- 3. BULK DELETE ---
 @router.post("/vault/delete-bulk")
 async def delete_syllabus_bulk(
         payload: dict = Body(...),
         db: Session = Depends(get_db),
-        current_user: dict = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
-    """
-    Deletes multiple records.
-    """
     ids_to_delete = payload.get("ids", [])
+    inst_id = getattr(current_user, "institution_id", None)
 
     if not ids_to_delete:
         return {"status": "success", "deleted_count": 0}
 
     try:
+        # FIX: Use dot notation .institution_id
         query = db.query(Syllabus).filter(
             Syllabus.id.in_(ids_to_delete),
-            Syllabus.institution_ref == current_user["institution_id"]
+            Syllabus.institution_ref == inst_id
         )
 
         deleted_count = query.count()
@@ -105,10 +97,8 @@ async def delete_syllabus_bulk(
         return {
             "status": "success",
             "deleted_count": deleted_count,
-            "message": f"Purged {deleted_count} records from vault"
+            "message": f"Successfully deleted {deleted_count} items"
         }
-
     except Exception as e:
         db.rollback()
-        print(f"BULK DELETE ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Bulk delete operation failed")
+        raise HTTPException(status_code=500, detail="Delete failed")
