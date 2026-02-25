@@ -206,7 +206,7 @@
         // 1. Robust Token Retrieval
         let token = "";
         try {
-            const result = await AppStorage.get('institutionToken');
+            const result = await AppStorage.get('auth_token');
             // Handle both simple strings and Capacitor Storage objects { value: "..." }
             token = (typeof result === 'object' && result !== null) ? result.value : result;
         } catch (e) {

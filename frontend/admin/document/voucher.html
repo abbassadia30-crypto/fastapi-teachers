@@ -136,7 +136,7 @@
     let step = 1; let drafts = []; let activeIdx = 0; let token = "";
 
     window.onload = async () => {
-        const tRes = await AppStorage.get("institutionToken");
+        const tRes = await AppStorage.get("auth_token");
         token = tRes.value || tRes;
         loadSections();
     };
