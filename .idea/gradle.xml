@@ -6,7 +6,7 @@
       <GradleProjectSettings>
         <option name="testRunner" value="CHOOSE_PER_TEST" />
         <option name="externalProjectPath" value="$PROJECT_DIR$/android" />
-        <option name="gradleJvm" value="#GRADLE_LOCAL_JAVA_HOME" />
+        <option name="gradleJvm" value="jbr-21 (2)" />
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$/android" />
@@ -16,6 +16,9 @@
             <option value="$PROJECT_DIR$/node_modules/@capacitor-community/sqlite/android" />
             <option value="$PROJECT_DIR$/node_modules/@capacitor/android/capacitor" />
             <option value="$PROJECT_DIR$/node_modules/@capacitor/preferences/android" />
+            <option value="$PROJECT_DIR$/node_modules/@capacitor/push-notifications/android" />
+            <option value="$PROJECT_DIR$/node_modules/@capgo/capacitor-native-biometric/android" />
+            <option value="$PROJECT_DIR$/node_modules/capacitor-native-biometric/android" />
           </set>
         </option>
         <option name="resolveExternalAnnotations" value="true" />

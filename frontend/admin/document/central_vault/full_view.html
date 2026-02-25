@@ -2,79 +2,75 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Professional Syllabus View</title>
+    <title>Professional Syllabus Document</title>
     <style>
-        :root { --inst-red: #800000; --text: #333; --border: #000; }
-        body { font-family: 'Times New Roman', serif; background: #f0f0f0; margin: 0; padding: 20px; }
+        /* 🏛️ Professional CSS for Institutional Standards */
+        body { font-family: 'Times New Roman', serif; background: #f0f2f5; margin: 0; padding: 20px; color: #000; }
+        .page { background: white; width: 95%; max-width: 850px; margin: 0 auto; padding: 50px; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; min-height: 1050px; }
         
-        .doc-page { 
-            background: white; width: 95%; max-width: 800px; margin: 0 auto; 
-            padding: 40px; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; min-height: 1000px;
-        }
-
-        /* 🏛️ GAV Model Header */
-        .header-table { width: 100%; border-collapse: collapse; border: 2px solid var(--border); margin-bottom: 20px; }
-        .header-table td { padding: 10px; text-align: center; border: 1px solid var(--border); }
-        .inst-name { font-size: 22px; font-weight: bold; text-transform: uppercase; }
-        .doc-type { font-size: 16px; font-weight: bold; margin-top: 5px; }
-
-        .sub-info { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; font-weight: bold; }
-
-        /* 🏛️ Main Layout */
-        .main-container { display: grid; grid-template-columns: 3fr 1fr; gap: 20px; }
+        .header-table { width: 100%; border: 2px solid #000; border-collapse: collapse; margin-bottom: 20px; }
+        .header-table td { border: 1px solid #000; padding: 15px; text-align: center; }
+        .inst-name { font-size: 24px; font-weight: bold; text-transform: uppercase; }
+        
+        .info-bar { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 2px solid #000; padding: 5px 0; margin-bottom: 20px; }
+        
+        .layout { display: grid; grid-template-columns: 3fr 1fr; gap: 30px; }
         
         .syllabus-table { width: 100%; border-collapse: collapse; }
-        .syllabus-table th, .syllabus-table td { border: 1px solid var(--border); padding: 12px; text-align: left; vertical-align: top; }
-        .syllabus-table th { background: #f2f2f2; text-transform: uppercase; font-size: 14px; }
+        .syllabus-table th, .syllabus-table td { border: 1px solid #000; padding: 10px; text-align: left; vertical-align: top; }
+        .syllabus-table th { background: #eeeeee; font-size: 14px; }
 
-        .index-sidebar { border-left: 2px solid var(--inst-red); padding-left: 15px; }
-        .index-title { color: var(--inst-red); font-weight: bold; border-bottom: 1px solid #ccc; margin-bottom: 10px; font-size: 14px; }
-        .index-item { font-size: 12px; margin-bottom: 8px; color: #555; cursor: pointer; }
+        .index-box { border-left: 2px solid #800000; padding-left: 15px; }
+        .index-title { color: #800000; font-weight: bold; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #ccc; }
+        .index-item { font-size: 12px; margin-bottom: 6px; }
 
-        .chapter-title { font-weight: bold; display: block; margin-top: 5px; text-decoration: underline; }
-        .topic-list { margin: 5px 0; padding-left: 18px; font-size: 13px; }
+        .chapter-title { font-weight: bold; display: block; margin-top: 8px; font-size: 14px; text-decoration: underline; }
+        .topics { margin: 3px 0; padding-left: 20px; font-size: 13px; list-style-type: square; }
 
-        /* 🏛️ Watermark */
-        .watermark { position: absolute; bottom: 20px; right: 20px; font-size: 12px; color: rgba(0,0,0,0.3); font-weight: bold; font-style: italic; }
+        .watermark { position: absolute; bottom: 30px; right: 40px; font-size: 12px; color: rgba(0,0,0,0.2); font-weight: bold; }
         
-        @media print { body { background: none; padding: 0; } .doc-page { box-shadow: none; width: 100%; } }
+        @media print { 
+            body { background: none; padding: 0; } 
+            .page { box-shadow: none; width: 100%; margin: 0; }
+            .no-print { display: none; }
+        }
     </style>
 </head>
 <body>
 
-<div class="doc-page">
+<button class="no-print" onclick="history.back()" style="margin-bottom: 10px; padding: 10px;">← Back to Vault</button>
+
+<div class="page" id="printArea">
     <table class="header-table">
         <tr>
             <td>
-                <div class="inst-name" id="inst-name-display">INSTITUTION NAME</div>
-                <div class="doc-type" id="doc-title-display">SYLLABUS FOR FINAL EXAMINATION</div>
+                <div class="inst-name">ST. LIGHT INT. INSTITUTION</div>
+                <div style="font-size: 16px; font-weight: bold;" id="docName">SYLLABUS PLAN</div>
             </td>
         </tr>
     </table>
 
-    <div class="sub-info">
-        <span>CLASS: <span id="class-display">---</span></span>
-        <span>DATE: <span id="date-display">2026</span></span>
+    <div class="info-bar">
+        <span>CLASS: <span id="viewClass">--</span></span>
+        <span>DATE: <span id="viewDate">--</span></span>
     </div>
 
-    <div class="main-container">
-        <div class="content-area">
+    <div class="layout">
+        <div class="main-content">
             <table class="syllabus-table">
                 <thead>
                     <tr>
-                        <th style="width: 30%;">Subject</th>
-                        <th>Syllabus Details</th>
+                        <th style="width: 25%;">SUBJECT</th>
+                        <th>SYLLABUS DETAILS</th>
                     </tr>
                 </thead>
-                <tbody id="syllabus-body">
-                    </tbody>
+                <tbody id="contentBody"></tbody>
             </table>
         </div>
 
-        <div class="index-sidebar">
+        <div class="index-box">
             <div class="index-title">INDEX</div>
-            <div id="index-body"></div>
+            <div id="indexBody"></div>
         </div>
     </div>
 
@@ -83,39 +79,34 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const rawData = localStorage.getItem('current_syllabus_view');
-        if (!rawData) return;
+        const data = JSON.parse(localStorage.getItem('current_syllabus_view'));
+        if (!data) return;
 
-        const data = JSON.parse(rawData);
-        
-        // Populate Top Info
-        document.getElementById('doc-title-display').innerText = data.name.toUpperCase();
-        document.getElementById('class-display').innerText = data.targets.join(', ');
-        document.getElementById('date-display').innerText = data.date || "2026";
+        document.getElementById('docName').innerText = data.name.toUpperCase();
+        document.getElementById('viewClass').innerText = data.targets.join(', ');
+        document.getElementById('viewDate').innerText = data.date;
 
-        const tableBody = document.getElementById('syllabus-body');
-        const indexBody = document.getElementById('index-body');
+        const contentBody = document.getElementById('contentBody');
+        const indexBody = document.getElementById('indexBody');
 
-        data.content.forEach((section, sIdx) => {
-            // 1. Create Table Row
-            let syllabusHtml = `Entire syllabus will be assessed except:`;
-            section.chapters.forEach(ch => {
-                syllabusHtml += `
-                    <span class="chapter-title">${ch.name}</span>
-                    <ul class="topic-list">
-                        ${ch.topics.map(t => `<li>${t}</li>`).join('')}
-                    </ul>
-                `;
+        data.content.forEach((section, idx) => {
+            // Build Details
+            let detailsHtml = "";
+            section.chapters.forEach(chap => {
+                detailsHtml += `<span class="chapter-title">${chap.name}</span>`;
+                detailsHtml += `<ul class="topics">${chap.topics.map(t => `<li>${t}</li>`).join('')}</ul>`;
             });
 
-            const row = `<tr>
-                <td><strong>${section.title}</strong></td>
-                <td>${syllabusHtml}</td>
-            </tr>`;
-            tableBody.innerHTML += row;
+            // Add Table Row
+            contentBody.innerHTML += `
+                <tr>
+                    <td><strong>${section.title}</strong></td>
+                    <td>${detailsHtml}</td>
+                </tr>
+            `;
 
-            // 2. Create Index Item
-            indexBody.innerHTML += `<div class="index-item">${sIdx + 1}. ${section.title}</div>`;
+            // Add Index Item
+            indexBody.innerHTML += `<div class="index-item">${idx + 1}. ${section.title}</div>`;
         });
     });
 </script>

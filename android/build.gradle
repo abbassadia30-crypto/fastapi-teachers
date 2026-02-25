@@ -6,8 +6,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        // 🏛️ Keep this at 8.7.2 for maximum stability with Capacitor plugins
-        classpath 'com.android.tools.build:gradle:8.7.2'
+        // Updated to 8.12.0 for stability
+        classpath 'com.android.tools.build:gradle:8.12.0'
         classpath 'com.google.gms:google-services:4.4.1'
     }
 }

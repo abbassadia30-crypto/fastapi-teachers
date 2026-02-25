@@ -198,76 +198,56 @@
   }
 
   // --- 4. SELECTION LOGIC ---
-  function handleCardClick(id, el) {
+  // --- 4. SELECTION & NAVIGATION LOGIC ---
+function handleCardClick(id, el) {
     if (isSelectionMode) {
-      if (selectedIds.has(id)) {
-        selectedIds.delete(id);
-        el.classList.remove('selected');
-      } else {
-        selectedIds.add(id);
-        el.classList.add('selected');
-      }
-      document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+        if (selectedIds.has(id)) {
+            selectedIds.delete(id);
+            el.classList.remove('selected');
+        } else {
+            selectedIds.add(id);
+            el.classList.add('selected');
+        }
+        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
     } else {
-      openFullView(id);
+        // 🏛️ REAL APP LOGIC: Cache and Redirect
+        navigateToProfessionalView(id);
     }
-  }
+}
 
-  // --- Update ONLY the openFullView function in your vault list file ---
-
-  function openFullView(id) {
+function navigateToProfessionalView(id) {
     const doc = syllabusVault.find(s => s.id === id);
-    if (!doc) return;
-    currentViewingId = id;
+    if (!doc) return notify("Syllabus data missing", "error");
 
-    let content = doc.content;
-    if (typeof content === 'string') {
-      try {
-        content = JSON.parse(content);
-        if (typeof content === 'string') content = JSON.parse(content);
-      } catch(e) { console.error("Data Parse Error", e); }
+    // 🏛️ Handle potentially stringified JSON from FastAPI/PostgreSQL
+    let processedContent = doc.content;
+    if (typeof processedContent === 'string') {
+        try {
+            processedContent = JSON.parse(processedContent);
+            // Double parse check for some Render/PostgreSQL edge cases
+            if (typeof processedContent === 'string') processedContent = JSON.parse(processedContent);
+        } catch(e) { 
+            console.error("Data Parse Error", e); 
+            return notify("Corrupted Data Format", "error");
+        }
     }
 
-    let html = `
-    <div style="text-align:center; margin-bottom:20px; border-bottom:2px solid var(--primary); padding-bottom:10px;">
-        <h2 style="margin:0;">${doc.name}</h2>
-        <p style="color:var(--primary); font-weight:700;">${doc.subject}</p>
-    </div>`;
+    // 🏛️ Standardize the object for the Viewer
+    const viewData = {
+        name: doc.name,
+        subject: doc.subject,
+        targets: Array.isArray(doc.targets) ? doc.targets : [doc.targets],
+        date: new Date().toLocaleDateString('en-GB'), // Matches professional standard
+        content: processedContent
+    };
 
-    if (Array.isArray(content)) {
-      html += content.map(sec => {
-        const rows = (sec.chapters || []).map(ch => {
-          const topics = Array.isArray(ch.topics) ? ch.topics : [];
-          const topicHtml = topics.map(t =>
-                  `<span style="display:inline-block; background:#e3f2fd; color:#0277bd; padding:2px 8px; border-radius:4px; margin:2px; font-size:11px; font-weight:600;">${t}</span>`
-          ).join('');
+    // 💾 Store in Cache
+    localStorage.setItem('current_syllabus_view', JSON.stringify(viewData));
 
-          return `
-                <tr>
-                    <td style="padding:10px; border:1px solid #eee; font-weight:700; width:30%; background:#fafafa;">${ch.name}</td>
-                    <td style="padding:10px; border:1px solid #eee;">${topicHtml || '<i style="color:#ccc;">Empty</i>'}</td>
-                </tr>`;
-        }).join('');
-
-        return `
-            <div style="margin-bottom:20px;">
-                <div style="background:var(--secondary); color:white; padding:8px 15px; border-radius:8px 8px 0 0; font-weight:800; font-size:13px;">📚 ${sec.title}</div>
-                <table style="width:100%; border-collapse:collapse; background:white;">
-                    <thead>
-                        <tr style="background:#f1f5f9; font-size:10px; text-align:left;">
-                            <th style="padding:8px; border:1px solid #eee;">CHAPTER</th>
-                            <th style="padding:8px; border:1px solid #eee;">TOPICS</th>
-                        </tr>
-                    </thead>
-                    <tbody>${rows}</tbody>
-                </table>
-            </div>`;
-      }).join('');
-    }
-
-    document.getElementById('templateContent').innerHTML = html;
-    document.getElementById('fullView').style.display = 'flex';
-  }
+    // 🚀 Navigate to the professional viewer file we created
+    // Adjust the path if your viewer is in a different folder
+    window.location.href = "full_view.html"; 
+}
 
   async function confirmBulkDelete() {
     // 1. Validation
