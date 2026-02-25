@@ -72,19 +72,17 @@ def publish_notice(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 1. 🏛️ Institutional Check
     if not current_user.institution_id:
         raise HTTPException(status_code=403, detail="Institution not linked")
 
     try:
-        # 2. 🏛️ Map to Database Model
-        # FIX: Change 'institution_id' to 'institution_ref' to match Notice model
         new_notice = Notice(
-            institution_ref=current_user.institution_id, # Match SQLAlchemy column name
+            institution_ref=current_user.institution_id,
             title=payload.title,
             message=payload.message,
             language=payload.language,
-            created_by=current_user.email
+            # 🏛️ FIX: Changed .email to .user_email to match your User model
+            created_by=current_user.user_email
         )
 
         db.add(new_notice)
@@ -94,9 +92,8 @@ def publish_notice(
 
     except Exception as e:
         db.rollback()
-        # Essential for Render monitoring
         print(f"DATABASE ERROR (Notice): {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to save notice: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to save notice.")
 
 @router.post("/finance/deploy-bulk")
 async def deploy_vouchers(

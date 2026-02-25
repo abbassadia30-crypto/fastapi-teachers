@@ -2,101 +2,151 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Fingerprint Access | Super Console</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Security Settings | Super Console</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --success: #22c55e; --danger: #ef4444; }
-        body { font-family: 'Poppins', sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; }
-
-        .header { margin-top: 40px; text-align: center; }
-        .header h2 { color: var(--primary); margin: 0; }
-
-        .setup-card {
-            background: var(--card); border-radius: 24px; padding: 25px;
-            margin-top: 30px; border: 1px solid #334155; text-align: center;
+        :root { --primary: #38bdf8; --bg: #0f172a; --card: #1e293b; --danger: #ef4444; --success: #22c55e; }
+        body {
+            background: var(--bg); color: white; font-family: 'Poppins', sans-serif;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100vh; margin: 0; overflow: hidden;
         }
 
-        .toggle-box {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 15px; margin-top: 20px;
+        /* 🏛️ Scanner Visual */
+        .scanner-container {
+            position: relative; width: 160px; height: 160px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 30px; cursor: pointer; border-radius: 50%;
+            transition: 0.3s;
+        }
+        .scanner-container:active { transform: scale(0.9); }
+
+        .fingerprint-icon { width: 85px; height: 85px; fill: var(--primary); z-index: 2; }
+
+        .scanner-circle {
+            position: absolute; width: 100%; height: 100%;
+            border: 2px dashed rgba(56, 189, 248, 0.4);
+            border-radius: 50%; animation: rotate 15s linear infinite;
         }
 
-        /* 🚨 Custom Red/Green Sign Box */
-        #notification-bar {
+        .scan-line {
+            position: absolute; width: 110px; height: 3px;
+            background: var(--primary); top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 20px var(--primary);
+            animation: scan 2.5s ease-in-out infinite;
+            z-index: 3; opacity: 0.8;
+        }
+
+        @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes scan {
+            0%, 100% { transform: translate(-50%, -45px); }
+            50% { transform: translate(-50%, 45px); }
+        }
+
+        .header { text-align: center; padding: 0 20px; }
+        .header h2 { color: var(--primary); margin: 0; font-size: 24px; font-weight: 600; }
+        .header p { color: #94a3b8; font-size: 15px; margin-top: 10px; line-height: 1.5; }
+
+        .fallback-link {
+            margin-top: 40px; color: #64748b; font-size: 14px;
+            text-decoration: underline; cursor: pointer; font-weight: 400;
+        }
+
+        /* 🚨 Sign Box */
+        #sign {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-            width: 85%; padding: 15px; border-radius: 12px; text-align: center;
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 2000; font-weight: 600;
+            padding: 18px; border-radius: 15px; width: 85%; max-width: 380px;
+            text-align: center; font-weight: 600; z-index: 2000; transition: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }
-        .bg-red { background: var(--danger); top: 20px !important; }
-        .bg-green { background: var(--success); top: 20px !important; }
-
-        .p-btn {
-            background: var(--primary); color: #0f172a; border: none;
-            padding: 15px 30px; border-radius: 12px; font-weight: 600;
-            width: 100%; margin-top: 25px; cursor: pointer;
-        }
+        .active-sign { top: 30px !important; }
+        .bg-red { background: var(--danger); color: white; box-shadow: 0 10px 20px rgba(239, 68, 68, 0.3); }
+        .bg-green { background: var(--success); color: white; box-shadow: 0 10px 20px rgba(34, 197, 94, 0.3); }
     </style>
 </head>
 <body>
 
-<div id="notification-bar"></div>
+<div id="sign"></div>
+
+<div class="scanner-container" onclick="triggerFingerprint()">
+    <div class="scanner-circle"></div>
+    <div class="scan-line"></div>
+    <svg class="fingerprint-icon" viewBox="0 0 24 24">
+        <path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.6 3.42 14 3 12.01 3c-1.98 0-3.58.42-4.74 1.01-.4.2-.89.04-1.09-.36-.2-.4-.04-.89.36-1.09C7.88 1.91 9.77 1.5 12.01 1.5c2.29 0 4.1.49 5.57 1.28.4.21.55.71.34 1.11-.11.2-.31.58-.11.58zm2.52 3.92c-.08 0-.16-.02-.23-.06-1.5-.75-3.04-1.12-4.62-1.12-2.14 0-4.13.72-5.74 2.05-.35.29-.86.23-1.15-.12-.29-.35-.23-.86.12-1.15 1.95-1.61 4.38-2.5 7.03-2.5 1.83 0 3.66.44 5.43 1.33.4.2.56.7.36 1.1-.11.19-.3.37-.2.37zm-4.3 12.83c-.1 0-.21-.02-.31-.06-.41-.17-.61-.64-.44-1.05.73-1.78 1.1-3.66 1.1-5.59 0-3.35-2.52-6.12-5.83-6.12-3.15 0-5.73 2.45-5.73 5.51 0 .44-.36.8-.8.8s-.8-.36-.8-.8c0-4.02 3.39-7.11 7.33-7.11 4.14 0 7.43 3.38 7.43 7.72 0 2.22-.43 4.38-1.25 6.37-.14.33-.46.53-.74.53zM8.34 23.01c-.13 0-.27-.03-.4-.1-.38-.21-.52-.7-.31-1.08l2.42-4.43c.21-.38.7-.52 1.08-.31.38.21.52.7.31 1.08l-2.42 4.43c-.13.24-.38.41-.68.41z"/>
+    </svg>
+</div>
 
 <div class="header">
-    <h2>Institution Security</h2>
-    <p style="color: #94a3b8;">Manage your biometric access</p>
+    <h2>Institutional Security</h2>
+    <p>Please touch the fingerprint sensor<br>to access the Super Console</p>
 </div>
 
-<div class="setup-card">
-    <div style="font-size: 50px; margin-bottom: 10px;">🧬</div>
-    <h3>Touch ID / Face ID</h3>
-    <p style="color: #94a3b8; font-size: 13px;">Use your device biometrics for instant access to the Super Console.</p>
-
-    <button class="p-btn" id="bioBtn" onclick="setupBiometrics()">Enable Biometric Lock</button>
+<div class="fallback-link" onclick="window.location.replace('../biometric/pattern.html')">
+    Use Pattern Security Instead
 </div>
 
-<script src="js/storage.js"></script>
+<script src="../js/storage.js"></script>
+<script src="../capacitor.js"></script>
 <script>
-    async function setupBiometrics() {
+    const { NativeBiometric } = Capacitor.Plugins;
+
+    async function triggerFingerprint() {
         try {
-            // 🏛️ Rule 1: Must have a PIN first as backup
-            const pass = await AppStorage.get('type');
-            if (!pass) {
-                showSign("Please set a PIN backup first", "error");
-                return;
-            }
+            // Check availability with a slight delay to ensure native bridge is warm
+            const result = await NativeBiometric.isAvailable();
 
-            // 🏛️ Rule 2: Check Hardware
-            const result = await Capacitor.Plugins.NativeBiometric.isAvailable();
             if (!result.isAvailable) {
-                showSign("Biometric hardware not supported", "error");
+                if (result.errorCode === 11) {
+                    showSign("No fingerprints enrolled. Check phone settings.", "error");
+                } else {
+                    showSign("Biometric sensor not found.", "error");
+                }
                 return;
             }
 
-            // 🏛️ Rule 3: Verify user right now
-            const verified = await Capacitor.Plugins.NativeBiometric.verify({
-                reason: "Enable biometric access for this institution",
-                title: "Confirm Identity",
-                subtitle: "Any registered finger will work"
+            await NativeBiometric.verify({
+                reason: "Identify yourself to access the Super Console",
+                title: "Security Gate",
+                subtitle: "Confirm your identity",
+                description: "Touch the fingerprint sensor",
+                negativeButtonText: "Cancel"
             });
 
-            if (verified) {
-                await AppStorage.set('security_type', 'biometric');
-                showSign("Biometric Lock Active", "success");
-                setTimeout(() => location.reload(), 1200);
+            // Success Logic
+            showSign("Welcome Back", "success");
+            sessionStorage.setItem('session_unlocked', 'true');
+
+            const userRole = await AppStorage.get('user_role') || 'admin';
+            const folder = (userRole === 'owner' || userRole === 'admin') ? 'admin' : userRole;
+
+            setTimeout(() => {
+                window.location.replace(`../${folder}/dashboard/dashboard.html`);
+            }, 800);
+
+        } catch (error) {
+            console.error("Biometric Error:", error);
+            // Don't show "failed" if they just clicked cancel
+            if (error.message !== "User cancelled") {
+                showSign("Authentication Failed", "error");
             }
-        } catch (err) {
-            showSign("Biometric Setup Cancelled", "error");
+            if (window.Capacitor) {
+                Capacitor.Plugins.Haptics.notification({ type: 'ERROR' });
+            }
         }
     }
 
-    function showSign(m, type) {
-        const b = document.getElementById('notification-bar');
-        b.innerText = m;
-        b.className = type === 'success' ? 'bg-green' : 'bg-red';
-        if (window.Capacitor) Capacitor.Plugins.Haptics.notification({ type: type.toUpperCase() });
-        setTimeout(() => { b.className = ""; }, 3000);
+    function showSign(m, t) {
+        const s = document.getElementById('sign');
+        s.innerText = m;
+        s.className = t === 'success' ? 'bg-green active-sign' : 'bg-red active-sign';
+        setTimeout(() => s.classList.remove('active-sign'), 3500);
     }
+
+    // Professional Auto-trigger after UI is rendered
+    window.onload = () => {
+        setTimeout(triggerFingerprint, 500);
+    };
 </script>
 </body>
 </html>

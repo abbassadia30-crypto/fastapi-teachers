@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAI Agent Dashboard</title>
+    <style>
+        :root {
+            --primary: #800000; /* Institution Maroon */
+            --secondary: #d4af37; /* Gold */
+            --sidebar-bg: #1a1a1a;
+            --chat-bg: #ffffff;
+            --text-main: #333;
+            --danger: #ff4444;
+            --success: #00c851;
+        }
+
+        body, html { margin: 0; padding: 0; font-family: 'Arial', sans-serif; height: 100vh; overflow: hidden; }
+        .app-container { display: flex; height: 100vh; width: 100vw; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px; background: var(--sidebar-bg); color: white;
+            display: flex; flex-direction: column; transition: 0.3s;
+        }
+        .sidebar-header { padding: 20px; text-align: center; border-bottom: 1px solid #333; }
+        .sidebar-nav { flex: 1; padding: 15px; overflow-y: auto; }
+        .nav-item {
+            padding: 12px; margin-bottom: 8px; border-radius: 8px; cursor: pointer;
+            transition: 0.2s; display: flex; align-items: center; gap: 10px;
+        }
+        .nav-item:hover { background: #333; }
+        .nav-item.active { background: var(--primary); }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; background: #f5f5f5; position: relative; }
+        .view-section { display: none; height: 100%; flex-direction: column; }
+        .view-section.active { display: flex; }
+
+        /* Chat Area */
+        .chat-display { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Message Bubbles */
+        .msg-wrapper { max-width: 85%; position: relative; }
+        .msg-user { align-self: flex-end; }
+        .msg-ai { align-self: flex-start; width: 90%; }
+
+        .bubble {
+            padding: 15px; border-radius: 12px; line-height: 1.6; font-size: 14px;
+            position: relative; overflow: hidden; transition: max-height 0.4s ease;
+        }
+        .msg-user .bubble { background: var(--primary); color: white; border-bottom-right-radius: 2px; }
+        .msg-ai .bubble { background: white; color: var(--text-main); border: 1px solid #ddd; border-bottom-left-radius: 2px; }
+
+        /* Expand Logic */
+        .collapsed { max-height: 150px; } /* Roughly 5-6 lines */
+        .expand-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 50px;
+            background: linear-gradient(transparent, white);
+            display: none; justify-content: center; align-items: flex-end; padding-bottom: 5px;
+        }
+        .collapsed .expand-overlay { display: flex; }
+        .expand-btn {
+            background: #eee; border: none; border-radius: 20px; padding: 2px 15px;
+            font-size: 11px; cursor: pointer; color: var(--primary); font-weight: bold;
+        }
+
+        /* Input Area */
+        .input-bar { padding: 20px; background: white; border-top: 1px solid #ddd; display: flex; gap: 10px; }
+        .input-bar input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 25px; outline: none; }
+        .input-bar button { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; }
+
+        /* Notification Box (Red/Green Sign Box) */
+        #sign-box {
+            position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px;
+            display: none; color: white; z-index: 9999; font-weight: bold;
+        }
+        .sign-red { background: var(--danger); }
+        .sign-green { background: var(--success); }
+    </style>
+</head>
+<body>
+
+<div id="sign-box"></div>
+
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 style="color:var(--secondary)">SAI AGENT</h2>
+            <small>Institution Super Console</small>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" onclick="switchView('chat')">💬 Live Agent</div>
+            <div class="nav-item" onclick="switchView('projects')">📁 Saved Projects</div>
+            <hr style="border:0; border-top:1px solid #333; margin:15px 0;">
+            <div style="font-size: 11px; color:#666; margin-bottom: 10px;">RECENT CHATS</div>
+            <div id="history-container">
+            </div>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <section id="chat-view" class="view-section active">
+            <div class="chat-display" id="chat-box">
+                <div class="msg-wrapper msg-ai">
+                    <div class="bubble">Welcome back. How can I assist your institution today?</div>
+                </div>
+            </div>
+            <div class="input-bar">
+                <input type="text" id="ai-input" placeholder="Type a message or request a graph...">
+                <button onclick="handleSend()">Send</button>
+            </div>
+        </section>
+
+        <section id="projects-view" class="view-section" style="padding:30px;">
+            <h1 style="color:var(--primary)">Project Vault</h1>
+            <p>Generated essays, reports, and class graphs appear here.</p>
+            <div id="project-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    const API_BASE = "http://YOUR_LOCAL_IP:8000"; // Point to your FastAPI
+    let currentUserId = "USER_123"; // Logic for current institution user
+
+    function showNotify(msg, type) {
+        const box = document.getElementById('sign-box');
+        box.innerText = msg;
+        box.className = type === 'success' ? 'sign-green' : 'sign-red';
+        box.style.display = 'block';
+        setTimeout(() => box.style.display = 'none', 3000);
+    }
+
+    function switchView(view) {
+        document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(view + '-view').classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    }
+
+    async function handleSend() {
+        const input = document.getElementById('ai-input');
+        const text = input.value.trim();
+        if(!text) return;
+
+        appendMessage(text, 'user');
+        input.value = "";
+
+        try {
+            const res = await fetch(`${API_BASE}/chat`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ user_id: currentUserId, message: text })
+            });
+            const data = await res.json();
+            appendMessage(data.response, 'ai');
+        } catch (e) {
+            showNotify("Agent Connection Failed", "error");
+        }
+    }
+
+    function appendMessage(content, sender) {
+        const box = document.getElementById('chat-box');
+        const wrapper = document.createElement('div');
+        wrapper.className = `msg-wrapper msg-${sender}`;
+
+        // Detect if content is long (over 300 characters is roughly 5 lines)
+        const isLong = content.length > 300;
+
+        wrapper.innerHTML = `
+            <div class="bubble ${isLong ? 'collapsed' : ''}">
+                ${content}
+                <div class="expand-overlay">
+                    <button class="expand-btn" onclick="toggleExpand(this)">SHOW MORE ▼</button>
+                </div>
+            </div>
+        `;
+
+        box.appendChild(wrapper);
+        box.scrollTop = box.scrollHeight;
+    }
+
+    function toggleExpand(btn) {
+        const bubble = btn.closest('.bubble');
+        if(bubble.classList.contains('collapsed')) {
+            bubble.classList.remove('collapsed');
+            btn.innerText = "SHOW LESS ▲";
+        } else {
+            bubble.classList.add('collapsed');
+            btn.innerText = "SHOW MORE ▼";
+        }
+    }
+</script>
+</body>
+</html>

@@ -242,26 +242,46 @@
                 let content = typeof doc.content === 'string' ? JSON.parse(doc.content) : doc.content;
 
                 content.forEach(sec => {
+                    // 1. Create the Book Section
                     addBook(sec.title);
                     const lastSec = document.getElementById('syllabus-content').lastElementChild;
-                    // Clear the default chapter added by addBook
+
+                    // 2. Clear the blank chapter added by default in addBook()
                     lastSec.querySelector('.chapters-area').innerHTML = "";
 
+                    // 3. Populate Chapters and Topics using the NEW "Simple" logic
                     sec.chapters.forEach(ch => {
-                        const div = document.createElement('div');
-                        div.className = 'chapter-row';
-                        div.innerHTML = `
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <input type="text" class="chap-name" value="${ch.name}">
-                                <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); cursor:pointer;">DEL</span>
-                            </div>
-                            <div class="topic-list">${ch.topics.map(t => `<div class="topic-pill" data-topic="${t}">${t} <span onclick="this.parentElement.remove()">✕</span></div>`).join('')}</div>
-                            <input type="text" placeholder="+ add topic" onkeydown="addTopic(event, this)" style="font-size:12px; color:var(--primary); border:none;">`;
-                        lastSec.querySelector('.chapters-area').appendChild(div);
+                        const addBtn = lastSec.querySelector('.add-btn');
+
+                        // Create the chapter div manually to match addChapter structure
+                        const chapDiv = document.createElement('div');
+                        chapDiv.className = 'chapter-row';
+                        chapDiv.style.marginBottom = "15px";
+                        chapDiv.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <input type="text" class="chap-name" value="${ch.name}" placeholder="Chapter Name"
+                                   style="font-weight:800; font-size:15px; border-bottom:2px solid #eee !important; width:80%;">
+                            <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-weight:800; cursor:pointer;">DEL</span>
+                        </div>
+                        <div class="topics-container"></div>
+                        <button onclick="addTopicInput(this)" style="background:none; border:none; color:var(--primary); font-size:12px; cursor:pointer; padding:5px;">+ Add Topic</button>
+                    `;
+                        addBtn.before(chapDiv);
+
+                        // 4. Fill in the Topics for this chapter
+                        const topicContainerBtn = chapDiv.querySelector('button');
+                        if (ch.topics && Array.isArray(ch.topics)) {
+                            ch.topics.forEach(topicText => {
+                                addTopicInput(topicContainerBtn, topicText);
+                            });
+                        }
                     });
                 });
             }
-        } catch (e) { console.error("Init Error:", e); }
+        } catch (e) {
+            console.error("Init Error:", e);
+            showNotify("Failed to load syllabus data", "error");
+        }
     }
 
     window.onload = initArchitect;
