@@ -1,10 +1,12 @@
 {
-  "appId": "com.institution.app",
-  "appName": "InstitutionManager",
+  "appId": "com.institution.superconsole",
+  "appName": "InstitutionApp",
   "webDir": "frontend",
   "server": {
     "androidScheme": "http",
     "cleartext": true,
-    "allowNavigation": ["https://fastapi-teachers.onrender.com"]
+    "allowNavigation": [
+      "https://fastapi-teachers.onrender.com"
+    ]
   }
 }

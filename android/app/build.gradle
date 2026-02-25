@@ -1,13 +1,11 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "com.institution.app"
-    compileSdk = 34
+    namespace = "com.institution.superconsole"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.institution.app"
+        applicationId "com.institution.superconsole"
         minSdkVersion rootProject.ext.minSdkVersion
-        targetSdkVersion 34
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
@@ -21,15 +19,14 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
-    }
-    kotlinOptions {
-        jvmTarget = '21'
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
     }
 }
 
@@ -54,13 +51,4 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
-}
-
-configurations.all {
-    resolutionStrategy {
-        force 'androidx.core:core:1.15.0'
-        force 'androidx.core:core-ktx:1.15.0'
-        force 'androidx.activity:activity:1.9.3'
-        force 'androidx.activity:activity-ktx:1.9.3'
-    }
 }
