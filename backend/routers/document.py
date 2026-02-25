@@ -42,15 +42,18 @@ def create_datesheet(
     if not current_user.institution_id:
         raise HTTPException(status_code=400, detail="User not linked to an institution")
 
+    if not payload.exams:
+        raise HTTPException(status_code=400, detail="Datesheet must contain at least one exam.")
+
     # 🏛️ 2. Creating the Instance
-    # FIX: Change 'institution_id' to 'institution_ref' to match your model
     new_ds = DateSheet(
-        institution_ref=current_user.institution_id, # Match the hex string ref
+        institution_ref=current_user.institution_id,
         title=payload.title,
         target=payload.target,
-        # model_dump() is correct for Pydantic v2 to store as JSON
+        # model_dump() is perfect for Pydantic v2 JSON storage
         exams=[e.model_dump() for e in payload.exams],
-        created_by=current_user.email
+        # 🏛️ FIX: Use user_email instead of email
+        created_by=current_user.user_email
     )
 
     try:
@@ -60,10 +63,12 @@ def create_datesheet(
         return new_ds
     except Exception as e:
         db.rollback()
-        # Log the specific database error to Render console
+        # Log specifically for Render's log stream
         print(f"DATESHEET DB ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to save DateSheet to Institution records")
-
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to save DateSheet to Institution records"
+        )
 
 
 @router.post("/publish", response_model=NoticeResponse)
