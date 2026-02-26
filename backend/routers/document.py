@@ -18,18 +18,36 @@ router = APIRouter(
 
 @router.post("/vault/upload")
 async def upload_to_vault(data: VaultUpload, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
-    # Corrected: model uses institution_ref
+    # 🏛️ Check if this was a resumed draft we are now finalizing
+    if data.id:
+        existing = db.query(Syllabus).filter(
+            Syllabus.id == data.id,
+            Syllabus.institution_ref == current_user.institution_id
+        ).first()
+
+        if existing:
+            existing.name = data.name
+            existing.subject = data.subject
+            existing.targets = data.targets
+            existing.content = data.content
+            existing.doc_type = "syllabus" # Finalize it!
+            existing.author_name = getattr(current_user, 'name', 'Admin')
+            db.commit()
+            return {"status": "success", "id": existing.id}
+
+    # 🏛️ Otherwise, create a fresh entry
     new_doc = Syllabus(
         institution_ref=current_user.institution_id,
         name=data.name,
         subject=data.subject,
         targets=data.targets,
-        doc_type=data.doc_type,
+        doc_type="syllabus",
         content=data.content,
         author_name=getattr(current_user, 'name', 'Admin')
     )
     db.add(new_doc)
     db.commit()
+    db.refresh(new_doc)
     return {"status": "success", "id": new_doc.id}
 
 @router.post("/create", response_model=DateSheetResponse)
@@ -69,6 +87,7 @@ def create_datesheet(
             status_code=500,
             detail="Failed to save DateSheet to Institution records"
         )
+
 @router.post("/pending/sync")
 async def sync_pending_syllabus(
         data: PendingSync,

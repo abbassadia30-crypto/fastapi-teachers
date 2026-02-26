@@ -8,13 +8,13 @@ from backend.models.admin.document import VoucherMode
 
 
 class VaultUpload(BaseModel):
+    id: Optional[int] = None      # Add this to handle resumed IDs
     name: str
     subject: str
     targets: List[str]
-    doc_type: str
-    content: List[Dict[str, Any]]
-
-    model_config = ConfigDict(from_attributes=True)
+    doc_type: str = "syllabus"
+    content: List[Any]
+    is_final: Optional[bool] = True
 
 class VaultBase(BaseModel):
     name: str
