@@ -75,31 +75,35 @@ async def sync_pending_syllabus(
         db: Session = Depends(get_db),
         current_user: Any = Depends(get_current_user)
 ):
-    # 1. Check if we are updating an existing draft
+    # 1. Initialize as None to avoid UnboundLocalError
+    existing_draft = None
+
+    # 2. Check if we are updating an existing draft
     if data.id:
         existing_draft = db.query(Syllabus).filter(
             Syllabus.id == data.id,
             Syllabus.institution_ref == current_user.institution_id
         ).first()
 
-    if existing_draft:
+        # Logic for updating if found
+        if existing_draft:
             existing_draft.name = data.name
             existing_draft.subject = data.subject
             existing_draft.targets = data.targets
             existing_draft.content = data.content
-            # Update author to the last person who edited it
+            # Record who made the last edit for institutional transparency
             existing_draft.author_name = getattr(current_user, 'name', 'Staff')
 
             db.commit()
             return {"status": "updated", "id": existing_draft.id}
 
-    # 2. If no ID or ID not found, create a new collaborative draft
+    # 3. If no ID was provided OR the ID didn't exist in our DB, create new
     new_draft = Syllabus(
         institution_ref=current_user.institution_id,
         name=data.name,
         subject=data.subject,
         targets=data.targets,
-        doc_type="pending_syllabus", # Marking as pending
+        doc_type="pending_syllabus",
         content=data.content,
         author_name=getattr(current_user, 'name', 'Staff')
     )
