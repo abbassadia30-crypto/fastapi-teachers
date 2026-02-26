@@ -4,110 +4,144 @@
     <meta charset="UTF-8">
     <title>Professional Syllabus Document</title>
     <style>
-        /* 🏛️ Professional CSS for Institutional Standards */
+        /* 🏛️ Professional Institutional CSS */
         body { font-family: 'Times New Roman', serif; background: #f0f2f5; margin: 0; padding: 20px; color: #000; }
         .page { background: white; width: 95%; max-width: 850px; margin: 0 auto; padding: 50px; box-shadow: 0 0 20px rgba(0,0,0,0.1); position: relative; min-height: 1050px; }
-        
+
         .header-table { width: 100%; border: 2px solid #000; border-collapse: collapse; margin-bottom: 20px; }
         .header-table td { border: 1px solid #000; padding: 15px; text-align: center; }
-        .inst-name { font-size: 24px; font-weight: bold; text-transform: uppercase; }
-        
-        .info-bar { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 2px solid #000; padding: 5px 0; margin-bottom: 20px; }
-        
+        .inst-name { font-size: 24px; font-weight: bold; text-transform: uppercase; color: #1a237e; }
+
+        .info-bar { display: flex; justify-content: space-between; font-weight: bold; border-bottom: 2px solid #000; padding: 5px 0; margin-bottom: 20px; font-size: 14px; }
+
         .layout { display: grid; grid-template-columns: 3fr 1fr; gap: 30px; }
-        
-        .syllabus-table { width: 100%; border-collapse: collapse; }
-        .syllabus-table th, .syllabus-table td { border: 1px solid #000; padding: 10px; text-align: left; vertical-align: top; }
-        .syllabus-table th { background: #eeeeee; font-size: 14px; }
 
-        .index-box { border-left: 2px solid #800000; padding-left: 15px; }
-        .index-title { color: #800000; font-weight: bold; margin-bottom: 10px; font-size: 14px; border-bottom: 1px solid #ccc; }
-        .index-item { font-size: 12px; margin-bottom: 6px; }
+        .syllabus-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .syllabus-table th, .syllabus-table td { border: 1px solid #000; padding: 12px; text-align: left; vertical-align: top; word-wrap: break-word; }
+        .syllabus-table th { background: #f5f5f5; font-size: 13px; text-transform: uppercase; }
 
-        .chapter-title { font-weight: bold; display: block; margin-top: 8px; font-size: 14px; text-decoration: underline; }
-        .topics { margin: 3px 0; padding-left: 20px; font-size: 13px; list-style-type: square; }
+        .index-box { border-left: 3px double #800000; padding-left: 15px; background: #fffcfc; }
+        .index-title { color: #800000; font-weight: bold; margin-bottom: 15px; font-size: 15px; border-bottom: 1px solid #800000; padding-bottom: 5px; }
+        .index-item { font-size: 12px; margin-bottom: 8px; border-bottom: 1px dotted #ccc; padding-bottom: 2px; display: flex; justify-content: space-between; }
 
-        .watermark { position: absolute; bottom: 30px; right: 40px; font-size: 12px; color: rgba(0,0,0,0.2); font-weight: bold; }
-        
-        @media print { 
-            body { background: none; padding: 0; } 
-            .page { box-shadow: none; width: 100%; margin: 0; }
+        .chapter-title { font-weight: bold; display: block; margin-top: 10px; font-size: 14px; color: #333; }
+        .topics { margin: 5px 0; padding-left: 20px; font-size: 13px; list-style-type: circle; line-height: 1.4; }
+
+        .watermark { position: absolute; bottom: 30px; right: 40px; font-size: 11px; color: rgba(0,0,0,0.3); font-weight: bold; letter-spacing: 1px; }
+
+        @media print {
+            body { background: none; padding: 0; }
+            .page { box-shadow: none; width: 100%; margin: 0; padding: 30px; }
             .no-print { display: none; }
         }
     </style>
 </head>
 <body>
 
-<button class="no-print" onclick="history.back()" style="margin-bottom: 10px; padding: 10px;">← Back to Vault</button>
+<button class="no-print" onclick="history.back()" style="margin-bottom: 15px; padding: 10px 20px; cursor: pointer; background: #263238; color: white; border: none; border-radius: 5px; font-weight: bold;">← Return to Vault</button>
 
 <div class="page" id="printArea">
     <table class="header-table">
         <tr>
             <td>
-                <div class="inst-name">ST. LIGHT INT. INSTITUTION</div>
-                <div style="font-size: 16px; font-weight: bold;" id="docName">SYLLABUS PLAN</div>
+                <div class="inst-name" id="displayInstName">INSTITUTION NAME</div>
+                <div style="font-size: 16px; font-weight: bold; margin-top: 5px; letter-spacing: 2px;" id="docName">SYLLABUS PLAN</div>
             </td>
         </tr>
     </table>
 
     <div class="info-bar">
-        <span>CLASS: <span id="viewClass">--</span></span>
-        <span>DATE: <span id="viewDate">--</span></span>
+        <span>TARGET CLASS: <span id="viewClass">--</span></span>
+        <span>ISSUED DATE: <span id="viewDate">--</span></span>
     </div>
 
     <div class="layout">
         <div class="main-content">
             <table class="syllabus-table">
                 <thead>
-                    <tr>
-                        <th style="width: 25%;">SUBJECT</th>
-                        <th>SYLLABUS DETAILS</th>
-                    </tr>
+                <tr>
+                    <th style="width: 30%;">Subject / Section</th>
+                    <th>Syllabus Details & Topics</th>
+                </tr>
                 </thead>
                 <tbody id="contentBody"></tbody>
             </table>
         </div>
 
         <div class="index-box">
-            <div class="index-title">INDEX</div>
+            <div class="index-title">CONTENT INDEX</div>
             <div id="indexBody"></div>
         </div>
     </div>
 
-    <div class="watermark">made by starlight</div>
+    <div class="watermark">DIGITIZED BY STARLIGHT • INSTITUTION MANAGEMENT SYSTEM</div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
+        // 1. Fetch Institution Data from Cache/Storage
+        // Adjusting to your specific logic (checking both localStorage and typical Capacitor storage patterns)
+        const rawAuth = localStorage.getItem('auth_data'); // Fallback to localStorage if needed
+        let instName = "ST. LIGHT INT. INSTITUTION"; // Default
+
+        try {
+            if (rawAuth) {
+                const authData = JSON.parse(rawAuth);
+                // Based on your previous logic, checking for institution_name or similar
+                instName = authData.institution_name || authData.name || instName;
+            }
+        } catch(e) { console.error("Auth fetch error", e); }
+
+        document.getElementById('displayInstName').innerText = instName.toUpperCase();
+
+        // 2. Load Syllabus Content
         const data = JSON.parse(localStorage.getItem('current_syllabus_view'));
         if (!data) return;
 
-        document.getElementById('docName').innerText = data.name.toUpperCase();
-        document.getElementById('viewClass').innerText = data.targets.join(', ');
-        document.getElementById('viewDate').innerText = data.date;
+        document.getElementById('docName').innerText = (data.name || "SYLLABUS PLAN").toUpperCase();
+
+        // Handle targets (Join array if multiple sections were selected)
+        const targetText = Array.isArray(data.targets) ? data.targets.join(', ') : data.targets;
+        document.getElementById('viewClass').innerText = targetText || "N/A";
+        document.getElementById('viewDate').innerText = data.date || new Date().toLocaleDateString('en-GB');
 
         const contentBody = document.getElementById('contentBody');
         const indexBody = document.getElementById('indexBody');
 
-        data.content.forEach((section, idx) => {
-            // Build Details
-            let detailsHtml = "";
-            section.chapters.forEach(chap => {
-                detailsHtml += `<span class="chapter-title">${chap.name}</span>`;
-                detailsHtml += `<ul class="topics">${chap.topics.map(t => `<li>${t}</li>`).join('')}</ul>`;
+        // 3. Render and Generate Index
+        if (data.content && Array.isArray(data.content)) {
+            data.content.forEach((section, idx) => {
+                const count = idx + 1; // 🏛️ Real Index Logic
+
+                // Build Chapters and Topics HTML
+                let detailsHtml = "";
+                if (section.chapters && Array.isArray(section.chapters)) {
+                    section.chapters.forEach(chap => {
+                        detailsHtml += `<span class="chapter-title">${chap.name || 'Untitled Chapter'}</span>`;
+                        const topicList = Array.isArray(chap.topics) ? chap.topics : [];
+                        detailsHtml += `<ul class="topics">${topicList.map(t => `<li>${t}</li>`).join('')}</ul>`;
+                    });
+                }
+
+                // Append Row to Table
+                contentBody.innerHTML += `
+                    <tr>
+                        <td>
+                            <div style="font-weight:bold; color:#1a237e;">${count}. ${section.title}</div>
+                        </td>
+                        <td>${detailsHtml || '<i>No details provided for this section.</i>'}</td>
+                    </tr>
+                `;
+
+                // Append Item to Index
+                indexBody.innerHTML += `
+                    <div class="index-item">
+                        <span>${count}. ${section.title}</span>
+                        <span style="color:#888;">........</span>
+                    </div>
+                `;
             });
-
-            // Add Table Row
-            contentBody.innerHTML += `
-                <tr>
-                    <td><strong>${section.title}</strong></td>
-                    <td>${detailsHtml}</td>
-                </tr>
-            `;
-
-            // Add Index Item
-            indexBody.innerHTML += `<div class="index-item">${idx + 1}. ${section.title}</div>`;
-        });
+        }
     });
 </script>
 </body>

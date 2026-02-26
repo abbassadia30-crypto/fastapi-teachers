@@ -8,283 +8,279 @@
     <style>
         :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; --success: #2e7d32; --danger: #d32f2f; --muted: #78909c; --border: #e0e0e0; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 120px; color: var(--secondary); overflow-x: hidden; }
-        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 6000; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .sign-red { background: var(--danger); border: 2px solid #b71c1c; }
-        .sign-green { background: var(--success); border: 2px solid #1b5e20; }
-        #name-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .modal-card { background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; text-align: center; }
+
+        /* Persistent Header & Tabs */
         header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
+        .top-tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 68px; z-index: 900; }
+        .tab-btn { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 6000; font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .sign-red { background: var(--danger); }
+        .sign-green { background: var(--success); }
+
         .main-container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: fadeIn 0.4s ease; }
+
         .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        label { font-size: 11px; font-weight: 800; color: var(--primary); text-transform: uppercase; }
-        .input-wrapper { background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; }
-        .field-row { display: flex; align-items: center; border-bottom: 2px solid #ddd; margin-bottom: 10px; }
-        .input-group { flex: 1; }
-        .micro-label { font-size: 9px; color: var(--primary); font-weight: 800; display: block; }
-        input { width: 100%; border: none; outline: none; background: transparent; padding: 8px 0; font-size: 14px; font-weight: 600; color: var(--secondary); font-family: inherit; }
-        .manual-add { color: var(--primary); font-size: 24px; font-weight: 800; padding: 0 10px; cursor: pointer; }
-        .tag-box { display: flex; flex-wrap: wrap; gap: 6px; min-height: 20px; margin-top: 5px; }
-        .tag { background: var(--secondary); color: white; padding: 4px 10px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 6px; font-weight: 600; }
-        .book-section { background: white; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; animation: slideUp 0.3s ease; }
+        .input-wrapper { background: #f9f9f9; padding: 12px; border-radius: 15px; border: 1px solid #eee; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        input { border: none; outline: none; background: transparent; font-size: 14px; font-weight: 600; flex: 1; }
+
+        /* Subject Tag Button */
+        .tag-add-btn { background: var(--primary); color: white; border: none; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+
+        .book-section { background: white; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; }
         .book-header { background: #f8f9fa; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; }
-        .section-title-input { font-weight: 800; border: none; background: transparent; font-size: 14px; flex: 1; }
-        .chapter-row { padding: 20px; border-bottom: 1px solid #f0f0f0; background: #fff; }
-        .chap-name { font-weight: 600; border: none; border-bottom: 1px solid #eee !important; width: 80%; margin-bottom: 10px; }
-        .topic-pill { background: #e3f2fd; color: var(--primary); padding: 6px 14px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; margin: 4px; font-weight: 700; border: 1px solid #bbdefb; }
-        .topic-pill span { margin-left: 8px; font-size: 14px; cursor: pointer; color: var(--danger); }
+
         .btn-main { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--primary); color: white; border: none; padding: 20px; border-radius: 18px; font-weight: 800; font-size: 16px; z-index: 2000; box-shadow: 0 8px 20px rgba(2,136,209,0.3); }
-        .gen-btn { background: var(--secondary); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: 700; margin-top: 10px; }
-        .add-btn { width: 100%; padding: 14px; border: 2px dashed #ddd; background: none; color: var(--muted); border-radius: 12px; margin-top: 10px; font-weight: 600; }
+
+        /* Pending List Item */
+        .pending-card { background: white; padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #eee; }
+
+        #name-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
 
 <div id="sign-box"></div>
-<div id="name-modal">
-    <div class="modal-card">
-        <h3>Name this Syllabus</h3>
-        <input type="text" id="doc-name-input" placeholder="e.g. Annual Syllabus 2026">
-        <div style="display:flex; gap:10px;">
-            <button class="gen-btn" style="background:#eee; color:#333;" onclick="toggleModal(false)">Cancel</button>
-            <button class="gen-btn" style="background:var(--success); flex:2;" onclick="confirmDeployment()">Confirm & Deploy</button>
-        </div>
-    </div>
-</div>
 
 <header>
-    <div onclick='history.back();' style="font-size:24px; font-weight:800;">✕</div>
-    <h2 id="page-title" style="margin:0; font-size:17px; font-weight: 800;">Syllabus Architect</h2>
+    <div onclick='history.back();' style="font-size:24px; font-weight:800; cursor:pointer;">✕</div>
+    <h2 id="inst-name" style="margin:0; font-size:16px; font-weight: 800; color: var(--primary);">INSTITUTION</h2>
     <div style="width:24px;"></div>
 </header>
 
-<div class="main-container">
-    <div class="card">
-        <label>Architect Configuration</label>
-        <div class="input-wrapper">
-            <div class="field-row">
-                <div class="input-group">
-                    <span class="micro-label">Target Classes</span>
-                    <input type="text" id="class-input" placeholder="Enter Class" onkeydown="if(event.key==='Enter') addListTag('class')">
-                </div>
-                <div class="manual-add" onclick="addListTag('class')">+</div>
-            </div>
-            <div class="tag-box" id="class-tags"></div>
-        </div>
-        <div class="input-wrapper">
-            <div class="field-row">
-                <div class="input-group">
-                    <span class="micro-label">Target Subjects</span>
-                    <input type="text" id="subject-input" placeholder="Enter Subject" onkeydown="if(event.key==='Enter') addListTag('subject')">
-                </div>
-                <div class="manual-add" onclick="addListTag('subject')">+</div>
-            </div>
-            <div class="tag-box" id="subject-tags"></div>
-        </div>
-        <button class="gen-btn" onclick="generateArchitectSections()">Build Architect Workspace</button>
-    </div>
-    <div id="syllabus-content"></div>
-    <button class="add-btn" onclick="addBook('')">+ Add Empty Manual Section</button>
+<div class="top-tabs">
+    <div class="tab-btn active" id="tab-arc" onclick="switchTab('architect')">ARCHITECT</div>
+    <div class="tab-btn" id="tab-pen" onclick="switchTab('pending')">PENDING VAULT</div>
 </div>
 
-<button class="btn-main" onclick="toggleModal(true)">Deploy to Institution Vault</button>
+<div class="main-container">
+    <div id="view-architect" class="view-section active">
+        <div class="card">
+            <label style="font-size: 11px; font-weight: 800; color: var(--primary);">1. SELECT CLASS SECTIONS</label>
+            <div id="section-container" style="display:flex; flex-wrap:wrap; gap:8px; margin:10px 0 20px;"></div>
+
+            <label style="font-size: 11px; font-weight: 800; color: var(--primary);">2. ADD SUBJECTS</label>
+            <div class="input-wrapper">
+                <input type="text" id="subject-input" placeholder="Type Subject Name..." onkeydown="if(event.key==='Enter') addSubjectTag()">
+                <button class="tag-add-btn" onclick="addSubjectTag()">ADD</button>
+            </div>
+            <div id="subject-tags" style="display:flex; flex-wrap:wrap; gap:5px; margin-bottom:15px;"></div>
+
+            <button class="gen-btn" style="width:100%; padding:15px; border-radius:12px; border:none; background:var(--secondary); color:white; font-weight:700;" onclick="generateArchitectSections()">Build Collaborator Workspace</button>
+        </div>
+
+        <div id="syllabus-content"></div>
+        <button style="width:100%; padding:15px; border:2px dashed #ccc; background:none; border-radius:15px; color:var(--muted); font-weight:600;" onclick="addBook('')">+ Add Custom Subject Area</button>
+    </div>
+
+    <div id="view-pending" class="view-section">
+        <div id="pending-list"></div>
+    </div>
+</div>
+
+<button class="btn-main" id="final-btn" onclick="toggleModal(true)">Deploy Official Syllabus</button>
+
+<div id="name-modal">
+    <div class="modal-card" style="background:white; width:85%; max-width:400px; padding:25px; border-radius:20px; text-align:center;">
+        <h3 style="margin-top:0;">Collaborative Sync</h3>
+        <input type="text" id="doc-name-input" placeholder="Document Name (e.g. Mid-Term 2026)" style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px; box-sizing:border-box;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:20px;">
+            <span style="font-size:13px; font-weight:700;">Finalized for Printing?</span>
+            <input type="checkbox" id="status-toggle" style="width:20px; height:20px;">
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button style="flex:1; padding:12px; border-radius:10px; border:none; background:#eee;" onclick="toggleModal(false)">Cancel</button>
+            <button style="flex:2; padding:12px; border-radius:10px; border:none; background:var(--success); color:white; font-weight:700;" onclick="handleDeployment()">Sync with DB</button>
+        </div>
+    </div>
+</div>
 
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 <script>
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    let isEditMode = false;
-    let currentEditId = null;
+    let selectedSections = new Set();
+    let currentSyllabusId = null; // Track if we are editing an existing draft
 
-    function showNotify(msg, type) {
-        const box = document.getElementById('sign-box');
-        box.innerText = msg;
-        box.className = type === 'success' ? 'sign-green' : 'sign-red';
-        box.style.display = 'block';
-        setTimeout(() => box.style.display = 'none', 3500);
+    window.onload = async () => {
+        const rawAuth = localStorage.getItem('auth_data');
+        if(rawAuth) document.getElementById('inst-name').innerText = JSON.parse(rawAuth).institution_name.toUpperCase();
+        loadSections();
+        loadPendingFromDB();
+    };
+
+    function switchTab(tab) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        if(tab === 'architect') {
+            document.getElementById('view-architect').classList.add('active');
+            document.getElementById('tab-arc').classList.add('active');
+            document.getElementById('final-btn').style.display = 'block';
+        } else {
+            document.getElementById('view-pending').classList.add('active');
+            document.getElementById('tab-pen').classList.add('active');
+            document.getElementById('final-btn').style.display = 'none';
+            loadPendingFromDB();
+        }
     }
 
-    function toggleModal(show) { document.getElementById('name-modal').style.display = show ? 'flex' : 'none'; }
-
-    function addListTag(type) {
-        const input = document.getElementById(`${type}-input`);
-        const val = input.value.trim();
-        if (val) { injectTag(type, val); input.value = ""; }
+    async function loadSections() {
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/dashboard/sections`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
+            document.getElementById('section-container').innerHTML = data.map(s => `<div class="sec-pill" style="padding:8px 15px; border-radius:10px; border:1px solid #ddd; cursor:pointer;" onclick="toggleSec(this, '${s}')">${s}</div>`).join('');
+        } catch(e) { console.error(e); }
     }
 
-    function injectTag(type, val) {
-        const container = document.getElementById(`${type}-tags`);
-        if (Array.from(container.querySelectorAll('.tag')).some(t => t.dataset.val === val)) return;
+    function toggleSec(el, s) {
+        if(selectedSections.has(s)) { selectedSections.delete(s); el.style.background = 'white'; el.style.color = 'black'; }
+        else { selectedSections.add(s); el.style.background = 'var(--primary)'; el.style.color = 'white'; }
+    }
+
+    function addSubjectTag() {
+        const input = document.getElementById('subject-input');
+        if(!input.value.trim()) return;
         const tag = document.createElement('div');
-        tag.className = 'tag'; tag.dataset.val = val;
-        tag.innerHTML = `${val} <span onclick="this.parentElement.remove()">✕</span>`;
-        container.appendChild(tag);
-    }
-
-    function addTopicInput(btn, value = "") {
-        const div = document.createElement('div');
-        div.className = 'topic-row';
-        div.style.paddingLeft = "20px";
-        div.style.marginBottom = "5px";
-        div.innerHTML = `
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span style="color:var(--muted); font-size:12px;">•</span>
-            <input type="text" class="topic-name" value="${value}" placeholder="Topic Name"
-                   style="font-size:13px; font-weight:400; border-bottom:1px solid #eee !important; width:100%;">
-            <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); cursor:pointer; font-size:12px;">✕</span>
-        </div>
-    `;
-        btn.before(div);
-    }
-
-    function addChapter(btn, name = "") {
-        const div = document.createElement('div');
-        div.className = 'chapter-row';
-        div.style.marginBottom = "15px";
-        div.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-            <input type="text" class="chap-name" value="${name}" placeholder="Chapter Name"
-                   style="font-weight:800; font-size:15px; border-bottom:2px solid #eee !important; width:80%;">
-            <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-weight:800; cursor:pointer;">DEL</span>
-        </div>
-        <div class="topics-container"></div>
-        <button onclick="addTopicInput(this)" style="background:none; border:none; color:var(--primary); font-size:12px; cursor:pointer; padding:5px;">+ Add Topic</button>
-    `;
-        btn.before(div);
-    }
-
-    function addBook(title = "") {
-        const container = document.getElementById('syllabus-content');
-        const section = document.createElement('div');
-        section.className = 'book-section';
-        section.innerHTML = `
-            <div class="book-header">
-                <input type="text" class="section-title-input" value="${title}" placeholder="Section Title">
-                <button onclick="this.parentElement.parentElement.remove()" style="background:none; border:none; color:var(--danger); cursor:pointer;">✕</button>
-            </div>
-            <div class="chapters-area"></div>
-            <button class="add-btn" style="border:none; color:var(--primary); background:#e1f5fe; border-radius:0; margin:0;" onclick="addChapter(this)">+ Add Chapter</button>
-        `;
-        container.appendChild(section);
-        addChapter(section.querySelector('.add-btn'));
+        tag.className = 'tag'; tag.style = "background:var(--secondary); color:white; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600; display:flex; align-items:center;";
+        tag.innerHTML = `${input.value} <span onclick="this.parentElement.remove()" style="margin-left:10px; cursor:pointer;">✕</span>`;
+        tag.dataset.val = input.value;
+        document.getElementById('subject-tags').appendChild(tag);
+        input.value = "";
     }
 
     function generateArchitectSections() {
-        const classes = Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val);
-        const subjects = Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val);
-        if (!classes.length || !subjects.length) return showNotify("Add class and subject tags first", "error");
-        classes.forEach(c => subjects.forEach(s => addBook(`${c} - ${s}`)));
+        const subs = Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val);
+        if(!selectedSections.size || !subs.length) return showNotify("Select Section & Subject first", "error");
+        selectedSections.forEach(sec => subs.forEach(sub => addBook(`${sec} - ${sub}`)));
     }
 
-    async function confirmDeployment() {
+    function addBook(title) {
+        const div = document.createElement('div');
+        div.className = 'book-section';
+        div.innerHTML = `
+            <div class="book-header">
+                <input type="text" class="sec-title" value="${title}" style="font-weight:800; border:none; background:none; width:80%;">
+                <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); cursor:pointer;">✕</span>
+            </div>
+            <div class="chap-list"></div>
+            <button onclick="addChapter(this)" style="width:100%; padding:10px; border:none; background:#e1f5fe; color:var(--primary); font-weight:700;">+ Add Chapter</button>
+        `;
+        document.getElementById('syllabus-content').appendChild(div);
+        addChapter(div.querySelector('button'));
+    }
+
+    function addChapter(btn, name = "") {
+        const ch = document.createElement('div');
+        ch.className = 'chapter-row'; ch.style = "padding:15px; border-bottom:1px solid #f0f0f0;";
+        ch.innerHTML = `
+            <input type="text" class="ch-name" placeholder="Chapter Name" value="${name}" style="width:100%; border:none; border-bottom:1px solid #eee; font-weight:700; margin-bottom:10px;">
+            <div class="topic-list" style="padding-left:15px;"></div>
+            <button onclick="addTopic(this)" style="background:none; border:none; color:var(--primary); font-size:11px;">+ Add Topic</button>
+        `;
+        btn.before(ch);
+    }
+
+    function addTopic(btn, val = "") {
+        const input = document.createElement('input');
+        input.className = 'topic-val'; input.placeholder = "• Topic detail"; input.value = val;
+        input.style = "display:block; width:100%; border:none; border-bottom:1px solid #f9f9f9; font-size:13px; margin-top:5px;";
+        btn.before(input);
+    }
+
+    // 🏛️ DB COLLABORATION LOGIC
+    async function handleDeployment() {
+        const isComplete = document.getElementById('status-toggle').checked;
+        const payload = {
+            id: currentSyllabusId, // Will be null for new, ID for existing
+            name: document.getElementById('doc-name-input').value,
+            targets: Array.from(selectedSections),
+            subject: Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val).join(', '),
+            date: new Date().toLocaleDateString('en-GB'),
+            is_final: isComplete,
+            content: Array.from(document.querySelectorAll('.book-section')).map(s => ({
+                title: s.querySelector('.sec-title').value,
+                chapters: Array.from(s.querySelectorAll('.chapter-row')).map(c => ({
+                    name: c.querySelector('.ch-name').value,
+                    topics: Array.from(c.querySelectorAll('.topic-val')).map(t => t.value)
+                }))
+            }))
+        };
+
+        const endpoint = isComplete ? `${API_BASE}/document/vault/upload` : `${API_BASE}/document/pending/sync`;
+
         try {
-            const name = document.getElementById('doc-name-input').value.trim();
             const resToken = await AppStorage.get('auth_token');
             const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
-
-            const payload = {
-                name: name,
-                subject: Array.from(document.querySelectorAll('#subject-tags .tag')).map(t => t.dataset.val).join(', '),
-                targets: Array.from(document.querySelectorAll('#class-tags .tag')).map(t => t.dataset.val),
-                doc_type: "syllabus",
-                content: Array.from(document.querySelectorAll('.book-section')).map(sec => ({
-                    title: sec.querySelector('.section-title-input').value,
-                    chapters: Array.from(sec.querySelectorAll('.chapter-row')).map(chap => ({
-                        name: chap.querySelector('.chap-name').value,
-                        // SIMPLE: Just map the values of the topic inputs
-                        topics: Array.from(chap.querySelectorAll('.topic-name')).map(t => t.value)
-                    }))
-                }))
-            };
-
-            const url = isEditMode ? `${API_BASE}/central_vault/vault/update/${currentEditId}` : `${API_BASE}/document/vault/upload`;
-
-            showNotify("Syncing...", "success");
-
-            const res = await fetch(url, {
-                method: isEditMode ? 'PUT' : 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+            const res = await fetch(endpoint, {
+                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            if (res.ok) {
-                showNotify("Vault Updated!", "success");
-                setTimeout(() => location.href="central_vault/syllabus.html", 1500);
+            if(res.ok) {
+                if(isComplete) {
+                    localStorage.setItem('current_syllabus_view', JSON.stringify(payload));
+                    window.location.href = "syllabus_view.html";
+                } else {
+                    showNotify("Synced to Institutional Pending Vault", "success");
+                    switchTab('pending');
+                    toggleModal(false);
+                }
             }
-        } catch (e) {
-            showNotify("Sync Failed", "error");
-        }
+        } catch(e) { showNotify("Sync Failed", "error"); }
     }
 
-    async function initArchitect() {
-        const params = new URLSearchParams(window.location.search);
-        currentEditId = params.get('editId');
-        if (!currentEditId) return;
-
-        isEditMode = true;
-        document.getElementById('page-title').innerText = "Edit Syllabus";
-
+    async function loadPendingFromDB() {
         try {
             const resToken = await AppStorage.get('auth_token');
             const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/document/pending/list`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const list = await res.json();
 
-            const res = await fetch(`${API_BASE}/central_vault/vault/list`, {
-                headers: {'Authorization': `Bearer ${token}`}
-            });
-            const docs = await res.json();
-            const doc = docs.find(d => d.id == currentEditId);
-
-            if (doc) {
-                document.getElementById('doc-name-input').value = doc.name;
-                doc.targets.forEach(t => injectTag('class', t));
-                if(doc.subject) doc.subject.split(',').forEach(s => injectTag('subject', s.trim()));
-
-                document.getElementById('syllabus-content').innerHTML = "";
-                let content = typeof doc.content === 'string' ? JSON.parse(doc.content) : doc.content;
-
-                content.forEach(sec => {
-                    // 1. Create the Book Section
-                    addBook(sec.title);
-                    const lastSec = document.getElementById('syllabus-content').lastElementChild;
-
-                    // 2. Clear the blank chapter added by default in addBook()
-                    lastSec.querySelector('.chapters-area').innerHTML = "";
-
-                    // 3. Populate Chapters and Topics using the NEW "Simple" logic
-                    sec.chapters.forEach(ch => {
-                        const addBtn = lastSec.querySelector('.add-btn');
-
-                        // Create the chapter div manually to match addChapter structure
-                        const chapDiv = document.createElement('div');
-                        chapDiv.className = 'chapter-row';
-                        chapDiv.style.marginBottom = "15px";
-                        chapDiv.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <input type="text" class="chap-name" value="${ch.name}" placeholder="Chapter Name"
-                                   style="font-weight:800; font-size:15px; border-bottom:2px solid #eee !important; width:80%;">
-                            <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-weight:800; cursor:pointer;">DEL</span>
-                        </div>
-                        <div class="topics-container"></div>
-                        <button onclick="addTopicInput(this)" style="background:none; border:none; color:var(--primary); font-size:12px; cursor:pointer; padding:5px;">+ Add Topic</button>
-                    `;
-                        addBtn.before(chapDiv);
-
-                        // 4. Fill in the Topics for this chapter
-                        const topicContainerBtn = chapDiv.querySelector('button');
-                        if (ch.topics && Array.isArray(ch.topics)) {
-                            ch.topics.forEach(topicText => {
-                                addTopicInput(topicContainerBtn, topicText);
-                            });
-                        }
-                    });
-                });
-            }
-        } catch (e) {
-            console.error("Init Error:", e);
-            showNotify("Failed to load syllabus data", "error");
-        }
+            document.getElementById('pending-list').innerHTML = list.map(d => `
+                <div class="pending-card">
+                    <div>
+                        <b style="display:block;">${d.name}</b>
+                        <small style="color:var(--primary);">${d.subject}</small>
+                    </div>
+                    <button style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:700;" onclick='resumeFromDB(${JSON.stringify(d)})'>COLLABORATE</button>
+                </div>
+            `).join('');
+        } catch(e) { console.error(e); }
     }
 
-    window.onload = initArchitect;
+    function resumeFromDB(d) {
+        currentSyllabusId = d.id; // Store ID for re-sync
+        document.getElementById('doc-name-input').value = d.name;
+        document.getElementById('syllabus-content').innerHTML = "";
+
+        d.content.forEach(sec => {
+            addBook(sec.title);
+            const lastBook = document.getElementById('syllabus-content').lastElementChild;
+            lastBook.querySelector('.chap-list').innerHTML = ""; // Clear defaults
+            sec.chapters.forEach(ch => {
+                addChapter(lastBook.querySelector('button'), ch.name);
+                const lastCh = lastBook.querySelector('.chapter-row:last-of-type');
+                ch.topics.forEach(t => addTopic(lastCh.querySelector('button'), t));
+            });
+        });
+        switchTab('architect');
+        showNotify("Collaborative Draft Loaded", "success");
+    }
+
+    function showNotify(m, t) {
+        const b = document.getElementById('sign-box'); b.innerText = m;
+        b.className = t==='success' ? 'sign-green' : 'sign-red';
+        b.style.display = 'block'; setTimeout(() => b.style.display='none', 3000);
+    }
+    function toggleModal(s) { document.getElementById('name-modal').style.display = s?'flex':'none'; }
 </script>
 </body>
 </html>

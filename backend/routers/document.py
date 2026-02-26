@@ -9,7 +9,7 @@ from backend.models.admin.institution import Institution
 from backend.models.User import User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
     NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit, \
-    StaffAttendanceSubmit
+    StaffAttendanceSubmit , PendingSync
 
 router = APIRouter(
     prefix="/document",
@@ -69,6 +69,59 @@ def create_datesheet(
             status_code=500,
             detail="Failed to save DateSheet to Institution records"
         )
+@router.post("/pending/sync")
+async def sync_pending_syllabus(
+        data: PendingSync,
+        db: Session = Depends(get_db),
+        current_user: Any = Depends(get_current_user)
+):
+    # 1. Check if we are updating an existing draft
+    if data.id:
+        existing_draft = db.query(Syllabus).filter(
+            Syllabus.id == data.id,
+            Syllabus.institution_ref == current_user.institution_id
+        ).first()
+
+    if existing_draft:
+            existing_draft.name = data.name
+            existing_draft.subject = data.subject
+            existing_draft.targets = data.targets
+            existing_draft.content = data.content
+            # Update author to the last person who edited it
+            existing_draft.author_name = getattr(current_user, 'name', 'Staff')
+
+            db.commit()
+            return {"status": "updated", "id": existing_draft.id}
+
+    # 2. If no ID or ID not found, create a new collaborative draft
+    new_draft = Syllabus(
+        institution_ref=current_user.institution_id,
+        name=data.name,
+        subject=data.subject,
+        targets=data.targets,
+        doc_type="pending_syllabus", # Marking as pending
+        content=data.content,
+        author_name=getattr(current_user, 'name', 'Staff')
+    )
+
+    db.add(new_draft)
+    db.commit()
+    db.refresh(new_draft)
+
+    return {"status": "created", "id": new_draft.id}
+
+@router.get("/pending/list")
+async def get_pending_syllabuses(
+        db: Session = Depends(get_db),
+        current_user: Any = Depends(get_current_user)
+):
+    # Fetch all documents marked as pending for this institution
+    drafts = db.query(Syllabus).filter(
+        Syllabus.institution_ref == current_user.institution_id,
+        Syllabus.doc_type == "pending_syllabus"
+    ).all()
+
+    return drafts
 
 
 @router.post("/publish", response_model=NoticeResponse)

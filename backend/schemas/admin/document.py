@@ -180,3 +180,11 @@ class StaffAttendanceSubmit(BaseModel):
     date: date
     shift: Optional[str] = "Morning"
     data: List[StaffAttendanceEntry]
+
+class PendingSync(BaseModel):
+    id: Optional[int] = None  # Crucial for resuming
+    name: str
+    subject: str
+    targets: List[str]
+    content: List[Any]
+    doc_type: str = "syllabus_draft"

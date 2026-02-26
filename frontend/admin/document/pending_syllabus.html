@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Syllabus Console | Institution</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary: #0288d1; --secondary: #263238; --bg: #f0f2f5; --success: #2e7d32; --danger: #d32f2f; --muted: #78909c; --border: #e0e0e0; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 120px; color: var(--secondary); overflow-x: hidden; }
+
+        /* 🏛️ Header & Persistent Tabs */
+        header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
+        .top-tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 68px; z-index: 900; }
+        .tab-btn { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+        #sign-box { display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); width: 85%; padding: 15px; border-radius: 12px; color: white; text-align: center; z-index: 6000; font-weight: 600; }
+        .sign-red { background: var(--danger); }
+        .sign-green { background: var(--success); }
+
+        .main-container { padding: 20px; max-width: 600px; margin: 0 auto; }
+        .view-section { display: none; animation: fadeIn 0.3s ease; }
+        .view-section.active { display: block; }
+
+        /* 🏛️ Architect Styles */
+        .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .section-pill-box { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 20px; }
+        .sec-pill { padding: 8px 15px; border-radius: 10px; border: 1.5px solid #ddd; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .sec-pill.selected { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .book-section { background: white; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 20px; }
+        .book-header { background: #f8f9fa; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .chapter-row { padding: 15px; border-bottom: 1px solid #f0f0f0; }
+
+        /* 🏛️ Pending Styles */
+        .draft-card { background: white; padding: 20px; border-radius: 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border: 1px solid #eee; }
+        .resume-btn { background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+
+        .btn-main { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--primary); color: white; border: none; padding: 18px; border-radius: 18px; font-weight: 800; font-size: 16px; z-index: 2000; box-shadow: 0 8px 20px rgba(2,136,209,0.3); }
+
+        #name-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 5000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-card { background: white; width: 85%; max-width: 400px; padding: 25px; border-radius: 20px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="sign-box"></div>
+
+<header>
+    <div onclick='history.back();' style="font-size:24px; font-weight:800; cursor:pointer;">✕</div>
+    <h2 id="inst-display" style="margin:0; font-size:15px; font-weight: 800; color: var(--primary);">INSTITUTION</h2>
+    <div style="width:24px;"></div>
+</header>
+
+<div class="top-tabs">
+    <div class="tab-btn active" id="tab-arc" onclick="switchTab('architect')">ARCHITECT</div>
+    <div class="tab-btn" id="tab-pen" onclick="switchTab('pending')">PENDING</div>
+</div>
+
+<div class="main-container">
+    <div id="view-architect" class="view-section active">
+        <div class="card">
+            <label style="font-size: 11px; font-weight: 800; color: var(--primary);">SELECT SECTIONS</label>
+            <div id="section-container" class="section-pill-box"></div>
+
+            <label style="font-size: 11px; font-weight: 800; color: var(--primary);">SUBJECTS</label>
+            <input type="text" id="subject-input" placeholder="Type & Enter" style="width:100%; border:none; border-bottom:2px solid #eee; padding:10px 0; margin-bottom:10px; font-weight:600;" onkeydown="if(event.key==='Enter') addListTag()">
+            <div id="subject-tags" style="display:flex; flex-wrap:wrap; gap:5px;"></div>
+
+            <button onclick="generateWorkspace()" style="width:100%; background:var(--secondary); color:white; border:none; padding:15px; border-radius:12px; margin-top:15px; font-weight:700;">Build Workspace</button>
+        </div>
+
+        <div id="syllabus-content"></div>
+        <button onclick="addBook('')" style="width:100%; padding:15px; border:2px dashed #ccc; background:none; border-radius:15px; color:var(--muted); font-weight:600;">+ Add Manual Section</button>
+    </div>
+
+    <div id="view-pending" class="view-section">
+        <div id="pending-list"></div>
+    </div>
+</div>
+
+<button class="btn-main" id="deploy-btn" onclick="openDeployModal()">Deploy to Vault</button>
+
+<div id="name-modal">
+    <div class="modal-card">
+        <h3 style="margin-top:0;">Finalize</h3>
+        <input type="text" id="doc-name" placeholder="Syllabus Title..." style="width:100%; padding:12px; border:1px solid #ddd; border-radius:10px; margin-bottom:15px; box-sizing:border-box;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#f9f9f9; padding:10px; border-radius:10px; margin-bottom:20px;">
+            <span style="font-size:13px; font-weight:700;">Mark as Completed?</span>
+            <input type="checkbox" id="is-complete" style="width:20px; height:20px;">
+        </div>
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="toggleModal(false)" style="flex:1; padding:12px; border-radius:10px; border:none; background:#eee;">Cancel</button>
+            <button onclick="processFinal()" style="flex:2; padding:12px; border-radius:10px; border:none; background:var(--success); color:white; font-weight:700;">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
+    let selectedSections = new Set();
+
+    // 1. App Initialization & Institution Name
+    window.onload = async () => {
+        const rawAuth = localStorage.getItem('auth_data');
+        if(rawAuth) {
+            const auth = JSON.parse(rawAuth);
+            document.getElementById('inst-display').innerText = (auth.institution_name || "MY INSTITUTION").toUpperCase();
+        }
+        loadSections();
+        refreshPending();
+    };
+
+    function switchTab(tab) {
+        document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+
+        if(tab === 'architect') {
+            document.getElementById('view-architect').classList.add('active');
+            document.getElementById('tab-arc').classList.add('active');
+            document.getElementById('deploy-btn').style.display = 'block';
+        } else {
+            document.getElementById('view-pending').classList.add('active');
+            document.getElementById('tab-pen').classList.add('active');
+            document.getElementById('deploy-btn').style.display = 'none';
+            refreshPending();
+        }
+    }
+
+    // 2. Fetch Sections
+    async function loadSections() {
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/sections`, { headers: {'Authorization': `Bearer ${token}`} });
+            const sections = await res.json();
+            document.getElementById('section-container').innerHTML = sections.map(s =>
+                `<div class="sec-pill" onclick="toggleSec(this, '${s}')">${s}</div>`).join('');
+        } catch (e) { console.error(e); }
+    }
+
+    function toggleSec(el, s) {
+        if(selectedSections.has(s)) { selectedSections.delete(s); el.classList.remove('selected'); }
+        else { selectedSections.add(s); el.classList.add('selected'); }
+    }
+
+    // 3. Architect Engine
+    function addListTag() {
+        const input = document.getElementById('subject-input');
+        if(!input.value.trim()) return;
+        const tag = document.createElement('div');
+        tag.className = 'tag';
+        tag.style = "background:var(--secondary); color:white; padding:5px 12px; border-radius:8px; font-size:12px; font-weight:600;";
+        tag.innerHTML = `${input.value} <span onclick="this.parentElement.remove()" style="margin-left:8px; cursor:pointer;">✕</span>`;
+        tag.dataset.val = input.value;
+        document.getElementById('subject-tags').appendChild(tag);
+        input.value = "";
+    }
+
+    function generateWorkspace() {
+        const subs = Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val);
+        if(!selectedSections.size || !subs.length) return showNotify("Select sections and subjects", "error");
+        selectedSections.forEach(sec => subs.forEach(sub => addBook(`${sec} - ${sub}`)));
+    }
+
+    function addBook(title) {
+        const div = document.createElement('div');
+        div.className = 'book-section';
+        div.innerHTML = `
+            <div class="book-header">
+                <input type="text" class="sec-title" value="${title}" style="border:none; background:none; font-weight:800; width:80%;">
+                <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); cursor:pointer;">✕</span>
+            </div>
+            <div class="chapter-area"></div>
+            <button onclick="addChapter(this)" style="width:100%; background:#e1f5fe; border:none; padding:10px; color:var(--primary); font-weight:700;">+ Add Chapter</button>
+        `;
+        document.getElementById('syllabus-content').appendChild(div);
+        addChapter(div.querySelector('button'));
+    }
+
+    function addChapter(btn, name = "") {
+        const ch = document.createElement('div');
+        ch.className = 'chapter-row';
+        ch.innerHTML = `
+            <div style="display:flex; justify-content:space-between;">
+                <input type="text" class="ch-name" value="${name}" placeholder="Chapter Name" style="width:85%; border:none; border-bottom:1px solid #eee; font-weight:700;">
+                <span onclick="this.parentElement.parentElement.remove()" style="color:var(--danger); font-size:12px;">DEL</span>
+            </div>
+            <div class="topic-area" style="padding-left:15px; margin-top:5px;"></div>
+            <button onclick="addTopic(this)" style="background:none; border:none; color:var(--primary); font-size:11px; margin-top:5px;">+ Add Topic</button>
+        `;
+        btn.before(ch);
+    }
+
+    function addTopic(btn, val = "") {
+        const input = document.createElement('input');
+        input.className = 'topic-val'; input.value = val;
+        input.placeholder = "• Topic detail";
+        input.style = "display:block; width:90%; border:none; border-bottom:1px solid #f9f9f9; font-size:13px; margin-top:5px;";
+        btn.before(input);
+    }
+
+    // 4. Deployment Logic
+    async function processFinal() {
+        const name = document.getElementById('doc-name').value;
+        const complete = document.getElementById('is-complete').checked;
+        if(!name) return showNotify("Name required", "error");
+
+        const payload = {
+            name, targets: Array.from(selectedSections),
+            subject: Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val).join(', '),
+            date: new Date().toLocaleDateString('en-GB'),
+            content: Array.from(document.querySelectorAll('.book-section')).map(s => ({
+                title: s.querySelector('.sec-title').value,
+                chapters: Array.from(s.querySelectorAll('.chapter-row')).map(c => ({
+                    name: c.querySelector('.ch-name').value,
+                    topics: Array.from(c.querySelectorAll('.topic-val')).map(t => t.value)
+                }))
+            }))
+        };
+
+        if(complete) {
+            localStorage.setItem('current_syllabus_view', JSON.stringify(payload));
+            await syncToCloud(payload);
+        } else {
+            let drafts = JSON.parse(localStorage.getItem('syllabus_drafts') || "[]");
+            drafts.push(payload);
+            localStorage.setItem('syllabus_drafts', JSON.stringify(drafts));
+            showNotify("Draft Saved to Pending", "success");
+            switchTab('pending');
+            toggleModal(false);
+        }
+    }
+
+    async function syncToCloud(payload) {
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/document/vault/upload`, {
+                method: 'POST', headers: {'Authorization':`Bearer ${token}`,'Content-Type':'application/json'},
+                body: JSON.stringify(payload)
+            });
+            if(res.ok) window.location.href = "syllabus_view.html";
+        } catch (e) { showNotify("Sync Error", "error"); }
+    }
+
+    // 5. Pending Management
+    function refreshPending() {
+        const drafts = JSON.parse(localStorage.getItem('syllabus_drafts') || "[]");
+        const list = document.getElementById('pending-list');
+        if(!drafts.length) { list.innerHTML = `<p style="text-align:center; color:#888; margin-top:40px;">No pending work.</p>`; return; }
+
+        list.innerHTML = drafts.map((d, i) => `
+            <div class="draft-card">
+                <div>
+                    <b style="display:block;">${d.name}</b>
+                    <small style="color:var(--primary);">${d.subject} | ${d.date}</small>
+                </div>
+                <button class="resume-btn" onclick="resumeDraft(${i})">RESUME</button>
+            </div>
+        `).join('');
+    }
+
+    function resumeDraft(i) {
+        const drafts = JSON.parse(localStorage.getItem('syllabus_drafts'));
+        const d = drafts[i];
+
+        // Load data into Architect
+        document.getElementById('syllabus-content').innerHTML = "";
+        d.content.forEach(sec => {
+            addBook(sec.title);
+            const lastSec = document.getElementById('syllabus-content').lastElementChild;
+            lastSec.querySelector('.chapter-area').innerHTML = ""; // Clear default
+            sec.chapters.forEach(ch => {
+                addChapter(lastSec.querySelector('button'), ch.name);
+                const lastCh = lastSec.querySelector('.chapter-row:last-of-type');
+                ch.topics.forEach(t => addTopic(lastCh.querySelector('button'), t));
+            });
+        });
+
+        // Remove from drafts once resumed
+        drafts.splice(i, 1);
+        localStorage.setItem('syllabus_drafts', JSON.stringify(drafts));
+
+        switchTab('architect');
+        showNotify("Draft Loaded", "success");
+    }
+
+    function showNotify(m, t) {
+        const s = document.getElementById('sign-box'); s.innerText = m;
+        s.className = t === 'success' ? 'sign-green' : 'sign-red';
+        s.style.display = 'block'; setTimeout(() => s.style.display='none', 3000);
+    }
+    function toggleModal(s) { document.getElementById('name-modal').style.display = s?'flex':'none'; }
+    function openDeployModal() { toggleModal(true); }
+</script>
+</body>
+</html>
