@@ -199,92 +199,6 @@
     }
 
     // 🏛️ DB COLLABORATION LOGIC
-    async function handleDeployment() {
-        const isComplete = document.getElementById('status-toggle').checked;
-        const payload = {
-            id: currentSyllabusId, // Will be null for new, ID for existing
-            name: document.getElementById('doc-name-input').value,
-            targets: Array.from(selectedSections),
-            subject: Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val).join(', '),
-            date: new Date().toLocaleDateString('en-GB'),
-            is_final: isComplete,
-            content: Array.from(document.querySelectorAll('.book-section')).map(s => ({
-                title: s.querySelector('.sec-title').value,
-                chapters: Array.from(s.querySelectorAll('.chapter-row')).map(c => ({
-                    name: c.querySelector('.ch-name').value,
-                    topics: Array.from(c.querySelectorAll('.topic-val')).map(t => t.value)
-                }))
-            }))
-        };
-
-        const endpoint = isComplete ? `${API_BASE}/document/vault/upload` : `${API_BASE}/document/pending/sync`;
-
-        try {
-            const resToken = await AppStorage.get('auth_token');
-            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
-            const res = await fetch(endpoint, {
-                method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if(res.ok) {
-                if(isComplete) {
-                    localStorage.setItem('current_syllabus_view', JSON.stringify(payload));
-                    window.location.href = "central_vault/syllabus.html";
-                } else {
-                    showNotify("Synced to Institutional Pending Vault", "success");
-                    switchTab('pending');
-                    toggleModal(false);
-                }
-            }
-        } catch(e) { showNotify("Sync Failed", "error"); }
-    }
-
-    async function loadPendingFromDB() {
-        try {
-            const resToken = await AppStorage.get('auth_token');
-            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
-            const res = await fetch(`${API_BASE}/document/pending/list`, { headers: { 'Authorization': `Bearer ${token}` } });
-            const list = await res.json();
-
-            document.getElementById('pending-list').innerHTML = list.map(d => `
-                <div class="pending-card">
-                    <div>
-                        <b style="display:block;">${d.name}</b>
-                        <small style="color:var(--primary);">${d.subject}</small>
-                    </div>
-                    <button style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:700;" onclick='resumeFromDB(${JSON.stringify(d)})'>COLLABORATE</button>
-                </div>
-            `).join('');
-        } catch(e) { console.error(e); }
-    }
-
-    function resumeFromDB(d) {
-        currentSyllabusId = d.id; // Store ID for re-sync
-        document.getElementById('doc-name-input').value = d.name;
-        document.getElementById('syllabus-content').innerHTML = "";
-
-        d.content.forEach(sec => {
-            addBook(sec.title);
-            const lastBook = document.getElementById('syllabus-content').lastElementChild;
-            lastBook.querySelector('.chap-list').innerHTML = ""; // Clear defaults
-            sec.chapters.forEach(ch => {
-                addChapter(lastBook.querySelector('button'), ch.name);
-                const lastCh = lastBook.querySelector('.chapter-row:last-of-type');
-                ch.topics.forEach(t => addTopic(lastCh.querySelector('button'), t));
-            });
-        });
-        switchTab('architect');
-        showNotify("Collaborative Draft Loaded", "success");
-    }
-
-    function showNotify(m, t) {
-        const b = document.getElementById('sign-box'); b.innerText = m;
-        b.className = t==='success' ? 'sign-green' : 'sign-red';
-        b.style.display = 'block'; setTimeout(() => b.style.display='none', 3000);
-    }
-    function toggleModal(s) { document.getElementById('name-modal').style.display = s?'flex':'none'; }
-
     // 🏛️ UPDATED DEPLOYMENT LOGIC WITH BUTTON DISABLE
     async function handleDeployment() {
         const isComplete = document.getElementById('status-toggle').checked;
@@ -372,7 +286,32 @@
         } catch(e) { console.error("Pending Load Fail", e); }
     }
 
-    // 🏛️ NEW DELETE LOGIC
+    function resumeFromDB(d) {
+        currentSyllabusId = d.id; // Store ID for re-sync
+        document.getElementById('doc-name-input').value = d.name;
+        document.getElementById('syllabus-content').innerHTML = "";
+
+        d.content.forEach(sec => {
+            addBook(sec.title);
+            const lastBook = document.getElementById('syllabus-content').lastElementChild;
+            lastBook.querySelector('.chap-list').innerHTML = ""; // Clear defaults
+            sec.chapters.forEach(ch => {
+                addChapter(lastBook.querySelector('button'), ch.name);
+                const lastCh = lastBook.querySelector('.chapter-row:last-of-type');
+                ch.topics.forEach(t => addTopic(lastCh.querySelector('button'), t));
+            });
+        });
+        switchTab('architect');
+        showNotify("Collaborative Draft Loaded", "success");
+    }
+
+    function showNotify(m, t) {
+        const b = document.getElementById('sign-box'); b.innerText = m;
+        b.className = t==='success' ? 'sign-green' : 'sign-red';
+        b.style.display = 'block'; setTimeout(() => b.style.display='none', 3000);
+    }
+    function toggleModal(s) { document.getElementById('name-modal').style.display = s?'flex':'none'; }
+
     async function deleteDraft(id) {
         if(!confirm("Are you sure you want to remove this draft from the institution vault?")) return;
 
