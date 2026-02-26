@@ -10,6 +10,9 @@
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); padding-bottom: 120px; color: var(--secondary); overflow-x: hidden; }
 
         /* Persistent Header & Tabs */
+        /* New style for the delete icon/button */
+        .del-draft-btn { background: #ffebee; color: var(--danger); border: none; padding: 8px; border-radius: 8px; cursor: pointer; margin-left: 10px; font-weight: 800; }
+        .btn-main:disabled { background: var(--muted); opacity: 0.7; cursor: not-allowed; }
         header { background: white; padding: 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 1000; }
         .top-tabs { display: flex; background: white; border-bottom: 1px solid var(--border); position: sticky; top: 68px; z-index: 900; }
         .tab-btn { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; color: var(--muted); border-bottom: 3px solid transparent; cursor: pointer; transition: 0.3s; }
@@ -227,7 +230,7 @@
             if(res.ok) {
                 if(isComplete) {
                     localStorage.setItem('current_syllabus_view', JSON.stringify(payload));
-                    window.location.href = "syllabus_view.html";
+                    window.location.href = "central_vault/syllabus.html";
                 } else {
                     showNotify("Synced to Institutional Pending Vault", "success");
                     switchTab('pending');
@@ -281,6 +284,112 @@
         b.style.display = 'block'; setTimeout(() => b.style.display='none', 3000);
     }
     function toggleModal(s) { document.getElementById('name-modal').style.display = s?'flex':'none'; }
+
+    // 🏛️ UPDATED DEPLOYMENT LOGIC WITH BUTTON DISABLE
+    async function handleDeployment() {
+        const isComplete = document.getElementById('status-toggle').checked;
+        const deployBtn = document.querySelector('.modal-card button[onclick="handleDeployment()"]');
+        const mainDeployBtn = document.getElementById('final-btn');
+
+        // Disable UI
+        deployBtn.disabled = true;
+        deployBtn.innerText = "Syncing...";
+        mainDeployBtn.disabled = true;
+
+        const payload = {
+            id: currentSyllabusId,
+            name: document.getElementById('doc-name-input').value,
+            targets: Array.from(selectedSections),
+            subject: Array.from(document.querySelectorAll('#subject-tags div')).map(t => t.dataset.val).join(', '),
+            date: new Date().toLocaleDateString('en-GB'),
+            is_final: isComplete,
+            content: Array.from(document.querySelectorAll('.book-section')).map(s => ({
+                title: s.querySelector('.sec-title').value,
+                chapters: Array.from(s.querySelectorAll('.chapter-row')).map(c => ({
+                    name: c.querySelector('.ch-name').value,
+                    topics: Array.from(c.querySelectorAll('.topic-val')).map(t => t.value)
+                }))
+            }))
+        };
+
+        const endpoint = isComplete ? `${API_BASE}/document/vault/upload` : `${API_BASE}/document/pending/sync`;
+
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if(res.ok) {
+                if(isComplete) {
+                    localStorage.setItem('current_syllabus_view', JSON.stringify(payload));
+                    window.location.href = "central_vault/syllabus.html";
+                } else {
+                    showNotify("Synced to Institutional Vault", "success");
+                    switchTab('pending');
+                    toggleModal(false);
+                    // Reset ID for new creation
+                    currentSyllabusId = null;
+                    document.getElementById('syllabus-content').innerHTML = "";
+                }
+            } else {
+                showNotify("Server Error: Check your data", "error");
+            }
+        } catch(e) {
+            showNotify("Network Error", "error");
+        } finally {
+            // Re-enable buttons if failed
+            deployBtn.disabled = false;
+            deployBtn.innerText = "Sync with DB";
+            mainDeployBtn.disabled = false;
+        }
+    }
+
+    // 🏛️ UPDATED PENDING LIST WITH DELETE OPTION
+    async function loadPendingFromDB() {
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/document/pending/list`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const list = await res.json();
+
+            document.getElementById('pending-list').innerHTML = list.map(d => `
+                <div class="pending-card">
+                    <div style="flex:1;">
+                        <b style="display:block;">${d.name}</b>
+                        <small style="color:var(--primary);">${d.subject}</small>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        <button style="background:var(--primary); color:white; border:none; padding:8px 15px; border-radius:10px; font-weight:700;"
+                                onclick='resumeFromDB(${JSON.stringify(d)})'>EDIT</button>
+                        <button class="del-draft-btn" onclick="deleteDraft(${d.id})">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        } catch(e) { console.error("Pending Load Fail", e); }
+    }
+
+    // 🏛️ NEW DELETE LOGIC
+    async function deleteDraft(id) {
+        if(!confirm("Are you sure you want to remove this draft from the institution vault?")) return;
+
+        try {
+            const resToken = await AppStorage.get('auth_token');
+            const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+            const res = await fetch(`${API_BASE}/document/pending/delete/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if(res.ok) {
+                showNotify("Draft Removed", "success");
+                loadPendingFromDB();
+            }
+        } catch(e) { showNotify("Delete failed", "error"); }
+    }
 </script>
 </body>
 </html>

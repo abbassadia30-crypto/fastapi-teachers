@@ -50,6 +50,24 @@ async def upload_to_vault(data: VaultUpload, db: Session = Depends(get_db), curr
     db.refresh(new_doc)
     return {"status": "success", "id": new_doc.id}
 
+@router.delete("/pending/delete/{doc_id}")
+async def delete_pending_syllabus(
+        doc_id: int,
+        db: Session = Depends(get_db),
+        current_user: Any = Depends(get_current_user)
+):
+    draft = db.query(Syllabus).filter(
+        Syllabus.id == doc_id,
+        Syllabus.institution_ref == current_user.institution_id
+    ).first()
+
+    if not draft:
+        raise HTTPException(status_code=404, detail="Syllabus not found")
+
+    db.delete(draft)
+    db.commit()
+    return {"status": "success", "message": "Draft deleted"}
+
 @router.post("/create", response_model=DateSheetResponse)
 def create_datesheet(
         payload: DateSheetCreate,
