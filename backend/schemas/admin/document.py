@@ -139,7 +139,7 @@ class PaperCreate(BaseModel):
     paper_type: str
     duration: str
     language: str
-    blueprint: List[BlueprintSection]
+    blueprint: List[SectionModel]
     total_marks: int
 
 class AttendanceEntry(BaseModel):
