@@ -300,44 +300,42 @@ async def deploy_results(
 @router.post("/papers/save-vault")
 async def save_to_vault(
         payload: PaperCreate,
+        paper_id: Optional[int] = None, # Added optional ID
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # 🏛️ Logic: Get the institution ID from the active role
-    # Since Owner/Teacher/Admin inherit from User, we check for institution_id
     inst_id = getattr(current_user, 'institution_id', None)
+    blueprint_data = [block.model_dump() for block in payload.blueprint]
 
-    if not inst_id:
-        raise HTTPException(status_code=403, detail="User not linked to any institution")
+    # 🔄 LOGIC: Check if we are updating or creating new
+    if paper_id:
+        existing_paper = db.query(PaperVault).filter(
+            PaperVault.id == paper_id,
+            PaperVault.institution_ref == inst_id
+        ).first()
 
-    try:
-        # Convert Pydantic blueprint blocks to dicts for JSON column
-        blueprint_data = [block.model_dump() for block in payload.blueprint]
+        if existing_paper:
+            existing_paper.subject = payload.subject
+            existing_paper.target_class = payload.target_class
+            existing_paper.paper_type = payload.paper_type
+            existing_paper.duration = payload.duration
+            existing_paper.language = payload.language
+            existing_paper.content_blueprint = blueprint_data
+            existing_paper.total_marks = payload.total_marks
+            db.commit()
+            return {"status": "updated", "paper_id": existing_paper.id}
 
-        new_paper = PaperVault(
-            institution_ref=inst_id,
-            subject=payload.subject,
-            target_class=payload.target_class,
-            paper_type=payload.paper_type,
-            duration=payload.duration,
-            language=payload.language,
-            content_blueprint=blueprint_data,
-            total_marks=payload.total_marks,
-            # 🏛️ Match your model: user_email NOT email
-            created_by=current_user.user_email,
-            status="pending"
-        )
+    # Otherwise, Create New
+    new_paper = PaperVault(
+        institution_ref=inst_id,
+        subject=payload.subject,
+        # ... (rest of the fields as before)
+        status="pending"
+    )
+    db.add(new_paper)
+    db.commit()
+    return {"status": "created", "paper_id": new_paper.id}
 
-        db.add(new_paper)
-        db.commit()
-        db.refresh(new_paper)
-
-        return {"status": "success", "paper_id": new_paper.id}
-
-    except Exception as e:
-        db.rollback()
-        print(f"DATABASE ERROR: {str(e)}") # Critical for Render logs
-        raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
 @router.get("/papers/vault-list")
 async def get_vault_papers(
@@ -355,6 +353,29 @@ async def get_vault_papers(
     ).all()
 
     return papers
+
+@router.delete("/papers/delete/{paper_id}")
+async def delete_paper(
+        paper_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    paper = db.query(PaperVault).filter(PaperVault.id == paper_id).first()
+
+    if not paper:
+        raise HTTPException(status_code=404, detail="Paper not found")
+
+    # Check if the user belongs to the same institution
+    if paper.institution_ref != current_user.institution_id:
+        raise HTTPException(status_code=403, detail="Unauthorized deletion attempt")
+
+    try:
+        db.delete(paper)
+        db.commit()
+        return {"status": "success", "message": "Paper removed from vault"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/submit")
 async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):

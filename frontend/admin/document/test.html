@@ -6,50 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Amiri&family=Noto+Nastaliq+Urdu&display=swap');
-
-        .lang-ar {
-            font-family: 'Amiri', serif;
-            direction: rtl;
-            text-align: right;
-        }
-
-        .lang-ur {
-            font-family: 'Noto Nastaliq Urdu', serif;
-            direction: rtl;
-            text-align: right;
-            line-height: 2.5; /* Urdu needs more space for Nastaliq */
-        }
-
-        /* Flip the question numbering for RTL */
-        .lang-ar .part-row, .lang-ur .part-row {
-            flex-direction: row-reverse;
-        }
-
-        .lang-ar .q-input, .lang-ur .q-input {
-            text-align: right;
-            padding-right: 10px;
-            padding-left: 0;
-        }
-
-        #notification-bar {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            z-index: 9999;
-            display: none;
-            font-weight: bold;
-        }
-        .bg-red { display: block !important; background: #e74c3c; box-shadow: 0 4px 15px rgba(231,76,60,0.4); }
-        .bg-green { display: block !important; background: #2ecc71; box-shadow: 0 4px 15px rgba(46,204,113,0.4); }
         :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; --success: #2e7d32; --secondary: #263238; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; overflow-x: hidden; }
 
-        /* 🔔 Notifier (Red/Green Sign Box) */
+        /* 🔔 Notifier & Red Confirmation Box */
         #notification-bar {
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
@@ -58,120 +18,117 @@
         .bg-red { background: var(--accent) !important; top: 20px !important; display: block !important; }
         .bg-green { background: var(--success) !important; top: 20px !important; display: block !important; }
 
-        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); flex-shrink: 0; }
+        #confirm-box {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 3000;
+        }
+        .confirm-content {
+            background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 320px;
+            border-top: 5px solid var(--accent);
+        }
+
+        /* 🏗️ Layout & Navigation */
+        header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
         .tab-bar { display: flex; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
         .tab { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; color: #888; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
-        .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; box-sizing: border-box; }
-
+        .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
         .blueprint-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .type-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .btn-type { background: #fff; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .btn-type { background: #fff; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: 800; }
 
-        #config-panel { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 10px; display: none; border: 1px dashed var(--primary); }
-        .input-group { display: flex; gap: 8px; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
-        .input-group div { flex: 1; display: flex; flex-direction: column; }
-        .input-group label { font-size: 9px; font-weight: 800; color: var(--primary); margin-bottom: 2px; text-transform: uppercase; }
-        .input-group input, .input-group select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 12px; box-sizing: border-box; }
+        /* 📑 Vault Grid */
+        #vault-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+        .vault-card { background: white; border-radius: 12px; padding: 12px; border: 1px solid #eee; position: relative; display: flex; flex-direction: column; }
+        .status-badge { position: absolute; top: 5px; right: 5px; font-size: 7px; background: #e8f5e9; color: var(--success); padding: 2px 5px; border-radius: 3px; font-weight: 900; }
+        .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
+        .btn-card { border: none; padding: 6px; border-radius: 6px; font-size: 9px; font-weight: 700; cursor: pointer; }
+        .btn-edit { background: #e3f2fd; color: #1565c0; }
+        .btn-del { background: #ffebee; color: #c62828; }
 
-        .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; margin-top: 20px; min-height: 800px; display: flex; flex-direction: column; }
-        .paper-header { border: 2px solid #000; padding: 15px; margin-bottom: 30px; text-align: center; }
-        .editable-inst { font-size: 20px; font-weight: 900; border: none; text-align: center; width: 100%; outline: none; text-transform: uppercase; background: transparent; }
-        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 80px; text-align: center; outline: none; background: transparent; }
+        /* 🖋️ Language Styles */
+        .lang-ar { font-family: 'Amiri', serif; direction: rtl; text-align: right; }
+        .lang-ur { font-family: 'Noto Nastaliq Urdu', serif; direction: rtl; text-align: right; line-height: 2.5; }
+        .lang-ar .part-row, .lang-ur .part-row { flex-direction: row-reverse; }
+        .lang-ar .q-input, .lang-ur .q-input { text-align: right; font-size: 18px; }
 
-        .question-block { margin-bottom: 25px; position: relative; padding: 10px; }
+        /* 📋 Canvas Styling */
+        .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; min-height: 800px; }
+        .paper-header { border: 2px solid #000; padding: 15px; margin-bottom: 20px; text-align: center; }
+        .editable-inst { font-size: 20px; font-weight: 900; border: none; text-align: center; width: 100%; text-transform: uppercase; background: transparent; outline: none; }
+        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 80px; text-align: center; background: transparent; outline: none; }
+        .question-block { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
         .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 10px; font-size: 14px; }
-        .main-q-row { margin-bottom: 15px; }
-        .part-row { display: flex; gap: 10px; align-items: center; width: 100%; }
-        .q-input { flex: 1; border: none; border-bottom: 1px solid #eee; font-size: 14px; outline: none; background: transparent; padding: 2px; }
-
-        /* Vault Styling */
-        .vault-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #eee; }
-        .btn-print { background: var(--accent); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; }
+        .part-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
+        .q-input { flex: 1; border: none; border-bottom: 1px solid #eee; font-size: 14px; outline: none; }
 
         .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; z-index: 1000; }
         .btn-action { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
-
-        /* RTL Layouts */
-        .rtl-block { direction: rtl; text-align: right; }
-        .rtl-block .q-input { font-family: 'Amiri', serif; font-size: 18px; }
-        .lang-ar {
-            font-family: 'Amiri', serif !important;
-            direction: rtl !important;
-            text-align: right !important;
-        }
-        .lang-ar .q-input { font-size: 18px; }
-
-        /* Urdu Specific Font */
-        .lang-ur {
-            font-family: 'Noto Nastaliq Urdu', serif !important;
-            direction: rtl !important;
-        }
-        .lang-ar { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
-        .lang-ur { direction: rtl; text-align: right; font-family: 'Noto Nastaliq Urdu', serif; }
     </style>
 </head>
 <body>
 
 <div id="notification-bar"></div>
 
+<div id="confirm-box">
+    <div class="confirm-content">
+        <h3 style="margin:0; color:var(--accent);">Delete Draft?</h3>
+        <p style="font-size:12px; color:#666;">This action will permanently remove this paper from the institution vault.</p>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+            <button onclick="closeConfirm()" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:700;">CANCEL</button>
+            <button id="final-del-btn" style="flex:1; padding:10px; border:none; border-radius:8px; background:var(--accent); color:white; font-weight:700;">DELETE</button>
+        </div>
+    </div>
+</div>
+
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer; margin-right:15px;">✕</div>
-    <h2 style="margin:0; font-size:15px; font-weight: 900;">INSTITUTION TEST CONSOLE</h2>
+    <h2 id="page-title" style="margin:0; font-size:15px; font-weight: 900;">PAPER DESIGNER</h2>
 </header>
 
 <div class="tab-bar">
-    <div class="tab active" id="t-design" onclick="switchTab('design')">DESIGN PAPER</div>
+    <div class="tab active" id="t-design" onclick="switchTab('design')">DESIGN</div>
     <div class="tab" id="t-vault" onclick="switchTab('vault')">PENDING VAULT</div>
 </div>
 
 <div class="main-container" id="design-view">
     <div class="blueprint-card">
-        <label style="font-size: 10px; font-weight: 800; color: #666;">1. SELECT LANGUAGE</label>
-        <select id="sel-lang" onchange="toggleLangLayout()" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px;">
-            <option value="en">English Layout</option>
-            <option value="ur">Urdu Layout (RTL)</option>
-            <option value="ar">Arabic Layout (RTL)</option>
+        <label style="font-size: 9px; font-weight: 800; color: var(--primary);">LANGUAGE LAYOUT</label>
+        <select id="sel-lang" onchange="toggleLangLayout()" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px; font-weight:700;">
+            <option value="en">English (Standard)</option>
+            <option value="ur">Urdu (Nastaliq RTL)</option>
+            <option value="ar">Arabic (Naskh RTL)</option>
         </select>
 
-        <label style="font-size: 10px; font-weight: 800; color: #666;">2. CHOOSE QUESTION TYPE</label>
         <div class="type-list">
             <button class="btn-type" onclick="showConfig('MCQs')">MCQs</button>
-            <button class="btn-type" onclick="shortConfig('Short')">Short Qs</button>
-            <button class="btn-type" onclick="shortConfig('Long')">Long Qs</button>
+            <button class="btn-type" onclick="showConfig('Short')">Short Qs</button>
+            <button class="btn-type" onclick="showConfig('Long')">Long Qs</button>
             <button class="btn-type" onclick="showConfig('Custom')">Custom</button>
         </div>
 
-        <div id="config-panel">
-            <h4 id="panel-title" style="margin:0 0 10px 0; font-size:11px; color:var(--primary);">Configuring Section</h4>
+        <div id="config-panel" style="display:none; background:#f9f9f9; padding:15px; border-radius:10px; border:1px dashed #ccc;">
             <div id="custom-statement-box" style="display:none; margin-bottom:10px;">
-                <input type="text" id="in-statement" placeholder="Enter Question Statement" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                <input type="text" id="in-statement" placeholder="Section Heading (e.g. Translation)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
             </div>
-            <div class="input-group">
-                <div><label>Total Qs</label><input type="number" id="in-qty" value="5"></div>
-                <div id="choice-wrap"><label>Attempt</label><input type="number" id="in-choice" value="5"></div>
-                <div><label>Marks/Q</label><input type="number" id="in-marks" value="1"></div>
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="in-qty" placeholder="Qty" style="width:30%; padding:10px;">
+                <input type="number" id="in-choice" placeholder="Attempt" style="width:30%; padding:10px;">
+                <input type="number" id="in-marks" placeholder="Marks" style="width:30%; padding:10px;">
             </div>
-            <div id="subparts-wrap" style="display:none; margin-bottom:10px;">
-                <label>Sub-parts (a, b)</label>
-                <select id="in-sub">
-                    <option value="0">Single Question</option>
-                    <option value="2">Include a & b parts</option>
-                </select>
-            </div>
-            <button class="btn-action" style="padding:10px; font-size:12px;" onclick="addSectionToPaper()">ADD TO CANVAS</button>
+            <button class="btn-action" style="margin-top:10px; padding:10px; font-size:12px;" onclick="addSectionToPaper()">ADD SECTION</button>
         </div>
     </div>
 
     <div class="paper-canvas" id="canvas-main">
         <div class="paper-header">
-            <input type="text" class="editable-inst" value="INSTITUTION NAME" id="p-inst-name">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size: 11px; margin-top:10px; border-bottom: 1px solid #eee; padding-bottom:10px;">
-                <div>SUB: <input type="text" id="p-subject" class="editable-head" value="Subject"></div>
-                <div>CLASS: <input type="text" id="p-class" class="editable-head" value="10th"></div>
-                <div>TYPE: <input type="text" id="p-type" class="editable-head" value="Test"></div>
-                <div>TIME: <input type="text" id="p-duration" class="editable-head" value="40m"></div>
+            <input type="text" class="editable-inst" value="LOADING..." id="p-inst-name">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size: 11px; margin-top:10px;">
+                <div>SUB: <input type="text" id="p-subject" class="editable-head" value="English"></div>
+                <div>CLASS: <input type="text" id="p-class" class="editable-head" value="9th"></div>
+                <div>TYPE: <input type="text" id="p-type" class="editable-head" value="Final"></div>
+                <div>TIME: <input type="text" id="p-duration" class="editable-head" value="3h"></div>
             </div>
         </div>
         <div id="dynamic-content"></div>
@@ -183,7 +140,7 @@
 </div>
 
 <div class="publish-footer">
-    <button class="btn-action" id="btn-save" onclick="saveToVault()">SAVE TO PENDING VAULT</button>
+    <button class="btn-action" id="btn-save" onclick="saveToVault()">SAVE TO INSTITUTION VAULT</button>
 </div>
 
 <script src="../../capacitor.js"></script>
@@ -193,43 +150,13 @@
     const API_URL = "https://fastapi-teachers.onrender.com";
     let activeType = '';
     let vaultData = [];
+    let currentEditId = null;
 
-    // FIX: Professional Institution Name Loader
     window.onload = async () => {
-        try {
-            // Log it to see what's actually coming back
-            const data = await AppStorage.get("current_institution_name");
-            console.log("Storage Raw Data:", data);
-
-            let instName = "";
-            if (data && typeof data === 'object' && data.value) {
-                instName = data.value;
-            } else if (data) {
-                instName = data;
-            }
-
-            if (instName && instName !== "undefined" && instName !== "null") {
-                document.getElementById('p-inst-name').value = instName.toUpperCase();
-            } else {
-                // Fallback: If storage is empty, try to get it from the user profile if available
-                document.getElementById('p-inst-name').value = "MY INSTITUTION";
-            }
-        } catch(e) {
-            document.getElementById('p-inst-name').value = "MY INSTITUTION";
-        }
+        const data = await AppStorage.get("current_institution_name");
+        let name = data.value || data || "MY INSTITUTION";
+        document.getElementById('p-inst-name').value = name.replace(/"/g, "").toUpperCase();
     };
-
-    function toggleLangLayout() {
-        const lang = document.getElementById('sel-lang').value;
-        const canvas = document.getElementById('canvas-main');
-
-        // Remove old classes
-        canvas.classList.remove('lang-ar', 'lang-ur');
-
-        // Apply new class for RTL and Fonts
-        if(lang === 'ar') canvas.classList.add('lang-ar');
-        if(lang === 'ur') canvas.classList.add('lang-ur');
-    }
 
     function switchTab(t) {
         document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
@@ -244,182 +171,190 @@
         activeType = type;
         document.getElementById('config-panel').style.display = 'block';
         document.getElementById('custom-statement-box').style.display = (type === 'Custom') ? 'block' : 'none';
-        document.getElementById('subparts-wrap').style.display = (type === 'Long') ? 'block' : 'none';
     }
 
-    function shortConfig(type) { showConfig(type); }
+    function toggleLangLayout() {
+        const lang = document.getElementById('sel-lang').value;
+        const canvas = document.getElementById('canvas-main');
+        canvas.classList.remove('lang-ar', 'lang-ur');
+        if(lang !== 'en') canvas.classList.add('lang-' + lang);
+    }
 
     function addSectionToPaper() {
-        const qty = parseInt(document.getElementById('in-qty').value);
-        const choice = parseInt(document.getElementById('in-choice').value);
-        const marks = parseInt(document.getElementById('in-marks').value);
-        const sub = parseInt(document.getElementById('in-sub').value);
+        const qty = parseInt(document.getElementById('in-qty').value) || 1;
+        const choice = parseInt(document.getElementById('in-choice').value) || qty;
+        const marks = parseInt(document.getElementById('in-marks').value) || 1;
 
         const block = document.createElement('div');
         block.className = 'question-block';
-        block.dataset.marks = marks;
-        block.dataset.choice = choice;
-        block.dataset.type = activeType;
+        block.dataset.marks = marks; block.dataset.choice = choice; block.dataset.type = activeType;
 
-        let headerText = (activeType === 'MCQs') ? "Choose the Correct Answer" : (activeType === 'Short' ? "Short Questions" : "Long Questions");
-        if(activeType === 'Custom') headerText = document.getElementById('in-statement').value;
+        let hText = (activeType === 'MCQs') ? "Multiple Choice Questions" : (activeType === 'Short' ? "Short Questions" : "Long Questions");
+        if(activeType === 'Custom') hText = document.getElementById('in-statement').value;
 
         block.innerHTML = `
             <div class="q-header-row">
-                <span>${headerText} (${choice < qty ? 'Attempt ' + choice : 'All Questions'})</span>
+                <span>${hText} (${choice < qty ? 'Attempt ' + choice : 'All'})</span>
                 <span>(${choice * marks} Marks)</span>
             </div>
             <div class="q-container"></div>
         `;
-
         const container = block.querySelector('.q-container');
         for(let i=1; i<=qty; i++) {
-            const qRow = document.createElement('div');
-            qRow.className = 'main-q-row';
-            qRow.innerHTML = `
-                <div class="part-row">
-                    <span>${i}.</span>
-                    <input type="text" class="q-input" placeholder="Enter Question Content...">
-                </div>
-            `;
-            container.appendChild(qRow);
+            container.innerHTML += `<div class="part-row"><span>${i}.</span><input type="text" class="q-input" placeholder="..."></div>`;
         }
-
         document.getElementById('dynamic-content').appendChild(block);
         document.getElementById('config-panel').style.display = 'none';
-        showNotify("Section Added", "green");
     }
 
     async function saveToVault() {
         const btn = document.getElementById('btn-save');
-        if (btn.disabled) return; // Prevent double clicks
-
-        btn.innerText = "UPLOADING TO VAULT...";
+        btn.innerText = "SYNCING CHANGES...";
         btn.disabled = true;
 
         const blueprint = [];
         let totalMarks = 0;
-
         document.querySelectorAll('.question-block').forEach(b => {
-            const marks = parseInt(b.dataset.marks) || 0;
-            const choice = parseInt(b.dataset.choice) || 0;
+            const marks = parseInt(b.dataset.marks);
+            const choice = parseInt(b.dataset.choice);
             totalMarks += (marks * choice);
-
-            const qs = [];
-            b.querySelectorAll('.q-input').forEach(inp => {
-                if(inp.value.trim() !== "") qs.push(inp.value);
-            });
-
-            blueprint.push({
-                type: b.dataset.type,
-                marks_per_q: marks,
-                choice: choice,
-                questions: qs
-            });
+            const qs = Array.from(b.querySelectorAll('.q-input')).map(i => i.value).filter(v => v !== "");
+            blueprint.push({ type: b.dataset.type, marks_per_q: marks, choice: choice, questions: qs });
         });
 
-        // VALIDATION: Ensure we have content
-        if(blueprint.length === 0) {
-            showNotify("Canvas is empty!", "red");
-            btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
-            return;
-        }
-
         const payload = {
-            institution: document.getElementById('p-inst-name').value,
             subject: document.getElementById('p-subject').value,
             target_class: document.getElementById('p-class').value,
             paper_type: document.getElementById('p-type').value,
             duration: document.getElementById('p-duration').value,
-            language: document.getElementById('sel-lang').value, // FIX: Missing field causing 422
+            language: document.getElementById('sel-lang').value,
             blueprint: blueprint,
             total_marks: totalMarks
         };
 
+        // 🏛️ Logic: Append ID if we are in Edit Mode
+        const url = currentEditId ? `${API_URL}/document/papers/save-vault?paper_id=${currentEditId}` : `${API_URL}/document/papers/save-vault`;
+
         try {
             const tRes = await AppStorage.get("auth_token");
-            const token = tRes.value || tRes;
-
-            const res = await fetch(`${API_URL}/document/papers/save-vault`, {
+            const res = await fetch(url, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tRes.value || tRes}` },
                 body: JSON.stringify(payload)
             });
 
             if(res.ok) {
-                showNotify("Paper Secured in Vault", "green");
-                setTimeout(() => location.reload(), 1500);
+                showNotify(currentEditId ? "Paper Updated Successfully" : "New Paper Secured", "green");
+                setTimeout(() => location.reload(), 1200);
             } else {
-                const errorData = await res.json();
-                console.log("Validation Error:", errorData);
-                showNotify("Submission Failed (422)", "red");
-                btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
+                showNotify("Error Saving Data", "red");
+                btn.disabled = false;
             }
         } catch(e) {
             showNotify("Network Error", "red");
-            btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
+            btn.disabled = false;
         }
     }
 
     async function fetchVault() {
         const container = document.getElementById('vault-list-container');
         container.innerHTML = "Syncing...";
-        try {
-            const tRes = await AppStorage.get("auth_token");
-            const res = await fetch(`${API_URL}/document/papers/vault-list`, {
-                headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
-            });
-            vaultData = await res.json();
-            container.innerHTML = vaultData.map(p => `
-                <div class="vault-item">
-                    <div>
-                        <b style="font-size:14px;">${p.subject} (${p.target_class})</b><br>
-                        <small>${p.paper_type} | Marks: ${p.total_marks}</small>
-                    </div>
-                    <button class="btn-print" onclick="processPrint(${p.id})">PRINT</button>
+        const tRes = await AppStorage.get("auth_token");
+        const res = await fetch(`${API_URL}/document/papers/vault-list`, {
+            headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+        });
+        vaultData = await res.json();
+        container.innerHTML = vaultData.map(p => `
+            <div class="vault-card">
+                <span class="status-badge">${p.status}</span>
+                <b>${p.subject}</b>
+                <small>${p.target_class} | ${p.paper_type}</small>
+                <div class="card-actions">
+                    <button class="btn-card btn-edit" onclick="loadEdit(${p.id})">EDIT</button>
+                    <button class="btn-card btn-del" onclick="confirmDelete(${p.id})">DELETE</button>
                 </div>
-            `).join('');
-        } catch(e) { container.innerHTML = "Failed to load vault."; }
+            </div>
+        `).join('');
     }
 
-    // --- THE BRIDGE TO MARKSHEET ARCHITECT ---
-    async function processPrint(id) {
-        const paper = vaultData.find(p => p.id === id);
-        if(!paper) return;
+    // --- UPDATED LOAD EDIT LOGIC ---
+    function loadEdit(id) {
+        const p = vaultData.find(x => x.id === id);
+        if(!p) return;
 
-        showNotify("Preparing Print & Archiving...", "green");
+        // 1. Set the Global ID (for updating)
+        currentEditId = p.id;
 
-        // 1. Save data for Marksheet Architect "Catch"
-        const catchData = {
-            title: `${paper.paper_type}: ${paper.subject}`,
-            section: paper.target_class,
-            subject: paper.subject,
-            max_marks: paper.total_marks
-        };
-        await AppStorage.set("last_printed_paper", JSON.stringify(catchData));
+        // 2. UI Perfection: Switch view immediately
+        switchTab('design');
 
-        // 2. Call API to move to 'Taken'
-        try {
-            const tRes = await AppStorage.get("auth_token");
-            await fetch(`${API_URL}/document/papers/mark-taken/${id}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+        // 3. Update Page Title and Button Text for Clarity
+        document.getElementById('page-title').innerText = "EDITING: " + p.subject.toUpperCase();
+        document.getElementById('btn-save').innerText = "UPDATE SECURED PAPER";
+
+        // 4. Hydrate Header
+        document.getElementById('p-subject').value = p.subject;
+        document.getElementById('p-class').value = p.target_class;
+        document.getElementById('p-type').value = p.paper_type;
+        document.getElementById('p-duration').value = p.duration;
+        document.getElementById('sel-lang').value = p.language;
+        toggleLangLayout();
+
+        // 5. Hydrate Canvas
+        const content = document.getElementById('dynamic-content');
+        content.innerHTML = "";
+
+        p.content_blueprint.forEach(sec => {
+            const block = document.createElement('div');
+            block.className = 'question-block';
+            block.dataset.marks = sec.marks_per_q;
+            block.dataset.choice = sec.choice;
+            block.dataset.type = sec.type;
+
+            let hText = (sec.type === 'MCQs') ? "Multiple Choice Questions" : (sec.type === 'Short' ? "Short Questions" : "Long Questions");
+            if(sec.type === 'Custom') hText = "Custom Section";
+
+            block.innerHTML = `
+            <div class="q-header-row">
+                <span>${hText} (${sec.choice} Attempt)</span>
+                <span>(${sec.choice * sec.marks_per_q} Marks)</span>
+            </div>
+            <div class="q-container"></div>
+        `;
+
+            sec.questions.forEach((q, i) => {
+                block.querySelector('.q-container').innerHTML += `
+                <div class="part-row">
+                    <span>${i+1}.</span>
+                    <input type="text" class="q-input" value="${q}">
+                </div>`;
             });
+            content.appendChild(block);
+        });
 
-            // 3. Redirect to Marksheet Architect
-            setTimeout(() => {
-                window.location.href = "marksheet_architect.html";
-            }, 1000);
-        } catch(e) { showNotify("Error moving to taken vault", "red"); }
+        showNotify("Draft Loaded for Correction", "green");
+    }
+
+    function confirmDelete(id) {
+        document.getElementById('confirm-box').style.display = 'flex';
+        document.getElementById('final-del-btn').onclick = () => performDelete(id);
+    }
+
+    function closeConfirm() { document.getElementById('confirm-box').style.display = 'none'; }
+
+    async function performDelete(id) {
+        const tRes = await AppStorage.get("auth_token");
+        const res = await fetch(`${API_URL}/document/papers/delete/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+        });
+        if(res.ok) { showNotify("Draft Removed", "green"); closeConfirm(); fetchVault(); }
+        else { showNotify("Delete Failed", "red"); }
     }
 
     function showNotify(msg, type) {
         const bar = document.getElementById('notification-bar');
-        bar.innerText = msg;
-        bar.className = type === 'red' ? 'bg-red' : 'bg-green';
+        bar.innerText = msg; bar.className = 'bg-' + type;
         setTimeout(() => bar.className = "", 3000);
     }
 </script>
