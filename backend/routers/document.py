@@ -297,18 +297,25 @@ async def deploy_results(
         print(f"DEPLOYMENT ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database commit failed")
 
-
 @router.post("/papers/save-vault")
 async def save_to_vault(
         payload: PaperCreate,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
+    # 🏛️ Logic: Get the institution ID from the active role
+    # Since Owner/Teacher/Admin inherit from User, we check for institution_id
+    inst_id = getattr(current_user, 'institution_id', None)
+
+    if not inst_id:
+        raise HTTPException(status_code=403, detail="User not linked to any institution")
+
     try:
+        # Convert Pydantic blueprint blocks to dicts for JSON column
         blueprint_data = [block.model_dump() for block in payload.blueprint]
 
         new_paper = PaperVault(
-            institution_ref=current_user.institution_id,
+            institution_ref=inst_id,
             subject=payload.subject,
             target_class=payload.target_class,
             paper_type=payload.paper_type,
@@ -316,7 +323,7 @@ async def save_to_vault(
             language=payload.language,
             content_blueprint=blueprint_data,
             total_marks=payload.total_marks,
-            # 🏛️ FIX: Changed .email to .user_email to match your model
+            # 🏛️ Match your model: user_email NOT email
             created_by=current_user.user_email,
             status="pending"
         )
@@ -329,8 +336,7 @@ async def save_to_vault(
 
     except Exception as e:
         db.rollback()
-        # This will now help you catch any other attribute mismatches
-        print(f"DATABASE ERROR: {str(e)}")
+        print(f"DATABASE ERROR: {str(e)}") # Critical for Render logs
         raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
 @router.get("/papers/vault-list")
