@@ -123,34 +123,21 @@ class BulkResultPayload(BaseModel):
     class_name: str
     results: List[StudentMarkEntry]
 
-
-
-class QuestionBlock(BaseModel):
-    block_type: str # 'MCQs', 'Short', 'Long', 'Custom'
-    header_text: str
-    marks_per_q: int
-    qty: int
-    questions: List[str] # The text typed in the .q-input fields
+class BlueprintBlock(BaseModel):
+    type: str          # Matches JS: container.dataset.type
+    marks_per_q: int   # Matches JS: container.dataset.marks
+    choice: int        # Matches JS: container.dataset.choice
+    questions: List[str]
 
 class PaperCreate(BaseModel):
+    institution: str
     subject: str
     target_class: str
     paper_type: str
     duration: str
-    language: str
-    blueprint: List[QuestionBlock]
+    language: str      # 'en', 'ur', or 'ar'
+    blueprint: List[BlueprintBlock]
     total_marks: int
-
-class PaperResponse(BaseModel):
-    id: int
-    subject: str
-    is_published: bool
-    created_at: datetime
-
-    class Config:
-        from_attributes = True
-
-
 
 class AttendanceEntry(BaseModel):
     student_id: str

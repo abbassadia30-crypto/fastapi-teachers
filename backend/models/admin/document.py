@@ -128,7 +128,7 @@ class PaperVault(Base):
     language = Column(String, default="en")
     content_blueprint = Column(JSON)
     total_marks = Column(Integer)
-    is_published = Column(Boolean, default=False)
+    status = Column(String, default="pending") # Logic: 'pending' or 'taken'
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String)
 

@@ -244,8 +244,9 @@
                 await AppStorage.set('auth_token', data.access_token);
                 await AppStorage.set('user_role', data.role);
                 if (data.identity) await AppStorage.set(`${data.role}_identity`, true);
-                if (data.institution_id) await AppStorage.set('institution_id', data.institution_id);
-
+                if (data.institution_id) {
+                    await AppStorage.set('institution_id', data.institution_id);
+                }
                 Notification.show("Login Successful!", "success");
 
                 // Move to routing
