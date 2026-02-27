@@ -306,6 +306,10 @@ async def save_to_vault(
         current_user: User = Depends(get_current_user)
 ):
     try:
+        # 1. Convert the list of Pydantic objects into a list of dictionaries
+        # This ensures the JSON column can store it without serialization errors
+        blueprint_data = [block.model_dump() for block in payload.blueprint]
+
         new_paper = PaperVault(
             institution_ref=current_user.institution_id,
             subject=payload.subject,
@@ -313,9 +317,10 @@ async def save_to_vault(
             paper_type=payload.paper_type,
             duration=payload.duration,
             language=payload.language,
-            content_blueprint=[block.model_dump() for block in payload.blueprint],
+            content_blueprint=blueprint_data, # Directly pass the list of dicts
             total_marks=payload.total_marks,
-            created_by=current_user.email
+            created_by=current_user.email,
+            status="pending" # Explicitly set default status
         )
 
         db.add(new_paper)
@@ -326,7 +331,9 @@ async def save_to_vault(
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Failed to sync with Vault")
+        # Print the real error to your logs so you can see exactly what failed
+        print(f"DATABASE ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
 @router.get("/papers/vault-list")
 async def get_vault_papers(

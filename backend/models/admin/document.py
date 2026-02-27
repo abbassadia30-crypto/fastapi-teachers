@@ -118,7 +118,6 @@ class AcademicResult(Base):
 
 class PaperVault(Base):
     __tablename__ = "paper_vault"
-
     id = Column(Integer, primary_key=True, index=True)
     institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
     subject = Column(String, nullable=False)
@@ -126,13 +125,12 @@ class PaperVault(Base):
     paper_type = Column(String)
     duration = Column(String)
     language = Column(String, default="en")
-    content_blueprint = Column(JSON)
+    content_blueprint = Column(JSON) # Ensure this is Importable from sqlalchemy
     total_marks = Column(Integer)
-    status = Column(String, default="pending") # Logic: 'pending' or 'taken'
+    status = Column(String, default="pending") # Check if this exists!
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String)
 
-    institution = relationship("Institution", back_populates="papers")
 
 class AttendanceLog(Base):
     __tablename__ = "attendance_logs"

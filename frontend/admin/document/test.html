@@ -68,6 +68,8 @@
             font-family: 'Noto Nastaliq Urdu', serif !important;
             direction: rtl !important;
         }
+        .lang-ar { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
+        .lang-ur { direction: rtl; text-align: right; font-family: 'Noto Nastaliq Urdu', serif; }
     </style>
 </head>
 <body>
@@ -152,11 +154,29 @@
     let activeType = '';
     let vaultData = [];
 
+    // FIX: Professional Institution Name Loader
     window.onload = async () => {
         try {
-            const data = await AppStorage.get('current_institution_name');
-            if(data && data.value) document.getElementById('p-inst-name').value = data.value;
-        } catch(e) {}
+            // Log it to see what's actually coming back
+            const data = await AppStorage.get("current_institution_name");
+            console.log("Storage Raw Data:", data);
+
+            let instName = "";
+            if (data && typeof data === 'object' && data.value) {
+                instName = data.value;
+            } else if (data) {
+                instName = data;
+            }
+
+            if (instName && instName !== "undefined" && instName !== "null") {
+                document.getElementById('p-inst-name').value = instName.toUpperCase();
+            } else {
+                // Fallback: If storage is empty, try to get it from the user profile if available
+                document.getElementById('p-inst-name').value = "MY INSTITUTION";
+            }
+        } catch(e) {
+            document.getElementById('p-inst-name').value = "MY INSTITUTION";
+        }
     };
 
     function toggleLangLayout() {
@@ -232,18 +252,23 @@
 
     async function saveToVault() {
         const btn = document.getElementById('btn-save');
-        btn.innerText = "SAVING...";
+        if (btn.disabled) return; // Prevent double clicks
+
+        btn.innerText = "UPLOADING TO VAULT...";
+        btn.disabled = true;
 
         const blueprint = [];
         let totalMarks = 0;
 
         document.querySelectorAll('.question-block').forEach(b => {
-            const marks = parseInt(b.dataset.marks);
-            const choice = parseInt(b.dataset.choice);
+            const marks = parseInt(b.dataset.marks) || 0;
+            const choice = parseInt(b.dataset.choice) || 0;
             totalMarks += (marks * choice);
 
             const qs = [];
-            b.querySelectorAll('.q-input').forEach(inp => qs.push(inp.value));
+            b.querySelectorAll('.q-input').forEach(inp => {
+                if(inp.value.trim() !== "") qs.push(inp.value);
+            });
 
             blueprint.push({
                 type: b.dataset.type,
@@ -253,28 +278,50 @@
             });
         });
 
+        // VALIDATION: Ensure we have content
+        if(blueprint.length === 0) {
+            showNotify("Canvas is empty!", "red");
+            btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
+            return;
+        }
+
         const payload = {
             institution: document.getElementById('p-inst-name').value,
             subject: document.getElementById('p-subject').value,
             target_class: document.getElementById('p-class').value,
             paper_type: document.getElementById('p-type').value,
             duration: document.getElementById('p-duration').value,
+            language: document.getElementById('sel-lang').value, // FIX: Missing field causing 422
             blueprint: blueprint,
             total_marks: totalMarks
         };
 
         try {
             const tRes = await AppStorage.get("auth_token");
+            const token = tRes.value || tRes;
+
             const res = await fetch(`${API_URL}/document/papers/save-vault`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tRes.value || tRes}` },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload)
             });
+
             if(res.ok) {
-                showNotify("Secured in Vault", "green");
-                setTimeout(() => location.reload(), 1000);
+                showNotify("Paper Secured in Vault", "green");
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                const errorData = await res.json();
+                console.log("Validation Error:", errorData);
+                showNotify("Submission Failed (422)", "red");
+                btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
             }
-        } catch(e) { showNotify("Sync Error", "red"); }
+        } catch(e) {
+            showNotify("Network Error", "red");
+            btn.disabled = false; btn.innerText = "SAVE TO PENDING VAULT";
+        }
     }
 
     async function fetchVault() {
