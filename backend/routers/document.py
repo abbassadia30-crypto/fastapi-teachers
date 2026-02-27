@@ -301,40 +301,45 @@ async def deploy_results(
 @router.post("/papers/save-vault")
 async def save_to_vault(
         payload: PaperCreate,
-        paper_id: Optional[int] = None, # Added optional ID
+        paper_id: Optional[int] = None, # FastAPI will pick this from URL ?paper_id=...
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     inst_id = getattr(current_user, 'institution_id', None)
+    if not inst_id:
+        raise HTTPException(status_code=403, detail="Institution not found for user")
+
     blueprint_data = [block.model_dump() for block in payload.blueprint]
 
-    # 🔄 LOGIC: Check if we are updating or creating new
     if paper_id:
-        existing_paper = db.query(PaperVault).filter(
-            PaperVault.id == paper_id,
-            PaperVault.institution_ref == inst_id
-        ).first()
-
-        if existing_paper:
-            existing_paper.subject = payload.subject
-            existing_paper.target_class = payload.target_class
-            existing_paper.paper_type = payload.paper_type
-            existing_paper.duration = payload.duration
-            existing_paper.language = payload.language
-            existing_paper.content_blueprint = blueprint_data
-            existing_paper.total_marks = payload.total_marks
+        existing = db.query(PaperVault).filter(PaperVault.id == paper_id, PaperVault.institution_ref == inst_id).first()
+        if existing:
+            existing.subject = payload.subject
+            existing.target_class = payload.target_class
+            existing.paper_type = payload.paper_type
+            existing.duration = payload.duration
+            existing.language = payload.language
+            existing.content_blueprint = blueprint_data
+            existing.total_marks = payload.total_marks
             db.commit()
-            return {"status": "updated", "paper_id": existing_paper.id}
+            return {"status": "updated", "paper_id": existing.id}
 
-    # Otherwise, Create New
+    # Creating New if no ID or ID not found
     new_paper = PaperVault(
         institution_ref=inst_id,
         subject=payload.subject,
-        # ... (rest of the fields as before)
+        target_class=payload.target_class,
+        paper_type=payload.paper_type,
+        duration=payload.duration,
+        language=payload.language,
+        content_blueprint=blueprint_data,
+        total_marks=payload.total_marks,
+        created_by=current_user.user_email,
         status="pending"
     )
     db.add(new_paper)
     db.commit()
+    db.refresh(new_paper)
     return {"status": "created", "paper_id": new_paper.id}
 
 

@@ -258,42 +258,44 @@
 
     async function fetchVault() {
         const container = document.getElementById('vault-list-container');
-        container.innerHTML = "Syncing...";
-        const tRes = await AppStorage.get("auth_token");
-        const res = await fetch(`${API_URL}/document/papers/vault-list`, {
-            headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
-        });
-        vaultData = await res.json();
-        container.innerHTML = vaultData.map(p => `
+        container.innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:20px;'>Syncing Vault...</div>";
+
+        try {
+            const tRes = await AppStorage.get("auth_token");
+            const res = await fetch(`${API_URL}/document/papers/vault-list`, {
+                headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+            });
+            vaultData = await res.json();
+
+            container.innerHTML = vaultData.map(p => `
             <div class="vault-card">
                 <span class="status-badge">${p.status}</span>
-                <b>${p.subject}</b>
+                <b style="font-size:12px;">${p.subject.toUpperCase()}</b>
                 <small>${p.target_class} | ${p.paper_type}</small>
-                <div class="card-actions">
-                    <button class="btn-card btn-edit" onclick="loadEdit(${p.id})">EDIT</button>
-                    <button class="btn-card btn-del" onclick="confirmDelete(${p.id})">DELETE</button>
+                <div class="card-actions" style="grid-template-columns: 1fr; gap: 4px;">
+                    <button class="btn-card btn-print-mini" style="background:var(--primary); color:white;" onclick="processPrint(${p.id})">PRINT PAPER</button>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+                        <button class="btn-card btn-edit" onclick="loadEdit(${p.id})">EDIT</button>
+                        <button class="btn-card btn-del" onclick="confirmDelete(${p.id})">DEL</button>
+                    </div>
                 </div>
             </div>
         `).join('');
+        } catch(e) { container.innerHTML = "Sync Failed."; }
     }
-
-
     // --- UPDATED LOAD EDIT LOGIC ---
     function loadEdit(id) {
         const p = vaultData.find(x => x.id === id);
         if(!p) return;
 
-        // 1. Set the Global ID (for updating)
         currentEditId = p.id;
-
-        // 2. UI Perfection: Switch view immediately
         switchTab('design');
 
-        // 3. Update Page Title and Button Text for Clarity
-        document.getElementById('page-title').innerText = "EDITING: " + p.subject.toUpperCase();
+        // UI Feedback
+        document.getElementById('page-title').innerText = "EDITING MODE";
         document.getElementById('btn-save').innerText = "UPDATE SECURED PAPER";
 
-        // 4. Hydrate Header
+        // Hydrate Header
         document.getElementById('p-subject').value = p.subject;
         document.getElementById('p-class').value = p.target_class;
         document.getElementById('p-type').value = p.paper_type;
@@ -301,7 +303,7 @@
         document.getElementById('sel-lang').value = p.language;
         toggleLangLayout();
 
-        // 5. Hydrate Canvas
+        // Hydrate Canvas
         const content = document.getElementById('dynamic-content');
         content.innerHTML = "";
 
@@ -323,17 +325,17 @@
             <div class="q-container"></div>
         `;
 
+            const qContainer = block.querySelector('.q-container');
             sec.questions.forEach((q, i) => {
-                block.querySelector('.q-container').innerHTML += `
-                <div class="part-row">
-                    <span>${i+1}.</span>
-                    <input type="text" class="q-input" value="${q}">
-                </div>`;
+                const row = document.createElement('div');
+                row.className = 'part-row';
+                row.innerHTML = `<span>${i+1}.</span><input type="text" class="q-input" value="${q.replace(/"/g, '&quot;')}">`;
+                qContainer.appendChild(row);
             });
             content.appendChild(block);
         });
 
-        showNotify("Draft Loaded for Correction", "green");
+        showNotify("Draft Re-opened", "green");
     }
 
     function confirmDelete(id) {
@@ -357,6 +359,20 @@
         const bar = document.getElementById('notification-bar');
         bar.innerText = msg; bar.className = 'bg-' + type;
         setTimeout(() => bar.className = "", 3000);
+    }
+
+    async function processPrint(id) {
+        const paper = vaultData.find(p => p.id === id);
+        if(!paper) return;
+
+        showNotify("Preparing Print Engine...", "green");
+
+        // Save to AppStorage for Marksheet Architect
+        const catchData = { title: `${paper.paper_type}: ${paper.subject}`, section: paper.target_class, subject: paper.subject, max_marks: paper.total_marks };
+        await AppStorage.set("last_printed_paper", JSON.stringify(catchData));
+
+        // Redirect to your print preview or architect
+        setTimeout(() => { window.location.href = "marksheet_architect.html"; }, 1000);
     }
 </script>
 </body>
