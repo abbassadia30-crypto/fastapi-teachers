@@ -133,13 +133,26 @@ class BlueprintSection(BaseModel):
     choice: int
     questions: List[QuestionEntry] # Change from List[str] to List[QuestionEntry]
 
+class QuestionModel(BaseModel):
+    text: str
+    sub_parts: List[str] = []
+
+# 2. Define the middle unit (The Section)
+class SectionModel(BaseModel):
+    type: str
+    marks_per_q: int
+    choice: int
+    questions: List[QuestionModel]
+
+# 3. Define the main payload (The Paper)
 class PaperCreate(BaseModel):
+    institution: str
     subject: str
     target_class: str
     paper_type: str
     duration: str
     language: str
-    blueprint: List[SectionModel]
+    blueprint: List[SectionModel]  # Now Python knows what SectionModel is!
     total_marks: int
 
 class AttendanceEntry(BaseModel):
