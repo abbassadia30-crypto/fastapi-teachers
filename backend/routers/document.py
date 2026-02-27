@@ -297,48 +297,7 @@ async def deploy_results(
         db.rollback()
         print(f"DEPLOYMENT ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database commit failed")@router.post("/papers/save-vault")
-    async def save_to_vault(
-            payload: PaperCreate,
-            paper_id: Optional[int] = None, # FastAPI will pick this from URL ?paper_id=...
-            db: Session = Depends(get_db),
-            current_user: User = Depends(get_current_user)
-    ):
-        inst_id = getattr(current_user, 'institution_id', None)
-    if not inst_id:
-        raise HTTPException(status_code=403, detail="Institution not found for user")
 
-    blueprint_data = [block.model_dump() for block in payload.blueprint]
-
-    if paper_id:
-        existing = db.query(PaperVault).filter(PaperVault.id == paper_id, PaperVault.institution_ref == inst_id).first()
-        if existing:
-            existing.subject = payload.subject
-            existing.target_class = payload.target_class
-            existing.paper_type = payload.paper_type
-            existing.duration = payload.duration
-            existing.language = payload.language
-            existing.content_blueprint = blueprint_data
-            existing.total_marks = payload.total_marks
-            db.commit()
-            return {"status": "updated", "paper_id": existing.id}
-
-    # Creating New if no ID or ID not found
-    new_paper = PaperVault(
-        institution_ref=inst_id,
-        subject=payload.subject,
-        target_class=payload.target_class,
-        paper_type=payload.paper_type,
-        duration=payload.duration,
-        language=payload.language,
-        content_blueprint=blueprint_data,
-        total_marks=payload.total_marks,
-        created_by=current_user.user_email,
-        status="pending"
-    )
-    db.add(new_paper)
-    db.commit()
-    db.refresh(new_paper)
-    return {"status": "created", "paper_id": new_paper.id}
 async def save_to_vault(
         payload: PaperCreate,
         paper_id: Optional[int] = None, # FastAPI will pick this from URL ?paper_id=...
