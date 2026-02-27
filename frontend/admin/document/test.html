@@ -6,6 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri&family=Noto+Nastaliq+Urdu&display=swap');
+
+        .lang-ar {
+            font-family: 'Amiri', serif;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .lang-ur {
+            font-family: 'Noto Nastaliq Urdu', serif;
+            direction: rtl;
+            text-align: right;
+            line-height: 2.5; /* Urdu needs more space for Nastaliq */
+        }
+
+        /* Flip the question numbering for RTL */
+        .lang-ar .part-row, .lang-ur .part-row {
+            flex-direction: row-reverse;
+        }
+
+        .lang-ar .q-input, .lang-ur .q-input {
+            text-align: right;
+            padding-right: 10px;
+            padding-left: 0;
+        }
+
+        #notification-bar {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            z-index: 9999;
+            display: none;
+            font-weight: bold;
+        }
+        .bg-red { display: block !important; background: #e74c3c; box-shadow: 0 4px 15px rgba(231,76,60,0.4); }
+        .bg-green { display: block !important; background: #2ecc71; box-shadow: 0 4px 15px rgba(46,204,113,0.4); }
         :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; --success: #2e7d32; --secondary: #263238; }
         body { font-family: 'Poppins', sans-serif; margin: 0; background: var(--bg); color: #000; overflow-x: hidden; }
 

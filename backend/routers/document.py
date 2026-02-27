@@ -344,13 +344,17 @@ async def get_vault_papers(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Fetch papers specifically for this institution that aren't published yet
-    papers = db.query(PaperVault).filter(
-        PaperVault.institution_ref == current_user.institution_id,
-        PaperVault.is_published == False
-    ).order_by(PaperVault.created_at.desc()).all()
-    return papers
+    inst_id = getattr(current_user, 'institution_id', None)
+    if not inst_id:
+        raise HTTPException(status_code=403, detail="Not linked to institution")
 
+    # FIX: Change 'is_published == False' to 'status == "pending"'
+    papers = db.query(PaperVault).filter(
+        PaperVault.institution_ref == inst_id,
+        PaperVault.status == "pending"
+    ).all()
+
+    return papers
 
 @router.post("/submit")
 async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
