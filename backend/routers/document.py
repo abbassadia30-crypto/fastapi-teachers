@@ -298,7 +298,6 @@ async def deploy_results(
         raise HTTPException(status_code=500, detail="Database commit failed")
 
 
-
 @router.post("/papers/save-vault")
 async def save_to_vault(
         payload: PaperCreate,
@@ -306,8 +305,6 @@ async def save_to_vault(
         current_user: User = Depends(get_current_user)
 ):
     try:
-        # 1. Convert the list of Pydantic objects into a list of dictionaries
-        # This ensures the JSON column can store it without serialization errors
         blueprint_data = [block.model_dump() for block in payload.blueprint]
 
         new_paper = PaperVault(
@@ -317,10 +314,11 @@ async def save_to_vault(
             paper_type=payload.paper_type,
             duration=payload.duration,
             language=payload.language,
-            content_blueprint=blueprint_data, # Directly pass the list of dicts
+            content_blueprint=blueprint_data,
             total_marks=payload.total_marks,
-            created_by=current_user.email,
-            status="pending" # Explicitly set default status
+            # 🏛️ FIX: Changed .email to .user_email to match your model
+            created_by=current_user.user_email,
+            status="pending"
         )
 
         db.add(new_paper)
@@ -331,7 +329,7 @@ async def save_to_vault(
 
     except Exception as e:
         db.rollback()
-        # Print the real error to your logs so you can see exactly what failed
+        # This will now help you catch any other attribute mismatches
         print(f"DATABASE ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Vault Sync Failed: {str(e)}")
 
