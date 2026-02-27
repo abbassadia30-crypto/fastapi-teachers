@@ -115,68 +115,47 @@
 
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
-
 <script>
   let step = 1;
   let subjects = [];
   let passingMarks = [];
-  let customCols = [];
   const API_URL = "https://fastapi-teachers.onrender.com";
 
-  window.onload = loadSections;
+  window.onload = async () => {
+    await loadSections();
+    await catchPaperDetails(); // New Feature: Catch from Vault
+  };
 
-  async function loadSections() {
-    const select = document.getElementById('class-select');
+  async function catchPaperDetails() {
     try {
-      const tRes = await AppStorage.get("institutionToken");
-      const token = tRes.value || tRes;
-      const res = await fetch(`${API_URL}/dashboard/sections`, { headers: { 'Authorization': `Bearer ${token}` }});
-      const sections = await res.json();
-      select.innerHTML = '<option value="">Select Section</option>';
-      sections.forEach(sec => select.innerHTML += `<option value="${sec}">${sec}</option>`);
-      select.innerHTML += '<option value="manual_opt">[+] Manual/Custom Entry</option>';
-    } catch (e) {
-      select.innerHTML = '<option value="manual_opt">Manual Entry Only</option>';
-    }
+      const saved = await AppStorage.get("last_printed_paper");
+      if (saved && saved.value) {
+        const paper = JSON.parse(saved.value);
+
+        // Auto-fill Step 1
+        document.getElementById('exam-title').value = paper.title;
+        document.getElementById('class-select').value = paper.section;
+
+        // Auto-fill Subjects
+        const subList = document.getElementById('subject-config-list');
+        subList.innerHTML = `
+          <div class="dynamic-row">
+            <input type="text" class="s-name" value="${paper.subject}" readonly>
+            <input type="number" class="s-max" value="${paper.max_marks}" readonly>
+            <div class="remove-btn">🔒</div>
+          </div>
+        `;
+
+        // Suggested Passing Marks (33% default)
+        document.getElementById('tag-input').value = Math.ceil(paper.max_marks * 0.33);
+        addPassTag();
+
+        showNotify("Imported Details from Printed Paper", "green");
+      }
+    } catch (e) { console.log("No pending paper found in catch"); }
   }
 
-  function toggleManualConfig() {
-    const isManual = document.getElementById('class-select').value === 'manual_opt';
-    document.getElementById('manual-fields-config').classList.toggle('hidden', !isManual);
-  }
-
-  function addCustomCol() {
-    const div = document.createElement('div');
-    div.className = 'dynamic-row';
-    div.innerHTML = `<input type="text" class="custom-col-name" placeholder="Column Name"><div style="width:1px"></div><div class="remove-btn" onclick="this.parentElement.remove()">✕</div>`;
-    document.getElementById('custom-col-list').appendChild(div);
-  }
-
-  // --- Tag System ---
-  document.getElementById('tag-input').addEventListener('keydown', e => { if(e.key==='Enter') addPassTag(); });
-  function addPassTag() {
-    const val = document.getElementById('tag-input').value;
-    if(!val) return;
-    passingMarks.push(parseFloat(val));
-    renderTags();
-    document.getElementById('tag-input').value = '';
-  }
-  function renderTags() {
-    document.getElementById('tag-list').innerHTML = passingMarks.map((m,i)=>`<div class="pass-tag">${m}<span class="tag-close" onclick="passingMarks.splice(${i},1);renderTags()">×</span></div>`).join('');
-  }
-
-  function addSubjectRow() {
-    const div = document.createElement('div');
-    div.className = 'dynamic-row';
-    div.innerHTML = `<input type="text" placeholder="Subject" class="s-name"><input type="number" placeholder="Max" class="s-max"><div class="remove-btn" onclick="this.parentElement.remove()">✕</div>`;
-    document.getElementById('subject-config-list').appendChild(div);
-  }
-
-  async function handleAction() {
-    if(step === 1) await startDrafting();
-    else deployResults();
-  }
-
+  // --- Optimized Fetching for specific Section ---
   async function startDrafting() {
     const mode = document.getElementById('class-select').value;
     if(!mode) return showNotify("Select a Section", "error");
@@ -187,88 +166,34 @@
       max: parseFloat(r.querySelector('.s-max').value)
     })).filter(s => s.name && s.max);
 
-    if(subjects.length === 0) return showNotify("Define subjects", "error");
-
-    customCols = (mode === 'manual_opt') ?
-            Array.from(document.querySelectorAll('.custom-col-name')).map(i => i.value).filter(v => v) :
-            ["Student Name", "Father Name"];
-
+    customCols = ["Student Name", "Father Name"];
     buildHeader();
+
     const body = document.getElementById('student-marks-body');
-    body.innerHTML = '';
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center">Loading Students...</td></tr>';
 
-    if(mode !== 'manual_opt') {
-      showNotify("Syncing...", "green");
+    try {
+      showNotify("Syncing Section Students...", "green");
       const tRes = await AppStorage.get("institutionToken");
-      const res = await fetch(`${API_URL}/dashboard/my_students`, { headers: {'Authorization': `Bearer ${tRes.value || tRes}`} });
+      const res = await fetch(`${API_URL}/dashboard/my_students`, {
+        headers: {'Authorization': `Bearer ${tRes.value || tRes}`}
+      });
       const data = await res.json();
-      (data.students || data).filter(s => s.section === mode).forEach(s => injectRow(s.id, [s.name, s.father_name || s.parent]));
-      document.getElementById('btn-manual-add').classList.add('hidden');
-    } else {
-      document.getElementById('btn-manual-add').classList.remove('hidden');
-      addNewManualRow();
+
+      body.innerHTML = '';
+
+      // Filter students who strictly belong to the selected section (class)
+      const sectionStudents = (data.students || data).filter(s => s.section === mode);
+
+      if(sectionStudents.length === 0) {
+        body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">No students found in this section.</td></tr>';
+      } else {
+        sectionStudents.forEach(s => injectRow(s.id, [s.name, s.father_name || s.parent]));
+        toggleStep(2);
+      }
+    } catch(e) {
+      showNotify("Failed to fetch students", "error");
     }
-    toggleStep(2);
-  }
-
-  function buildHeader() {
-    let html = '<tr>';
-    customCols.forEach(c => html += `<th>${c}</th>`);
-    subjects.forEach((s, i) => {
-      const pm = passingMarks[i] !== undefined ? passingMarks[i] : passingMarks[passingMarks.length - 1];
-      html += `<th>${s.name}<br><span style="color:var(--primary); font-size:8px;">PASS: ${pm}</span></th>`;
-    });
-    html += '<th>STATUS</th></tr>';
-    document.getElementById('gb-header').innerHTML = html;
-  }
-
-  function addNewManualRow() { injectRow(Date.now(), []); }
-
-  function injectRow(id, data) {
-    const tr = document.createElement('tr');
-    tr.dataset.id = id;
-    let html = '';
-    customCols.forEach((_, i) => {
-      html += `<td><input type="text" class="stu-info" value="${data[i] || ''}" style="width:100%; border:none; border-bottom:1px solid #eee;"></td>`;
-    });
-    subjects.forEach((_, i) => {
-      html += `<td><input type="number" class="obt-input" oninput="calculate(this)"></td>`;
-    });
-    html += `<td class="status-cell" style="font-weight:bold; color:var(--success)">PASS</td>`;
-    tr.innerHTML = html;
-    document.getElementById('student-marks-body').appendChild(tr);
-  }
-
-  function calculate(el) {
-    const row = el.closest('tr');
-    const inputs = row.querySelectorAll('.obt-input');
-    let fail = false;
-    inputs.forEach((inp, i) => {
-      const pm = passingMarks[i] !== undefined ? passingMarks[i] : passingMarks[passingMarks.length - 1];
-      if(parseFloat(inp.value) < pm) fail = true;
-    });
-    const status = row.querySelector('.status-cell');
-    status.innerText = fail ? "FAIL" : "PASS";
-    status.style.color = fail ? "var(--danger)" : "var(--success)";
-  }
-
-  function toggleStep(s) {
-    step = s;
-    document.getElementById('step1-view').classList.toggle('hidden', s !== 1);
-    document.getElementById('step2-view').classList.toggle('hidden', s !== 2);
-    document.getElementById('btn-back').style.display = s === 2 ? 'block' : 'none';
-    document.getElementById('btn-action').innerText = s === 1 ? "FETCH & START" : "DEPLOY RESULTS";
-  }
-
-  function showNotify(m, t) {
-    const b = document.getElementById('notification-bar');
-    b.innerText = m; b.className = t === 'error' ? 'bg-red' : 'bg-green';
-    setTimeout(() => b.className = "", 3000);
-  }
-
-  function deployResults() {
-    showNotify("Results Deployed!", "green");
-    setTimeout(() => location.reload(), 2000);
   }
 </script>
 </body>

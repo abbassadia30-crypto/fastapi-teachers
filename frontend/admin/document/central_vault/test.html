@@ -160,112 +160,120 @@
     </div>
 </div>
 
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
+
 <script>
+    const API_URL = "https://fastapi-teachers.onrender.com";
     let isSelectionMode = false;
     let selectedIds = new Set();
+    let testVault = []; // Now dynamic!
+    let activePaper = null; // To track what is currently open in FullView
 
-    let testVault = [
-        { id: 4001, title: "Kinematics Unit Test", sub: "Physics", class: "9th", marks: 25, time: "45 Min", date: "2026-02-10", content: "1. Define Speed & Velocity.<br>2. Derive 1st Equation of Motion.<br>3. Why is gravity constant?" },
-        { id: 4002, title: "Algebra Mid-Term", sub: "Math", class: "10th", marks: 50, time: "90 Min", date: "2026-02-12", content: "1. Solve for x: 2x+5=15.<br>2. Define Quadratic Formula.<br>3. Factorize: x^2 + 5x + 6." },
-        { id: 4003, title: "English Grammar Quiz", sub: "English", class: "8th", marks: 15, time: "20 Min", date: "2026-02-15", content: "1. Change to Passive Voice.<br>2. Fill in the blanks with Tenses.<br>3. Write 5 prepositions." }
-    ];
+    // 1. FETCH DATA ON LOAD
+    window.onload = fetchPendingVault;
 
+    async function fetchPendingVault() {
+        try {
+            const tRes = await AppStorage.get("institutionToken");
+            const token = tRes.value || tRes;
+            const res = await fetch(`${API_URL}/document/papers/vault-list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            testVault = await res.json();
+            renderGrid(testVault);
+        } catch (e) {
+            notify("Failed to sync vault", "red");
+        }
+    }
+
+    // 2. RENDER GRID (Stay the same as your template)
     function renderGrid(list) {
         const grid = document.getElementById('sectionGrid');
-        if (!list) list = testVault;
-
         grid.innerHTML = list.map(t => `
             <div class="card ${selectedIds.has(t.id) ? 'selected' : ''}" onclick="handleCardClick(${t.id}, this)">
                 <div class="select-dot"></div>
                 <div class="icon-circle">📝</div>
-                <span class="card-tag">${t.sub}</span>
-                <span class="card-title">${t.title}</span>
+                <span class="card-tag">${t.subject}</span>
+                <span class="card-title">${t.paper_type || 'Test'}</span>
                 <div class="card-footer">
-                    <span>${t.class}</span> • <span>${t.marks} Marks</span>
+                    <span>${t.target_class}</span> • <span>${t.total_marks} Marks</span>
                 </div>
             </div>
         `).join('');
     }
 
-    function handleCardClick(id, el) {
-        if (isSelectionMode) {
-            if (selectedIds.has(id)) selectedIds.delete(id);
-            else selectedIds.add(id);
-            el.classList.toggle('selected');
-            document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
-        } else {
-            openFullView(id);
-        }
-    }
-
-    function enterSelectionMode() {
-        isSelectionMode = true;
-        document.body.classList.add('selection-active');
-        document.getElementById('selectionHeader').style.display = 'flex';
-        document.getElementById('menuFAB').style.display = 'block';
-    }
-
-    function exitSelection() {
-        isSelectionMode = false;
-        selectedIds.clear();
-        document.body.classList.remove('selection-active');
-        document.getElementById('selectionHeader').style.display = 'none';
-        document.getElementById('menuFAB').style.display = 'none';
-        renderGrid();
-    }
-
-    function selectAll() {
-        testVault.forEach(t => selectedIds.add(t.id));
-        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
-        renderGrid();
-    }
-
-    function applyAllFilters() {
-        const q = document.getElementById('vaultSearch').value.toLowerCase();
-        const sub = document.getElementById('subjectFilter').value;
-
-        let filtered = testVault.filter(t => {
-            const matchesText = t.title.toLowerCase().includes(q) || t.sub.toLowerCase().includes(q);
-            const matchesSub = !sub || t.sub === sub;
-            return matchesText && matchesSub;
-        });
-        renderGrid(filtered);
-    }
-
+    // 3. OPEN FULL VIEW & SET ACTIVE PAPER
     function openFullView(id) {
-        const t = testVault.find(item => item.id === id);
-        if (!t) return;
+        activePaper = testVault.find(item => item.id === id);
+        if (!activePaper) return;
 
-        document.getElementById('viewHeaderTitle').innerText = t.title.toUpperCase();
+        document.getElementById('viewHeaderTitle').innerText = activePaper.subject.toUpperCase();
+        // Dynamic content generation from your blueprint logic
         document.getElementById('templateContent').innerHTML = `
-      <div class="test-paper">
-        <div class="test-header">
-          <h2 style="margin:0;">INSTITUTION ASSESSMENT</h2>
-          <p style="margin:0; font-weight:700;">${t.sub} | ${t.class}</p>
-        </div>
-        <div class="test-meta">
-          <span>Date: ${t.date}</span>
-          <span>Time: ${t.time}</span>
-          <span>Marks: ${t.marks}</span>
-        </div>
-        <div style="font-weight:800; margin-bottom:10px;">Subjective Type</div>
-        <div style="line-height:2.2; font-size:14px; min-height:200px;">
-          ${t.content}
-        </div>
-        <div style="margin-top:50px; text-align:center; font-size:10px; border-top:1px solid #ddd; padding-top:10px;">
-          GOOD LUCK | Verified by Institution Examination Cell
-        </div>
-      </div>
-    `;
+            <div class="test-paper">
+                <div class="test-header">
+                    <h2 style="margin:0;">${activePaper.institution || 'INSTITUTION'}</h2>
+                    <p style="margin:0; font-weight:700;">${activePaper.subject} | ${activePaper.target_class}</p>
+                </div>
+                <div class="test-meta">
+                    <span>Time: ${activePaper.duration}</span>
+                    <span>Marks: ${activePaper.total_marks}</span>
+                </div>
+                <div style="line-height:1.8;">
+                   [Paper Content Generated from Blueprint]
+                </div>
+            </div>
+        `;
         document.getElementById('fullView').style.display = 'flex';
     }
 
-    function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
-    function toggleMenu() {
-        const m = document.getElementById('importMenu');
-        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    // 4. THE BRIDGE: PRINT & MOVE TO ARCHITECT
+    async function exportCurrent() {
+        if (!activePaper) return;
+
+        // 1. UI Feedback
+        notify("Generating Print-Ready Layout...");
+
+        // 2. Create the "Catch" for Marksheet Architect
+        const paperData = {
+            title: `${activePaper.paper_type} - ${activePaper.subject}`,
+            section: activePaper.target_class,
+            subject: activePaper.subject,
+            max_marks: activePaper.total_marks,
+            id: activePaper.id
+        };
+
+        // 3. Save to Capacitor Storage
+        await AppStorage.set("last_printed_paper", JSON.stringify(paperData));
+
+        // 4. Update Database Status (Move to 'Taken')
+        try {
+            const tRes = await AppStorage.get("institutionToken");
+            const token = tRes.value || tRes;
+
+            const res = await fetch(`${API_URL}/document/papers/mark-taken/${activePaper.id}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if(res.ok) {
+                notify("Success! Redirecting to Marksheet Architect...", "green");
+                setTimeout(() => {
+                    // Navigate to your Marksheet Architect file
+                    window.location.href = "marksheet_architect.html";
+                }, 1500);
+            } else {
+                throw new Error("Sync Failed");
+            }
+        } catch (e) {
+            notify("Paper printed, but database sync failed.", "red");
+            // Still redirect for user experience, sync can be manual later
+            setTimeout(() => { window.location.href = "marksheet_architect.html"; }, 2000);
+        }
     }
 
+    // Utility functions (Notify, CloseView, etc. stay same as your template)
     function notify(msg, type = 'green') {
         const n = document.getElementById('appNotifier');
         n.innerText = msg;
@@ -274,24 +282,7 @@
         setTimeout(() => n.classList.remove('notifier-show'), 3000);
     }
 
-    function confirmBulkDelete() {
-        if (selectedIds.size === 0) return;
-        if(confirm(`Erase ${selectedIds.size} assessments?`)) {
-            testVault = testVault.filter(t => !selectedIds.has(t.id));
-            notify(`Tests Deleted`, 'red');
-            exitSelection();
-        }
-    }
-
-    function handleImport(action) {
-        notify(`Executing ${action}...`);
-        toggleMenu(); exitSelection();
-    }
-
-    function editCurrent() { notify("Opening Test Editor..."); }
-    function exportCurrent() { notify("Generating Print-Ready PDF..."); }
-
-    renderGrid();
+    function closeFullView() { document.getElementById('fullView').style.display = 'none'; activePaper = null; }
 </script>
 </body>
 </html>

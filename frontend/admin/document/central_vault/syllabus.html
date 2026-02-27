@@ -129,60 +129,43 @@
   let isSelectionMode = false;
   let selectedIds = new Set();
   let syllabusVault = [];
-  let currentViewingId = null;
   let notifyTimer;
 
-  // --- 1. NOTIFIER ---
+  // --- 1. NOTIFIER (Standardized) ---
   function notify(msg, type = 'success') {
     const n = document.getElementById('appNotifier');
     if (!n) return;
     clearTimeout(notifyTimer);
     n.innerText = msg;
-    n.style.background = type === 'error' ? '#c62828' : '#2e7d32';
-    n.classList.add('notifier-show');
+    n.className = type === 'error' ? 'notifier-show' : 'notifier-show';
+    n.style.background = type === 'error' ? 'var(--danger)' : 'var(--success)';
     notifyTimer = setTimeout(() => n.classList.remove('notifier-show'), 3000);
   }
 
-  // --- 2. AUTH & SYNC ---
+  // --- 2. SYNC VAULT ---
   async function syncVault() {
-    console.log("Syncing Vault...");
     try {
-      // Ensure this key matches what you use at Login!
       const res = await AppStorage.get('auth_token');
       const token = (res && typeof res === 'object') ? res.value : res;
-
       if (!token) return notify("Session Expired", "error");
 
       const response = await fetch(`${API_BASE}/central_vault/vault/list`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (response.status === 500) {
-        // This catches the 'Owner' object error from your backend
-        return notify("Backend Logic Error: Contact Support", "error");
-      }
-
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
+      if (!response.ok) throw new Error("Fetch failed");
       syllabusVault = await response.json();
       renderGrid(syllabusVault);
     } catch (e) {
-      console.error("Fetch Error:", e);
-      notify("Could not connect to Vault", "error");
+      notify("Vault sync failed", "error");
     }
   }
 
-  // --- 3. GRID RENDERING ---
+  // --- 3. RENDER GRID ---
   function renderGrid(list = syllabusVault) {
     const grid = document.getElementById('sectionGrid');
-    if (!grid) return;
-
-    if (!list || list.length === 0) {
-      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px; color:#999;">Empty Vault</div>`;
+    if (!list.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:50px;">No records found in institution vault.</div>`;
       return;
     }
 
@@ -192,133 +175,77 @@
           <div class="icon-circle">📄</div>
           <span class="card-subject">${doc.subject || 'Syllabus'}</span>
           <span class="card-title">${doc.name}</span>
-          <div class="card-footer">${doc.targets ? (Array.isArray(doc.targets) ? doc.targets.join(', ') : doc.targets) : 'General'}</div>
+          <div class="card-footer">${Array.isArray(doc.targets) ? doc.targets.join(', ') : doc.targets}</div>
       </div>
     `).join('');
   }
 
-  // --- 4. SELECTION LOGIC ---
-  // --- 4. SELECTION & NAVIGATION LOGIC ---
-function handleCardClick(id, el) {
+  // --- 4. NAVIGATION & SELECTION ---
+  function handleCardClick(id, el) {
     if (isSelectionMode) {
-        if (selectedIds.has(id)) {
-            selectedIds.delete(id);
-            el.classList.remove('selected');
-        } else {
-            selectedIds.add(id);
-            el.classList.add('selected');
-        }
-        document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
+      selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+      el.classList.toggle('selected');
+      document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
     } else {
-        // 🏛️ REAL APP LOGIC: Cache and Redirect
-        navigateToProfessionalView(id);
-    }
-}
-
-function navigateToProfessionalView(id) {
-    const doc = syllabusVault.find(s => s.id === id);
-    if (!doc) return notify("Syllabus data missing", "error");
-
-    // 🏛️ Handle potentially stringified JSON from FastAPI/PostgreSQL
-    let processedContent = doc.content;
-    if (typeof processedContent === 'string') {
-        try {
-            processedContent = JSON.parse(processedContent);
-            // Double parse check for some Render/PostgreSQL edge cases
-            if (typeof processedContent === 'string') processedContent = JSON.parse(processedContent);
-        } catch(e) { 
-            console.error("Data Parse Error", e); 
-            return notify("Corrupted Data Format", "error");
-        }
-    }
-
-    // 🏛️ Standardize the object for the Viewer
-    const viewData = {
+      const doc = syllabusVault.find(s => s.id === id);
+      // Cache for the Professional Viewer/Editor
+      localStorage.setItem('current_syllabus_view', JSON.stringify({
+        id: doc.id,
         name: doc.name,
         subject: doc.subject,
-        targets: Array.isArray(doc.targets) ? doc.targets : [doc.targets],
-        date: new Date().toLocaleDateString('en-GB'), // Matches professional standard
-        content: processedContent
-    };
-
-    // 💾 Store in Cache
-    localStorage.setItem('current_syllabus_view', JSON.stringify(viewData));
-
-    // 🚀 Navigate to the professional viewer file we created
-    // Adjust the path if your viewer is in a different folder
-    window.location.href = "full_view.html"; 
-}
-
-  async function confirmBulkDelete() {
-    // 1. Validation
-    if (!selectedIds.size) return notify("Nothing selected", "error");
-
-    const count = selectedIds.size;
-    if (!confirm(`Permanently delete ${count} records?`)) return;
-
-    // 2. Auth Token Retrieval
-    const resToken = await AppStorage.get('institutionToken');
-    const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
-
-    // 3. Prepare Payload (Matches your Python dict = Body(...))
-    const payload = {
-      ids: Array.from(selectedIds) // Converts Set to [1, 2, 3]
-    };
-
-    try {
-      // 4. Single POST request to the bulk route
-      const response = await fetch(`${API_BASE}/central_vault/vault/delete-bulk`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-
-        // 5. Success UI Feedback
-        notify(result.message || `Purged ${result.deleted_count} records`, "success");
-
-        // 6. Reset UI State
-        exitSelection();
-        await syncVault(); // Refresh the grid to show they are gone
-      } else {
-        const errData = await response.json();
-        notify(errData.detail || "Bulk delete failed", "error");
-      }
-    } catch (e) {
-      console.error("Connection Error:", e);
-      notify("Server connection failed", "error");
+        targets: doc.targets,
+        content: typeof doc.content === 'string' ? JSON.parse(doc.content) : doc.content,
+        date: new Date().toLocaleDateString('en-GB')
+      }));
+      window.location.href = "full_view.html";
     }
   }
 
+  // --- 5. BULK DELETE (Institutional Purge) ---
+  async function confirmBulkDelete() {
+    if (!selectedIds.size) return notify("Select items first", "error");
+    if (!confirm(`Permanently delete ${selectedIds.size} records?`)) return;
+
+    try {
+      const resToken = await AppStorage.get('auth_token');
+      const token = (resToken && typeof resToken === 'object') ? resToken.value : resToken;
+
+      const response = await fetch(`${API_BASE}/central_vault/vault/delete-bulk`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) })
+      });
+
+      if (response.ok) {
+        notify("Records purged successfully", "success");
+        exitSelection();
+        syncVault();
+      }
+    } catch (e) { notify("Purge failed", "error"); }
+  }
+
+  // --- UI HELPERS ---
   function enterSelectionMode() {
     isSelectionMode = true;
+    document.body.classList.add('selection-active');
     document.getElementById('selectionHeader').style.display = 'flex';
     document.getElementById('menuFAB').style.display = 'block';
-    renderGrid(); // Refresh grid to show select dots
+    renderGrid();
   }
 
   function exitSelection() {
     isSelectionMode = false;
     selectedIds.clear();
+    document.body.classList.remove('selection-active');
     document.getElementById('selectionHeader').style.display = 'none';
     document.getElementById('menuFAB').style.display = 'none';
     renderGrid();
   }
 
-  function editCurrent() {
-    location.href = `../syllabus.html?editId=${currentViewingId}`;
-  }
-
-  function closeFullView() { document.getElementById('fullView').style.display = 'none'; }
   function selectAll() {
     syllabusVault.forEach(doc => selectedIds.add(doc.id));
-    document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
     renderGrid();
+    document.getElementById('selectedCount').innerText = `${selectedIds.size} Selected`;
   }
 
   function toggleMenu() {
@@ -326,10 +253,7 @@ function navigateToProfessionalView(id) {
     m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
   }
 
-  // --- START ---
-  window.onload = () => {
-    syncVault();
-  };
+  window.onload = syncVault;
 </script>
 </body>
 </html>

@@ -145,7 +145,7 @@
     // --- 1. INITIALIZATION ---
     window.onload = async () => {
         // Auth Check using your established method
-        authToken = localStorage.getItem('institutionToken');
+        authToken = localStorage.getItem('auth_token');
         if (!authToken) {
             window.location.replace("../../index.html");
             return;
