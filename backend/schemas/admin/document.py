@@ -104,7 +104,6 @@ class VoucherResponse(BaseModel):
     class Config:
         from_attributes = True
 
-
 class SubjectResult(BaseModel):
     subject: str
     max: float
