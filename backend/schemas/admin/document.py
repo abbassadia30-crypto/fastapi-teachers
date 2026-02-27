@@ -122,28 +122,18 @@ class BulkResultPayload(BaseModel):
     class_name: str
     results: List[StudentMarkEntry]
 
-class QuestionEntry(BaseModel):
-    text: str
-    sub_parts: List[str] = []
-
-class BlueprintSection(BaseModel):
-    type: str
-    marks_per_q: int
-    choice: int
-    questions: List[QuestionEntry] # Change from List[str] to List[QuestionEntry]
-
 class QuestionModel(BaseModel):
     text: str
     sub_parts: List[str] = []
 
-# 2. Define the middle unit (The Section)
+# 2. The middle unit: A section (e.g., "Short Questions") containing multiple questions
 class SectionModel(BaseModel):
     type: str
     marks_per_q: int
     choice: int
     questions: List[QuestionModel]
 
-# 3. Define the main payload (The Paper)
+# 3. The main payload: The entire paper structure
 class PaperCreate(BaseModel):
     institution: str
     subject: str
@@ -151,7 +141,7 @@ class PaperCreate(BaseModel):
     paper_type: str
     duration: str
     language: str
-    blueprint: List[SectionModel]  # Now Python knows what SectionModel is!
+    blueprint: List[SectionModel]
     total_marks: int
 
 class AttendanceEntry(BaseModel):
