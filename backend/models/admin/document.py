@@ -131,7 +131,7 @@ class PaperVault(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String)
 
-    institution = relationship("Institution", back_populates="paper_vault")
+    institution = relationship("Institution", back_populates="papers")
 
 class AttendanceLog(Base):
     __tablename__ = "attendance_logs"
