@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now" />
+    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change beforePath="$PROJECT_DIR$/backend/schemas/admin/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schemas/admin/document.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -92,7 +94,7 @@
       <workItem from="1772113571384" duration="17000" />
       <workItem from="1772119851489" duration="11495000" />
       <workItem from="1772184973053" duration="15394000" />
-      <workItem from="1772204622957" duration="2834000" />
+      <workItem from="1772204622957" duration="3169000" />
     </task>
     <task id="LOCAL-00001" summary="now">
       <option name="closed" value="true" />
@@ -286,7 +288,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772207123746</updated>
     </task>
-    <option name="localTasksCounter" value="25" />
+    <task id="LOCAL-00025" summary="now">
+      <option name="closed" value="true" />
+      <created>1772207721670</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1772207721670</updated>
+    </task>
+    <task id="LOCAL-00026" summary="now">
+      <option name="closed" value="true" />
+      <created>1772207759077</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1772207759077</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
