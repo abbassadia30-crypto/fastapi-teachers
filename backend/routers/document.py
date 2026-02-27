@@ -10,6 +10,7 @@ from backend.models.User import User
 from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateSheetCreate, \
     NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit, \
     StaffAttendanceSubmit , PendingSync
+from typing import Optional
 
 router = APIRouter(
     prefix="/document",
