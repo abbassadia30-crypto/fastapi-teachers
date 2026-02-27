@@ -124,9 +124,9 @@ class BulkResultPayload(BaseModel):
     results: List[StudentMarkEntry]
 
 class BlueprintBlock(BaseModel):
-    type: str          # Matches JS: container.dataset.type
-    marks_per_q: int   # Matches JS: container.dataset.marks
-    choice: int        # Matches JS: container.dataset.choice
+    type: str
+    marks_per_q: int
+    choice: int
     questions: List[str]
 
 class PaperCreate(BaseModel):
@@ -135,7 +135,7 @@ class PaperCreate(BaseModel):
     target_class: str
     paper_type: str
     duration: str
-    language: str      # 'en', 'ur', or 'ar'
+    language: str  # Must be sent by JS
     blueprint: List[BlueprintBlock]
     total_marks: int
 
