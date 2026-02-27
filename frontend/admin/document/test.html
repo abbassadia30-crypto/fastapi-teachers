@@ -65,6 +65,35 @@
 
         .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; z-index: 1000; }
         .btn-action { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
+        .q-row-wrapper {
+            position: relative;
+            margin-bottom: 10px;
+            padding-right: 40px;
+        }
+        .btn-inline-add {
+            position: absolute;
+            right: 0;
+            top: 0;
+            background: #e8f5e9;
+            color: var(--success);
+            border: 1px solid var(--success);
+            border-radius: 4px;
+            width: 30px;
+            height: 30px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .sub-part-row {
+            margin-left: 25px;
+            margin-top: 5px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .sub-part-row input {
+            font-size: 13px;
+            border-bottom: 1px dashed #ccc !important;
+        }
     </style>
 </head>
 <body>
@@ -180,59 +209,131 @@
         if(lang !== 'en') canvas.classList.add('lang-' + lang);
     }
 
+    // --- SMART SECTION ADDER (With Grouping Logic) ---
     function addSectionToPaper() {
         const qty = parseInt(document.getElementById('in-qty').value) || 1;
         const choice = parseInt(document.getElementById('in-choice').value) || qty;
         const marks = parseInt(document.getElementById('in-marks').value) || 1;
 
-        const block = document.createElement('div');
-        block.className = 'question-block';
-        block.dataset.marks = marks; block.dataset.choice = choice; block.dataset.type = activeType;
+        const dynamicContent = document.getElementById('dynamic-content');
 
-        let hText = (activeType === 'MCQs') ? "Multiple Choice Questions" : (activeType === 'Short' ? "Short Questions" : "Long Questions");
-        if(activeType === 'Custom') hText = document.getElementById('in-statement').value;
+        // LOGIC: Check if last block is same type to GROUP them
+        let targetBlock = dynamicContent.lastElementChild;
+        if (!targetBlock || targetBlock.dataset.type !== activeType || activeType === 'Custom') {
+            targetBlock = document.createElement('div');
+            targetBlock.className = 'question-block';
+            targetBlock.dataset.marks = marks;
+            targetBlock.dataset.choice = choice;
+            targetBlock.dataset.type = activeType;
 
-        block.innerHTML = `
-            <div class="q-header-row">
-                <span>${hText} (${choice < qty ? 'Attempt ' + choice : 'All'})</span>
-                <span>(${choice * marks} Marks)</span>
-            </div>
-            <div class="q-container"></div>
-        `;
-        const container = block.querySelector('.q-container');
-        for(let i=1; i<=qty; i++) {
-            container.innerHTML += `<div class="part-row"><span>${i}.</span><input type="text" class="q-input" placeholder="..."></div>`;
+            let hText = (activeType === 'MCQs') ? "Multiple Choice Questions" : (activeType === 'Short' ? "Short Questions" : "Long Questions");
+            if(activeType === 'Custom') hText = document.getElementById('in-statement').value;
+
+            targetBlock.innerHTML = `
+                <div class="q-header-row">
+                    <span>${hText}</span>
+                    <span class="marks-label">(${choice * marks} Marks)</span>
+                </div>
+                <div class="q-container"></div>
+            `;
+            dynamicContent.appendChild(targetBlock);
         }
-        document.getElementById('dynamic-content').appendChild(block);
+
+        const container = targetBlock.querySelector('.q-container');
+        const existingCount = container.querySelectorAll('.q-row-wrapper').length;
+
+        for(let i=1; i<=qty; i++) {
+            createNewQuestionRow(container, existingCount + i);
+        }
+
         document.getElementById('config-panel').style.display = 'none';
+        showNotify("Integrated into Canvas", "green");
     }
 
+    // --- ROW CREATOR (With In-line Buttons & Sub-parts) ---
+    function createNewQuestionRow(container, index, val = "", subparts = []) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'q-row-wrapper';
+        wrapper.style.position = 'relative';
+        wrapper.style.marginBottom = '15px';
+
+        wrapper.innerHTML = `
+            <div class="part-row" style="display:flex; gap:10px; align-items:center;">
+                <span class="q-num" style="font-weight:bold;">${index}.</span>
+                <input type="text" class="q-input" value="${val}" style="flex:1" placeholder="Type question...">
+                <button class="btn-inline-add" onclick="addSibling(this)" style="background:#e8f5e9; border:1px solid #2ecc71; color:#2ecc71; border-radius:4px; cursor:pointer; width:25px; font-weight:bold;">+</button>
+            </div>
+            <div class="sub-container" style="margin-left:25px; margin-top:5px;"></div>
+        `;
+
+        const subCont = wrapper.querySelector('.sub-container');
+        if (subparts.length > 0) {
+            subparts.forEach((sp, idx) => addSubPart(subCont, sp, String.fromCharCode(97 + idx)));
+        } else if (activeType === 'Long') {
+            addSubPart(subCont, "", "a");
+            addSubPart(subCont, "", "b");
+        }
+
+        container.appendChild(wrapper);
+    }
+
+    function addSibling(btn) {
+        const container = btn.closest('.q-container');
+        const index = container.querySelectorAll('.q-row-wrapper').length + 1;
+        createNewQuestionRow(container, index);
+    }
+
+    function addSubPart(container, val = "", label = null) {
+        const count = container.children.length;
+        const char = label || String.fromCharCode(97 + count);
+        const div = document.createElement('div');
+        div.className = 'sub-part-row';
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginTop = '4px';
+        div.innerHTML = `<span>(${char})</span><input type="text" class="sub-input q-input" value="${val}" style="flex:1; font-size:13px; border-bottom:1px dashed #ccc;">`;
+        container.appendChild(div);
+    }
+
+    // --- SAVE LOGIC (Handles Nesting) ---
     async function saveToVault() {
         const btn = document.getElementById('btn-save');
-        btn.innerText = "SYNCING CHANGES...";
-        btn.disabled = true;
+        btn.innerText = "SAVING..."; btn.disabled = true;
 
         const blueprint = [];
-        let totalMarks = 0;
-        document.querySelectorAll('.question-block').forEach(b => {
-            const marks = parseInt(b.dataset.marks);
-            const choice = parseInt(b.dataset.choice);
-            totalMarks += (marks * choice);
-            const qs = Array.from(b.querySelectorAll('.q-input')).map(i => i.value).filter(v => v !== "");
-            blueprint.push({ type: b.dataset.type, marks_per_q: marks, choice: choice, questions: qs });
+        let grandTotal = 0;
+
+        document.querySelectorAll('.question-block').forEach(block => {
+            const questions = [];
+            block.querySelectorAll('.q-row-wrapper').forEach(wrapper => {
+                const mainQ = wrapper.querySelector('.part-row .q-input').value;
+                const subQs = Array.from(wrapper.querySelectorAll('.sub-input')).map(si => si.value);
+                questions.push({ text: mainQ, sub_parts: subQs });
+            });
+
+            const m = parseInt(block.dataset.marks);
+            const c = parseInt(block.dataset.choice);
+            grandTotal += (m * c);
+
+            blueprint.push({
+                type: block.dataset.type,
+                marks_per_q: m,
+                choice: c,
+                questions: questions
+            });
         });
 
         const payload = {
+            institution: document.getElementById('p-inst-name').value,
             subject: document.getElementById('p-subject').value,
             target_class: document.getElementById('p-class').value,
             paper_type: document.getElementById('p-type').value,
             duration: document.getElementById('p-duration').value,
             language: document.getElementById('sel-lang').value,
             blueprint: blueprint,
-            total_marks: totalMarks
+            total_marks: grandTotal
         };
 
-        // 🏛️ Logic: Append ID if we are in Edit Mode
         const url = currentEditId ? `${API_URL}/document/papers/save-vault?paper_id=${currentEditId}` : `${API_URL}/document/papers/save-vault`;
 
         try {
@@ -244,11 +345,11 @@
             });
 
             if(res.ok) {
-                showNotify(currentEditId ? "Paper Updated Successfully" : "New Paper Secured", "green");
+                showNotify("Paper Secured", "green");
                 setTimeout(() => location.reload(), 1200);
             } else {
-                showNotify("Error Saving Data", "red");
-                btn.disabled = false;
+                showNotify("Save Failed (Check Console)", "red");
+                btn.disabled = false; btn.innerText = "SAVE TO VAULT";
             }
         } catch(e) {
             showNotify("Network Error", "red");
@@ -258,52 +359,43 @@
 
     async function fetchVault() {
         const container = document.getElementById('vault-list-container');
-        container.innerHTML = "<div style='grid-column: 1/-1; text-align:center; padding:20px;'>Syncing Vault...</div>";
-
+        container.innerHTML = "Syncing...";
         try {
             const tRes = await AppStorage.get("auth_token");
             const res = await fetch(`${API_URL}/document/papers/vault-list`, {
                 headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
             });
             vaultData = await res.json();
-
             container.innerHTML = vaultData.map(p => `
-            <div class="vault-card">
-                <span class="status-badge">${p.status}</span>
-                <b style="font-size:12px;">${p.subject.toUpperCase()}</b>
-                <small>${p.target_class} | ${p.paper_type}</small>
-                <div class="card-actions" style="grid-template-columns: 1fr; gap: 4px;">
-                    <button class="btn-card btn-print-mini" style="background:var(--primary); color:white;" onclick="processPrint(${p.id})">PRINT PAPER</button>
-                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
-                        <button class="btn-card btn-edit" onclick="loadEdit(${p.id})">EDIT</button>
-                        <button class="btn-card btn-del" onclick="confirmDelete(${p.id})">DEL</button>
+                <div class="vault-card">
+                    <span class="status-badge">${p.status}</span>
+                    <b style="font-size:12px;">${p.subject.toUpperCase()}</b>
+                    <small>${p.target_class} | ${p.paper_type}</small>
+                    <div class="card-actions" style="grid-template-columns: 1fr; gap: 4px;">
+                        <button class="btn-card" style="background:var(--primary); color:white;" onclick="processPrint(${p.id})">PRINT</button>
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:4px;">
+                            <button class="btn-card btn-edit" onclick="loadEdit(${p.id})">EDIT</button>
+                            <button class="btn-card btn-del" onclick="confirmDelete(${p.id})">DEL</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `).join('');
         } catch(e) { container.innerHTML = "Sync Failed."; }
     }
-    // --- UPDATED LOAD EDIT LOGIC ---
+
     function loadEdit(id) {
         const p = vaultData.find(x => x.id === id);
         if(!p) return;
-
         currentEditId = p.id;
         switchTab('design');
 
-        // UI Feedback
-        document.getElementById('page-title').innerText = "EDITING MODE";
         document.getElementById('btn-save').innerText = "UPDATE SECURED PAPER";
-
-        // Hydrate Header
         document.getElementById('p-subject').value = p.subject;
         document.getElementById('p-class').value = p.target_class;
         document.getElementById('p-type').value = p.paper_type;
-        document.getElementById('p-duration').value = p.duration;
         document.getElementById('sel-lang').value = p.language;
         toggleLangLayout();
 
-        // Hydrate Canvas
         const content = document.getElementById('dynamic-content');
         content.innerHTML = "";
 
@@ -314,65 +406,49 @@
             block.dataset.choice = sec.choice;
             block.dataset.type = sec.type;
 
-            let hText = (sec.type === 'MCQs') ? "Multiple Choice Questions" : (sec.type === 'Short' ? "Short Questions" : "Long Questions");
-            if(sec.type === 'Custom') hText = "Custom Section";
-
             block.innerHTML = `
-            <div class="q-header-row">
-                <span>${hText} (${sec.choice} Attempt)</span>
-                <span>(${sec.choice * sec.marks_per_q} Marks)</span>
-            </div>
-            <div class="q-container"></div>
-        `;
-
-            const qContainer = block.querySelector('.q-container');
-            sec.questions.forEach((q, i) => {
-                const row = document.createElement('div');
-                row.className = 'part-row';
-                row.innerHTML = `<span>${i+1}.</span><input type="text" class="q-input" value="${q.replace(/"/g, '&quot;')}">`;
-                qContainer.appendChild(row);
+                <div class="q-header-row">
+                    <span>${sec.type}</span>
+                    <span class="marks-label">(${sec.choice * sec.marks_per_q} Marks)</span>
+                </div>
+                <div class="q-container"></div>
+            `;
+            const qCont = block.querySelector('.q-container');
+            sec.questions.forEach((qObj, idx) => {
+                // Support both old string format and new object format
+                const text = typeof qObj === 'string' ? qObj : qObj.text;
+                const subs = qObj.sub_parts || [];
+                createNewQuestionRow(qCont, idx + 1, text, subs);
             });
             content.appendChild(block);
         });
-
-        showNotify("Draft Re-opened", "green");
+        showNotify("Editor Hydrated", "green");
     }
 
     function confirmDelete(id) {
         document.getElementById('confirm-box').style.display = 'flex';
         document.getElementById('final-del-btn').onclick = () => performDelete(id);
     }
-
     function closeConfirm() { document.getElementById('confirm-box').style.display = 'none'; }
-
     async function performDelete(id) {
         const tRes = await AppStorage.get("auth_token");
         const res = await fetch(`${API_URL}/document/papers/delete/${id}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
         });
-        if(res.ok) { showNotify("Draft Removed", "green"); closeConfirm(); fetchVault(); }
-        else { showNotify("Delete Failed", "red"); }
+        if(res.ok) { showNotify("Removed", "green"); closeConfirm(); fetchVault(); }
     }
-
     function showNotify(msg, type) {
         const bar = document.getElementById('notification-bar');
         bar.innerText = msg; bar.className = 'bg-' + type;
         setTimeout(() => bar.className = "", 3000);
     }
-
     async function processPrint(id) {
         const paper = vaultData.find(p => p.id === id);
         if(!paper) return;
-
-        showNotify("Preparing Print Engine...", "green");
-
-        // Save to AppStorage for Marksheet Architect
-        const catchData = { title: `${paper.paper_type}: ${paper.subject}`, section: paper.target_class, subject: paper.subject, max_marks: paper.total_marks };
+        const catchData = { title: paper.subject, section: paper.target_class, subject: paper.subject, max_marks: paper.total_marks };
         await AppStorage.set("last_printed_paper", JSON.stringify(catchData));
-
-        // Redirect to your print preview or architect
-        setTimeout(() => { window.location.href = "marksheet_architect.html"; }, 1000);
+        window.location.href = "marksheet_architect.html";
     }
 </script>
 </body>

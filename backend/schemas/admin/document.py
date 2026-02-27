@@ -123,20 +123,23 @@ class BulkResultPayload(BaseModel):
     class_name: str
     results: List[StudentMarkEntry]
 
-class BlueprintBlock(BaseModel):
+class QuestionEntry(BaseModel):
+    text: str
+    sub_parts: List[str] = []
+
+class BlueprintSection(BaseModel):
     type: str
     marks_per_q: int
     choice: int
-    questions: List[str]
+    questions: List[QuestionEntry] # Change from List[str] to List[QuestionEntry]
 
 class PaperCreate(BaseModel):
-    institution: str
     subject: str
     target_class: str
     paper_type: str
     duration: str
-    language: str  # Must be sent by JS
-    blueprint: List[BlueprintBlock]
+    language: str
+    blueprint: List[BlueprintSection]
     total_marks: int
 
 class AttendanceEntry(BaseModel):
