@@ -6,6 +6,7 @@ from backend.models.admin.document import ScannedQuestionBank # Assuming this ex
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 from sqlalchemy.orm import Session
+from typing import Any
 
 router = APIRouter(
     prefix="/scanner",
