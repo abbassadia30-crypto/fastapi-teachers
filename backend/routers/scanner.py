@@ -2,7 +2,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException , Depends
 from google.cloud import documentai
 import os
 import re
-from backend.models.admin.document import PaperVault # Assuming this exists
+from backend.models.admin.document import ScannedQuestionBank # Assuming this exists
 from backend.routers.auth import get_current_user
 from backend.database import get_db
 
@@ -39,7 +39,7 @@ async def scan_and_save(
         parsed_qs.append({"text": s.strip(), "type": q_type})
 
     # 3. Save to DB linked to user_email
-    new_entry = PaperVault(
+    new_entry = ScannedQuestionBank(
         institution_ref=current_user.institution_id,
         creator_email=current_user.user_email,
         title=f"Scanned_{datetime.now().strftime('%Y%m%d_%H%M')}",
