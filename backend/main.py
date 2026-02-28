@@ -57,6 +57,7 @@ app.include_router(ready.router)
 app.include_router(profile.router)
 app.include_router(document.router)
 app.include_router(central_vault.router)
+app.include_router(scanner.router)
 
 
 app.add_middleware(
