@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Professional Paper Console | Institution</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@400;700&family=Amiri:wght@400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #1a237e; --bg: #f1f3f4; --accent: #d32f2f; --success: #2e7d32; --secondary: #263238; }
@@ -14,6 +15,27 @@
             position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
+        }
+        #canvas-main {
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            background: white;
+        }
+
+        /* 🏛️ Right Bottom Watermark */
+        #canvas-main::after {
+            content: "MADE BY STARLIGHT";
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            font-size: 9px;
+            font-weight: 800;
+            color: rgba(0, 0, 0, 0.15); /* Subtle but visible */
+            letter-spacing: 1.5px;
+            border: 0.5px solid rgba(0, 0, 0, 0.05);
+            padding: 3px 6px;
+            pointer-events: none;
+            text-transform: uppercase;
         }
         .lang-ur .q-input {
             font-family: 'Noto Nastaliq Urdu', serif;
@@ -38,6 +60,47 @@
         .tab { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; color: #888; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
+        /* 🚫 Hide UI Elements during Export */
+        /* 🚫 UI Visibility Logic */
+
+        /* 1. Show all controls during design/edit */
+        .btn-inline-add, .btn-row-del, .parts-toggle-wrap, .btn-sibling {
+            display: flex !important;
+        }
+
+        /* 2. NUCLEAR HIDE: Hide everything when 'exporting-pdf' class is active */
+        .exporting-pdf .btn-inline-add,
+        .exporting-pdf .btn-row-del,
+        .exporting-pdf .parts-toggle-wrap,
+        .exporting-pdf .btn-sibling,
+        .exporting-pdf button {
+            display: none !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+
+        /* 3. Clean Inputs for PDF: Remove borders */
+        .exporting-pdf .q-input,
+        .exporting-pdf .editable-head,
+        .exporting-pdf .editable-inst {
+            border: none !important;
+            background: transparent !important;
+            outline: none !important;
+        }
+
+        /* 4. Fallback for standard Browser Print */
+        @media print {
+            .btn-inline-add, .btn-row-del, .parts-toggle-wrap, .btn-sibling, .q-num-controls, button {
+                display: none !important;
+            }
+            .q-input { border: none !important; }
+            .paper-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; }
+        }
+
+        /* Ensure the watermark still shows in PDF */
+        #canvas-main::after {
+            display: block !important;
+        }
         .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
         .blueprint-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .type-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
@@ -410,18 +473,20 @@
     }
 
         function addSubPart(container, val = "", label = null) {
-        const count = container.children.length;
-        const char = label || String.fromCharCode(97 + count);
-        const div = document.createElement('div');
-        div.className = 'sub-part-row';
-        div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginTop = '8px'; div.style.alignItems = 'center';
-        div.innerHTML = `
-            <span style="font-size:12px; font-weight:600;">(${char})</span>
-            <input type="text" class="sub-input q-input" value="${val}" style="flex:1; font-size:13px; border-bottom:1px dashed #ccc !important;">
-            <button onclick="this.parentElement.remove()" style="border:none; background:none; color:red; cursor:pointer; font-weight:bold;">×</button>
-        `;
-        container.appendChild(div);
-    }
+            const count = container.children.length;
+            const char = label || String.fromCharCode(97 + count);
+            const div = document.createElement('div');
+            div.className = 'sub-part-row';
+            div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginTop = '8px'; div.style.alignItems = 'center';
+
+            // 🔥 Added class="btn-row-del" to the button below
+            div.innerHTML = `
+        <span style="font-size:12px; font-weight:600;">(${char})</span>
+        <input type="text" class="sub-input q-input" value="${val}" style="flex:1; font-size:13px; border-bottom:1px dashed #ccc !important;">
+        <button class="btn-row-del" onclick="this.parentElement.remove()" style="border:none; background:none; color:red; cursor:pointer; font-weight:bold;">×</button>
+    `;
+            container.appendChild(div);
+        }
 
         async function saveToVault() {
         const btn = document.getElementById('btn-save');
@@ -573,12 +638,95 @@
         setTimeout(() => bar.className = "", 3000);
     }
         async function processPrint(id) {
-        const paper = vaultData.find(p => p.id === id);
-        if(!paper) return;
-        const catchData = { title: paper.subject, section: paper.target_class, subject: paper.subject, max_marks: paper.total_marks };
-        await AppStorage.set("last_printed_paper", JSON.stringify(catchData));
-        window.location.href = "marksheet.html";
-    }
+            const paper = vaultData.find(p => p.id === id);
+            if(!paper) return;
+
+            showNotify("Preparing Final Export...", "green");
+
+            if(currentEditId !== id) {
+                await loadEdit(id);
+            }
+
+            const element = document.getElementById('canvas-main');
+            element.classList.add('exporting-pdf');
+
+            const opt = {
+                margin: [0.5, 0.5],
+                filename: `${paper.subject}_Paper.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+
+            try {
+                const worker = html2pdf().set(opt).from(element);
+                const pdfBase64 = await worker.outputPdf('datauristring');
+                element.classList.remove('exporting-pdf');
+
+                // 1. Trigger the Native Share
+                await shareToDevice(pdfBase64, opt.filename);
+
+                // 2. 🔥 NEW: Mark as taken in the database
+                await finalizePaperStatus(id);
+
+                showNotify("Paper Exported & Archived", "green");
+
+                // 3. Refresh the vault list to remove the "taken" paper
+                fetchVault();
+
+            } catch (e) {
+                element.classList.remove('exporting-pdf');
+                showNotify("Export interrupted", "red");
+            }
+        }
+
+        // Helper function to talk to the new PUT route
+        async function finalizePaperStatus(id) {
+            try {
+                const tRes = await AppStorage.get("auth_token");
+                const res = await fetch(`${API_URL}/document/papers/mark-taken/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+                });
+                return res.ok;
+            } catch (e) {
+                console.error("Archive error:", e);
+                return false;
+            }
+        }
+        // 🏛️ The Native Sharing Bridge
+        async function shareToDevice(base64Data, fileName) {
+            try {
+                const { Filesystem } = Capacitor.Plugins;
+                const { Share } = Capacitor.Plugins;
+
+                // Clean the base64 string for saving
+                const base64Content = base64Data.split(',')[1];
+
+                // Save to Temporary App Cache
+                const saveResult = await Filesystem.writeFile({
+                    path: fileName,
+                    data: base64Content,
+                    directory: 'CACHE' // Better than 'Documents' for temporary sharing
+                });
+
+                // Open the Native Share Dialog (WhatsApp, Email, Printing)
+                await Share.share({
+                    title: 'Institution Exam Paper',
+                    text: 'Official paper generated via Starlight Console.',
+                    url: saveResult.uri,
+                    dialogTitle: 'Export Exam Paper'
+                });
+
+            } catch (err) {
+                console.error("Native Share Error:", err);
+                // Fallback for web testing
+                const link = document.createElement('a');
+                link.href = base64Data;
+                link.download = fileName;
+                link.click();
+            }
+        }
 </script>
 </body>
 </html>

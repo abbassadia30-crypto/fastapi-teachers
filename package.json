@@ -22,9 +22,12 @@
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
     "@capacitor/core": "^8.1.0",
+    "@capacitor/device": "^8.0.1",
+    "@capacitor/filesystem": "^8.1.2",
     "@capacitor/haptics": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/push-notifications": "^8.0.1",
+    "@capacitor/share": "^8.0.1",
     "@capgo/capacitor-speech-recognition": "^8.0.10",
     "capacitor-native-biometric": "^4.2.2"
   }
