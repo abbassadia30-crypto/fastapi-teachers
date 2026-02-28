@@ -111,7 +111,7 @@ async def delete_syllabus_bulk(
 @router.get("/papers/history-list")
 async def get_history_papers(
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
     inst_id = getattr(current_user, 'institution_id', None)
     if not inst_id:

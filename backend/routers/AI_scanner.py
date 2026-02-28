@@ -3,6 +3,8 @@ from google.cloud import documentai
 import os
 import re
 from backend.models.admin.document import PaperVault # Assuming this exists
+from backend.routers.auth import get_current_user
+from backend.database import get_db
 
 router = APIRouter(
     prefix="/scanner",
