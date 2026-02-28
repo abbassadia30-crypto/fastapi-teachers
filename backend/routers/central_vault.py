@@ -107,3 +107,20 @@ async def delete_syllabus_bulk(
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail="Delete failed")
+
+@router.get("/papers/history-list")
+async def get_history_papers(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    inst_id = getattr(current_user, 'institution_id', None)
+    if not inst_id:
+        raise HTTPException(status_code=403, detail="Not linked to institution")
+
+    # Fetching papers that have already been exported/printed
+    papers = db.query(PaperVault).filter(
+        PaperVault.institution_ref == inst_id,
+        PaperVault.status == "taken"
+    ).all()
+
+    return papers

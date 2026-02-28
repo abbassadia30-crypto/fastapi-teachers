@@ -5,16 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/capacitor.build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/capacitor.settings.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/document.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/test.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/central_vault.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/central_vault.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,7 +97,7 @@
       <workItem from="1772204622957" duration="9222000" />
       <workItem from="1772254730626" duration="1749000" />
       <workItem from="1772259360025" duration="21000" />
-      <workItem from="1772259404066" duration="2477000" />
+      <workItem from="1772259404066" duration="2869000" />
     </task>
     <task id="LOCAL-00001" summary="now">
       <option name="closed" value="true" />
@@ -348,7 +339,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772209095831</updated>
     </task>
-    <option name="localTasksCounter" value="31" />
+    <task id="LOCAL-00031" summary="now">
+      <option name="closed" value="true" />
+      <created>1772262475233</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1772262475233</updated>
+    </task>
+    <option name="localTasksCounter" value="32" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
