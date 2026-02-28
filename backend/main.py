@@ -11,6 +11,7 @@ from backend.routers import document
 from backend.routers import profile
 from backend.routers import ready
 from backend.routers import central_vault
+from backend.routers import scanner
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
