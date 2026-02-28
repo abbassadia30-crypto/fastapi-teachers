@@ -164,3 +164,22 @@ class IndividualAttendance(Base):
     student = relationship("Student")
     parent_log = relationship("AttendanceLog")
     institution = relationship("Institution", back_populates="individual_attendances")
+
+
+class ScannedQuestionBank(Base):
+    __tablename__ = "scanned_question_bank"
+
+    id = Column(Integer, primary_key=True, index=True)
+    institution_id = Column(Integer, ForeignKey('institutions.id'), nullable=False)
+    creator_email = Column(String, index=True, nullable=False)
+
+    # Store the filename or a nickname for the scan (e.g. "Biology Midterm 2024")
+    source_name = Column(String, nullable=True)
+
+    # This will store the array of objects: [{"text": "...", "type": "MCQs", "marks": 1}, ...]
+    questions_data = Column(JSON, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationship to institution
+    institution = relationship("Institution")

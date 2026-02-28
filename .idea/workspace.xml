@@ -5,7 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/backend/routers/central_vault.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/central_vault.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/admin/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/admin/document.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/AI_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/AI_scanner.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/document/paper_vault.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/paper_vault.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/document/test.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/test.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -98,6 +103,7 @@
       <workItem from="1772254730626" duration="1749000" />
       <workItem from="1772259360025" duration="21000" />
       <workItem from="1772259404066" duration="2869000" />
+      <workItem from="1772284094391" duration="10623000" />
     </task>
     <task id="LOCAL-00001" summary="now">
       <option name="closed" value="true" />

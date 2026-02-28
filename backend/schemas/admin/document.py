@@ -190,3 +190,22 @@ class PendingSync(BaseModel):
     targets: List[str]
     content: List[Any]
     doc_type: str = "syllabus_draft"
+
+
+class ScannedQuestion(BaseModel):
+    text: str
+    type: str # MCQs, Short, Long
+    marks: Optional[int] = 1
+
+class ScannedBankCreate(BaseModel):
+    source_name: Optional[str] = "Untitled Scan"
+    questions: List[ScannedQuestion]
+
+class ScannedBankResponse(BaseModel):
+    id: int
+    source_name: str
+    questions_data: List[ScannedQuestion]
+    created_at: datetime
+
+    class Config:
+        from_attributes = True

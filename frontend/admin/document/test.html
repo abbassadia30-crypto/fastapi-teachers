@@ -16,32 +16,45 @@
             width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
             color: white; text-align: center; transition: 0.4s; z-index: 2000; font-weight: 600;
         }
-        #canvas-main {
-            position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+
+        .paper-page {
             background: white;
+            width: 210mm;      /* A4 Width */
+            height: 297mm;     /* A4 Height */
+            padding: 15mm 20mm;/* Standard Margins */
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            position: relative;
+            box-sizing: border-box;
+            display: none;     /* Hidden until active */
+            overflow: hidden;
+            border: 1px solid #ddd;
         }
 
-        /* 🏛️ Right Bottom Watermark */
-        #canvas-main::after {
+        .paper-page.active-page { display: block !important; }
+
+        /* 🏛️ Right Bottom Watermark (On every page) */
+        .paper-page::after {
             content: "MADE BY STARLIGHT";
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            font-size: 9px;
-            font-weight: 800;
-            color: rgba(0, 0, 0, 0.15); /* Subtle but visible */
-            letter-spacing: 1.5px;
-            border: 0.5px solid rgba(0, 0, 0, 0.05);
-            padding: 3px 6px;
-            pointer-events: none;
-            text-transform: uppercase;
+            position: absolute; bottom: 15px; right: 15px;
+            font-size: 8px; font-weight: 800; color: rgba(0, 0, 0, 0.1);
+            letter-spacing: 1.5px; pointer-events: none; text-transform: uppercase;
         }
-        .lang-ur .q-input {
-            font-family: 'Noto Nastaliq Urdu', serif;
-            height: 45px;
-            padding-top: 10px;
+
+        /* Page Navigation UI */
+        .page-controls {
+            display: flex; align-items: center; justify-content: center;
+            gap: 15px; margin-bottom: 15px; background: white;
+            padding: 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+
+        .btn-nav {
+            background: var(--primary); color: white; border: none;
+            padding: 8px 15px; border-radius: 6px; font-weight: 700; cursor: pointer;
+        }
+
+        .page-info { font-weight: 800; font-size: 13px; color: var(--secondary); }
+
+        /* General UI Styles */
         .bg-red { background: var(--accent) !important; top: 20px !important; display: block !important; }
         .bg-green { background: var(--success) !important; top: 20px !important; display: block !important; }
 
@@ -54,153 +67,228 @@
             border-top: 5px solid var(--accent);
         }
 
-        /* 🏗️ Layout & Navigation */
         header { background: white; padding: 15px 20px; display: flex; align-items: center; border-bottom: 2px solid var(--primary); }
         .tab-bar { display: flex; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 900; }
         .tab { flex: 1; padding: 15px; text-align: center; font-weight: 700; font-size: 13px; cursor: pointer; color: #888; }
         .tab.active { color: var(--primary); border-bottom: 3px solid var(--primary); }
 
-        /* 🚫 Hide UI Elements during Export */
-        /* 🚫 UI Visibility Logic */
+        /* Printing & Export Logic */
+        .exporting-pdf .btn-inline-add, .exporting-pdf .btn-row-del,
+        .exporting-pdf .parts-toggle-wrap, .exporting-pdf button { display: none !important; }
 
-        /* 1. Show all controls during design/edit */
-        .btn-inline-add, .btn-row-del, .parts-toggle-wrap, .btn-sibling {
-            display: flex !important;
+        .exporting-pdf .q-input, .exporting-pdf .editable-head, .exporting-pdf .editable-inst {
+            border: none !important; background: transparent !important; outline: none !important;
         }
 
-        /* 2. NUCLEAR HIDE: Hide everything when 'exporting-pdf' class is active */
-        .exporting-pdf .btn-inline-add,
-        .exporting-pdf .btn-row-del,
-        .exporting-pdf .parts-toggle-wrap,
-        .exporting-pdf .btn-sibling,
-        .exporting-pdf button {
-            display: none !important;
-            opacity: 0 !important;
-            visibility: hidden !important;
-        }
-
-        /* 3. Clean Inputs for PDF: Remove borders */
-        .exporting-pdf .q-input,
-        .exporting-pdf .editable-head,
-        .exporting-pdf .editable-inst {
-            border: none !important;
-            background: transparent !important;
-            outline: none !important;
-        }
-
-        /* 4. Fallback for standard Browser Print */
         @media print {
-            .btn-inline-add, .btn-row-del, .parts-toggle-wrap, .btn-sibling, .q-num-controls, button {
-                display: none !important;
-            }
-            .q-input { border: none !important; }
-            .paper-canvas { border: none !important; box-shadow: none !important; padding: 0 !important; }
+            .btn-inline-add, .btn-row-del, .parts-toggle-wrap, button { display: none !important; }
+            .paper-page { box-shadow: none !important; border: none !important; margin: 0 !important; }
         }
 
-        /* Ensure the watermark still shows in PDF */
-        #canvas-main::after {
-            display: block !important;
+        /* Arabic Support */
+        .lang-ar { direction: rtl; text-align: right; font-family: 'Amiri', serif; }
+        .lang-ar .q-input { text-align: right; }
+        /* Fix for Android/Capacitor Click issues */
+        button, .btn-inline-add, .btn-row-del {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
-        .main-container { padding: 15px; max-width: 900px; margin: auto; padding-bottom: 120px; }
+
+        /* Allow questions to grow vertically and wrap text */
+        .q-input {
+            display: block;
+            width: 100%;
+            min-height: 20px;
+            white-space: pre-wrap; /* Preserves spaces and wraps text */
+            word-wrap: break-word;
+            border-bottom: 1px solid #eee;
+            outline: none;
+            padding: 2px 0;
+        }
+
+        /* Ensure the PDF process sees the full height */
+        .exporting-pdf .paper-page {
+            height: auto !important;
+            overflow: visible !important;
+        }
+        /* Canvas Elements */
+        /* 🏛️ Header with Logo Space */
+        /* 🏛️ Professional Header with Left Logo */
+        .paper-header {
+            border: 2px solid #000;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            position: relative;
+            padding-left: 90px; /* Space for Logo on the Left */
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .inst-logo-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 15px; /* Moved to Left */
+            transform: translateY(-50%);
+            width: 70px;
+            height: 70px;
+            border: 1px dashed #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 800;
+            color: #666;
+            background: #fcfcfc;
+            border-radius: 4px;
+        }
+
+        /* Ensure long text wraps instead of staying on one line */
+        .q-input {
+            white-space: normal;
+            word-wrap: break-word;
+            height: auto;
+            min-height: 20px;
+        }
+
+        /* 🛠️ Fix for PDF Clipping */
+        .exporting-pdf .paper-page {
+            overflow: visible !important;
+            height: auto !important;
+            min-height: 297mm;
+        }
+
+        /* Visual indicator if content is too long for the institution paper */
+        .paper-page {
+            border-bottom: 5px solid transparent;
+        }
+        .page-overflow-warning {
+            border-bottom: 5px solid var(--accent) !important;
+        }
+
+        /* Fix for Android Scaling overflow */
+        #pages-container {
+            height: auto;
+            overflow: visible;
+        }
+
+        /* 📱 Improved Mobile Scaling */
+        @media screen and (max-width: 768px) {
+            .pages-wrapper {
+                transform: scale(0.45);
+                transform-origin: top center;
+                width: 210mm;
+                margin: 0 auto;
+                margin-bottom: -600px; /* Adjust based on device height */
+            }
+        }
+        .editable-inst { font-size: 20px; font-weight: 900; border: none; text-align: center; width: 100%; text-transform: uppercase; background: transparent; outline: none; }
+        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 80px; text-align: center; background: transparent; outline: none; }
+        .question-block { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 8px; font-size: 14px; }
+        .q-input { flex: 1; border: none; border-bottom: 1px solid #eee; font-size: 14px; outline: none; }
+
+        /* Language Specifics */
+        .lang-ur { direction: rtl; text-align: right; }
+        .lang-ur .q-input { font-family: 'Noto Nastaliq Urdu', serif; height: 45px; }
+
+        .main-container { padding: 15px; max-width: 1000px; margin: auto; padding-bottom: 120px; }
         .blueprint-card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
         .type-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
         .btn-type { background: #fff; border: 1px solid #ddd; padding: 10px 5px; border-radius: 8px; font-size: 11px; font-weight: 800; }
 
-        /* 📑 Vault Grid */
-        #vault-list-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-        .vault-card { background: white; border-radius: 12px; padding: 12px; border: 1px solid #eee; position: relative; display: flex; flex-direction: column; }
-        .status-badge { position: absolute; top: 5px; right: 5px; font-size: 7px; background: #e8f5e9; color: var(--success); padding: 2px 5px; border-radius: 3px; font-weight: 900; }
-        .card-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 10px; }
-        .btn-card { border: none; padding: 6px; border-radius: 6px; font-size: 9px; font-weight: 700; cursor: pointer; }
-        .btn-edit { background: #e3f2fd; color: #1565c0; }
-        .btn-del { background: #ffebee; color: #c62828; }
-
-        /* 🖋️ Language Styles */
-        .lang-ar { font-family: 'Amiri', serif; direction: rtl; text-align: right; }
-        .lang-ur { font-family: 'Noto Nastaliq Urdu', serif; direction: rtl; text-align: right; line-height: 2.5; }
-        .lang-ar .part-row, .lang-ur .part-row { flex-direction: row-reverse; }
-        .lang-ar .q-input, .lang-ur .q-input { text-align: right; font-size: 18px; }
-
-        /* 📋 Canvas Styling */
-        .paper-canvas { background: white; padding: 40px 30px; border: 1px solid #000; min-height: 800px; }
-        .paper-header { border: 2px solid #000; padding: 15px; margin-bottom: 20px; text-align: center; }
-        .editable-inst { font-size: 20px; font-weight: 900; border: none; text-align: center; width: 100%; text-transform: uppercase; background: transparent; outline: none; }
-        .editable-head { border: none; border-bottom: 1px dashed #ccc; font-weight: 700; width: 80px; text-align: center; background: transparent; outline: none; }
-        .question-block { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-        .q-header-row { display: flex; justify-content: space-between; font-weight: 800; border-bottom: 1px solid #000; margin-bottom: 10px; font-size: 14px; }
-        .part-row { display: flex; gap: 10px; align-items: center; margin-bottom: 8px; }
-        .q-input { flex: 1; border: none; border-bottom: 1px solid #eee; font-size: 14px; outline: none; }
-
         .publish-footer { position: fixed; bottom: 0; width: 100%; background: white; padding: 15px; border-top: 1px solid #eee; display: flex; box-sizing: border-box; z-index: 1000; }
         .btn-action { background: var(--primary); color: white; border: none; flex: 1; padding: 15px; border-radius: 12px; font-weight: 700; cursor: pointer; }
-        .q-row-wrapper {
-            position: relative;
-            margin-bottom: 10px;
-            padding-right: 40px;
+
+        #vault-list-container {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column for mobile */
+            gap: 15px;
+            padding: 10px;
         }
-        .btn-inline-add {
+
+        .vault-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            position: relative;
+        }
+
+        .status-badge {
             position: absolute;
-            right: 0;
-            top: 0;
+            top: 10px;
+            right: 10px;
             background: #e8f5e9;
             color: var(--success);
-            border: 1px solid var(--success);
-            border-radius: 4px;
-            width: 30px;
-            height: 30px;
-            font-weight: 900;
-            cursor: pointer;
-        }
-        .sub-part-row {
-            margin-left: 25px;
-            margin-top: 5px;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .sub-part-row input {
-            font-size: 13px;
-            border-bottom: 1px dashed #ccc !important;
-        }
-        .parts-toggle-wrap {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-size: 11px;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 10px;
             font-weight: 700;
-            color: var(--secondary);
         }
 
-        .switch {
-            position: relative; display: inline-block; width: 34px; height: 18px;
+        .card-actions {
+            margin-top: 12px;
+            display: grid;
+            gap: 8px;
         }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 18px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--success); }
-        input:checked + .slider:before { transform: translateX(16px); }
 
-        /* Individual Row Delete */
-        .btn-row-del {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-            border-radius: 4px;
-            width: 25px;
-            height: 25px;
-            cursor: pointer;
-            font-size: 14px;
+        .btn-card {
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 700;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        /* 📱 Mobile Scaling for Android Capacitor */
+        @media screen and (max-width: 768px) {
+            .pages-wrapper {
+                transform: scale(0.45); /* Scales the A4 down to fit phone width */
+                transform-origin: top center;
+                margin-bottom: -500px; /* Offset the scale gap */
+            }
+        }
+
+        /* 🇸🇦 Arabic Layout Support */
+        .lang-ar {
+            direction: rtl !important;
+            text-align: right !important;
+            font-family: 'Amiri', serif;
+        }
+        .lang-ar .q-input, .lang-ar .sub-input {
+            text-align: right !important;
+        }
+        .pages-wrapper {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center; /* Centers paper horizontally */
+            width: 100%;
+            margin-top: 20px;
         }
+
+        .header-info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+            margin-top: 10px;
+            text-align: left;
+        }
+
+        .lang-ur .header-info-grid, .lang-ar .header-info-grid {
+            text-align: right;
+        }
+        /* Ensure controls stay visible while scaling */
+        .page-controls { position: relative; z-index: 1100; margin-top: 10px; }
+        /* Individual Row Controls */
+        .q-row-wrapper { position: relative; margin-bottom: 10px; padding-right: 40px; }
+        .btn-inline-add { background: #e8f5e9; color: var(--success); border: 1px solid var(--success); border-radius: 4px; width: 30px; height: 30px; font-weight: 900; cursor: pointer; }
+        .btn-row-del { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; border-radius: 4px; width: 25px; height: 25px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -210,7 +298,7 @@
 <div id="confirm-box">
     <div class="confirm-content">
         <h3 style="margin:0; color:var(--accent);">Delete Draft?</h3>
-        <p style="font-size:12px; color:#666;">This action will permanently remove this paper from the institution vault.</p>
+        <p style="font-size:12px; color:#666;">This will remove the paper from the institution vault.</p>
         <div style="display:flex; gap:10px; margin-top:20px;">
             <button onclick="closeConfirm()" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:700;">CANCEL</button>
             <button id="final-del-btn" style="flex:1; padding:10px; border:none; border-radius:8px; background:var(--accent); color:white; font-weight:700;">DELETE</button>
@@ -220,7 +308,7 @@
 
 <header>
     <div onclick="history.back()" style="font-size:24px; cursor:pointer; margin-right:15px;">✕</div>
-    <h2 id="page-title" style="margin:0; font-size:15px; font-weight: 900;">PAPER DESIGNER</h2>
+    <h2 style="margin:0; font-size:15px; font-weight: 900;">PAPER DESIGNER</h2>
 </header>
 
 <div class="tab-bar">
@@ -234,7 +322,7 @@
         <select id="sel-lang" onchange="toggleLangLayout()" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin-bottom:15px; font-weight:700;">
             <option value="en">English (Standard)</option>
             <option value="ur">Urdu (Nastaliq RTL)</option>
-            <option value="ar">Arabic (Naskh RTL)</option>
+            <option value="ar">Arabic (Modern Standard)</option>
         </select>
 
         <div class="type-list">
@@ -246,32 +334,41 @@
 
         <div id="config-panel" style="display:none; background:#f9f9f9; padding:15px; border-radius:10px; border:1px dashed #ccc;">
             <div id="custom-statement-box" style="display:none; margin-bottom:10px;">
-                <input type="text" id="in-statement" placeholder="Section Heading (e.g. Translation)" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                <input type="text" id="in-statement" placeholder="Section Heading" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
             </div>
             <div style="display:flex; gap:10px;">
-                <input type="number" id="in-qty" placeholder="Qty" style="width:30%; padding:10px;">
-                <input type="number" id="in-choice" placeholder="Attempt" style="width:30%; padding:10px;">
-                <input type="number" id="in-marks" placeholder="Marks" style="width:30%; padding:10px;">
+                <input type="number" id="in-qty" placeholder="Qty" style="width:33%;">
+                <input type="number" id="in-choice" placeholder="Attempt" style="width:33%;">
+                <input type="number" id="in-marks" placeholder="Marks" style="width:33%;">
             </div>
-            <button class="btn-action" style="margin-top:10px; padding:10px; font-size:12px;" onclick="addSectionToPaper()">ADD SECTION</button>
+            <button class="btn-action" style="margin-top:10px; height:40px;" onclick="addSectionToPaper()">ADD SECTION</button>
         </div>
     </div>
 
-    <div class="paper-canvas" id="canvas-main">
-        <div class="paper-header">
-            <input type="text" class="editable-inst" value="LOADING..." id="p-inst-name">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size: 11px; margin-top:10px;">
-                <div>SUB: <input type="text" id="p-subject" class="editable-head" value="English"></div>
-                <div>CLASS:
-                    <select id="p-class" class="editable-head" style="border:none; background:transparent; width:70%;">
-                        <option value="">Fetching...</option>
-                    </select>
+    <div class="page-controls">
+        <button class="btn-nav" onclick="changePage(-1)">PREV</button>
+        <div class="page-info">PAGE <span id="current-page-num">1</span> / <span id="total-pages-num">1</span></div>
+        <button class="btn-nav" onclick="changePage(1)">NEXT</button>
+    </div>
+
+    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+        <button onclick="manualCreatePage()" style="flex: 1; padding: 10px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: 700;">+ ADD NEW PAGE</button>
+        <button onclick="manualDeletePage()" style="flex: 1; padding: 10px; background: var(--accent); color: white; border: none; border-radius: 8px; font-weight: 700;">DELETE THIS PAGE</button>
+    </div>
+
+    <div id="pages-container" class="pages-wrapper">
+        <div class="paper-page active-page" id="page-1">
+            <div class="paper-header">
+                <div class="inst-logo-placeholder">LOGO</div> <input type="text" class="editable-inst" value="LOADING..." id="p-inst-name">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size: 11px; margin-top:10px;">
+                    <div>SUB: <input type="text" id="p-subject" class="editable-head" value="English"></div>
+                    <div>CLASS: <select id="p-class" class="editable-head" style="width:60%;"></select></div>
+                    <div>TYPE: <input type="text" id="p-type" class="editable-head" value="Final"></div>
+                    <div>TIME: <input type="text" id="p-duration" class="editable-head" value="3h"></div>
                 </div>
-                <div>TYPE: <input type="text" id="p-type" class="editable-head" value="Final"></div>
-                <div>TIME: <input type="text" id="p-duration" class="editable-head" value="3h"></div>
             </div>
+            <div id="dynamic-content-p1"></div>
         </div>
-        <div id="dynamic-content"></div>
     </div>
 </div>
 
@@ -282,15 +379,23 @@
 <div class="publish-footer">
     <button class="btn-action" id="btn-save" onclick="saveToVault()">SAVE TO INSTITUTION VAULT</button>
 </div>
-
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 
 <script>
-        const API_URL = "https://fastapi-teachers.onrender.com";
-        let activeType = '';
-        let vaultData = [];
-        let currentEditId = null;
+    const API_URL = "https://fastapi-teachers.onrender.com";
+    let activeType = '';
+    let vaultData = [];
+    let currentEditId = null;
+    let currentPage = 1;
+    let totalPages = 1;
+    const MAX_PAGE_HEIGHT_MM = 250; // A4 is 297mm, leaving room for margins/headers
+
+    const langMap = {
+        en: { sub: "SUB", class: "CLASS", type: "TYPE", time: "TIME", mcq: "Multiple Choice Questions", short: "Short Questions", long: "Long Questions" },
+        ur: { sub: "مضمون", class: "جماعت", type: "قسم", time: "وقت", mcq: "کثیر الانتخابی سوالات", short: "مختصر سوالات", long: "انشائیہ سوالات" },
+        ar: { sub: "المادة", class: "الصف", type: "نوع", time: "وقت", mcq: "أسئلة الاختيار من متعدد", short: "أسئلة قصيرة", long: "أسئلة طويلة" }
+    };
 
         window.onload = async () => {
         const data = await AppStorage.get("current_institution_name");
@@ -349,55 +454,76 @@
         document.getElementById('custom-statement-box').style.display = (type === 'Custom') ? 'block' : 'none';
     }
 
-        function toggleLangLayout() {
+    function toggleLangLayout() {
         const lang = document.getElementById('sel-lang').value;
-        const canvas = document.getElementById('canvas-main');
-        canvas.classList.remove('lang-ar', 'lang-ur');
-        if(lang !== 'en') canvas.classList.add('lang-' + lang);
+        const container = document.getElementById('pages-container');
+        container.classList.remove('lang-ar', 'lang-ur');
+        if(lang !== 'en') container.classList.add('lang-' + lang);
+
+        // Update Template Labels
+        const labels = langMap[lang] || langMap.en;
+        const header = document.querySelector('.paper-header');
+        if(header) {
+            header.innerHTML = `
+            <div class="inst-logo-placeholder">LOGO</div>
+            <input type="text" class="editable-inst" value="${document.getElementById('p-inst-name').value}" id="p-inst-name">
+            <div class="header-info-grid">
+                <div>${labels.sub}: <input type="text" id="p-subject" class="editable-head" value="${document.getElementById('p-subject').value}"></div>
+                <div>${labels.class}: <select id="p-class" class="editable-head" style="width:60%;"></select></div>
+                <div>${labels.type}: <input type="text" id="p-type" class="editable-head" value="${document.getElementById('p-type').value}"></div>
+                <div>${labels.time}: <input type="text" id="p-duration" class="editable-head" value="${document.getElementById('p-duration').value}"></div>
+            </div>
+        `;
+            loadSections(); // Re-fill the class dropdown
+        }
     }
 
-        function addSectionToPaper() {
+    function addSectionToPaper() {
         const qty = parseInt(document.getElementById('in-qty').value) || 1;
         const choice = parseInt(document.getElementById('in-choice').value) || qty;
         const marks = parseInt(document.getElementById('in-marks').value) || 1;
-        const dynamicContent = document.getElementById('dynamic-content');
+        const lang = document.getElementById('sel-lang').value;
+        const labels = langMap[lang] || langMap.en;
 
-        let targetBlock = dynamicContent.lastElementChild;
-        if (!targetBlock || targetBlock.dataset.type !== activeType || activeType === 'Custom') {
-        targetBlock = document.createElement('div');
+        // Target the current active page
+        let targetContentArea = document.getElementById(`dynamic-content-p${currentPage}`);
+
+        let targetBlock = document.createElement('div');
         targetBlock.className = 'question-block';
         targetBlock.dataset.marks = marks;
         targetBlock.dataset.choice = choice;
         targetBlock.dataset.type = activeType;
 
-        let hText = (activeType === 'MCQs') ? "Multiple Choice Questions" : (activeType === 'Short' ? "Short Questions" : "Long Questions");
-        if(activeType === 'Custom') hText = document.getElementById('in-statement').value;
+        // 🛠️ FIXED HEADER LOGIC
+        let hText = "";
+        if (activeType === 'Custom') {
+            hText = document.getElementById('in-statement').value || "Section";
+        } else {
+            // Explicitly map the type to the language label
+            const typeKey = activeType.toLowerCase(); // 'mcqs', 'short', or 'long'
+
+            // Handle the 'MCQs' vs 'mcq' mapping difference in your langMap
+            const mapKey = typeKey === 'mcqs' ? 'mcq' : (typeKey === 'short' ? 'short' : 'long');
+            hText = labels[mapKey];
+        }
 
         targetBlock.innerHTML = `
-                <div class="q-header-row">
-                    <span>${hText}</span>
-                    <span class="marks-label">(${choice * marks} Marks)</span>
-                </div>
-                ${activeType === 'Long' ? `
-                <div class="parts-toggle-wrap">
-                    <label class="switch">
-                        <input type="checkbox" checked onchange="togglePartsVisibility(this)">
-                        <span class="slider"></span>
-                    </label>
-                    <span>Enable (a) & (b) parts</span>
-                </div>` : ''}
-                <div class="q-container"></div>
-            `;
-        dynamicContent.appendChild(targetBlock);
-    }
+        <div class="q-header-row">
+            <span>${hText}</span>
+            <span class="marks-label">(${choice * marks} Marks)</span>
+        </div>
+        <div class="q-container"></div>
+    `;
 
+        targetContentArea.appendChild(targetBlock);
         const container = targetBlock.querySelector('.q-container');
-        const existingCount = container.querySelectorAll('.q-row-wrapper').length;
 
         for(let i=1; i<=qty; i++) {
-        createNewQuestionRow(container, existingCount + i);
-    }
+            createNewQuestionRow(container, i);
+        }
+
         document.getElementById('config-panel').style.display = 'none';
+        showNotify(activeType + " Added Successfully", "green");
     }
 
         function createNewQuestionRow(container, index, val = "", subparts = []) {
@@ -408,7 +534,7 @@
         wrapper.innerHTML = `
             <div class="part-row" style="display:flex; gap:10px; align-items:center;">
                 <span class="q-num" style="font-weight:bold; min-width:20px;">${index}.</span>
-                <input type="text" class="q-input" value="${val}" style="flex:1" placeholder="Type question here...">
+              <span class="q-input" contenteditable="true" style="flex:1; display:block;">${val}</span>
                 <div style="display:flex; gap:5px;">
                     <button class="btn-inline-add" onclick="addSpecificSubPart(this)" title="Add Part (a,b..)"
                             style="background:#e3f2fd; border:1px solid #2196f3; color:#2196f3; width:30px; border-radius:4px; position:static;">(a)</button>
@@ -472,84 +598,89 @@
         createNewQuestionRow(container, index);
     }
 
-        function addSubPart(container, val = "", label = null) {
-            const count = container.children.length;
-            const char = label || String.fromCharCode(97 + count);
-            const div = document.createElement('div');
-            div.className = 'sub-part-row';
-            div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginTop = '8px'; div.style.alignItems = 'center';
+    function addSubPart(container, val = "", label = null) {
+        const count = container.children.length;
+        const char = label || String.fromCharCode(97 + count);
+        const div = document.createElement('div');
+        div.className = 'sub-part-row';
 
-            // 🔥 Added class="btn-row-del" to the button below
-            div.innerHTML = `
+        // Logic: If it's an MCQ section, make options inline
+        const isMCQ = container.closest('.question-block').dataset.type === 'MCQs';
+
+        div.style.display = isMCQ ? 'inline-flex' : 'flex';
+        div.style.width = isMCQ ? '45%' : '100%';
+        div.style.gap = '5px';
+        div.style.marginTop = '8px';
+        div.style.alignItems = 'center';
+
+        div.innerHTML = `
         <span style="font-size:12px; font-weight:600;">(${char})</span>
-        <input type="text" class="sub-input q-input" value="${val}" style="flex:1; font-size:13px; border-bottom:1px dashed #ccc !important;">
-        <button class="btn-row-del" onclick="this.parentElement.remove()" style="border:none; background:none; color:red; cursor:pointer; font-weight:bold;">×</button>
+       <span class="sub-input q-input" contenteditable="true" style="flex:1; display:block;">${val}</span>
+        <button class="btn-row-del" onclick="this.parentElement.remove()" style="border:none; background:none; color:red; font-weight:bold; padding:0 5px;">×</button>
     `;
-            container.appendChild(div);
-        }
+        container.appendChild(div);
+    }
 
-        async function saveToVault() {
+    async function saveToVault() {
         const btn = document.getElementById('btn-save');
         btn.innerText = "SAVING..."; btn.disabled = true;
 
         const blueprint = [];
         let grandTotal = 0;
 
-        document.querySelectorAll('.question-block').forEach(block => {
-        const questions = [];
-        block.querySelectorAll('.q-row-wrapper').forEach(wrapper => {
-        const mainQ = wrapper.querySelector('.part-row .q-input').value;
-        const subQs = Array.from(wrapper.querySelectorAll('.sub-input')).map(si => si.value);
-        questions.push({ text: mainQ, sub_parts: subQs });
-    });
+        // 🔥 FIX: Query all question blocks across ALL pages
+        document.querySelectorAll('.paper-page .question-block').forEach(block => {
+            const questions = [];
+            block.querySelectorAll('.q-row-wrapper').forEach(wrapper => {
+                const mainQ = wrapper.querySelector('.part-row .q-input').innerText; // Use innerText
+                const subQs = Array.from(wrapper.querySelectorAll('.sub-input')).map(si => si.innerText); // Use innerText
+                questions.push({ text: mainQ, sub_parts: subQs });
+            });
 
-        const m = parseInt(block.dataset.marks);
-        const c = parseInt(block.dataset.choice);
-        grandTotal += (m * c);
+            const m = parseInt(block.dataset.marks) || 0;
+            const c = parseInt(block.dataset.choice) || 0;
+            grandTotal += (m * c);
 
-        blueprint.push({
-        type: block.dataset.type,
-        marks_per_q: m,
-        choice: c,
-        questions: questions
-    });
-    });
+            blueprint.push({
+                type: block.dataset.type,
+                marks_per_q: m,
+                choice: c,
+                questions: questions
+            });
+        });
 
-        // 🔥 FIX 4: Consistently use 'content_blueprint' to match fetch logic
-// Inside your saveToVault() function in the <script>
-            const payload = {
-                institution: document.getElementById('p-inst-name').value,
-                subject: document.getElementById('p-subject').value,
-                target_class: document.getElementById('p-class').value,
-                paper_type: document.getElementById('p-type').value,
-                duration: document.getElementById('p-duration').value,
-                language: document.getElementById('sel-lang').value,
-                // 🔥 CHANGE THIS LINE: It must match the Pydantic field name "blueprint"
-                blueprint: blueprint,
-                total_marks: grandTotal
-            };
+        const payload = {
+            institution: document.getElementById('p-inst-name').value,
+            subject: document.getElementById('p-subject').value,
+            target_class: document.getElementById('p-class').value,
+            paper_type: document.getElementById('p-type').value,
+            duration: document.getElementById('p-duration').value,
+            language: document.getElementById('sel-lang').value,
+            blueprint: blueprint,
+            total_marks: grandTotal
+        };
 
         const url = currentEditId ? `${API_URL}/document/papers/save-vault?paper_id=${currentEditId}` : `${API_URL}/document/papers/save-vault`;
 
         try {
-        const tRes = await AppStorage.get("auth_token");
-        const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tRes.value || tRes}` },
-        body: JSON.stringify(payload)
-    });
+            const tRes = await AppStorage.get("auth_token");
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tRes.value || tRes}` },
+                body: JSON.stringify(payload)
+            });
 
-        if(res.ok) {
-        showNotify("Paper Secured", "green");
-        setTimeout(() => location.reload(), 1200);
-    } else {
-        showNotify("Save Failed", "red");
-        btn.disabled = false; btn.innerText = "SAVE TO VAULT";
-    }
-    } catch(e) {
-        showNotify("Network Error", "red");
-        btn.disabled = false;
-    }
+            if(res.ok) {
+                showNotify("Paper Secured", "green");
+                setTimeout(() => location.reload(), 1200);
+            } else {
+                showNotify("Save Failed", "red");
+                btn.disabled = false; btn.innerText = "SAVE TO VAULT";
+            }
+        } catch(e) {
+            showNotify("Network Error", "red");
+            btn.disabled = false;
+        }
     }
 
         async function fetchVault() {
@@ -578,44 +709,66 @@
     } catch(e) { container.innerHTML = "Sync Failed."; }
     }
 
-        function loadEdit(id) {
+    function loadEdit(id) {
         const p = vaultData.find(x => x.id === id);
         if(!p) return;
         currentEditId = p.id;
         switchTab('design');
 
+        // Reset Pages to Start Fresh
+        document.getElementById('pages-container').innerHTML = `
+        <div class="paper-page active-page" id="page-1">
+            <div class="paper-header">
+                <input type="text" class="editable-inst" value="${p.institution}" id="p-inst-name">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; font-size: 11px; margin-top:10px;">
+                    <div>SUB: <input type="text" id="p-subject" class="editable-head" value="${p.subject}"></div>
+                    <div>CLASS: <select id="p-class" class="editable-head" style="width:60%;"></select></div>
+                    <div>TYPE: <input type="text" id="p-type" class="editable-head" value="${p.paper_type}"></div>
+                    <div>TIME: <input type="text" id="p-duration" class="editable-head" value="${p.duration}"></div>
+                </div>
+            </div>
+            <div id="dynamic-content-p1"></div>
+        </div>
+    `;
+        totalPages = 1;
+        currentPage = 1;
+        loadSections(); // Refresh dropdown
+
         document.getElementById('btn-save').innerText = "UPDATE SECURED PAPER";
-        document.getElementById('p-subject').value = p.subject;
-        document.getElementById('p-class').value = p.target_class;
-        document.getElementById('p-type').value = p.paper_type;
         document.getElementById('sel-lang').value = p.language;
         toggleLangLayout();
 
-        const content = document.getElementById('dynamic-content');
-        content.innerHTML = "";
+        // Re-build sections across pages
+        const blueprintData = p.content_blueprint || p.blueprint;
+        blueprintData.forEach(sec => {
+            activeType = sec.type;
+            // Logic to add section while respecting page breaks
+            let targetContentArea = document.getElementById(`dynamic-content-p${totalPages}`);
+            const block = document.createElement('div');
+            block.className = 'question-block';
+            block.dataset.marks = sec.marks_per_q;
+            block.dataset.choice = sec.choice;
+            block.dataset.type = sec.type;
 
-        p.content_blueprint.forEach(sec => {
-        const block = document.createElement('div');
-        block.className = 'question-block';
-        block.dataset.marks = sec.marks_per_q;
-        block.dataset.choice = sec.choice;
-        block.dataset.type = sec.type;
+            block.innerHTML = `
+            <div class="q-header-row">
+                <span>${sec.type}</span>
+                <span class="marks-label">(${sec.choice * sec.marks_per_q} Marks)</span>
+            </div>
+            <div class="q-container"></div>
+        `;
+            targetContentArea.appendChild(block);
 
-        block.innerHTML = `
-                <div class="q-header-row">
-                    <span>${sec.type}</span>
-                    <span class="marks-label">(${sec.choice * sec.marks_per_q} Marks)</span>
-                </div>
-                <div class="q-container"></div>
-            `;
-        const qCont = block.querySelector('.q-container');
-        sec.questions.forEach((qObj, idx) => {
-        const text = typeof qObj === 'string' ? qObj : qObj.text;
-        const subs = qObj.sub_parts || [];
-        createNewQuestionRow(qCont, idx + 1, text, subs);
-    });
-        content.appendChild(block);
-    });
+            const qCont = block.querySelector('.q-container');
+            sec.questions.forEach((qObj, idx) => {
+                const text = typeof qObj === 'string' ? qObj : qObj.text;
+                const subs = qObj.sub_parts || [];
+                createNewQuestionRow(qCont, idx + 1, text, subs);
+                // Check if adding this question caused a page overflow
+                checkAndHandleOverflow(block);
+            });
+        });
+        showPage(1); // Return to first page after loading
         showNotify("Editor Hydrated", "green");
     }
 
@@ -637,48 +790,50 @@
         bar.innerText = msg; bar.className = 'bg-' + type;
         setTimeout(() => bar.className = "", 3000);
     }
-        async function processPrint(id) {
-            const paper = vaultData.find(p => p.id === id);
-            if(!paper) return;
+    async function processPrint(id) {
+        const paper = vaultData.find(p => p.id === id);
+        if(!paper) return;
 
-            showNotify("Preparing Final Export...", "green");
+        showNotify("Compiling Pages for Export...", "green");
 
-            if(currentEditId !== id) {
-                await loadEdit(id);
-            }
-
-            const element = document.getElementById('canvas-main');
-            element.classList.add('exporting-pdf');
-
-            const opt = {
-                margin: [0.5, 0.5],
-                filename: `${paper.subject}_Paper.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-
-            try {
-                const worker = html2pdf().set(opt).from(element);
-                const pdfBase64 = await worker.outputPdf('datauristring');
-                element.classList.remove('exporting-pdf');
-
-                // 1. Trigger the Native Share
-                await shareToDevice(pdfBase64, opt.filename);
-
-                // 2. 🔥 NEW: Mark as taken in the database
-                await finalizePaperStatus(id);
-
-                showNotify("Paper Exported & Archived", "green");
-
-                // 3. Refresh the vault list to remove the "taken" paper
-                fetchVault();
-
-            } catch (e) {
-                element.classList.remove('exporting-pdf');
-                showNotify("Export interrupted", "red");
-            }
+        if(currentEditId !== id) {
+            await loadEdit(id);
         }
+
+        // Target the entire container holding all A4 pages
+        const element = document.getElementById('pages-container');
+
+        // Show ALL pages for the PDF generator
+        const allPages = document.querySelectorAll('.paper-page');
+        allPages.forEach(p => p.style.display = 'block');
+        element.classList.add('exporting-pdf');
+
+        const opt = {
+            margin: 0,
+            filename: `${paper.subject}_Paper.pdf`,
+            image: { type: 'jpeg', quality: 1.0 },
+            html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        };
+
+        try {
+            const worker = html2pdf().set(opt).from(element);
+            const pdfBase64 = await worker.outputPdf('datauristring');
+
+            // Hide non-active pages again
+            showPage(currentPage);
+            element.classList.remove('exporting-pdf');
+
+            await shareToDevice(pdfBase64, opt.filename);
+            await finalizePaperStatus(id);
+            fetchVault();
+        } catch (e) {
+            showPage(currentPage);
+            element.classList.remove('exporting-pdf');
+            showNotify("Export failed", "red");
+        }
+    }
 
         // Helper function to talk to the new PUT route
         async function finalizePaperStatus(id) {
@@ -727,6 +882,103 @@
                 link.click();
             }
         }
+
+    function changePage(step) {
+        const newPage = currentPage + step;
+        if (newPage >= 1 && newPage <= totalPages) {
+            showPage(newPage);
+        }
+    }
+
+        function goToPage(target) {
+            if (target === 'first') showPage(1);
+            if (target === 'last') showPage(totalPages);
+        }
+
+    function createNewPage() {
+        totalPages++;
+        const container = document.getElementById('pages-container');
+        const newDiv = document.createElement('div');
+        newDiv.className = 'paper-page';
+        newDiv.id = `page-${totalPages}`;
+        // Pages after Page 1 do NOT get the paper-header
+        newDiv.innerHTML = `<div id="dynamic-content-p${totalPages}"></div>`;
+        container.appendChild(newDiv);
+
+        document.getElementById('total-pages-num').innerText = totalPages;
+        return newDiv;
+    }
+
+    function manualCreatePage() {
+        totalPages++;
+        const container = document.getElementById('pages-container');
+        const newDiv = document.createElement('div');
+        newDiv.className = 'paper-page';
+        newDiv.id = `page-${totalPages}`;
+        // Pages after Page 1 do NOT get the paper-header automatically
+        newDiv.innerHTML = `<div id="dynamic-content-p${totalPages}" style="min-height: 100px;"></div>`;
+        container.appendChild(newDiv);
+
+        document.getElementById('total-pages-num').innerText = totalPages;
+        showPage(totalPages); // Move to the new page immediately
+        showNotify("New Page Created", "green");
+    }
+
+    // 🔥 NEW: Manually delete the current page (with safety)
+    function manualDeletePage() {
+        if (totalPages === 1) {
+            showNotify("Cannot delete the first page", "red");
+            return;
+        }
+
+        const pageToDelete = document.getElementById(`page-${currentPage}`);
+        if (pageToDelete) {
+            pageToDelete.remove();
+
+            // Re-calculate totals and IDs
+            const remainingPages = document.querySelectorAll('.paper-page');
+            totalPages = remainingPages.length;
+
+            // Re-ID all pages to keep sequence correct
+            remainingPages.forEach((pg, index) => {
+                const newIdx = index + 1;
+                pg.id = `page-${newIdx}`;
+                const content = pg.querySelector('[id^="dynamic-content-p"]');
+                if(content) content.id = `dynamic-content-p${newIdx}`;
+            });
+
+            document.getElementById('total-pages-num').innerText = totalPages;
+            showPage(Math.max(1, currentPage - 1));
+            showNotify("Page Removed", "red");
+        }
+    }
+
+    // 🔥 MODIFIED: Ensure switchTab/loadEdit respects manual page logic
+    function showPage(num) {
+        document.querySelectorAll('.paper-page').forEach(p => p.classList.remove('active-page'));
+        const target = document.getElementById(`page-${num}`);
+        if (target) {
+            target.style.display = 'block'; // Ensure it's visible
+            target.classList.add('active-page');
+            currentPage = num;
+            document.getElementById('current-page-num').innerText = currentPage;
+        }
+    }
+
+    function cleanupEmptyPages() {
+        if (totalPages <= 1) return;
+
+        const lastPage = document.getElementById(`page-${totalPages}`);
+        const content = document.getElementById(`dynamic-content-p${totalPages}`);
+
+        if (content && content.children.length === 0) {
+            lastPage.remove();
+            totalPages--;
+            document.getElementById('total-pages-num').innerText = totalPages;
+            if (currentPage > totalPages) showPage(totalPages);
+        }
+    }
+
 </script>
 </body>
 </html>
