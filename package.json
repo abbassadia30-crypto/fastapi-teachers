@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/abbassadia30-crypto/fastapi-teachers#readme",
   "dependencies": {
+    "@aparajita/capacitor-biometric-auth": "^10.0.0",
     "@capacitor-mlkit/barcode-scanning": "^8.0.1",
     "@capacitor/android": "^8.1.0",
     "@capacitor/cli": "^8.1.0",
@@ -29,10 +30,16 @@
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/share": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.1",
     "@capgo/capacitor-speech-recognition": "^8.0.10",
     "capacitor-native-biometric": "^4.2.2",
     "chart.js": "^4.5.1",
+    "framer-motion": "^12.34.3",
+    "lottie-web": "^5.13.0",
     "pako": "^2.1.0",
-    "pyodide": "^0.29.3"
+    "phonegap-nfc": "^1.2.0",
+    "pyodide": "^0.29.3",
+    "socket.io-client": "^4.8.3",
+    "video.js": "^8.23.7"
   }
 }

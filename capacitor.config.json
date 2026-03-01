@@ -1,6 +1,6 @@
 {
-  "appId": "com.institution.superconsole",
-  "appName": "InstitutionApp",
+  "appId": "com.starlight.superconsol",
+  "appName": "Starlight",
   "webDir": "frontend",
   "server": {
     "androidScheme": "http",
