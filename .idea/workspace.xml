@@ -5,8 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/admin/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/admin/document.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/document.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/schemas/admin/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schemas/admin/document.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,6 +119,7 @@
       <workItem from="1772338082363" duration="7144000" />
       <workItem from="1772346145883" duration="1841000" />
       <workItem from="1772348038505" duration="2286000" />
+      <workItem from="1772351955876" duration="1056000" />
     </task>
     <task id="LOCAL-00008" summary="now">
       <option name="closed" value="true" />
