@@ -295,24 +295,28 @@
     }
   }
 
-  async function deployToCloud(isDraft) {
+  async function deployToCloud(isDraft = false) {
+    // 1. Get current input values
     const exam = document.getElementById('inp-exam').value;
     const tClass = document.getElementById('inp-class').value;
-    const totalMarks = parseFloat(document.getElementById('inp-total').value);
+    const subject = document.getElementById('inp-subject').value;
+    const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
 
-    if(!exam || !tClass) return showNotify("Fill Exam Title & Class", "red");
+    if (!exam || !tClass) {
+      showNotify("Exam Title and Class are required!", "red");
+      return;
+    }
 
-    // Construct the data array to match the Backend Schema perfectly
+    // 2. Format data for the Institution Management System
     const formattedData = students.map(s => {
       const obtained = parseFloat(s.obtained) || 0;
       const perc = (obtained / totalMarks) * 100;
-
       return {
         student_id: parseInt(s.id),
         student_name: s.name,
-        father_name: s.father_name || "",
+        father_name: s.father_name || "N/A",
         subjects: [{
-          subject: document.getElementById('inp-subject').value || "General",
+          subject: subject || "General",
           max: totalMarks,
           obtained: obtained
         }],
@@ -324,13 +328,17 @@
       exam_title: exam,
       target_class: tClass,
       status: isDraft ? 'DRAFT' : 'PUBLISHED',
-      data: formattedData // Send the formatted version
+      data: formattedData
     };
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
-      const res = await fetch(`${API_URL}/document/academic/deploy-results`, {
+
+      showNotify("Connecting to Institution Server...", "green");
+
+      // FIX: Changed API_URL to API to match your variable definition
+      const res = await fetch(`${API}/document/academic/deploy-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -339,11 +347,20 @@
         body: JSON.stringify(payload)
       });
 
-      if(!res.ok) throw new Error();
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Server rejected the request");
+      }
 
-      showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
-      if(!isDraft) setTimeout(() => location.reload(), 2000);
-    } catch (e) { showNotify("Sync Failed", "red"); }
+      showNotify(isDraft ? "Draft Saved Successfully" : "Results Published!", "green");
+
+      if (!isDraft) {
+        setTimeout(() => location.reload(), 2000);
+      }
+    } catch (e) {
+      console.error("Network Error:", e);
+      showNotify(e.message || "Failed to reach server", "red");
+    }
   }
 
   async function renderPendingList() {
