@@ -157,7 +157,7 @@
 
   async function fetchSections() {
     try {
-      const tokenObj = await AppStorage.get("institutionToken");
+      const tokenObj = await AppStorage.get("auth_token");
       const token = tokenObj.value || tokenObj;
 
       const res = await fetch(`${API_URL}/dashboard/sections`, {
@@ -204,7 +204,7 @@
     list.innerHTML = '<div style="text-align:center; padding:20px;">Fetching Members...</div>';
 
     try {
-      const tokenObj = await AppStorage.get("institutionToken");
+      const tokenObj = await AppStorage.get("auth_token");
       const token = tokenObj.value || tokenObj;
 
       const res = await fetch(`${API_URL}/dashboard/my_students`, {
@@ -310,7 +310,7 @@
     };
 
     try {
-      const tokenObj = await AppStorage.get("institutionToken");
+      const tokenObj = await AppStorage.get("auth_token");
       const token = tokenObj.value || tokenObj;
 
       const res = await fetch(`${API_URL}/document/submit`, {

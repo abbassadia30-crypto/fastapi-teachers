@@ -16,6 +16,48 @@
       height: 100vh; display: flex; flex-direction: column; overflow: hidden;
     }
 
+    /* Add this to your <style> head */
+    .marking-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 10px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    .student-card {
+      background: white;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid var(--border);
+      transition: 0.2s;
+    }
+
+    .student-card:active { transform: scale(0.98); background: #fffcf9; }
+
+    .card-info b { color: var(--secondary); font-size: 14px; display: block; text-transform: uppercase; }
+    .card-info span { color: var(--primary); font-size: 11px; font-weight: 600; }
+
+    .input-zone { width: 75px; }
+
+    .grid-input {
+      width: 100%;
+      height: 45px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--secondary);
+      background: #fdfdfd;
+    }
+
+    .grid-input:focus { border-color: var(--primary); outline: none; background: white; }
+
     /* Ensure the table doesn't feel cramped */
     .gb-table {
       width: 100%;
@@ -340,25 +382,35 @@
       return;
     }
 
-    const results = [];
-    rows.forEach(tr => {
-      results.push({
-        name: tr.dataset.name,
-        father_name: tr.dataset.fname,
-        marks: [{
+    const cards = document.querySelectorAll('.student-card');
+
+    const formattedData = Array.from(cards).map(card => {
+      const studentId = card.getAttribute('data-sid');
+      const studentName = card.querySelector('b').innerText;
+      const fatherName = card.querySelector('span').innerText.replace('S/O: ', '');
+      const obtained = parseFloat(card.querySelector('.obt-input').value) || 0;
+
+      const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
+      const perc = (obtained / totalMarks) * 100;
+
+      return {
+        student_id: studentId, // Keeping raw ID for database integrity
+        student_name: studentName,
+        father_name: fatherName,
+        subjects: [{
           subject: document.getElementById('inp-sub').value,
-          max: parseFloat(document.getElementById('inp-total').value),
-          obt: parseFloat(tr.querySelector('.obt-input').value) || 0,
-          pass_mark: parseFloat(document.getElementById('inp-pass').value)
-        }]
-      });
+          max: totalMarks,
+          obtained: obtained
+        }],
+        percentage: parseFloat(perc.toFixed(2))
+      };
     });
 
     const payload = {
-      exam_title: title,
-      class_name: section,
-      is_draft: isDraft,
-      results: results
+      exam_title: document.getElementById('exam-title').value,
+      target_class: document.getElementById('sel-sec').value,
+      status: isDraft ? 'DRAFT' : 'PUBLISHED',
+      data: formattedData
     };
     try {
       const tRes = await AppStorage.get("auth_token");
@@ -388,31 +440,37 @@
       showNotify("Sync Failed", "red");
     }
   }
-  let localDrafts = []; // This keeps our data safe from HTML string errors
+  let localDrafts = []; // 🎯 Global storage to prevent string errors
 
   async function renderPendingList() {
     const listDiv = document.getElementById('pending-list');
+    const tRes = await AppStorage.get("auth_token");
+    const token = tRes.value || tRes;
+
     try {
-      const tRes = await AppStorage.get("auth_token");
-      const token = tRes.value || tRes;
       const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const drafts = await res.json();
-      localDrafts = drafts; // Store the full data here
+      localDrafts = drafts; // Store the data safely
 
-      listDiv.innerHTML = drafts.map((d, index) => `
-        <div class="pending-item" onclick="loadDraftByIndex(${index})">
-            <div style="flex: 1;">
-                <b style="color:var(--secondary);">${d.exam_title}</b>
-                <div style="font-size:11px; color:var(--primary);">Section: ${d.target_class}</div>
-            </div>
-            <div style="text-align:right;">
-                <span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:10px; font-size:10px;">RESUME</span>
+      listDiv.innerHTML = drafts.map(d => `
+    <div class="pending-item">
+        <div style="flex:1;">
+            <b style="color:var(--secondary);">${d.exam_title}</b>
+            <div style="font-size:11px; color:var(--primary); font-weight:600;">
+                ${d.target_class} • ${d.student_count} Students
             </div>
         </div>
-    `).join('');
-    } catch (e) { showNotify("Error fetching drafts", "red"); }
+        <button class="btn-tab active"
+                onclick="loadDraft('${d.id}')"
+                style="width:auto; padding:8px 20px; font-size:12px;">
+            RESUME
+        </button>
+    </div>`).join('');
+    } catch (e) {
+      showNotify("Failed to fetch drafts", "red");
+    }
   }
 
   function validateSingleRow(el) {
@@ -433,70 +491,61 @@
   }
 
   async function loadDraft(draftId) {
-    showNotify("Restoring Draft...", "green");
-
+    showNotify("Reconstructing Grid...", "green");
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
+      const res = await fetch(`${API_URL}/document/academic/draft/${draftId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      if (!res.ok) throw new Error("Could not fetch draft details");
-
+      if (!res.ok) throw new Error("Mismatch");
       const draft = await res.json();
 
-      // 1. Switch back to Architect Tab
       switchTab('arch');
 
-      // 2. Fill the configuration headers
+      // Header Sync
       document.getElementById('exam-title').value = draft.exam_title;
       document.getElementById('sel-sec').value = draft.target_class;
 
-      // Use the first student's subject data to fill headers
-      if (draft.data && draft.data.length > 0) {
-        const firstSub = draft.data[0].subjects[0];
-        document.getElementById('inp-sub').value = firstSub.subject;
-        document.getElementById('inp-total').value = firstSub.max;
-      }
+      const subData = draft.data[0].subjects[0];
+      document.getElementById('inp-sub').value = subData.subject;
+      document.getElementById('inp-total').value = subData.max;
 
-      // 3. Render the marking rows with SAVED values
-      const rows = document.getElementById('student-marking-rows');
-      document.getElementById('marking-area').classList.remove('hidden');
+      // INJECT GRID INTO CONTAINER
+      const container = document.getElementById('marking-area');
+      container.classList.remove('hidden');
 
-      currentStudents = draft.data; // Sync global state
-
-      rows.innerHTML = currentStudents.map((s, index) => `
-    <tr data-sid="${s.id || s.student_id}" data-name="${s.name || s.student_name}" data-fname="${s.father_name || 'N/A'}">
-        <td>
-            <div style="font-weight:700; color:var(--secondary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${s.name || s.student_name}
+      // We replace the table body with a Grid Root
+      container.innerHTML = `
+            <div class="marking-grid">
+                ${draft.data.map((s, idx) => `
+                    <div class="student-card" data-sid="${s.student_id}">
+                        <div class="card-info">
+                            <b>${s.student_name}</b>
+                            <span>S/O: ${s.father_name.toUpperCase()}</span>
+                        </div>
+                        <div class="input-zone">
+                            <input type="number"
+                                   class="grid-input obt-input"
+                                   value="${s.subjects[0].obtained}"
+                                   inputmode="decimal"
+                                   onfocus="this.select()"
+                                   onkeydown="handleEnterKey(event, ${idx})"
+                                   oninput="validateSingleRow(this)">
+                        </div>
+                    </div>
+                `).join('')}
             </div>
-            <div style="font-size:10px; color:var(--primary); font-weight:600;">
-                S/O: ${(s.father_name || 'N/A').substring(0, 15)}
-            </div>
-        </td>
-        <td style="text-align:right;">
-            <input type="number"
-                   class="obt-input"
-                   value="${s.subjects ? s.subjects[0].obtained : 0}"
-                   inputmode="decimal"
-                   onfocus="this.select()"
-                   onkeydown="handleEnterKey(event, ${index})"
-                   oninput="validateSingleRow(this)">
-        </td>
-    </tr>
-`).join('');
+        `;
 
-      showNotify("Draft Loaded Successfully", "green");
-
+      currentStudents = draft.data;
+      showNotify("Integrity Check Passed", "green");
     } catch (e) {
-      console.error(e);
-      showNotify("Failed to open draft", "red");
+      showNotify("Database Integrity Error", "red");
     }
   }
-
   function resumeDraft(draft) {
     // 1. Fill the Header inputs
     document.getElementById('exam-title').value = draft.exam_title;
@@ -538,26 +587,26 @@
     const draft = localDrafts[index];
     if (!draft) return;
 
-    // 1. Fill Headers
+    // 1. Fill Header Info
     document.getElementById('exam-title').value = draft.exam_title;
     document.getElementById('sel-sec').value = draft.target_class;
 
-    // Get subject config from first student entry
+    // Auto-fill marking config from the first saved student
     const config = draft.data[0].marks_data[0];
     document.getElementById('inp-sub').value = config.subject;
     document.getElementById('inp-total').value = config.max;
     document.getElementById('inp-pass').value = config.pass_mark;
 
-    // 2. Open Table
+    // 2. Switch UI
     document.getElementById('setup-area').classList.add('hidden');
     document.getElementById('marking-area').classList.remove('hidden');
 
-    // 3. Render student rows with their SAVED obtained marks
+    // 3. Render rows with SAVED values
     const rows = document.getElementById('student-marking-rows');
     rows.innerHTML = draft.data.map((s, idx) => `
         <tr data-name="${s.student_name}" data-fname="${s.father_name}">
             <td>
-                <div style="font-weight:700;">${s.student_name}</div>
+                <div style="font-weight:700; color:var(--secondary);">${s.student_name}</div>
                 <div style="font-size:10px; color:#666;">S/O: ${s.father_name}</div>
             </td>
             <td style="text-align:right;">
@@ -569,10 +618,10 @@
         </tr>
     `).join('');
 
-    showNotify("Draft Loaded: " + draft.exam_title, "green");
+    showNotify("Editing Draft: " + draft.exam_title, "orange");
   }
 
-  async function finalizeCurrentDraft() {
+  async function finalizeSyllabus() {
     const title = document.getElementById('exam-title').value;
     const section = document.getElementById('sel-sec').value;
 
@@ -586,7 +635,7 @@
       });
 
       if (res.ok) {
-        showNotify("Syllabus Completed & Results Published!", "green");
+        showNotify("Syllabus Completed & Published!", "green");
         setTimeout(() => location.reload(), 1500);
       }
     } catch (e) {

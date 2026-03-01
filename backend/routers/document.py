@@ -455,7 +455,7 @@ async def delete_paper(
 @router.post("/submit")
 async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
     try:
-        # Corrected: model uses institution_id
+        # 1. Create the main Log entry (this works for both manual and registered)
         new_log = AttendanceLog(
             institution_id=current_user.institution_id,
             section_identifier=payload.section_id,
@@ -467,25 +467,34 @@ async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get
             l_count=len([x for x in payload.data if x.status == 'L'])
         )
         db.add(new_log)
-        db.flush()
+        db.flush() # Get the new_log.id without committing yet
 
+        # 2. Save individual records ONLY for registered students
         for entry in payload.data:
-            if not entry.is_manual:
+            # IMPORTANT: Check if it's NOT a manual entry and ID is numeric
+            # Manual entries like "M-4829" will break Foreign Key constraints
+            if not entry.is_manual and str(entry.student_id).isdigit():
                 indiv = IndividualAttendance(
                     institution_id=current_user.institution_id,
-                    student_id=str(entry.student_id), # model expects String FK
+                    student_id=str(entry.student_id),
                     log_id=new_log.id,
                     status=entry.status,
                     date=payload.date
                 )
                 db.add(indiv)
+            else:
+                # We skip IndividualAttendance for manual entries
+                # because they aren't in the 'students' table.
+                # Their data is already saved inside AttendanceLog.attendance_data
+                continue
 
         db.commit()
         return {"status": "success"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
-
+        # This will help you see the exact SQL error in Render logs
+        print(f"ATTENDANCE ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database Integrity Error")
 
 @router.post("/submit-staff")
 async def submit_staff_attendance(payload: StaffAttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
