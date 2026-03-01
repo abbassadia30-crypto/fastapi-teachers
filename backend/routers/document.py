@@ -284,10 +284,10 @@ async def get_pending_marksheets(
         current_user: Any = Depends(get_current_user)
 ):
     # Single bulk fetch: Source of Truth (Institution) + State (Pending)
-    marksheets = db.query(MarksheetLog).filter(
+    marksheets = db.query(AcademicResult).filter(
         MarksheetLog.institution_id == current_user.institution_id,
         MarksheetLog.status == "pending"  # Only fetch what needs action
-    ).order_by(MarksheetLog.created_at.desc()).all()
+    ).order_by(AcademicResult.created_at.desc()).all()
 
     return marksheets
 
