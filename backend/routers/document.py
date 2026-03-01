@@ -11,6 +11,7 @@ from backend.schemas.admin.document import VaultUpload, DateSheetResponse, DateS
     NoticeCreate, NoticeResponse, BulkDeployPayload, BulkResultPayload, PaperCreate, AttendanceSubmit, \
     StaffAttendanceSubmit , PendingSync
 from typing import Optional
+from backend.models.admin.dashboard import student as StudentModel
 
 router = APIRouter(
     prefix="/document",

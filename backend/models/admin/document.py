@@ -105,7 +105,7 @@ class AcademicResult(Base):
     institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     # FIX: Point to "students.id" (plural) to match your dashboard.py
-    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
+    student_id = Column(Integer, ForeignKey("students.id"), index=True)
 
     exam_title = Column(String, nullable=False)
     target_class = Column(String, nullable=False)
