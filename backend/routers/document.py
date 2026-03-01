@@ -248,65 +248,34 @@ async def deploy_vouchers(
 
 
 @router.post("/academic/deploy-results")
-async def deploy_results(
-        payload: BulkResultPayload,
-        db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
-):
-    # 🏛️ Robustly find the Institution ID
-    inst_id = getattr(current_user, 'institution_id', None) or \
-              getattr(current_user, 'last_active_institution_id', None)
-
-    if not inst_id:
-        raise HTTPException(status_code=400, detail="User not linked to an institution")
-
+async def deploy_results(payload: BulkResultPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     try:
-        # 1. CLEANUP: Remove any existing results for this Exam + Section
-        # This prevents the "Duplicate Entry" errors that cause 500 crashes
+        # 1. Clean old entries for this specific Exam + Section
         db.query(AcademicResult).filter(
-            AcademicResult.institution_ref == inst_id,
+            AcademicResult.institution_ref == current_user.institution_id,
             AcademicResult.exam_title == payload.exam_title,
             AcademicResult.target_class == payload.class_name
         ).delete()
 
-        status_to_set = "DRAFT" if payload.is_draft else "PUBLISHED"
-        db_entries = []
-
+        # 2. Bulk Insert the snapshot
         for entry in payload.results:
-            # Calculate Total Marks for this student
-            total_max = sum(m.max for m in entry.marks) if entry.marks else 100
-            total_obt = sum(m.obt for m in entry.marks) if entry.marks else 0
-
-            # Ensure student_id is an INT (Crucial for DB integrity)
-            s_id = int(entry.student_id)
-
             new_res = AcademicResult(
-                institution_ref=inst_id,
+                institution_ref=current_user.institution_id,
                 exam_title=payload.exam_title,
                 target_class=payload.class_name,
-                student_id=s_id,
                 student_name=entry.name,
                 father_name=entry.father_name,
                 marks_data=[m.model_dump() for m in entry.marks],
-                percentage=round((total_obt / total_max * 100), 2) if total_max > 0 else 0,
-                status=status_to_set,
-                created_by=getattr(current_user, 'user_email', 'Teacher')
+                status="DRAFT" if payload.is_draft else "PUBLISHED",
+                created_by=current_user.user_email
             )
-            db_entries.append(new_res)
+            db.add(new_res)
 
-        db.add_all(db_entries)
         db.commit()
-
-        return {
-            "status": "success",
-            "message": "Data Synchronized",
-            "count": len(db_entries)
-        }
-
+        return {"status": "success"}
     except Exception as e:
         db.rollback()
-        print(f"DATABASE ERROR: {str(e)}") # Check your server logs for this!
-        raise HTTPException(status_code=500, detail=f"Sync Failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Storage Failed")
 
 @router.get("/my-drafts")
 async def get_my_drafts(

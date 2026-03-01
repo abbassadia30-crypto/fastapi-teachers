@@ -331,47 +331,36 @@
   }
 
   async function deployToCloud(isDraft) {
-    const rows = document.querySelectorAll('#student-marking-rows tr');
-    const results = [];
-
-    // 1. Get values and ensure they are numbers
-    const total = parseFloat(document.getElementById('inp-total').value) || 100;
-    const pass = parseFloat(document.getElementById('inp-pass').value) || 33;
-    const sub = document.getElementById('inp-sub').value || "General";
-    const title = document.getElementById('exam-title').value;
     const section = document.getElementById('sel-sec').value;
+    const title = document.getElementById('exam-title').value;
+    const rows = document.querySelectorAll('#student-marking-rows tr');
 
-    if (!title || !section) {
-      showNotify("Please enter Exam Title and select Section", "red");
+    if (!section || !title) {
+      showNotify("Section and Title Required", "red");
       return;
     }
 
+    const results = [];
     rows.forEach(tr => {
-      const obtValue = tr.querySelector('.obt-input').value;
-
       results.push({
-        // Force student_id to be a Number to avoid 422 error
-        student_id: Number(tr.dataset.sid),
+        // 🎯 We send names as strings, ignore DB IDs
         name: tr.dataset.name,
         father_name: tr.dataset.fname,
         marks: [{
-          subject: sub,
-          max: total,
-          obt: parseFloat(obtValue) || 0,
-          pass_mark: pass
+          subject: document.getElementById('inp-sub').value || "General",
+          max: parseFloat(document.getElementById('inp-total').value),
+          obt: parseFloat(tr.querySelector('.obt-input').value) || 0,
+          pass_mark: parseFloat(document.getElementById('inp-pass').value)
         }]
       });
     });
 
     const payload = {
       exam_title: title,
-      class_name: section, // Ensure this matches your Pydantic schema field name
+      class_name: section,
       is_draft: isDraft,
       results: results
     };
-
-    console.log("Sending Payload:", payload); // Debug this in Chrome/Android inspection
-
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;

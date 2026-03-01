@@ -100,24 +100,21 @@ class Voucher(Base):
 class AcademicResult(Base):
     __tablename__ = "academic_results"
     id = Column(Integer, primary_key=True, index=True)
-
-    # THE PRIMARY RELATION (Owned by Institution)
     institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
-    # FIX: Point to "students.id" (plural) to match your dashboard.py
-    student_id = Column(Integer, ForeignKey("students.id"), index=True)
+    exam_title = Column(String)
+    target_class = Column(String) # This is your Section/Class link
 
-    exam_title = Column(String, nullable=False)
-    target_class = Column(String, nullable=False)
+    # 🏛️ Instead of a ForeignKey link, we store the name and father name directly
+    # This keeps the record safe even if the student is deleted from the system
     student_name = Column(String)
     father_name = Column(String)
-    marks_data = Column(JSON) # [{'subject': 'Math', 'obtained': 80, 'total': 100}]
+
+    marks_data = Column(JSON) # Stores subject, max, obt, pass_mark
     percentage = Column(Float)
-    status = Column(String, default="DRAFT") # DRAFT or PUBLISHED
-
-    created_by = Column(String) # Email of the teacher who entered it
-    created_at = Column(DateTime, default=datetime.utcnow)
-
+    status = Column(String) # DRAFT or PUBLISHED
+    created_by = Column(String)
+    created_at = Column(DateTime, server_default=func.now())
     # Relationships
     institution = relationship("Institution", back_populates="academic_results")
 
