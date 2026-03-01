@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">InstitutionApp</string>
-    <string name="title_activity_main">InstitutionApp</string>
-    <string name="package_name">com.institution.superconsole</string>
-    <string name="custom_url_scheme">com.institution.superconsole</string>
+    <string name="app_name">Starlight</string>
+    <string name="title_activity_main">Starlight</string>
+    <string name="package_name">com.starlight.superconsol</string>
+    <string name="custom_url_scheme">com.starlight.superconsol</string>
 </resources>

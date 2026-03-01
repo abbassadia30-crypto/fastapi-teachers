@@ -113,6 +113,7 @@ class AcademicResult(Base):
     final_status = Column(String)
     created_at = Column(DateTime, default=datetime.utcnow)
     created_by = Column(String)
+    status = Column(String, default="PUBLISHED")
 
     institution = relationship("Institution", back_populates="academic_results")
 

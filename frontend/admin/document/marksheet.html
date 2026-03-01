@@ -16,15 +16,14 @@
       height: 100vh; display: flex; flex-direction: column; overflow: hidden;
     }
 
-    /* Notification System (Red/Green Sign Boxes) */
     #notification-bar {
       position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
-      width: 90%; max-width: 400px; padding: 15px; border-radius: 12px;
-      color: white; text-align: center; transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-      z-index: 9999; font-weight: 700; box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+      width: 90%; max-width: 400px; padding: 18px; border-radius: 12px;
+      color: white; text-align: center; transition: 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 10000; font-weight: 700; box-shadow: 0 15px 30px rgba(0,0,0,0.2);
     }
-    .bg-red { background: var(--danger) !important; top: 20px !important; display: block !important;}
-    .bg-green { background: var(--success) !important; top: 20px !important; display: block !important;}
+    .bg-red { background: var(--danger); top: 25px !important; }
+    .bg-green { background: var(--success); top: 25px !important; }
 
     header {
       background: white; padding: 15px 20px; display: flex;
@@ -32,7 +31,6 @@
       border-bottom: 1px solid #ddd; flex-shrink: 0;
     }
 
-    /* Tab Navigation */
     .tab-nav { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 15px; background: white; border-bottom: 1px solid var(--border); }
     .btn-tab {
       padding: 12px; border-radius: 12px; border: 1px solid var(--border);
@@ -49,9 +47,7 @@
 
     label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; margin-bottom: 5px; display: block; }
 
-    .locked-val { background: #f8fafc; padding: 12px; border-radius: 10px; font-weight: 700; font-size: 14px; color: var(--secondary); margin-bottom: 12px; border: 1px solid var(--border); border-left: 4px solid var(--primary); }
-
-    input {
+    input, select {
       width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border);
       border-radius: 10px; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s;
     }
@@ -62,9 +58,17 @@
     .gb-table th { background: #f1f5f9; padding: 12px; font-size: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
     .gb-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 
-    .obt-input { width: 70px; padding: 8px; border: 2px solid var(--border); border-radius: 8px; text-align: center; font-weight: 800; color: var(--primary); }
+    .obt-input {
+      width: 80px !important;
+      padding: 8px !important;
+      border: 2px solid var(--border) !important;
+      border-radius: 8px !important;
+      text-align: center !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+      margin: 0 !important;
+    }
 
-    .footer { background: white; padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
     .btn-main {
       background: var(--primary); color: white; border: none; flex: 1;
       padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer;
@@ -99,227 +103,223 @@
   <div id="view-arch">
     <div class="config-card">
       <label>Exam/Test Title</label>
-      <input type="text" id="exam-title" placeholder="e.g. Unit Test - 01">
+      <input type="text" id="exam-title" placeholder="e.g. Final Term 2026">
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div><label>Subject</label><div id="lock-sub" class="locked-val">--</div></div>
-        <div><label>Section</label><div id="lock-sec" class="locked-val">--</div></div>
+        <div>
+          <label>Select Section</label>
+          <select id="sel-sec" onchange="autoLoadMarkingStation()">
+            <option value="">-- Select Section --</option>
+          </select>
+        </div>
+        <div><label>Subject</label><input type="text" id="inp-sub" placeholder="e.g. Mathematics"></div>
       </div>
 
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div><label>Total Marks</label><div id="lock-total" class="locked-val">0</div></div>
-        <div><label>Passing Marks</label><input type="number" id="pass-marks" value="33"></div>
+        <div><label>Total Marks</label><input type="number" id="inp-total" value="100"></div>
+        <div><label>Passing Marks</label><input type="number" id="inp-pass" value="33"></div>
+      </div>
+    </div>
+
+    <div id="marking-area" class="hidden">
+      <div class="table-wrapper">
+        <table class="gb-table">
+          <thead>
+          <tr>
+            <th>STUDENT & FATHER NAME</th>
+            <th style="text-align:center; width: 100px;">OBTAINED</th>
+          </tr>
+          </thead>
+          <tbody id="student-marking-rows"></tbody>
+        </table>
       </div>
 
-      <button class="btn-main" onclick="saveAsPending()">CREATE MARKING TEMPLATE</button>
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+        <button class="btn-main" style="background:#607d8b;" onclick="deployToCloud(true)">SAVE DRAFT</button>
+        <button class="btn-main" style="background:var(--secondary);" onclick="deployToCloud(false)">PUBLISH NOW</button>
+      </div>
     </div>
   </div>
 
   <div id="view-pend" class="hidden">
-    <div id="pending-list">
-    </div>
+    <div id="pending-list"></div>
   </div>
 
-  <div id="view-marking" class="hidden">
-    <div class="config-card" style="border-left: 5px solid var(--success);">
-      <h2 id="mark-title" style="margin:0; font-size:16px;"></h2>
-      <p id="mark-meta" style="font-size:11px; color:#666; margin:5px 0 0 0;"></p>
-    </div>
-    <div class="table-wrapper">
-      <table class="gb-table">
-        <thead>
-        <tr>
-          <th>STUDENT NAME</th>
-          <th style="text-align:center;">MARKS OBTAINED</th>
-        </tr>
-        </thead>
-        <tbody id="student-marking-rows"></tbody>
-      </table>
-    </div>
-    <div style="height:20px;"></div>
-    <button class="btn-main" id="btn-deploy" style="background:var(--secondary);">PUBLISH RESULTS TO INSTITUTION</button>
-  </div>
 </div>
 
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 <script>
   const API_URL = "https://fastapi-teachers.onrender.com";
-  let paperContext = null;
 
-  window.onload = async () => {
-    await catchPaperDetails();
-  };
+  window.onload = async () => { await fetchSections(); };
 
-  // 1. CATCH FROM VAULT PENDING
-  async function catchPaperDetails() {
+  function showNotify(msg, type) {
+    const bar = document.getElementById('notification-bar');
+    bar.innerText = msg;
+    bar.className = type === "red" ? "bg-red" : "bg-green";
+    setTimeout(() => { bar.className = ""; }, 3000);
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.btn-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-arch').classList.add('hidden');
+    document.getElementById('view-pend').classList.add('hidden');
+
+    if (tab === 'arch') {
+      document.getElementById('tab-arch').classList.add('active');
+      document.getElementById('view-arch').classList.remove('hidden');
+    } else if (tab === 'pend') {
+      document.getElementById('tab-pend').classList.add('active');
+      document.getElementById('view-pend').classList.remove('hidden');
+      renderPendingList();
+    }
+  }
+
+  async function fetchSections() {
     try {
-      const saved = await AppStorage.get("last_printed_paper");
-      const raw = saved.value || saved;
-      if (raw) {
-        paperContext = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        document.getElementById('lock-sub').innerText = paperContext.subject;
-        document.getElementById('lock-sec').innerText = paperContext.section;
-        document.getElementById('lock-total').innerText = paperContext.max_marks;
-      }
-    } catch (e) { showNotify("No Context Found", "red"); }
+      const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
+      const res = await fetch(`${API_URL}/dashboard/sections`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const sections = await res.json();
+      const select = document.getElementById('sel-sec');
+      select.innerHTML = '<option value="">-- Choose Section --</option>' +
+              sections.map(s => `<option value="${s}">${s}</option>`).join('');
+    } catch (e) { showNotify("Failed to load sections", "red"); }
   }
 
-  // 2. SAVE AS PENDING TEMPLATE
-  async function saveAsPending() {
+  async function autoLoadMarkingStation() {
+    const section = document.getElementById('sel-sec').value;
     const title = document.getElementById('exam-title').value;
-    const pass = document.getElementById('pass-marks').value;
 
-    if(!title) return showNotify("Enter Exam Title First", "red");
-
-    const template = {
-      id: Date.now(),
-      title: title,
-      subject: paperContext.subject,
-      section: paperContext.section,
-      total: paperContext.max_marks,
-      pass: pass,
-      created_at: new Date().toLocaleDateString()
-    };
-
-    let existing = await AppStorage.get("pending_marking_jobs") || {value: "[]"};
-    let list = JSON.parse(existing.value || "[]");
-    list.push(template);
-    await AppStorage.set("pending_marking_jobs", JSON.stringify(list));
-
-    showNotify("Template Moved to Pending Tab", "green");
-    switchTab('pend');
-  }
-
-  // 3. TAB SWITCHING LOGIC
-  function switchTab(target) {
-    document.getElementById('tab-arch').className = target === 'arch' ? 'btn-tab active' : 'btn-tab';
-    document.getElementById('tab-pend').className = target === 'pend' ? 'btn-tab active' : 'btn-tab';
-
-    document.getElementById('view-arch').classList.toggle('hidden', target !== 'arch');
-    document.getElementById('view-pend').classList.toggle('hidden', target !== 'pend');
-    document.getElementById('view-marking').classList.add('hidden');
-
-    if(target === 'pend') renderPendingList();
-  }
-
-  // 4. RENDER PENDING LIST
-  async function renderPendingList() {
-    const listDiv = document.getElementById('pending-list');
-    let data = await AppStorage.get("pending_marking_jobs") || {value: "[]"};
-    let list = JSON.parse(data.value || "[]");
-
-    if(list.length === 0) {
-      listDiv.innerHTML = `<div style="text-align:center; padding:50px; color:#999; font-size:12px;">No pending marks sheets.</div>`;
+    if (!title) {
+      showNotify("Enter Exam Title first!", "red");
+      document.getElementById('sel-sec').value = "";
       return;
     }
 
-    listDiv.innerHTML = list.map(item => `
-        <div class="pending-item">
-            <div>
-                <b style="font-size:14px;">${item.title}</b>
-                <div style="font-size:10px; color:#666;">${item.subject} (${item.section})</div>
-            </div>
-            <button class="btn-tab active" style="padding:8px 15px;" onclick="openMarkingStation(${item.id})">ENTER MARKS</button>
-        </div>
-    `).join('');
-  }
-
-  // 5. OPEN MARKING STATION
-  async function openMarkingStation(id) {
-    let data = await AppStorage.get("pending_marking_jobs") || {value: "[]"};
-    let list = JSON.parse(data.value || "[]");
-    const test = list.find(t => t.id === id);
-
-    document.getElementById('view-pend').classList.add('hidden');
-    document.getElementById('view-marking').classList.remove('hidden');
-
-    document.getElementById('mark-title').innerText = test.title;
-    document.getElementById('mark-meta').innerText = `${test.subject} • ${test.section} • Max: ${test.total}`;
-
-    const rows = document.getElementById('student-marking-rows');
-    rows.innerHTML = '<tr><td colspan="2" style="text-align:center;">Fetching Students...</td></tr>';
+    if (!section) {
+      document.getElementById('marking-area').classList.add('hidden');
+      return;
+    }
 
     try {
       const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
       const res = await fetch(`${API_URL}/dashboard/my_students`, {
-        headers: { 'Authorization': `Bearer ${tRes.value || tRes}` }
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      const sData = await res.json();
-      const students = (sData.students || []).filter(s => s.section === test.section);
+      const data = await res.json();
+      const students = data.students.filter(s => s.section === section);
 
-      rows.innerHTML = students.map(s => `
-            <tr data-sid="${s.id}" data-name="${s.name}" data-fname="${s.father_name || s.parent}">
-                <td>
-                    <div style="font-weight:700;">${s.name.toUpperCase()}</div>
-                    <div style="font-size:10px; color:#888;">${(s.father_name || '---').toUpperCase()}</div>
-                </td>
-                <td style="text-align:center;">
-                    <input type="number" class="obt-input" placeholder="0">
-                </td>
-            </tr>
-        `).join('');
+      if (students.length === 0) {
+        showNotify("No students found in " + section, "red");
+        document.getElementById('marking-area').classList.add('hidden');
+        return;
+      }
 
-      document.getElementById('btn-deploy').onclick = () => deployFinalResults(test);
+      const rows = document.getElementById('student-marking-rows');
+      rows.innerHTML = students.map(s => {
+        const father = s.father_name || s.f_name || "N/A";
+        return `
+          <tr data-sid="${s.id}" data-name="${s.name}" data-fname="${father}">
+              <td>
+                  <div style="font-weight:700; color:var(--secondary); text-transform:uppercase;">${s.name}</div>
+                  <div style="font-size:11px; color:var(--primary); font-weight:600;">S/O: ${father.toUpperCase()}</div>
+              </td>
+              <td style="text-align:center;">
+                  <input type="number"
+                         class="obt-input"
+                         placeholder="0"
+                         min="0"
+                         max="${document.getElementById('inp-total').value}"
+                         onfocus="this.select()"
+                         style="width: 80px; padding: 8px; border: 2px solid var(--border); border-radius: 8px; text-align: center; font-weight: 800; color: var(--primary);">
+              </td>
+          </tr>`;
+      }).join('');
 
-    } catch (e) { showNotify("Failed to fetch students", "red"); }
+      document.getElementById('marking-area').classList.remove('hidden');
+      showNotify(`${students.length} Students Loaded`, "green");
+
+    } catch (e) { showNotify("Connection error", "red"); }
   }
 
-  // 6. DEPLOY TO DB (YOUR FASTAPI ROUTE)
-  async function deployFinalResults(test) {
+  async function deployToCloud(isDraft) {
     const rows = document.querySelectorAll('#student-marking-rows tr');
     const results = [];
+    const total = parseInt(document.getElementById('inp-total').value);
+    const pass = parseInt(document.getElementById('inp-pass').value);
+    const sub = document.getElementById('inp-sub').value;
 
     rows.forEach(tr => {
-      const obt = parseFloat(tr.querySelector('.obt-input').value) || 0;
+      const obtValue = tr.querySelector('.obt-input').value;
       results.push({
         student_id: parseInt(tr.dataset.sid),
-        name: tr.dataset.sid,
+        name: tr.dataset.name,
         father_name: tr.dataset.fname,
         marks: [{
-          subject: test.subject,
-          max: parseInt(test.total),
-          obt: obt,
-          pass_mark: parseInt(test.pass)
+          subject: sub || "General",
+          max: total,
+          obt: parseFloat(obtValue) || 0,
+          pass_mark: pass
         }]
       });
     });
 
     const payload = {
-      exam_title: test.title,
-      class_name: test.section,
+      exam_title: document.getElementById('exam-title').value,
+      class_name: document.getElementById('sel-sec').value,
+      is_draft: isDraft,
       results: results
     };
 
     try {
       const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
       const res = await fetch(`${API_URL}/document/academic/deploy-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tRes.value || tRes}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(payload)
       });
 
-      if(res.ok) {
-        showNotify("Results Published Successfully!", "green");
-        // Remove from pending
-        let data = await AppStorage.get("pending_marking_jobs") || {value: "[]"};
-        let list = JSON.parse(data.value || "[]").filter(t => t.id !== test.id);
-        await AppStorage.set("pending_marking_jobs", JSON.stringify(list));
-        setTimeout(() => location.reload(), 2000);
-      } else {
-        showNotify("Server Error during Deployment", "red");
-      }
-    } catch(e) { showNotify("Network Error", "red"); }
+      if(!res.ok) throw new Error();
+
+      showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
+      if(!isDraft) setTimeout(() => location.reload(), 2000);
+    } catch (e) { showNotify("Sync Failed", "red"); }
   }
 
-  function showNotify(msg, color) {
-    const bar = document.getElementById('notification-bar');
-    bar.innerText = msg;
-    bar.className = color === 'red' ? 'bg-red' : 'bg-green';
-    setTimeout(() => bar.className = "", 3000);
+  async function renderPendingList() {
+    const listDiv = document.getElementById('pending-list');
+    listDiv.innerHTML = '<div style="text-align:center; padding:20px;">Loading Drafts...</div>';
+    try {
+      const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
+      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const drafts = await res.json();
+
+      if(drafts.length === 0) {
+        listDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">No pending marksheets.</div>';
+        return;
+      }
+
+      listDiv.innerHTML = drafts.map(d => `
+        <div class="pending-item">
+            <div>
+                <b>${d.exam_title}</b>
+                <div style="font-size:10px;">${d.target_class} • ${d.student_count} Students</div>
+            </div>
+            <button class="btn-tab active" style="width:auto; padding:5px 15px;">OPEN</button>
+        </div>`).join('');
+    } catch (e) { showNotify("Error fetching drafts", "red"); }
   }
 </script>
 </body>

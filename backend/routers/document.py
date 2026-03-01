@@ -254,15 +254,22 @@ async def deploy_results(
     if not current_user.institution_id:
         raise HTTPException(status_code=400, detail="Institution context required")
 
+    # 🏛️ CLEANUP: If this exam/class already has DRAFTS, delete them before re-saving
+    db.query(AcademicResult).filter(
+        AcademicResult.exam_title == payload.exam_title,
+        AcademicResult.target_class == payload.class_name,
+        AcademicResult.status == "DRAFT"
+    ).delete()
+
     db_entries = []
+    status_to_set = "DRAFT" if payload.is_draft else "PUBLISHED"
 
     for entry in payload.results:
-        # 🏛️ Server-side Calculation for Integrity
+        # Server-side Calculation for Integrity
         total_max = sum(m.max for m in entry.marks)
         total_obt = sum(m.obt for m in entry.marks)
         perc = (total_obt / total_max * 100) if total_max > 0 else 0
 
-        # 🏛️ Server-side Pass/Fail check (Security Measure)
         actual_status = "PASS"
         for m in entry.marks:
             if m.obt < m.pass_mark:
@@ -279,24 +286,57 @@ async def deploy_results(
             marks_data=[m.model_dump() for m in entry.marks],
             percentage=round(perc, 2),
             final_status=actual_status,
+            status=status_to_set, # 🏛️ Setting the state here
             created_by=current_user.email
         )
         db_entries.append(new_res)
 
     try:
-        # Bulk save to DB
         db.add_all(db_entries)
         db.commit()
-
         return {
             "status": "success",
-            "message": f"Successfully published {len(db_entries)} marksheets",
-            "exam": payload.exam_title
+            "message": f"{'Draft saved' if payload.is_draft else 'Results published'} successfully",
+            "count": len(db_entries)
         }
     except Exception as e:
         db.rollback()
-        print(f"DEPLOYMENT ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database commit failed")
+        raise HTTPException(status_code=500, detail="Cloud synchronization failed")
+
+@router.get("/my-drafts")
+async def get_my_drafts(
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Fetch unique exam titles that are still in DRAFT status
+    drafts = db.query(
+        AcademicResult.exam_title,
+        AcademicResult.target_class,
+        func.count(AcademicResult.id).label("student_count")
+    ).filter(
+        AcademicResult.institution_ref == current_user.institution_id,
+        AcademicResult.status == "DRAFT"
+    ).group_by(AcademicResult.exam_title, AcademicResult.target_class).all()
+
+    return [
+        {"exam_title": d[0], "target_class": d[1], "student_count": d[2]}
+        for d in drafts
+    ]
+
+@router.get("/draft-details")
+async def get_draft_details(
+        exam_title: str,
+        target_class: str,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Fetch the actual marks already saved in the draft
+    results = db.query(AcademicResult).filter(
+        AcademicResult.exam_title == exam_title,
+        AcademicResult.target_class == target_class,
+        AcademicResult.status == "DRAFT"
+    ).all()
+    return results
 
 @router.post("/papers/save-vault")
 async def save_to_vault(

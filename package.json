@@ -37,7 +37,6 @@
     "framer-motion": "^12.34.3",
     "lottie-web": "^5.13.0",
     "pako": "^2.1.0",
-    "phonegap-nfc": "^1.2.0",
     "pyodide": "^0.29.3",
     "socket.io-client": "^4.8.3",
     "video.js": "^8.23.7"

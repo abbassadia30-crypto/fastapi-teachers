@@ -117,10 +117,23 @@ class StudentMarkEntry(BaseModel):
     marks: List[SubjectResult]
     status: str  # "PASS" or "FAIL"
 
+class MarkEntry(BaseModel):
+    subject: str
+    max: int
+    obt: float
+    pass_mark: int
+
+class StudentResult(BaseModel):
+    student_id: int
+    name: str
+    father_name: str
+    marks: List[MarkEntry]
+
 class BulkResultPayload(BaseModel):
     exam_title: str
-    class_name: str
-    results: List[StudentMarkEntry]
+    class_name: str  # 🏛️ Match the JS key
+    is_draft: bool
+    results: List[StudentResult]
 
 class QuestionEntry(BaseModel):
     text: str

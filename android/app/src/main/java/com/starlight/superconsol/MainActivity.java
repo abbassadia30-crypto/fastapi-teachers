@@ -1,4 +1,4 @@
-package com.institution.superconsole;
+package com.starlight.superconsol;
 
 import com.getcapacitor.BridgeActivity;
 
