@@ -388,10 +388,10 @@
       showNotify("Sync Failed", "red");
     }
   }
+  let localDrafts = []; // This keeps our data safe from HTML string errors
 
   async function renderPendingList() {
     const listDiv = document.getElementById('pending-list');
-    listDiv.innerHTML = '<div style="text-align:center; padding:20px;">Loading Drafts...</div>';
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
@@ -399,26 +399,19 @@
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const drafts = await res.json();
+      localDrafts = drafts; // Store the full data here
 
-      if(drafts.length === 0) {
-        listDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">No pending marksheets.</div>';
-        return;
-      }
-
-      // This replaces the mapping inside your existing renderPendingList()
-      // Inside renderPendingList()
-      listDiv.innerHTML = drafts.map(d => `
-    <div class="pending-item" onclick='resumeDraft(${JSON.stringify(d)})'>
-        <div>
-            <b style="color:var(--secondary);">${d.exam_title}</b>
-            <div style="font-size:11px;">Section: ${d.target_class}</div>
+      listDiv.innerHTML = drafts.map((d, index) => `
+        <div class="pending-item" onclick="loadDraftByIndex(${index})">
+            <div style="flex: 1;">
+                <b style="color:var(--secondary);">${d.exam_title}</b>
+                <div style="font-size:11px; color:var(--primary);">Section: ${d.target_class}</div>
+            </div>
+            <div style="text-align:right;">
+                <span class="badge" style="background:var(--primary); color:white; padding:4px 8px; border-radius:10px; font-size:10px;">RESUME</span>
+            </div>
         </div>
-        <div style="text-align:right;">
-            <div style="font-size:10px; color:#999;">${d.date}</div>
-            <span style="color:var(--primary); font-size:12px;">Resume ➔</span>
-        </div>
-    </div>
-`).join('');
+    `).join('');
     } catch (e) { showNotify("Error fetching drafts", "red"); }
   }
 
@@ -538,7 +531,69 @@
     `).join('');
 
     showNotify("Draft Loaded: " + draft.exam_title, "green");
+
   }
+
+  function loadDraftByIndex(index) {
+    const draft = localDrafts[index];
+    if (!draft) return;
+
+    // 1. Fill Headers
+    document.getElementById('exam-title').value = draft.exam_title;
+    document.getElementById('sel-sec').value = draft.target_class;
+
+    // Get subject config from first student entry
+    const config = draft.data[0].marks_data[0];
+    document.getElementById('inp-sub').value = config.subject;
+    document.getElementById('inp-total').value = config.max;
+    document.getElementById('inp-pass').value = config.pass_mark;
+
+    // 2. Open Table
+    document.getElementById('setup-area').classList.add('hidden');
+    document.getElementById('marking-area').classList.remove('hidden');
+
+    // 3. Render student rows with their SAVED obtained marks
+    const rows = document.getElementById('student-marking-rows');
+    rows.innerHTML = draft.data.map((s, idx) => `
+        <tr data-name="${s.student_name}" data-fname="${s.father_name}">
+            <td>
+                <div style="font-weight:700;">${s.student_name}</div>
+                <div style="font-size:10px; color:#666;">S/O: ${s.father_name}</div>
+            </td>
+            <td style="text-align:right;">
+                <input type="number" class="obt-input"
+                       value="${s.marks_data[0].obt}"
+                       oninput="validateSingleRow(this)"
+                       onkeydown="handleEnterKey(event, ${idx})">
+            </td>
+        </tr>
+    `).join('');
+
+    showNotify("Draft Loaded: " + draft.exam_title, "green");
+  }
+
+  async function finalizeCurrentDraft() {
+    const title = document.getElementById('exam-title').value;
+    const section = document.getElementById('sel-sec').value;
+
+    const tRes = await AppStorage.get("auth_token");
+    const token = tRes.value || tRes;
+
+    try {
+      const res = await fetch(`${API_URL}/document/academic/finalize-results?exam_title=${title}&class_name=${section}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        showNotify("Syllabus Completed & Results Published!", "green");
+        setTimeout(() => location.reload(), 1500);
+      }
+    } catch (e) {
+      showNotify("Finalize Failed", "red");
+    }
+  }
+
 </script>
 </body>
 </html>

@@ -322,20 +322,31 @@ async def get_my_drafts(
 
     return list(grouped.values())
 
-@router.get("/draft-details")
-async def get_draft_details(
+@router.patch("/academic/finalize-results")
+async def finalize_results(
         exam_title: str,
-        target_class: str,
+        class_name: str,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Fetch the actual marks already saved in the draft
+    inst_id = getattr(current_user, 'institution_id', None) or getattr(current_user, 'last_active_institution_id', None)
+
+    # Update all matching records
     results = db.query(AcademicResult).filter(
+        AcademicResult.institution_ref == inst_id,
         AcademicResult.exam_title == exam_title,
-        AcademicResult.target_class == target_class,
+        AcademicResult.target_class == class_name,
         AcademicResult.status == "DRAFT"
     ).all()
-    return results
+
+    if not results:
+        raise HTTPException(status_code=404, detail="No draft found")
+
+    for r in results:
+        r.status = "PUBLISHED"
+
+    db.commit()
+    return {"status": "success", "message": "Marked as Completed"}
 
 @router.post("/papers/save-vault")
 async def save_to_vault(
