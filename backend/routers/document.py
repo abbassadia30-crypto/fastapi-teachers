@@ -254,15 +254,17 @@ async def deploy_results(
         current_user: Any = Depends(get_current_user)
 ):
     try:
-        # Convert Pydantic results to a list of dicts for JSON storage
+        # 🏛️ Convert Pydantic results to list of dicts for JSON storage
         formatted_marks = [result.model_dump() for result in payload.results]
 
         # 🏛️ INSTITUTION CONSOLE LOGIC:
-        # Aligning variable names with the SQLAlchemy Model columns
+        # Verified Model Column Names:
+        # 1. institution_ref (NOT institution_id)
+        # 2. section_identifier (NOT section_id)
         new_result = AcademicResult(
             institution_ref=current_user.institution_id,
             exam_title=payload.exam_title,
-            section_id=payload.class_name,      # <--- FIX: Changed from section_identifier
+            section_identifier=payload.class_name,      # <--- FIXED NAME
             subject_name=payload.results[0].marks[0].subject if payload.results else "N/A",
             total_marks=payload.results[0].marks[0].max if payload.results else 100,
             passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
@@ -272,7 +274,7 @@ async def deploy_results(
 
         db.add(new_result)
         db.commit()
-        return {"status": "success", "message": "Institution records synchronized"}
+        return {"status": "success", "message": "Records Synchronized"}
     except Exception as e:
         db.rollback()
         print(f"DEPLOY ERROR: {str(e)}")
@@ -285,8 +287,8 @@ async def get_pending_marksheets(
 ):
     # Single bulk fetch: Source of Truth (Institution) + State (Pending)
     marksheets = db.query(AcademicResult).filter(
-        MarksheetLog.institution_id == current_user.institution_id,
-        MarksheetLog.status == "pending"  # Only fetch what needs action
+        AcademicResult.institution_id == current_user.institution_id,
+        AcademicResult.status == "pending"  # Only fetch what needs action
     ).order_by(AcademicResult.created_at.desc()).all()
 
     return marksheets
