@@ -302,29 +302,22 @@ async def get_my_drafts(
 
     grouped = {}
     for d in drafts:
+        # Create a unique key for each Section + Exam combo
         key = f"{d.exam_title}_{d.target_class}"
-
-        # 🔥 FIX: Check if created_at exists, otherwise use "Recently"
-        formatted_date = d.created_at.strftime("%d %b, %Y") if d.created_at else "Recently"
 
         if key not in grouped:
             grouped[key] = {
                 "exam_title": d.exam_title,
                 "target_class": d.target_class,
-                "date": formatted_date,
-                "student_count": 0,
-                "data": []
+                "date": d.created_at.strftime("%d %b") if d.created_at else "Recent",
+                "data": [] # This will hold the full snapshot
             }
 
-        grouped[key]["student_count"] += 1
-
-        # Safely extract marks (assuming marks_data is a list of dicts)
-        m_data = d.marks_data if isinstance(d.marks_data, list) else []
-
+        # Add the full student details and their marks to the 'data' array
         grouped[key]["data"].append({
             "student_name": d.student_name,
             "father_name": d.father_name,
-            "marks_data": m_data
+            "marks_data": d.marks_data # This contains subject, max, obt
         })
 
     return list(grouped.values())
