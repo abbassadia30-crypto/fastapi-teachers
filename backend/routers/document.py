@@ -254,27 +254,32 @@ async def deploy_results(
         current_user: Any = Depends(get_current_user)
 ):
     try:
-        # 🏛️ Convert Pydantic results to list of dicts for JSON storage
-        formatted_marks = [result.model_dump() for result in payload.results]
-
         # 🏛️ INSTITUTION CONSOLE LOGIC:
-        # Verified Model Column Names:
-        # 1. institution_ref (NOT institution_id)
-        # 2. section_identifier (NOT section_id)
-        new_result = AcademicResult(
-            institution_ref=current_user.institution_id,
-            exam_title=payload.exam_title,
-            section_identifier=payload.class_name,      # <--- FIXED NAME
-            subject_name=payload.results[0].marks[0].subject if payload.results else "N/A",
-            total_marks=payload.results[0].marks[0].max if payload.results else 100,
-            passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
-            marks_data=formatted_marks,
-            status="published" if not payload.is_draft else "pending"
-        )
+        # Loop through each student in the payload and create a separate DB row
+        for entry in payload.results:
+            # Entry matches the 'ResultEntry' schema (name, father_name, marks)
 
-        db.add(new_result)
+            # Calculate percentage for the 'percentage' column
+            obt = entry.marks[0].obt if entry.marks else 0
+            total = entry.marks[0].max if entry.marks else 100
+            calc_percentage = (obt / total) * 100 if total > 0 else 0
+
+            new_record = AcademicResult(
+                institution_ref=current_user.institution_id,
+                exam_title=payload.exam_title,
+                target_class=payload.class_name,    # 🎯 Matches your Column 'target_class'
+                student_name=entry.name,            # 🎯 Matches your Column 'student_name'
+                father_name=entry.father_name,      # 🎯 Matches your Column 'father_name'
+                marks_data=entry.marks[0].model_dump(), # Single subject data
+                percentage=calc_percentage,
+                status="published" if not payload.is_draft else "pending",
+                created_by=current_user.user_email
+            )
+            db.add(new_record)
+
         db.commit()
-        return {"status": "success", "message": "Records Synchronized"}
+        return {"status": "success", "message": f"{len(payload.results)} records deployed."}
+
     except Exception as e:
         db.rollback()
         print(f"DEPLOY ERROR: {str(e)}")
@@ -287,7 +292,7 @@ async def get_pending_marksheets(
 ):
     # Single bulk fetch: Source of Truth (Institution) + State (Pending)
     marksheets = db.query(AcademicResult).filter(
-        AcademicResult.institution_id == current_user.institution_id,
+        AcademicResult.institution_ref == current_user.institution_id,
         AcademicResult.status == "pending"  # Only fetch what needs action
     ).order_by(AcademicResult.created_at.desc()).all()
 
