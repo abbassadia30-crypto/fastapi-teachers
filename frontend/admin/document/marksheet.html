@@ -293,46 +293,37 @@
   }
 
 
-  async function deployToCloud(isDraft) {
-    const section = document.getElementById('sel-sec').value;
-    const title = document.getElementById('exam-title').value;
-    const rows = document.querySelectorAll('#student-marking-rows tr');
+  async function deployToCloud(isDraft = false) {
+    const records = [];
 
-    if (!section || !title) {
-      showNotify("Section and Title Required", "red");
-      return;
-    }
+    // 🏛️ Grid Technique: Collect data from student cards
+    document.querySelectorAll('.student-card').forEach(card => {
+      const obtValue = card.querySelector('.obt-input').value;
+      const totalMarks = parseFloat(document.getElementById('inp-total').value);
+      const passingMarks = parseFloat(document.getElementById('inp-pass').value);
+      const subjectName = document.getElementById('inp-sub').value;
 
-    const cards = document.querySelectorAll('.student-card');
-
-    const formattedData = Array.from(cards).map(card => {
-      const studentId = card.getAttribute('data-sid');
-      const studentName = card.querySelector('b').innerText;
-      const fatherName = card.querySelector('span').innerText.replace('S/O: ', '');
-      const obtained = parseFloat(card.querySelector('.obt-input').value) || 0;
-
-      const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
-      const perc = (obtained / totalMarks) * 100;
-
-      return {
-        student_id: studentId, // Keeping raw ID for database integrity
-        student_name: studentName,
-        father_name: fatherName,
-        subjects: [{
-          subject: document.getElementById('inp-sub').value,
+      // 🎯 Matches 'ResultEntry' schema
+      records.push({
+        name: card.getAttribute('data-name'),
+        father_name: card.getAttribute('data-fname'),
+        marks: [{
+          subject: subjectName,
           max: totalMarks,
-          obtained: obtained
-        }],
-        percentage: parseFloat(perc.toFixed(2))
-      };
+          obt: parseFloat(obtValue) || 0,
+          pass_mark: passingMarks
+        }]
+      });
     });
 
+    // 🎯 Matches 'BulkResultPayload' schema exactly
     const payload = {
       exam_title: document.getElementById('exam-title').value,
-      target_class: document.getElementById('sel-sec').value,
-      status: isDraft ? 'DRAFT' : 'PUBLISHED',
-      data: formattedData
+      class_name: document.getElementById('sel-sec').value, // Matches 'class_name'
+      is_draft: isDraft,
+      results: records // 🏛️ CRITICAL: Must be named 'results', not 'data'
     };
+
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
@@ -346,19 +337,16 @@
         body: JSON.stringify(payload)
       });
 
-      if (res.status === 422) {
-        const errorDetail = await res.json();
-        console.error("Validation Error:", errorDetail);
-        showNotify("Data Format Error (422)", "red");
-        return;
+      if (res.ok) {
+        showNotify(isDraft ? "Draft Saved" : "Results Published", "green");
+        if(!isDraft) setTimeout(() => location.reload(), 2000);
+      } else {
+        const err = await res.json();
+        console.error("Schema Mismatch:", err);
+        showNotify("Console Error: Check Data Format", "red");
       }
-
-      if (!res.ok) throw new Error();
-
-      showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
-      setTimeout(() => location.reload(), 2000);
     } catch (e) {
-      showNotify("Sync Failed", "red");
+      showNotify("Network Error", "red");
     }
   }
   let localDrafts = []; // 🎯 Global storage to prevent string errors

@@ -246,43 +246,37 @@ async def deploy_vouchers(
         print(f"FINANCE DEPLOY ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database integrity failure during bulk deploy")
 
-
 @router.post("/academic/deploy-results")
 async def deploy_results(
         payload: BulkResultPayload,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
-    inst_id = getattr(current_user, 'institution_id', None) or getattr(current_user, 'last_active_institution_id', None)
-
     try:
-        # 1. Clear previous records for this Exam + Section
-        db.query(AcademicResult).filter(
-            AcademicResult.institution_ref == inst_id,
-            AcademicResult.exam_title == payload.exam_title,
-            AcademicResult.target_class == payload.class_name
-        ).delete()
+        # 🏛️ AcademicResult model expects a flat 'marks_data' JSON
+        # We transform the 'results' list into the format your DB expects
+        db_ready_data = []
+        for r in payload.results:
+            db_ready_data.append({
+                "student_name": r.name,
+                "father_name": r.father_name,
+                "obt": r.marks[0].obt if r.marks else 0
+            })
 
-        # 2. Save new snapshot
-        for entry in payload.results:
-            total_max = sum(m.max for m in entry.marks)
-            total_obt = sum(m.obt for m in entry.marks)
+        new_result = AcademicResult(
+            institution_id=current_user.institution_id,
+            exam_title=payload.exam_title,
+            section_identifier=payload.class_name,
+            subject_name=payload.results[0].marks[0].subject if payload.results else "General",
+            total_marks=payload.results[0].marks[0].max if payload.results else 100,
+            passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
+            marks_data=db_ready_data,
+            status="published" if not payload.is_draft else "pending"
+        )
 
-            new_res = AcademicResult(
-                institution_ref=inst_id,
-                exam_title=payload.exam_title,
-                target_class=payload.class_name,
-                student_name=entry.name,
-                father_name=entry.father_name,
-                marks_data=[m.model_dump() for m in entry.marks],
-                percentage=round((total_obt / total_max * 100), 2) if total_max > 0 else 0,
-                status="DRAFT" if payload.is_draft else "PUBLISHED",
-                created_by=current_user.user_email
-            )
-            db.add(new_res)
-
+        db.add(new_result)
         db.commit()
-        return {"status": "success", "message": "Snapshot saved"}
+        return {"status": "success"}
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
