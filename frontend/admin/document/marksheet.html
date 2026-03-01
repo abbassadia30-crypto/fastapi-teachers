@@ -343,11 +343,10 @@
     const results = [];
     rows.forEach(tr => {
       results.push({
-        // 🎯 We send names as strings, ignore DB IDs
         name: tr.dataset.name,
         father_name: tr.dataset.fname,
         marks: [{
-          subject: document.getElementById('inp-sub').value || "General",
+          subject: document.getElementById('inp-sub').value,
           max: parseFloat(document.getElementById('inp-total').value),
           obt: parseFloat(tr.querySelector('.obt-input').value) || 0,
           pass_mark: parseFloat(document.getElementById('inp-pass').value)

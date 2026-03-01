@@ -103,19 +103,17 @@ class AcademicResult(Base):
     institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
     exam_title = Column(String)
-    target_class = Column(String) # This is your Section/Class link
+    target_class = Column(String)
 
-    # 🏛️ Instead of a ForeignKey link, we store the name and father name directly
-    # This keeps the record safe even if the student is deleted from the system
+    # 🏛️ Store as String now - no more ID dependencies
     student_name = Column(String)
     father_name = Column(String)
 
-    marks_data = Column(JSON) # Stores subject, max, obt, pass_mark
+    marks_data = Column(JSON)
     percentage = Column(Float)
-    status = Column(String) # DRAFT or PUBLISHED
+    status = Column(String)
     created_by = Column(String)
     created_at = Column(DateTime, server_default=func.now())
-    # Relationships
     institution = relationship("Institution", back_populates="academic_results")
 
 class PaperVault(Base):

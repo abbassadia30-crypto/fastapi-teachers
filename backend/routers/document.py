@@ -248,34 +248,44 @@ async def deploy_vouchers(
 
 
 @router.post("/academic/deploy-results")
-async def deploy_results(payload: BulkResultPayload, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+async def deploy_results(
+        payload: BulkResultPayload,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    inst_id = getattr(current_user, 'institution_id', None) or getattr(current_user, 'last_active_institution_id', None)
+
     try:
-        # 1. Clean old entries for this specific Exam + Section
+        # 1. Clear previous records for this Exam + Section
         db.query(AcademicResult).filter(
-            AcademicResult.institution_ref == current_user.institution_id,
+            AcademicResult.institution_ref == inst_id,
             AcademicResult.exam_title == payload.exam_title,
             AcademicResult.target_class == payload.class_name
         ).delete()
 
-        # 2. Bulk Insert the snapshot
+        # 2. Save new snapshot
         for entry in payload.results:
+            total_max = sum(m.max for m in entry.marks)
+            total_obt = sum(m.obt for m in entry.marks)
+
             new_res = AcademicResult(
-                institution_ref=current_user.institution_id,
+                institution_ref=inst_id,
                 exam_title=payload.exam_title,
                 target_class=payload.class_name,
                 student_name=entry.name,
                 father_name=entry.father_name,
                 marks_data=[m.model_dump() for m in entry.marks],
+                percentage=round((total_obt / total_max * 100), 2) if total_max > 0 else 0,
                 status="DRAFT" if payload.is_draft else "PUBLISHED",
                 created_by=current_user.user_email
             )
             db.add(new_res)
 
         db.commit()
-        return {"status": "success"}
+        return {"status": "success", "message": "Snapshot saved"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail="Storage Failed")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/my-drafts")
 async def get_my_drafts(

@@ -117,7 +117,7 @@ class MarkEntry(BaseModel):
     pass_mark: float
 
 class ResultEntry(BaseModel):
-    student_id: int  # Must be int
+    # 🎯 Remove student_id here to stop 422 errors
     name: str
     father_name: str
     marks: List[MarkEntry]
@@ -127,7 +127,6 @@ class BulkResultPayload(BaseModel):
     class_name: str
     is_draft: bool
     results: List[ResultEntry]
-
 class QuestionEntry(BaseModel):
     text: str
     sub_parts: List[str] = []
