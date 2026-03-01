@@ -131,9 +131,9 @@ class StudentResult(BaseModel):
 
 class BulkResultPayload(BaseModel):
     exam_title: str
-    class_name: str  # 🏛️ Match the JS key
-    is_draft: bool
-    results: List[StudentResult]
+    target_class: str
+    status: str = "DRAFT"
+    data: List[dict] # Contains student_id, marks, etc.
 
 class QuestionEntry(BaseModel):
     text: str

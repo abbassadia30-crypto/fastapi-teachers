@@ -244,68 +244,37 @@ async def deploy_vouchers(
         # Log error for Render debugging
         print(f"FINANCE DEPLOY ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database integrity failure during bulk deploy")
+
+
 @router.post("/academic/deploy-results")
 async def deploy_results(
         payload: BulkResultPayload,
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
-    # 1. Determine Institution ID safely
-    # We try to get it from the user object, or the payload if the user object fails
-    inst_id = getattr(current_user, 'institution_id', None)
-
-    if not inst_id:
-        # Fallback: Many of your models use last_active_institution_id
-        inst_id = getattr(current_user, 'last_active_institution_id', None)
-
-    if not inst_id:
-        raise HTTPException(status_code=400, detail="Institution identity not found")
-
     try:
-        # 2. CLEANUP: Remove previous records for this specific Exam + Class to prevent duplicates
-        db.query(AcademicResult).filter(
-            AcademicResult.institution_ref == inst_id,
-            AcademicResult.exam_title == payload.exam_title,
-            AcademicResult.target_class == payload.class_name
-        ).delete()
-
-        status_to_set = "DRAFT" if payload.is_draft else "PUBLISHED"
-        db_entries = []
-
-        for entry in payload.results:
-            # 3. Simple Math for Percentage
-            total_max = sum(m.max for m in entry.marks) if entry.marks else 100
-            total_obt = sum(m.obt for m in entry.marks) if entry.marks else 0
-
-            # 4. Create Model Instance
-            # Ensure these field names match your 'AcademicResult' model exactly
-            new_res = AcademicResult(
-                institution_ref=inst_id,
+        for entry in payload.data:
+            new_result = AcademicResult(
+                institution_ref=current_user.institution_id, # LOCKED TO INSTITUTION
                 exam_title=payload.exam_title,
-                target_class=payload.class_name,
-                student_id=entry.student_id,
-                student_name=entry.name,
-                father_name=entry.father_name,
-                marks_data=[m.model_dump() for m in entry.marks],
-                percentage=round((total_obt / total_max * 100), 2) if total_max > 0 else 0,
-                status=status_to_set,
-                created_by=current_user.user_email
+                target_class=payload.target_class,
+                student_id=entry['student_id'],
+                student_name=entry['student_name'],
+                father_name=entry.get('father_name'),
+                marks_data=entry['subjects'],
+                percentage=entry['percentage'],
+                created_by=current_user.user_email,
+                status=payload.status
             )
-            db_entries.append(new_res)
+            db.add(new_result)
 
-        db.add_all(db_entries)
         db.commit()
-
-        return {
-            "status": "success",
-            "message": "Sync Complete",
-            "count": len(db_entries)
-        }
-
+        return {"status": "success", "message": f"Deployed {len(payload.data)} results"}
     except Exception as e:
         db.rollback()
-        print(f"DEPLOY ERROR: {str(e)}") # This will show in your Render/Server logs
-        raise HTTPException(status_code=500, detail=f"Database Error: {str(e)}")
+        # This will catch the ForeignKeyViolation and tell you why
+        print(f"DEPLOY ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Database Integrity Error: Check Student IDs")
 
 @router.get("/my-drafts")
 async def get_my_drafts(

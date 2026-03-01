@@ -99,22 +99,26 @@ class Voucher(Base):
 
 class AcademicResult(Base):
     __tablename__ = "academic_results"
-
     id = Column(Integer, primary_key=True, index=True)
+
+    # THE PRIMARY RELATION (Owned by Institution)
     institution_ref = Column(Integer, ForeignKey('institutions.id'), nullable=False)
 
-    exam_title = Column(String, nullable=False)
-    target_class = Column(String)
-    student_id = Column(Integer, ForeignKey("student.id"), nullable=True)
-    student_name = Column(String, nullable=False)
-    father_name = Column(String)
-    marks_data = Column(JSON)
-    percentage = Column(Float)
-    final_status = Column(String)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    created_by = Column(String)
-    status = Column(String, default="PUBLISHED")
+    # FIX: Point to "students.id" (plural) to match your dashboard.py
+    student_id = Column(Integer, ForeignKey("students.id"), nullable=False)
 
+    exam_title = Column(String, nullable=False)
+    target_class = Column(String, nullable=False)
+    student_name = Column(String)
+    father_name = Column(String)
+    marks_data = Column(JSON) # [{'subject': 'Math', 'obtained': 80, 'total': 100}]
+    percentage = Column(Float)
+    status = Column(String, default="DRAFT") # DRAFT or PUBLISHED
+
+    created_by = Column(String) # Email of the teacher who entered it
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
     institution = relationship("Institution", back_populates="academic_results")
 
 class PaperVault(Base):
