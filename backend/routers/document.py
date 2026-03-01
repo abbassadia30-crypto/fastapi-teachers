@@ -277,7 +277,7 @@ async def deploy_results(
                 break
 
         new_res = AcademicResult(
-            institution_ref=current_user.institution_id,
+            institution_ref=getattr(current_user, 'institution_id', None),
             exam_title=payload.exam_title,
             target_class=payload.class_name,
             student_id=entry.student_id,
@@ -287,7 +287,7 @@ async def deploy_results(
             percentage=round(perc, 2),
             final_status=actual_status,
             status=status_to_set, # 🏛️ Setting the state here
-            created_by = getattr(current_user, 'user_email', getattr(current_user, 'email', 'System'))
+            created_by=getattr(current_user, 'user_email', 'System')
         )
         db_entries.append(new_res)
 
