@@ -65,6 +65,14 @@ async def health_check():
     # This tells Render "I am alive and ready for Starlight!"
     return {"status": "online", "service": "Starlight Super Console"}
 
+@app.get("/dashboard")
+async def get_dashboard_data():
+    return {
+        "institution_name": "Starlight Super Console",
+        "status": "Operational",
+        "active_challenges": 12
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
