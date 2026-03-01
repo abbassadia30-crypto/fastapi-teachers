@@ -1,24 +1,27 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-# 🏛️ Priority: Use PostgreSQL if available, fallback to SQLite for local testing
+# 🏛️ Priority: Get the URL from Render Environment
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Render's DATABASE_URL often starts with 'postgres://',
-# but SQLAlchemy requires 'postgresql://'. This fix is essential:
-if SQLALCHEMY_DATABASE_URL and SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
-# If no DB URL is found (like on your local PC), it uses SQLite
-if not SQLALCHEMY_DATABASE_URL:
+if SQLALCHEMY_DATABASE_URL:
+    # Render gives 'postgres://', we need 'postgresql+psycopg://'
+    # The '+psycopg' part is mandatory for Python 3.13 compatibility!
+    if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+    else:
+        # Even if it's already 'postgresql://', force the '+psycopg' driver
+        SQLALCHEMY_DATABASE_URL = SQLALCHEMY_DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+else:
+    # 🏛️ Local Fallback (Institution DB)
     SQLALCHEMY_DATABASE_URL = "sqlite:///./institution.db"
 
+# Engine configuration
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    # check_same_thread is ONLY for SQLite
-    connect_args={"check_same_thread": False} if SQLALCHEMY_DATABASE_URL.startswith("sqlite") else {}
+    # Only use check_same_thread for SQLite
+    connect_args={"check_same_thread": False} if "sqlite" in SQLALCHEMY_DATABASE_URL else {}
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
