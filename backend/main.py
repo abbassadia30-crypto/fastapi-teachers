@@ -60,6 +60,10 @@ app.include_router(document.router)
 app.include_router(central_vault.router)
 app.include_router(scanner.router)
 
+@app.get("/")
+async def health_check():
+    # This tells Render "I am alive and ready for Starlight!"
+    return {"status": "online", "service": "Starlight Super Console"}
 
 app.add_middleware(
     CORSMiddleware,
