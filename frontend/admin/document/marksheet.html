@@ -296,32 +296,35 @@
   }
 
   async function deployToCloud(isDraft) {
-    const rows = document.querySelectorAll('#student-marking-rows tr');
-    const results = [];
-    const total = parseInt(document.getElementById('inp-total').value);
-    const pass = parseInt(document.getElementById('inp-pass').value);
-    const sub = document.getElementById('inp-sub').value;
+    const exam = document.getElementById('inp-exam').value;
+    const tClass = document.getElementById('inp-class').value;
+    const totalMarks = parseFloat(document.getElementById('inp-total').value);
 
-    rows.forEach(tr => {
-      const obtValue = tr.querySelector('.obt-input').value;
-      results.push({
-        student_id: parseInt(tr.dataset.sid),
-        name: tr.dataset.name,
-        father_name: tr.dataset.fname,
-        marks: [{
-          subject: sub || "General",
-          max: total,
-          obt: parseFloat(obtValue) || 0,
-          pass_mark: pass
-        }]
-      });
+    if(!exam || !tClass) return showNotify("Fill Exam Title & Class", "red");
+
+    // Construct the data array to match the Backend Schema perfectly
+    const formattedData = students.map(s => {
+      const obtained = parseFloat(s.obtained) || 0;
+      const perc = (obtained / totalMarks) * 100;
+
+      return {
+        student_id: parseInt(s.id),
+        student_name: s.name,
+        father_name: s.father_name || "",
+        subjects: [{
+          subject: document.getElementById('inp-subject').value || "General",
+          max: totalMarks,
+          obtained: obtained
+        }],
+        percentage: parseFloat(perc.toFixed(2))
+      };
     });
 
     const payload = {
-      exam_title: document.getElementById('exam-title').value,
-      class_name: document.getElementById('sel-sec').value,
-      is_draft: isDraft,
-      results: results
+      exam_title: exam,
+      target_class: tClass,
+      status: isDraft ? 'DRAFT' : 'PUBLISHED',
+      data: formattedData // Send the formatted version
     };
 
     try {

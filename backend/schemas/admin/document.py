@@ -117,23 +117,18 @@ class StudentMarkEntry(BaseModel):
     marks: List[SubjectResult]
     status: str  # "PASS" or "FAIL"
 
-class MarkEntry(BaseModel):
-    subject: str
-    max: int
-    obt: float
-    pass_mark: int
-
-class StudentResult(BaseModel):
+class StudentResultData(BaseModel):
     student_id: int
-    name: str
-    father_name: str
-    marks: List[MarkEntry]
+    student_name: str
+    father_name: Optional[str] = None
+    subjects: List[dict] # This is where the marks go
+    percentage: float
 
 class BulkResultPayload(BaseModel):
     exam_title: str
     target_class: str
-    status: str = "DRAFT"
-    data: List[dict] # Contains student_id, marks, etc.
+    status: str
+    data: List[StudentResultData]
 
 class QuestionEntry(BaseModel):
     text: str
