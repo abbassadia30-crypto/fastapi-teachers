@@ -453,48 +453,42 @@ async def delete_paper(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/submit")
-async def submit_attendance(payload: AttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
+async def submit_attendance(
+        payload: AttendanceSubmit,
+        db: Session = Depends(get_db),
+        current_user: Any = Depends(get_current_user)
+):
     try:
-        # 1. Create the main Log entry (this works for both manual and registered)
+        # 🏛️ The Institution ID is our absolute Source of Truth
+        inst_id = current_user.institution_id
+
+        if not inst_id:
+            raise HTTPException(status_code=403, detail="Institution context missing")
+
+        # 1. Save the complete snapshot to the Log
+        # This includes all students (registered & manual) in the 'attendance_data' JSON field
         new_log = AttendanceLog(
-            institution_id=current_user.institution_id,
+            institution_id=inst_id,
             section_identifier=payload.section_id,
             log_date=payload.date,
             category=payload.type,
+            # model_dump() converts the Pydantic list into a JSON-compatible format
             attendance_data=[e.model_dump() for e in payload.data],
             p_count=len([x for x in payload.data if x.status == 'P']),
             a_count=len([x for x in payload.data if x.status == 'A']),
             l_count=len([x for x in payload.data if x.status == 'L'])
         )
+
         db.add(new_log)
-        db.flush() # Get the new_log.id without committing yet
+        db.commit() # Commit here; no need to touch individual_attendance
 
-        # 2. Save individual records ONLY for registered students
-        for entry in payload.data:
-            # IMPORTANT: Check if it's NOT a manual entry and ID is numeric
-            # Manual entries like "M-4829" will break Foreign Key constraints
-            if not entry.is_manual and str(entry.student_id).isdigit():
-                indiv = IndividualAttendance(
-                    institution_id=current_user.institution_id,
-                    student_id=str(entry.student_id),
-                    log_id=new_log.id,
-                    status=entry.status,
-                    date=payload.date
-                )
-                db.add(indiv)
-            else:
-                # We skip IndividualAttendance for manual entries
-                # because they aren't in the 'students' table.
-                # Their data is already saved inside AttendanceLog.attendance_data
-                continue
+        return {"status": "success", "log_id": new_log.id}
 
-        db.commit()
-        return {"status": "success"}
     except Exception as e:
         db.rollback()
-        # This will help you see the exact SQL error in Render logs
+        # Log specifically for Render debugging
         print(f"ATTENDANCE ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database Integrity Error")
+        raise HTTPException(status_code=500, detail="Failed to save institutional record")
 
 @router.post("/submit-staff")
 async def submit_staff_attendance(payload: StaffAttendanceSubmit, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
