@@ -246,31 +246,22 @@ async def deploy_vouchers(
         print(f"FINANCE DEPLOY ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Database integrity failure during bulk deploy")
 
+# Inside your router in document.py
 @router.post("/academic/deploy-results")
-async def deploy_results(
-        payload: BulkResultPayload,
-        db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
-):
+async def deploy_results(payload: BulkResultPayload, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
     try:
-        # 🏛️ AcademicResult model expects a flat 'marks_data' JSON
-        # We transform the 'results' list into the format your DB expects
-        db_ready_data = []
-        for r in payload.results:
-            db_ready_data.append({
-                "student_name": r.name,
-                "father_name": r.father_name,
-                "obt": r.marks[0].obt if r.marks else 0
-            })
+        # Convert Pydantic results to a list of dicts for JSON storage in DB
+        formatted_marks = [result.model_dump() for result in payload.results]
 
         new_result = AcademicResult(
             institution_id=current_user.institution_id,
             exam_title=payload.exam_title,
             section_identifier=payload.class_name,
-            subject_name=payload.results[0].marks[0].subject if payload.results else "General",
+            # Extract first subject info for high-level columns
+            subject_name=payload.results[0].marks[0].subject if payload.results else "N/A",
             total_marks=payload.results[0].marks[0].max if payload.results else 100,
             passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
-            marks_data=db_ready_data,
+            marks_data=formatted_marks, # Store the full structured list
             status="published" if not payload.is_draft else "pending"
         )
 
@@ -279,7 +270,8 @@ async def deploy_results(
         return {"status": "success"}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"DEPLOY ERROR: {str(e)}") # This will show in your Render logs
+        raise HTTPException(status_code=500, detail="Database Sync Failed")
 
 @router.get("/pending-marksheets")
 async def get_pending_marksheets(

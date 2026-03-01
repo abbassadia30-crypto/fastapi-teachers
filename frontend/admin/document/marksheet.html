@@ -294,35 +294,36 @@
 
 
   async function deployToCloud(isDraft = false) {
-    const records = [];
+    const results = [];
 
     // 🏛️ Grid Technique: Collect data from student cards
     document.querySelectorAll('.student-card').forEach(card => {
       const obtValue = card.querySelector('.obt-input').value;
-      const totalMarks = parseFloat(document.getElementById('inp-total').value);
-      const passingMarks = parseFloat(document.getElementById('inp-pass').value);
-      const subjectName = document.getElementById('inp-sub').value;
 
-      // 🎯 Matches 'ResultEntry' schema
-      records.push({
+      // 🎯 Matches the 'ResultEntry' and 'MarkEntry' schemas in your document.py
+      results.push({
         name: card.getAttribute('data-name'),
         father_name: card.getAttribute('data-fname'),
         marks: [{
-          subject: subjectName,
-          max: totalMarks,
+          subject: document.getElementById('inp-sub').value || "General",
+          max: parseFloat(document.getElementById('inp-total').value) || 100,
           obt: parseFloat(obtValue) || 0,
-          pass_mark: passingMarks
+          pass_mark: parseFloat(document.getElementById('inp-pass').value) || 33
         }]
       });
     });
 
-    // 🎯 Matches 'BulkResultPayload' schema exactly
+    // 🎯 Matches 'BulkResultPayload' schema
     const payload = {
-      exam_title: document.getElementById('exam-title').value,
-      class_name: document.getElementById('sel-sec').value, // Matches 'class_name'
+      exam_title: document.getElementById('exam-title').value || "Untitled Exam",
+      class_name: document.getElementById('sel-sec').value,
       is_draft: isDraft,
-      results: records // 🏛️ CRITICAL: Must be named 'results', not 'data'
+      results: results // Must be 'results' as per your Pydantic model
     };
+
+    if (!payload.class_name) {
+      return showNotify("Please select a section", "red");
+    }
 
     try {
       const tRes = await AppStorage.get("auth_token");
@@ -337,18 +338,21 @@
         body: JSON.stringify(payload)
       });
 
+      const responseData = await res.json();
+
       if (res.ok) {
-        showNotify(isDraft ? "Draft Saved" : "Results Published", "green");
+        showNotify(isDraft ? "Draft Saved to Cloud" : "Results Published Successfully", "green");
         if(!isDraft) setTimeout(() => location.reload(), 2000);
       } else {
-        const err = await res.json();
-        console.error("Schema Mismatch:", err);
-        showNotify("Console Error: Check Data Format", "red");
+        // Log the specific backend error for debugging
+        console.error("Server Error Detail:", responseData.detail);
+        showNotify("Server Error: Check Console", "red");
       }
     } catch (e) {
-      showNotify("Network Error", "red");
+      showNotify("Network connection lost", "red");
     }
   }
+
   let localDrafts = []; // 🎯 Global storage to prevent string errors
 
   async function renderPendingList() {
