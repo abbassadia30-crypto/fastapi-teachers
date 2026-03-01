@@ -287,7 +287,7 @@ async def deploy_results(
             percentage=round(perc, 2),
             final_status=actual_status,
             status=status_to_set, # 🏛️ Setting the state here
-            created_by=current_user.email
+            created_by = getattr(current_user, 'user_email', getattr(current_user, 'email', 'System'))
         )
         db_entries.append(new_res)
 
