@@ -295,31 +295,36 @@ async def get_my_drafts(
     inst_id = getattr(current_user, 'institution_id', None) or \
               getattr(current_user, 'last_active_institution_id', None)
 
-    # 🎯 We fetch drafts and group them by Title and Section
-    # This allows the teacher to see "Final Exam - 10th-A" as one item
     drafts = db.query(AcademicResult).filter(
         AcademicResult.institution_ref == inst_id,
         AcademicResult.status == "DRAFT"
     ).all()
 
-    # Organize data so the frontend can easily list them
     grouped = {}
     for d in drafts:
         key = f"{d.exam_title}_{d.target_class}"
+
+        # 🔥 FIX: Check if created_at exists, otherwise use "Recently"
+        formatted_date = d.created_at.strftime("%d %b, %Y") if d.created_at else "Recently"
+
         if key not in grouped:
             grouped[key] = {
                 "exam_title": d.exam_title,
                 "target_class": d.target_class,
-                "date": d.created_at.strftime("%d %b, %Y"),
+                "date": formatted_date,
                 "student_count": 0,
-                "data": [] # We store the full rows here to "Resume" later
+                "data": []
             }
 
         grouped[key]["student_count"] += 1
-        grouped[key]["data"].push({
+
+        # Safely extract marks (assuming marks_data is a list of dicts)
+        m_data = d.marks_data if isinstance(d.marks_data, list) else []
+
+        grouped[key]["data"].append({
             "student_name": d.student_name,
             "father_name": d.father_name,
-            "marks_data": d.marks_data
+            "marks_data": m_data
         })
 
     return list(grouped.values())

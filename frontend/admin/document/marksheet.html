@@ -395,7 +395,7 @@
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
-      const res = await fetch(`${API_URL}/document/my-drafts`, {
+      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const drafts = await res.json();
@@ -447,7 +447,7 @@
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      const res = await fetch(`${API_URL}/document/academic/draft/${draftId}`, {
+      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
