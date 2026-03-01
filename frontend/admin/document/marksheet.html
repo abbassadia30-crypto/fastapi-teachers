@@ -333,21 +333,25 @@
   async function deployToCloud(isDraft) {
     const rows = document.querySelectorAll('#student-marking-rows tr');
     const results = [];
+
+    // 1. Get values and ensure they are numbers
     const total = parseFloat(document.getElementById('inp-total').value) || 100;
     const pass = parseFloat(document.getElementById('inp-pass').value) || 33;
     const sub = document.getElementById('inp-sub').value || "General";
-    const examTitle = document.getElementById('exam-title').value;
+    const title = document.getElementById('exam-title').value;
     const section = document.getElementById('sel-sec').value;
 
-    if(!examTitle || !section) {
-      showNotify("Title and Section required", "red");
+    if (!title || !section) {
+      showNotify("Please enter Exam Title and select Section", "red");
       return;
     }
 
     rows.forEach(tr => {
       const obtValue = tr.querySelector('.obt-input').value;
+
       results.push({
-        student_id: parseInt(tr.dataset.sid), // Force Integer
+        // Force student_id to be a Number to avoid 422 error
+        student_id: Number(tr.dataset.sid),
         name: tr.dataset.name,
         father_name: tr.dataset.fname,
         marks: [{
@@ -360,11 +364,13 @@
     });
 
     const payload = {
-      exam_title: examTitle,
-      class_name: section,
+      exam_title: title,
+      class_name: section, // Ensure this matches your Pydantic schema field name
       is_draft: isDraft,
       results: results
     };
+
+    console.log("Sending Payload:", payload); // Debug this in Chrome/Android inspection
 
     try {
       const tRes = await AppStorage.get("auth_token");
@@ -379,17 +385,19 @@
         body: JSON.stringify(payload)
       });
 
-      const data = await res.json();
-
-      if (res.ok) {
-        showNotify(isDraft ? "Draft Saved Successfully" : "Results Published!", "green");
-        if(!isDraft) setTimeout(() => location.reload(), 2000);
-      } else {
-        // This catches the 400/500 errors from Python
-        showNotify(data.detail || "Server Refused Data", "red");
+      if (res.status === 422) {
+        const errorDetail = await res.json();
+        console.error("Validation Error:", errorDetail);
+        showNotify("Data Format Error (422)", "red");
+        return;
       }
+
+      if (!res.ok) throw new Error();
+
+      showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
+      if (!isDraft) setTimeout(() => location.reload(), 2000);
     } catch (e) {
-      showNotify("Network Error: Check Internet", "red");
+      showNotify("Sync Failed", "red");
     }
   }
 

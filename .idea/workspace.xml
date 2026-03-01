@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/document.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/document.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/marksheet.html" afterDir="false" />
-    </list>
+    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -122,15 +117,7 @@
       <workItem from="1772348038505" duration="2286000" />
       <workItem from="1772351955876" duration="8483000" />
       <workItem from="1772361459079" duration="845000" />
-      <workItem from="1772367207871" duration="374000" />
-    </task>
-    <task id="LOCAL-00012" summary="now">
-      <option name="closed" value="true" />
-      <created>1772191337488</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1772191337488</updated>
+      <workItem from="1772367207871" duration="875000" />
     </task>
     <task id="LOCAL-00013" summary="now">
       <option name="closed" value="true" />
@@ -516,7 +503,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772355234440</updated>
     </task>
-    <option name="localTasksCounter" value="61" />
+    <task id="LOCAL-00061" summary="now">
+      <option name="closed" value="true" />
+      <created>1772367848152</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1772367848152</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
