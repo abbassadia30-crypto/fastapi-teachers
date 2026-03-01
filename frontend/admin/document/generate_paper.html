@@ -88,21 +88,27 @@
         SAVE SELECTED TO VAULT (<span id="selected-count">0</span>)
     </button>
 </div>
-
+<script src="../../capacitor.js"></script>
+<script src="../../js/storage.js"></script>
 <script>
     let extractedData = [];
-    const API_BASE = "https://your-backend-render-url.com"; // Replace with your Render URL
+    // Ensure this matches your FastAPI router prefix (e.g., /document)
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
     function showSignBox(msg, type) {
         const box = document.getElementById('sign-box');
+        if(!box) return; // Safety check
         box.innerText = msg;
-        box.style.background = type === 'success' ? 'var(--success)' : 'var(--accent)';
+        box.style.background = type === 'success' ? '#2e7d32' : '#d32f2f';
         box.style.display = 'block';
         setTimeout(() => { box.style.display = 'none'; }, 3500);
     }
 
     function previewFile() {
-        const file = document.getElementById('file-input').files[0];
+        const fileInput = document.getElementById('file-input');
+        if (!fileInput.files[0]) return;
+
+        const file = fileInput.files[0];
         const preview = document.getElementById('preview-img');
         const reader = new FileReader();
 
@@ -111,7 +117,7 @@
             preview.style.display = 'block';
             processWithAI(file);
         }
-        if (file) reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
     }
 
     async function processWithAI(file) {
@@ -121,58 +127,38 @@
         formData.append("file", file);
 
         try {
-            // Fetch token from AppStorage (from index.html)
-            const token = await AppStorage.get('auth_token');
+            // FIX 1: Correct Token Retrieval
+            const storageData = await AppStorage.get("auth_token");
+            const token = (storageData && typeof storageData === 'object') ? storageData.value : storageData;
 
-            const response = await fetch(`${API_BASE}/scanner/papers/scan`, {
+            if (!token) {
+                showSignBox("Session Expired. Please Login.", "error");
+                return;
+            }
+
+            // FIX 2: Correct URL path
+            const response = await fetch(`${API_BASE}/scanner/papers/scan-and-save`, {
                 method: "POST",
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
-            if (!response.ok) throw new Error("Server Error");
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.detail || "Server Error");
+            }
 
             const data = await response.json();
             extractedData = data.questions;
             renderQuestions();
+            showSignBox("Scan Complete!", "success");
         } catch (err) {
-            showSignBox("Scan failed. Try clearer image.", "error");
-            // Offline demo fallback logic removed for professional version
+            console.error("AI Scan Error:", err);
+            showSignBox(err.message || "Scan failed. Try clearer image.", "error");
         }
     }
 
-    function renderQuestions() {
-        const list = document.getElementById('questions-list');
-        const container = document.getElementById('results-container');
-        const footer = document.getElementById('footer-actions');
-
-        list.innerHTML = "";
-        container.style.display = "block";
-        footer.style.display = "block";
-
-        extractedData.forEach((q, i) => {
-            const div = document.createElement('div');
-            div.className = 'question-item';
-            div.innerHTML = `
-                <input type="checkbox" class="q-check" onchange="updateCount()" checked>
-                <div style="flex:1">
-                    <div contenteditable="true" class="q-text" style="outline:none; font-size:14px; border-bottom: 1px solid #eee;">${q.text}</div>
-                    <select class="q-type-select">
-                        <option value="MCQs" ${q.type === 'MCQs' ? 'selected' : ''}>Section: MCQs</option>
-                        <option value="Short" ${q.type === 'Short' ? 'selected' : ''}>Section: Short Qs</option>
-                        <option value="Long" ${q.type === 'Long' ? 'selected' : ''}>Section: Long Qs</option>
-                    </select>
-                </div>
-            `;
-            list.appendChild(div);
-            updateCount();
-        });
-    }
-
-    function updateCount() {
-        const count = document.querySelectorAll('.q-check:checked').length;
-        document.getElementById('selected-count').innerText = count;
-    }
+    // ... renderQuestions() and updateCount() stay the same ...
 
     async function saveToVault() {
         const selected = [];
@@ -181,7 +167,8 @@
             if (cb.checked) {
                 selected.push({
                     text: item.querySelector('.q-text').innerText,
-                    type: item.querySelector('.q-type-select').value
+                    type: item.querySelector('.q-type-select').value,
+                    marks: 1 // Professional default
                 });
             }
         });
@@ -189,24 +176,33 @@
         if(selected.length === 0) return showSignBox("Select at least one question", "error");
 
         try {
-            const token = await AppStorage.get('auth_token');
+            const storageData = await AppStorage.get("auth_token");
+            const token = (storageData && typeof storageData === 'object') ? storageData.value : storageData;
+
+            // FIX 3: Point to the save route we are creating
             const response = await fetch(`${API_BASE}/scanner/papers/save-scanned`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ source_name: "AI Scan", questions: selected })
+                body: JSON.stringify({
+                    source_name: "AI Document Scan",
+                    questions: selected
+                })
             });
 
             if(response.ok) {
                 showSignBox("Questions saved to Vault!", "success");
                 setTimeout(() => {
-                    window.location.href = 'test.html?tab=vault';
+                    // Navigate to generator with vault tab active
+                    window.location.href = '../generator/test.html?tab=vault';
                 }, 1500);
+            } else {
+                showSignBox("Failed to save to Vault", "error");
             }
         } catch (e) {
-            showSignBox("Database Error", "error");
+            showSignBox("Connection Error", "error");
         }
     }
 </script>

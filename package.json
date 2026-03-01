@@ -29,6 +29,9 @@
     "@capacitor/push-notifications": "^8.0.1",
     "@capacitor/share": "^8.0.1",
     "@capgo/capacitor-speech-recognition": "^8.0.10",
-    "capacitor-native-biometric": "^4.2.2"
+    "capacitor-native-biometric": "^4.2.2",
+    "chart.js": "^4.5.1",
+    "pako": "^2.1.0",
+    "pyodide": "^0.29.3"
   }
 }
