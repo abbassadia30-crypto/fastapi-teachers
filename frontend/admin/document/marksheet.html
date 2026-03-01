@@ -16,81 +16,95 @@
       height: 100vh; display: flex; flex-direction: column; overflow: hidden;
     }
 
-    /* Add this to your <style> head */
+    /* 🏛️ GRID TECHNIQUE: Used for the Pending Marksheets List */
+    .pending-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 15px;
+      padding: 15px;
+    }
+
+    .pending-card {
+      background: #fff;
+      border-radius: 18px;
+      padding: 20px;
+      border: 1px solid #eee;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+      transition: transform 0.2s;
+      position: relative;
+    }
+
+    .pending-card:active { transform: scale(0.98); }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--primary);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    /* 🏛️ MARKING CONSOLE: High-speed grid for entering marks */
     .marking-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
+      grid-template-columns: 1fr; /* Single column for mobile focus */
+      gap: 12px;
       padding: 10px;
       overflow-y: auto;
-      background: var(--bg);
+    }
+
+    @media (min-width: 600px) {
+      .marking-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     .student-card {
       background: white;
-      border-radius: 12px;
-      padding: 12px 16px;
+      border-radius: 15px;
+      padding: 15px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       border: 1px solid var(--border);
-      transition: 0.2s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
     }
 
-    .student-card:active { transform: scale(0.98); background: #fffcf9; }
+    .card-info b {
+      color: var(--secondary);
+      font-size: 14px;
+      display: block;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 180px;
+    }
 
-    .card-info b { color: var(--secondary); font-size: 14px; display: block; text-transform: uppercase; }
-    .card-info span { color: var(--primary); font-size: 11px; font-weight: 600; }
+    .card-info span { color: var(--primary); font-size: 10px; font-weight: 700; }
 
-    .input-zone { width: 75px; }
-
-    .grid-input {
-      width: 100%;
+    /* 🏛️ INPUT STYLING: Optimized for rapid data entry */
+    .obt-input {
+      width: 75px !important;
       height: 45px;
-      border: 2px solid var(--border);
+      border: 2px solid var(--border) !important;
       border-radius: 10px;
       text-align: center;
-      font-size: 18px;
+      font-size: 18px !important;
       font-weight: 800;
       color: var(--secondary);
       background: #fdfdfd;
-    }
-
-    .grid-input:focus { border-color: var(--primary); outline: none; background: white; }
-
-    /* Ensure the table doesn't feel cramped */
-    .gb-table {
-      width: 100%;
-      border-collapse: separate;
-      border-spacing: 0 8px; /* Adds space between rows */
-      min-width: unset; /* Remove min-width to prevent horizontal scroll on small phones */
-    }
-
-    .gb-table td {
-      background: white;
-      padding: 12px;
-    }
-
-    /* Rounded corners for rows */
-    .gb-table tr td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-    .gb-table tr td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
-
-    /* The Input Styling */
-    .obt-input {
-      width: 70px !important;
-      height: 45px;
-      font-size: 18px !important;
-      border: 2px solid #cfd8dc !important;
-      background: #fdfdfd !important;
       transition: 0.2s;
     }
 
     .obt-input:focus {
       border-color: var(--primary) !important;
+      outline: none;
       background: #fff8e1 !important;
-      box-shadow: 0 0 10px rgba(251, 140, 0, 0.2);
+      box-shadow: 0 0 10px rgba(251, 140, 0, 0.15);
     }
 
+    /* 🏛️ GLOBAL UI COMPONENTS */
     #notification-bar {
       position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
       width: 90%; max-width: 400px; padding: 18px; border-radius: 12px;
@@ -126,36 +140,6 @@
       width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--border);
       border-radius: 10px; box-sizing: border-box; font-size: 14px; outline: none; transition: 0.3s;
     }
-    input:focus { border-color: var(--primary); background: #fffaf5; }
-
-    .table-wrapper {
-      overflow-x: hidden; /* Prevent horizontal sliding */
-      background: white;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-    }
-    .gb-table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: unset !important; /* CRITICAL: Remove the 500px minimum */
-    }
-    .gb-table th:first-child,
-    .gb-table td:first-child {
-      width: 65%; /* Give more room to the name */
-      padding-right: 5px;
-    }
-
-    .gb-table th:last-child,
-    .gb-table td:last-child {
-      width: 35%; /* Tighten the input column */
-      text-align: right;
-    }
-    .obt-input {
-      width: 65px !important; /* Reduced from 80px */
-      height: 40px;
-      font-size: 16px !important;
-      margin-left: auto !important;
-    }
 
     .btn-main {
       background: var(--primary); color: white; border: none; flex: 1;
@@ -164,16 +148,9 @@
     }
 
     .hidden { display: none !important; }
-
-    .pending-item {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 15px; background: white; border-radius: 12px;
-      border: 1px solid var(--border); margin-bottom: 10px;
-    }
   </style>
 </head>
 <body>
-
 <div id="notification-bar"></div>
 
 <header>
@@ -210,19 +187,10 @@
     </div>
 
     <div id="marking-area" class="hidden">
-      <div class="table-wrapper">
-        <table class="gb-table">
-          <thead>
-          <tr>
-            <th>STUDENT & FATHER NAME</th>
-            <th style="text-align:center; width: 100px;">OBTAINED</th>
-          </tr>
-          </thead>
-          <tbody id="student-marking-rows"></tbody>
-        </table>
+      <div id="student-marking-grid" class="marking-grid">
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:20px;">
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:20px 0; padding-bottom: 30px;">
         <button class="btn-main" style="background:#607d8b;" onclick="deployToCloud(true)">SAVE DRAFT</button>
         <button class="btn-main" style="background:var(--secondary);" onclick="deployToCloud(false)">PUBLISH NOW</button>
       </div>
@@ -230,11 +198,11 @@
   </div>
 
   <div id="view-pend" class="hidden">
-    <div id="pending-list"></div>
+    <div id="pending-grid-container" class="pending-grid">
+    </div>
   </div>
 
 </div>
-
 <script src="../../capacitor.js"></script>
 <script src="../../js/storage.js"></script>
 <script>
@@ -290,87 +258,40 @@
   }
 
   async function autoLoadMarkingStation() {
-    const section = document.getElementById('sel-sec').value;
-    const markingArea = document.getElementById('marking-area');
-    const rows = document.getElementById('student-marking-rows');
+    const sec = document.getElementById('sel-sec').value;
+    if (!sec) return;
 
-    if (!section) {
-      markingArea.classList.add('hidden');
-      rows.innerHTML = "";
-      return;
-    }
-
-    markingArea.classList.remove('hidden');
-    rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--primary); font-weight:600;">
-                        Fetching Students...
-                      </td></tr>`;
+    const grid = document.getElementById('student-marking-grid');
+    grid.innerHTML = '<div style="text-align:center; padding:20px;">Fetching Students...</div>';
+    document.getElementById('marking-area').classList.remove('hidden');
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      const res = await fetch(`${API_URL}/dashboard/my_students`, {
+      // Fetch students for the institution section
+      const res = await fetch(`${API_URL}/dashboard/students/${sec}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const students = await res.json();
 
-      if (!res.ok) throw new Error("Unauthorized or Server Error");
-
-      const data = await res.json();
-
-      // Filter students for the global variable and the local render
-      currentStudents = data.students.filter(s => s.section === section);
-
-      if (currentStudents.length === 0) {
-        rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:30px; color:var(--danger);">
-                                No active students found in Section: ${section}
-                              </td></tr>`;
-        return;
-      }
-
-      // PERFECTED RENDER LOGIC
-      rows.innerHTML = currentStudents.map((s, index) => `
-    <tr data-sid="${s.id || s.student_id}" data-name="${s.name || s.student_name}" data-fname="${s.father_name || 'N/A'}">
-        <td>
-            <div style="font-weight:700; color:var(--secondary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                ${s.name || s.student_name}
+      grid.innerHTML = students.map((s, idx) => `
+            <div class="student-card" data-sid="${s.id}" data-name="${s.name}" data-fname="${s.father_name}">
+                <div class="card-info">
+                    <b>${s.name}</b>
+                    <span>S/O: ${s.father_name}</span>
+                </div>
+                <div class="input-zone">
+                    <input type="number" class="obt-input" placeholder="0"
+                           onkeydown="handleEnterKey(event, ${idx})">
+                </div>
             </div>
-            <div style="font-size:10px; color:var(--primary); font-weight:600;">
-                S/O: ${(s.father_name || 'N/A').substring(0, 15)}
-            </div>
-        </td>
-        <td style="text-align:right;">
-            <input type="number"
-                   class="obt-input"
-                   value="${s.subjects ? s.subjects[0].obtained : 0}"
-                   inputmode="decimal"
-                   onfocus="this.select()"
-                   onkeydown="handleEnterKey(event, ${index})"
-                   oninput="validateSingleRow(this)">
-        </td>
-    </tr>
-`).join('');
-
-      showNotify(`${currentStudents.length} Students Loaded`, "green");
-
+        `).join('');
     } catch (e) {
-      rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:red;">Connection Failed.</td></tr>`;
-      showNotify("Server Connection Failed", "red");
+      showNotify("Failed to load students", "red");
     }
   }
 
-  // Keep this helper outside
-  function handleEnterKey(event, index) {
-    if (event.key === "Enter") {
-      event.preventDefault(); // Prevent accidental form submission
-      const nextInput = document.querySelectorAll('.obt-input')[index + 1];
-      if (nextInput) {
-        nextInput.focus();
-      } else {
-        // If it's the last student, hide the keyboard
-        document.activeElement.blur();
-      }
-    }
-  }
 
   async function deployToCloud(isDraft) {
     const section = document.getElementById('sel-sec').value;
@@ -443,33 +364,42 @@
   let localDrafts = []; // 🎯 Global storage to prevent string errors
 
   async function renderPendingList() {
-    const listDiv = document.getElementById('pending-list');
-    const tRes = await AppStorage.get("auth_token");
-    const token = tRes.value || tRes;
+    const grid = document.getElementById('pending-grid-container');
+    grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;">Syncing Institution Records...</div>';
 
     try {
-      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
+      const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
+
+      // Using our new single source of truth route
+      const res = await fetch(`${API_URL}/document/pending-marksheets`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const drafts = await res.json();
-      localDrafts = drafts; // Store the data safely
 
-      listDiv.innerHTML = drafts.map(d => `
-    <div class="pending-item">
-        <div style="flex:1;">
-            <b style="color:var(--secondary);">${d.exam_title}</b>
-            <div style="font-size:11px; color:var(--primary); font-weight:600;">
-                ${d.target_class} • ${d.student_count} Students
+      if (drafts.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:#999;">No pending records found.</div>';
+        return;
+      }
+
+      grid.innerHTML = drafts.map(d => `
+            <div class="pending-card" onclick="loadDraft('${d.id}')">
+                <div class="card-meta">
+                    <span>${d.section_identifier}</span>
+                    <span style="color:var(--primary)">PENDING</span>
+                </div>
+                <h3 style="margin:5px 0; font-size:16px;">${d.subject_name}</h3>
+                <div style="font-size:11px; color:#666; margin-top:10px;">
+                    Exam: ${d.exam_title}<br>
+                    ${d.marks_data ? d.marks_data.length : 0} Students Registered
+                </div>
+                <button class="btn-main" style="margin-top:15px; width:100%; padding:10px; font-size:12px; box-shadow:none;">
+                    RESUME MARKING
+                </button>
             </div>
-        </div>
-        <button class="btn-tab active"
-                onclick="loadDraft('${d.id}')"
-                style="width:auto; padding:8px 20px; font-size:12px;">
-            RESUME
-        </button>
-    </div>`).join('');
+        `).join('');
     } catch (e) {
-      showNotify("Failed to fetch drafts", "red");
+      showNotify("Sync Error", "red");
     }
   }
 
@@ -491,61 +421,54 @@
   }
 
   async function loadDraft(draftId) {
-    showNotify("Reconstructing Grid...", "green");
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      const res = await fetch(`${API_URL}/document/academic/draft/${draftId}`, {
+      const res = await fetch(`${API_URL}/document/pending-marksheets`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      const drafts = await res.json();
+      const draft = drafts.find(d => d.id == draftId);
 
-      if (!res.ok) throw new Error("Mismatch");
-      const draft = await res.json();
+      if (!draft) return;
 
-      switchTab('arch');
-
-      // Header Sync
+      // Auto-fill configuration
       document.getElementById('exam-title').value = draft.exam_title;
-      document.getElementById('sel-sec').value = draft.target_class;
+      document.getElementById('sel-sec').value = draft.section_identifier;
+      document.getElementById('inp-sub').value = draft.subject_name;
 
-      const subData = draft.data[0].subjects[0];
-      document.getElementById('inp-sub').value = subData.subject;
-      document.getElementById('inp-total').value = subData.max;
+      // Switch view and render grid
+      switchTab('arch');
+      document.getElementById('marking-area').classList.remove('hidden');
 
-      // INJECT GRID INTO CONTAINER
-      const container = document.getElementById('marking-area');
-      container.classList.remove('hidden');
-
-      // We replace the table body with a Grid Root
-      container.innerHTML = `
-            <div class="marking-grid">
-                ${draft.data.map((s, idx) => `
-                    <div class="student-card" data-sid="${s.student_id}">
-                        <div class="card-info">
-                            <b>${s.student_name}</b>
-                            <span>S/O: ${s.father_name.toUpperCase()}</span>
-                        </div>
-                        <div class="input-zone">
-                            <input type="number"
-                                   class="grid-input obt-input"
-                                   value="${s.subjects[0].obtained}"
-                                   inputmode="decimal"
-                                   onfocus="this.select()"
-                                   onkeydown="handleEnterKey(event, ${idx})"
-                                   oninput="validateSingleRow(this)">
-                        </div>
-                    </div>
-                `).join('')}
+      const grid = document.getElementById('student-marking-grid');
+      grid.innerHTML = draft.marks_data.map((s, idx) => `
+            <div class="student-card" data-name="${s.student_name}" data-fname="${s.father_name}">
+                <div class="card-info">
+                    <b>${s.student_name}</b>
+                    <span>S/O: ${s.father_name}</span>
+                </div>
+                <div class="input-zone">
+                    <input type="number" class="obt-input" value="${s.obt}"
+                           onkeydown="handleEnterKey(event, ${idx})">
+                </div>
             </div>
-        `;
+        `).join('');
 
-      currentStudents = draft.data;
-      showNotify("Integrity Check Passed", "green");
+      showNotify("Draft Loaded Successfully", "green");
     } catch (e) {
-      showNotify("Database Integrity Error", "red");
+      showNotify("Error loading draft", "red");
     }
   }
+
+  function handleEnterKey(e, idx) {
+    if (e.key === "Enter") {
+      const inputs = document.querySelectorAll('.obt-input');
+      if (inputs[idx + 1]) inputs[idx + 1].focus();
+    }
+  }
+
   function resumeDraft(draft) {
     // 1. Fill the Header inputs
     document.getElementById('exam-title').value = draft.exam_title;

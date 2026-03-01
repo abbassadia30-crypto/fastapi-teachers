@@ -116,7 +116,7 @@
 
     async function fetchAllSections() {
         try {
-            const tokenObj = await AppStorage.get("institutionToken");
+            const tokenObj = await AppStorage.get("auth_token");
             const token = tokenObj.value || tokenObj;
             const res = await fetch(`${API_URL}/dashboard/sections`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -134,7 +134,7 @@
         const endpoint = currentStaffType === 'teacher' ? 'teacher-list' : 'Staff_list';
 
         try {
-            const tokenObj = await AppStorage.get("institutionToken");
+            const tokenObj = await AppStorage.get("auth_token");
             const token = tokenObj.value || tokenObj;
 
             const res = await fetch(`${API_URL}/dashboard/${endpoint}`, {
@@ -252,7 +252,7 @@
         };
 
         try {
-            const tokenObj = await AppStorage.get("institutionToken");
+            const tokenObj = await AppStorage.get("auth_token");
             const token = tokenObj.value || tokenObj;
             const res = await fetch(`${API_URL}/document/submit-staff`, {
                 method: 'POST',

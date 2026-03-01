@@ -287,40 +287,18 @@ async def deploy_results(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/academic/my-drafts")
-async def get_my_drafts(
+@router.get("/pending-marksheets")
+async def get_pending_marksheets(
         db: Session = Depends(get_db),
-        current_user: User = Depends(get_current_user)
+        current_user: Any = Depends(get_current_user)
 ):
-    inst_id = getattr(current_user, 'institution_id', None) or \
-              getattr(current_user, 'last_active_institution_id', None)
+    # Single bulk fetch: Source of Truth (Institution) + State (Pending)
+    marksheets = db.query(MarksheetLog).filter(
+        MarksheetLog.institution_id == current_user.institution_id,
+        MarksheetLog.status == "pending"  # Only fetch what needs action
+    ).order_by(MarksheetLog.created_at.desc()).all()
 
-    drafts = db.query(AcademicResult).filter(
-        AcademicResult.institution_ref == inst_id,
-        AcademicResult.status == "DRAFT"
-    ).all()
-
-    grouped = {}
-    for d in drafts:
-        # Create a unique key for each Section + Exam combo
-        key = f"{d.exam_title}_{d.target_class}"
-
-        if key not in grouped:
-            grouped[key] = {
-                "exam_title": d.exam_title,
-                "target_class": d.target_class,
-                "date": d.created_at.strftime("%d %b") if d.created_at else "Recent",
-                "data": [] # This will hold the full snapshot
-            }
-
-        # Add the full student details and their marks to the 'data' array
-        grouped[key]["data"].append({
-            "student_name": d.student_name,
-            "father_name": d.father_name,
-            "marks_data": d.marks_data # This contains subject, max, obt
-        })
-
-    return list(grouped.values())
+    return marksheets
 
 @router.patch("/academic/finalize-results")
 async def finalize_results(

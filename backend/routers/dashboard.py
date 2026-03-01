@@ -352,17 +352,27 @@ async def check_ownership(
         "full_name": current_user.user_name
     }
 
-@router.get("/students-by-section")
+@router.get("/students/{section_name}")
 async def get_students_by_section(
-        section: str,
+        section_name: str,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Fetch students only for the logged-in teacher's institution and specific section
+    """
+    🏛️ SUPER CONSOLE FETCH:
+    Returns all active students for a specific section within the user's institution.
+    """
+    # 1. Filter by Institution ID (Security & Truth)
+    # 2. Filter by Section Name
+    # 3. Ensure only Active students are fetched
     students = db.query(student).filter(
         student.institution_id == current_user.institution_id,
-        student.section == section,
+        student.section == section_name,
         student.is_active == True
-    ).order_by(student.name).all()
+    ).order_by(student.name.asc()).all()
+
+    if not students:
+        # We return an empty list instead of an error to keep the frontend Grid stable
+        return []
 
     return students
