@@ -257,12 +257,12 @@ async def deploy_results(
         # Convert Pydantic results to a list of dicts for JSON storage
         formatted_marks = [result.model_dump() for result in payload.results]
 
-        # 🏛️ FIX: Change 'institution_id' to 'institution_ref'
-        # to match your AcademicResult model definition
+        # 🏛️ INSTITUTION CONSOLE LOGIC:
+        # Aligning variable names with the SQLAlchemy Model columns
         new_result = AcademicResult(
-            institution_ref=current_user.institution_id, # <--- Changed this line
+            institution_ref=current_user.institution_id,
             exam_title=payload.exam_title,
-            section_identifier=payload.class_name,
+            section_id=payload.class_name,      # <--- FIX: Changed from section_identifier
             subject_name=payload.results[0].marks[0].subject if payload.results else "N/A",
             total_marks=payload.results[0].marks[0].max if payload.results else 100,
             passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
@@ -272,10 +272,9 @@ async def deploy_results(
 
         db.add(new_result)
         db.commit()
-        return {"status": "success"}
+        return {"status": "success", "message": "Institution records synchronized"}
     except Exception as e:
         db.rollback()
-        # This print will show the real error in your Render logs
         print(f"DEPLOY ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
