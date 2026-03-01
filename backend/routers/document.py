@@ -248,20 +248,25 @@ async def deploy_vouchers(
 
 # Inside your router in document.py
 @router.post("/academic/deploy-results")
-async def deploy_results(payload: BulkResultPayload, db: Session = Depends(get_db), current_user: Any = Depends(get_current_user)):
+async def deploy_results(
+        payload: BulkResultPayload,
+        db: Session = Depends(get_db),
+        current_user: Any = Depends(get_current_user)
+):
     try:
-        # Convert Pydantic results to a list of dicts for JSON storage in DB
+        # Convert Pydantic results to a list of dicts for JSON storage
         formatted_marks = [result.model_dump() for result in payload.results]
 
+        # 🏛️ FIX: Change 'institution_id' to 'institution_ref'
+        # to match your AcademicResult model definition
         new_result = AcademicResult(
-            institution_id=current_user.institution_id,
+            institution_ref=current_user.institution_id, # <--- Changed this line
             exam_title=payload.exam_title,
             section_identifier=payload.class_name,
-            # Extract first subject info for high-level columns
             subject_name=payload.results[0].marks[0].subject if payload.results else "N/A",
             total_marks=payload.results[0].marks[0].max if payload.results else 100,
             passing_marks=payload.results[0].marks[0].pass_mark if payload.results else 33,
-            marks_data=formatted_marks, # Store the full structured list
+            marks_data=formatted_marks,
             status="published" if not payload.is_draft else "pending"
         )
 
@@ -270,8 +275,9 @@ async def deploy_results(payload: BulkResultPayload, db: Session = Depends(get_d
         return {"status": "success"}
     except Exception as e:
         db.rollback()
-        print(f"DEPLOY ERROR: {str(e)}") # This will show in your Render logs
-        raise HTTPException(status_code=500, detail="Database Sync Failed")
+        # This print will show the real error in your Render logs
+        print(f"DEPLOY ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/pending-marksheets")
 async def get_pending_marksheets(
