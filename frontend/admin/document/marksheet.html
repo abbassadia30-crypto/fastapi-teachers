@@ -383,7 +383,7 @@
       if (!res.ok) throw new Error();
 
       showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
-      if (!isDraft) setTimeout(() => location.reload(), 2000);
+      setTimeout(() => location.reload(), 2000);
     } catch (e) {
       showNotify("Sync Failed", "red");
     }
@@ -405,14 +405,21 @@
         return;
       }
 
+      // This replaces the mapping inside your existing renderPendingList()
       listDiv.innerHTML = drafts.map(d => `
-        <div class="pending-item">
-            <div>
-                <b>${d.exam_title}</b>
-                <div style="font-size:10px;">${d.target_class} • ${d.student_count} Students</div>
+    <div class="pending-item" onclick='resumeDraft(${JSON.stringify(d)})'>
+        <div style="flex: 1;">
+            <b style="color:var(--secondary);">${d.exam_title}</b>
+            <div style="font-size:11px; color:var(--primary);">
+                Section: ${d.target_class} • ${d.student_count} Students
             </div>
-            <button class="btn-tab active" onclick="loadDraft('${d.id}')" style="width:auto; padding:5px 15px;">OPEN</button>
-        </div>`).join('');
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:10px; color:#999;">${d.date}</div>
+            <i class="fas fa-chevron-right" style="color:var(--primary); margin-top:5px;"></i>
+        </div>
+    </div>
+`).join('');
     } catch (e) { showNotify("Error fetching drafts", "red"); }
   }
 
@@ -498,7 +505,38 @@
     }
   }
 
+  function resumeDraft(draft) {
+    // 1. Set the Header Info
+    document.getElementById('exam-title').value = draft.exam_title;
+    document.getElementById('sel-sec').value = draft.target_class;
 
+    // Pick first student to fill the Subject/Total/Pass fields
+    const sampleMark = draft.data[0].marks_data[0];
+    document.getElementById('inp-sub').value = sampleMark.subject;
+    document.getElementById('inp-total').value = sampleMark.max;
+    document.getElementById('inp-pass').value = sampleMark.pass_mark;
+
+    // 2. Render the Rows from the Snapshot
+    const rows = document.getElementById('student-marking-rows');
+    document.getElementById('marking-area').classList.remove('hidden');
+    document.getElementById('setup-area').classList.add('hidden');
+
+    rows.innerHTML = draft.data.map(s => `
+        <tr data-name="${s.student_name}" data-fname="${s.father_name}">
+            <td>
+                <div style="font-weight:700;">${s.student_name}</div>
+                <div style="font-size:10px; color:#666;">S/O: ${s.father_name}</div>
+            </td>
+            <td style="text-align:right;">
+                <input type="number" class="obt-input"
+                       value="${s.marks_data[0].obt}"
+                       oninput="validateSingleRow(this)">
+            </td>
+        </tr>
+    `).join('');
+
+    showNotify("Draft Loaded", "green");
+  }
 
 </script>
 </body>

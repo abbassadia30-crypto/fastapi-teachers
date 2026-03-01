@@ -287,25 +287,42 @@ async def deploy_results(
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/my-drafts")
+@router.get("/academic/my-drafts")
 async def get_my_drafts(
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
-    # Fetch unique exam titles that are still in DRAFT status
-    drafts = db.query(
-        AcademicResult.exam_title,
-        AcademicResult.target_class,
-        func.count(AcademicResult.id).label("student_count")
-    ).filter(
-        AcademicResult.institution_ref == current_user.institution_id,
-        AcademicResult.status == "DRAFT"
-    ).group_by(AcademicResult.exam_title, AcademicResult.target_class).all()
+    inst_id = getattr(current_user, 'institution_id', None) or \
+              getattr(current_user, 'last_active_institution_id', None)
 
-    return [
-        {"exam_title": d[0], "target_class": d[1], "student_count": d[2]}
-        for d in drafts
-    ]
+    # 🎯 We fetch drafts and group them by Title and Section
+    # This allows the teacher to see "Final Exam - 10th-A" as one item
+    drafts = db.query(AcademicResult).filter(
+        AcademicResult.institution_ref == inst_id,
+        AcademicResult.status == "DRAFT"
+    ).all()
+
+    # Organize data so the frontend can easily list them
+    grouped = {}
+    for d in drafts:
+        key = f"{d.exam_title}_{d.target_class}"
+        if key not in grouped:
+            grouped[key] = {
+                "exam_title": d.exam_title,
+                "target_class": d.target_class,
+                "date": d.created_at.strftime("%d %b, %Y"),
+                "student_count": 0,
+                "data": [] # We store the full rows here to "Resume" later
+            }
+
+        grouped[key]["student_count"] += 1
+        grouped[key]["data"].push({
+            "student_name": d.student_name,
+            "father_name": d.father_name,
+            "marks_data": d.marks_data
+        })
+
+    return list(grouped.values())
 
 @router.get("/draft-details")
 async def get_draft_details(
