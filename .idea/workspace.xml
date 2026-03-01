@@ -117,23 +117,7 @@
       <workItem from="1772348038505" duration="2286000" />
       <workItem from="1772351955876" duration="8483000" />
       <workItem from="1772361459079" duration="845000" />
-      <workItem from="1772367207871" duration="875000" />
-    </task>
-    <task id="LOCAL-00013" summary="now">
-      <option name="closed" value="true" />
-      <created>1772191755650</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1772191755650</updated>
-    </task>
-    <task id="LOCAL-00014" summary="now">
-      <option name="closed" value="true" />
-      <created>1772192453384</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1772192453384</updated>
+      <workItem from="1772367207871" duration="1492000" />
     </task>
     <task id="LOCAL-00015" summary="now">
       <option name="closed" value="true" />
@@ -511,7 +495,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772367848152</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="now">
+      <option name="closed" value="true" />
+      <created>1772368250203</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1772368250203</updated>
+    </task>
+    <task id="LOCAL-00063" summary="now">
+      <option name="closed" value="true" />
+      <created>1772368708201</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1772368708201</updated>
+    </task>
+    <option name="localTasksCounter" value="64" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
