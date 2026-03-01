@@ -250,31 +250,62 @@ async def deploy_vouchers(
 async def deploy_results(
         payload: BulkResultPayload,
         db: Session = Depends(get_db),
-        current_user: Any = Depends(get_current_user)
+        current_user: User = Depends(get_current_user)
 ):
-    try:
-        for entry in payload.data:
-            new_result = AcademicResult(
-                institution_ref=current_user.institution_id, # LOCKED TO INSTITUTION
-                exam_title=payload.exam_title,
-                target_class=payload.target_class,
-                student_id=entry['student_id'],
-                student_name=entry['student_name'],
-                father_name=entry.get('father_name'),
-                marks_data=entry['subjects'],
-                percentage=entry['percentage'],
-                created_by=current_user.user_email,
-                status=payload.status
-            )
-            db.add(new_result)
+    # 🏛️ Robustly find the Institution ID
+    inst_id = getattr(current_user, 'institution_id', None) or \
+              getattr(current_user, 'last_active_institution_id', None)
 
+    if not inst_id:
+        raise HTTPException(status_code=400, detail="User not linked to an institution")
+
+    try:
+        # 1. CLEANUP: Remove any existing results for this Exam + Section
+        # This prevents the "Duplicate Entry" errors that cause 500 crashes
+        db.query(AcademicResult).filter(
+            AcademicResult.institution_ref == inst_id,
+            AcademicResult.exam_title == payload.exam_title,
+            AcademicResult.target_class == payload.class_name
+        ).delete()
+
+        status_to_set = "DRAFT" if payload.is_draft else "PUBLISHED"
+        db_entries = []
+
+        for entry in payload.results:
+            # Calculate Total Marks for this student
+            total_max = sum(m.max for m in entry.marks) if entry.marks else 100
+            total_obt = sum(m.obt for m in entry.marks) if entry.marks else 0
+
+            # Ensure student_id is an INT (Crucial for DB integrity)
+            s_id = int(entry.student_id)
+
+            new_res = AcademicResult(
+                institution_ref=inst_id,
+                exam_title=payload.exam_title,
+                target_class=payload.class_name,
+                student_id=s_id,
+                student_name=entry.name,
+                father_name=entry.father_name,
+                marks_data=[m.model_dump() for m in entry.marks],
+                percentage=round((total_obt / total_max * 100), 2) if total_max > 0 else 0,
+                status=status_to_set,
+                created_by=getattr(current_user, 'user_email', 'Teacher')
+            )
+            db_entries.append(new_res)
+
+        db.add_all(db_entries)
         db.commit()
-        return {"status": "success", "message": f"Deployed {len(payload.data)} results"}
+
+        return {
+            "status": "success",
+            "message": "Data Synchronized",
+            "count": len(db_entries)
+        }
+
     except Exception as e:
         db.rollback()
-        # This will catch the ForeignKeyViolation and tell you why
-        print(f"DEPLOY ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Database Integrity Error: Check Student IDs")
+        print(f"DATABASE ERROR: {str(e)}") # Check your server logs for this!
+        raise HTTPException(status_code=500, detail=f"Sync Failed: {str(e)}")
 
 @router.get("/my-drafts")
 async def get_my_drafts(

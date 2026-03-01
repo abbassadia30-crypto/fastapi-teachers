@@ -86,20 +86,33 @@
     }
     input:focus { border-color: var(--primary); background: #fffaf5; }
 
-    .table-wrapper { overflow-x: auto; background: white; border-radius: 12px; border: 1px solid var(--border); }
-    .gb-table { width: 100%; border-collapse: collapse; min-width: 500px; }
-    .gb-table th { background: #f1f5f9; padding: 12px; font-size: 10px; text-align: left; border-bottom: 2px solid #e2e8f0; }
-    .gb-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
+    .table-wrapper {
+      overflow-x: hidden; /* Prevent horizontal sliding */
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .gb-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: unset !important; /* CRITICAL: Remove the 500px minimum */
+    }
+    .gb-table th:first-child,
+    .gb-table td:first-child {
+      width: 65%; /* Give more room to the name */
+      padding-right: 5px;
+    }
 
+    .gb-table th:last-child,
+    .gb-table td:last-child {
+      width: 35%; /* Tighten the input column */
+      text-align: right;
+    }
     .obt-input {
-      width: 80px !important;
-      padding: 8px !important;
-      border: 2px solid var(--border) !important;
-      border-radius: 8px !important;
-      text-align: center !important;
-      font-weight: 800 !important;
-      color: var(--primary) !important;
-      margin: 0 !important;
+      width: 65px !important; /* Reduced from 80px */
+      height: 40px;
+      font-size: 16px !important;
+      margin-left: auto !important;
     }
 
     .btn-main {
@@ -185,13 +198,24 @@
 <script>
   const API_URL = "https://fastapi-teachers.onrender.com";
 
+  let currentStudents = [];
+
   window.onload = async () => { await fetchSections(); };
 
   function showNotify(msg, type) {
     const bar = document.getElementById('notification-bar');
     bar.innerText = msg;
-    bar.className = type === "red" ? "bg-red" : "bg-green";
-    setTimeout(() => { bar.className = ""; }, 3000);
+    // Clear previous classes first to reset animation
+    bar.classList.remove('bg-red', 'bg-green');
+
+    // Force a tiny delay so the browser registers the new class for animation
+    setTimeout(() => {
+      bar.classList.add(type === "red" ? "bg-red" : "bg-green");
+    }, 10);
+
+    setTimeout(() => {
+      bar.classList.remove('bg-red', 'bg-green');
+    }, 3000);
   }
 
   function switchTab(tab) {
@@ -228,24 +252,21 @@
     const markingArea = document.getElementById('marking-area');
     const rows = document.getElementById('student-marking-rows');
 
-    // 1. Instant UI Feedback: Clear old data and show loading state
     if (!section) {
       markingArea.classList.add('hidden');
       rows.innerHTML = "";
       return;
     }
 
-    // Show the area immediately with a loading message
     markingArea.classList.remove('hidden');
     rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--primary); font-weight:600;">
-                        <div class="spinner"></div> Fetching Students from DB...
+                        Fetching Students...
                       </td></tr>`;
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      // 2. Optimized API call (Matching your dashboard.py logic)
       const res = await fetch(`${API_URL}/dashboard/my_students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -254,91 +275,102 @@
 
       const data = await res.json();
 
-      // Filter students by the selected section
-      const students = data.students.filter(s => s.section === section);
+      // Filter students for the global variable and the local render
+      currentStudents = data.students.filter(s => s.section === section);
 
-      if (!students || students.length === 0) {
+      if (currentStudents.length === 0) {
         rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:30px; color:var(--danger);">
-                            No active students found in Section: ${section}
-                          </td></tr>`;
-        showNotify("No students found in " + section, "red");
+                                No active students found in Section: ${section}
+                              </td></tr>`;
         return;
       }
 
-      // 3. Populate Rows Instantly
-      rows.innerHTML = students.map(s => `
-    <tr data-sid="${s.id}" data-name="${s.name}" data-fname="${s.father_name || 'N/A'}">
-        <td style="width: 70%;">
-            <div style="font-weight:700; color:var(--secondary); font-size: 14px;">${s.name}</div>
-            <div style="font-size:11px; color:var(--primary); font-weight:600;">S/O: ${(s.father_name || 'N/A').toUpperCase()}</div>
+      // PERFECTED RENDER LOGIC
+      rows.innerHTML = currentStudents.map((s, index) => `
+    <tr data-sid="${s.id || s.student_id}" data-name="${s.name || s.student_name}" data-fname="${s.father_name || 'N/A'}">
+        <td>
+            <div style="font-weight:700; color:var(--secondary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${s.name || s.student_name}
+            </div>
+            <div style="font-size:10px; color:var(--primary); font-weight:600;">
+                S/O: ${(s.father_name || 'N/A').substring(0, 15)}
+            </div>
         </td>
-        <td style="text-align:right; width: 30%;">
+        <td style="text-align:right;">
             <input type="number"
                    class="obt-input"
-                   value="0"
-                   pattern="[0-9]*"
-                   inputmode="numeric"
+                   value="${s.subjects ? s.subjects[0].obtained : 0}"
+                   inputmode="decimal"
                    onfocus="this.select()"
+                   onkeydown="handleEnterKey(event, ${index})"
                    oninput="validateSingleRow(this)">
         </td>
     </tr>
 `).join('');
 
-      showNotify(`${students.length} Students Loaded`, "green");
+      showNotify(`${currentStudents.length} Students Loaded`, "green");
 
     } catch (e) {
-      console.error(e);
-      rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:red;">
-                          Connection Failed. Please try again.
-                        </td></tr>`;
+      rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:red;">Connection Failed.</td></tr>`;
       showNotify("Server Connection Failed", "red");
     }
   }
 
-  async function deployToCloud(isDraft = false) {
-    // 1. Get current input values
-    const exam = document.getElementById('inp-exam').value;
-    const tClass = document.getElementById('inp-class').value;
-    const subject = document.getElementById('inp-subject').value;
-    const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
+  // Keep this helper outside
+  function handleEnterKey(event, index) {
+    if (event.key === "Enter") {
+      event.preventDefault(); // Prevent accidental form submission
+      const nextInput = document.querySelectorAll('.obt-input')[index + 1];
+      if (nextInput) {
+        nextInput.focus();
+      } else {
+        // If it's the last student, hide the keyboard
+        document.activeElement.blur();
+      }
+    }
+  }
 
-    if (!exam || !tClass) {
-      showNotify("Exam Title and Class are required!", "red");
+  async function deployToCloud(isDraft) {
+    const rows = document.querySelectorAll('#student-marking-rows tr');
+    const results = [];
+    const total = parseFloat(document.getElementById('inp-total').value) || 100;
+    const pass = parseFloat(document.getElementById('inp-pass').value) || 33;
+    const sub = document.getElementById('inp-sub').value || "General";
+    const examTitle = document.getElementById('exam-title').value;
+    const section = document.getElementById('sel-sec').value;
+
+    if(!examTitle || !section) {
+      showNotify("Title and Section required", "red");
       return;
     }
 
-    // 2. Format data for the Institution Management System
-    const formattedData = students.map(s => {
-      const obtained = parseFloat(s.obtained) || 0;
-      const perc = (obtained / totalMarks) * 100;
-      return {
-        student_id: parseInt(s.id),
-        student_name: s.name,
-        father_name: s.father_name || "N/A",
-        subjects: [{
-          subject: subject || "General",
-          max: totalMarks,
-          obtained: obtained
-        }],
-        percentage: parseFloat(perc.toFixed(2))
-      };
+    rows.forEach(tr => {
+      const obtValue = tr.querySelector('.obt-input').value;
+      results.push({
+        student_id: parseInt(tr.dataset.sid), // Force Integer
+        name: tr.dataset.name,
+        father_name: tr.dataset.fname,
+        marks: [{
+          subject: sub,
+          max: total,
+          obt: parseFloat(obtValue) || 0,
+          pass_mark: pass
+        }]
+      });
     });
 
     const payload = {
-      exam_title: exam,
-      target_class: tClass,
-      status: isDraft ? 'DRAFT' : 'PUBLISHED',
-      data: formattedData
+      exam_title: examTitle,
+      class_name: section,
+      is_draft: isDraft,
+      results: results
     };
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      showNotify("Connecting to Institution Server...", "green");
-
-      // FIX: Changed API_URL to API to match your variable definition
-      const res = await fetch(`${API}/document/academic/deploy-results`, {
+      const res = await fetch(`${API_URL}/document/academic/deploy-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -347,19 +379,17 @@
         body: JSON.stringify(payload)
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Server rejected the request");
-      }
+      const data = await res.json();
 
-      showNotify(isDraft ? "Draft Saved Successfully" : "Results Published!", "green");
-
-      if (!isDraft) {
-        setTimeout(() => location.reload(), 2000);
+      if (res.ok) {
+        showNotify(isDraft ? "Draft Saved Successfully" : "Results Published!", "green");
+        if(!isDraft) setTimeout(() => location.reload(), 2000);
+      } else {
+        // This catches the 400/500 errors from Python
+        showNotify(data.detail || "Server Refused Data", "red");
       }
     } catch (e) {
-      console.error("Network Error:", e);
-      showNotify(e.message || "Failed to reach server", "red");
+      showNotify("Network Error: Check Internet", "red");
     }
   }
 
@@ -369,7 +399,7 @@
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
-      const res = await fetch(`${API_URL}/document/academic/my-drafts`, {
+      const res = await fetch(`${API_URL}/document/my-drafts`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const drafts = await res.json();
@@ -385,23 +415,94 @@
                 <b>${d.exam_title}</b>
                 <div style="font-size:10px;">${d.target_class} • ${d.student_count} Students</div>
             </div>
-            <button class="btn-tab active" style="width:auto; padding:5px 15px;">OPEN</button>
+            <button class="btn-tab active" onclick="loadDraft('${d.id}')" style="width:auto; padding:5px 15px;">OPEN</button>
         </div>`).join('');
     } catch (e) { showNotify("Error fetching drafts", "red"); }
   }
 
   function validateSingleRow(el) {
     const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
-    const val = parseFloat(el.value);
+    let val = parseFloat(el.value);
 
     if (val > totalMarks) {
       el.value = totalMarks;
       el.style.borderColor = "var(--danger)";
-      showNotify("Max marks: " + totalMarks, "red");
+      showNotify("Cannot exceed total marks: " + totalMarks, "red");
+    } else if (val < 0) {
+      el.value = 0;
+      el.style.borderColor = "var(--danger)";
+      showNotify("Marks cannot be negative", "red");
     } else {
       el.style.borderColor = "var(--primary)";
     }
   }
+
+  async function loadDraft(draftId) {
+    showNotify("Restoring Draft...", "green");
+
+    try {
+      const tRes = await AppStorage.get("auth_token");
+      const token = tRes.value || tRes;
+
+      const res = await fetch(`${API_URL}/document/academic/draft/${draftId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!res.ok) throw new Error("Could not fetch draft details");
+
+      const draft = await res.json();
+
+      // 1. Switch back to Architect Tab
+      switchTab('arch');
+
+      // 2. Fill the configuration headers
+      document.getElementById('exam-title').value = draft.exam_title;
+      document.getElementById('sel-sec').value = draft.target_class;
+
+      // Use the first student's subject data to fill headers
+      if (draft.data && draft.data.length > 0) {
+        const firstSub = draft.data[0].subjects[0];
+        document.getElementById('inp-sub').value = firstSub.subject;
+        document.getElementById('inp-total').value = firstSub.max;
+      }
+
+      // 3. Render the marking rows with SAVED values
+      const rows = document.getElementById('student-marking-rows');
+      document.getElementById('marking-area').classList.remove('hidden');
+
+      currentStudents = draft.data; // Sync global state
+
+      rows.innerHTML = currentStudents.map((s, index) => `
+    <tr data-sid="${s.id || s.student_id}" data-name="${s.name || s.student_name}" data-fname="${s.father_name || 'N/A'}">
+        <td>
+            <div style="font-weight:700; color:var(--secondary); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                ${s.name || s.student_name}
+            </div>
+            <div style="font-size:10px; color:var(--primary); font-weight:600;">
+                S/O: ${(s.father_name || 'N/A').substring(0, 15)}
+            </div>
+        </td>
+        <td style="text-align:right;">
+            <input type="number"
+                   class="obt-input"
+                   value="${s.subjects ? s.subjects[0].obtained : 0}"
+                   inputmode="decimal"
+                   onfocus="this.select()"
+                   onkeydown="handleEnterKey(event, ${index})"
+                   oninput="validateSingleRow(this)">
+        </td>
+    </tr>
+`).join('');
+
+      showNotify("Draft Loaded Successfully", "green");
+
+    } catch (e) {
+      console.error(e);
+      showNotify("Failed to open draft", "red");
+    }
+  }
+
+
 
 </script>
 </body>
