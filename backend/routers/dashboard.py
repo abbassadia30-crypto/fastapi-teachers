@@ -351,3 +351,18 @@ async def check_ownership(
         "user_role": current_user.type,
         "full_name": current_user.user_name
     }
+
+@router.get("/students-by-section")
+async def get_students_by_section(
+        section: str,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Fetch students only for the logged-in teacher's institution and specific section
+    students = db.query(student).filter(
+        student.institution_id == current_user.institution_id,
+        student.section == section,
+        student.is_active == True
+    ).order_by(student.name).all()
+
+    return students
