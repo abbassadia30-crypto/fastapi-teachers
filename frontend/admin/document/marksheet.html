@@ -16,7 +16,39 @@
       height: 100vh; display: flex; flex-direction: column; overflow: hidden;
     }
 
-    /* 🔔 Notification System */
+    /* Ensure the table doesn't feel cramped */
+    .gb-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px; /* Adds space between rows */
+      min-width: unset; /* Remove min-width to prevent horizontal scroll on small phones */
+    }
+
+    .gb-table td {
+      background: white;
+      padding: 12px;
+    }
+
+    /* Rounded corners for rows */
+    .gb-table tr td:first-child { border-radius: 12px 0 0 12px; border-left: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .gb-table tr td:last-child { border-radius: 0 12px 12px 0; border-right: 1px solid var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+
+    /* The Input Styling */
+    .obt-input {
+      width: 70px !important;
+      height: 45px;
+      font-size: 18px !important;
+      border: 2px solid #cfd8dc !important;
+      background: #fdfdfd !important;
+      transition: 0.2s;
+    }
+
+    .obt-input:focus {
+      border-color: var(--primary) !important;
+      background: #fff8e1 !important;
+      box-shadow: 0 0 10px rgba(251, 140, 0, 0.2);
+    }
+
     #notification-bar {
       position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
       width: 90%; max-width: 400px; padding: 18px; border-radius: 12px;
@@ -60,17 +92,21 @@
     .gb-table td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 13px; }
 
     .obt-input {
-      width: 80px !important; padding: 8px !important; border: 2px solid var(--border) !important;
-      border-radius: 8px !important; text-align: center !important; font-weight: 800 !important;
-      color: var(--primary) !important; margin: 0 !important;
+      width: 80px !important;
+      padding: 8px !important;
+      border: 2px solid var(--border) !important;
+      border-radius: 8px !important;
+      text-align: center !important;
+      font-weight: 800 !important;
+      color: var(--primary) !important;
+      margin: 0 !important;
     }
 
     .btn-main {
       background: var(--primary); color: white; border: none; flex: 1;
       padding: 16px; border-radius: 15px; font-weight: 700; cursor: pointer;
-      box-shadow: 0 4px 15px rgba(251, 140, 0, 0.3); transition: 0.2s;
+      box-shadow: 0 4px 15px rgba(251, 140, 0, 0.3);
     }
-    .btn-main:active { transform: scale(0.98); }
 
     .hidden { display: none !important; }
 
@@ -141,6 +177,7 @@
   <div id="view-pend" class="hidden">
     <div id="pending-list"></div>
   </div>
+
 </div>
 
 <script src="../../capacitor.js"></script>
@@ -148,9 +185,7 @@
 <script>
   const API_URL = "https://fastapi-teachers.onrender.com";
 
-  window.onload = async () => {
-    await fetchSections();
-  };
+  window.onload = async () => { await fetchSections(); };
 
   function showNotify(msg, type) {
     const bar = document.getElementById('notification-bar');
@@ -174,146 +209,143 @@
     }
   }
 
-  // 1. Fetch available sections from the dashboard
   async function fetchSections() {
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
-
-      // This endpoint should return a unique list of sections from the student table
       const res = await fetch(`${API_URL}/dashboard/sections`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const sections = await res.json();
-
       const select = document.getElementById('sel-sec');
       select.innerHTML = '<option value="">-- Choose Section --</option>' +
               sections.map(s => `<option value="${s}">${s}</option>`).join('');
-
-    } catch (e) {
-      showNotify("Failed to load sections", "red");
-    }
+    } catch (e) { showNotify("Failed to load sections", "red"); }
   }
-  // 2. Load students dynamically based on selected section
+
   async function autoLoadMarkingStation() {
     const section = document.getElementById('sel-sec').value;
-    const rows = document.getElementById('student-marking-rows');
     const markingArea = document.getElementById('marking-area');
+    const rows = document.getElementById('student-marking-rows');
 
-    // Reset UI
-    rows.innerHTML = '<tr><td colspan="2" style="text-align:center; padding:20px;">Fetching Students...</td></tr>';
-    markingArea.classList.remove('hidden');
-
+    // 1. Instant UI Feedback: Clear old data and show loading state
     if (!section) {
       markingArea.classList.add('hidden');
+      rows.innerHTML = "";
       return;
     }
+
+    // Show the area immediately with a loading message
+    markingArea.classList.remove('hidden');
+    rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:var(--primary); font-weight:600;">
+                        <div class="spinner"></div> Fetching Students from DB...
+                      </td></tr>`;
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
 
-      // Optimized call: We pass the section directly to the backend
-      const res = await fetch(`${API_URL}/dashboard/students-by-section?section=${encodeURIComponent(section)}`, {
+      // 2. Optimized API call (Matching your dashboard.py logic)
+      const res = await fetch(`${API_URL}/dashboard/my_students`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
-      const students = await res.json();
+      if (!res.ok) throw new Error("Unauthorized or Server Error");
+
+      const data = await res.json();
+
+      // Filter students by the selected section
+      const students = data.students.filter(s => s.section === section);
 
       if (!students || students.length === 0) {
-        rows.innerHTML = '<tr><td colspan="2" style="text-align:center; color:red; padding:20px;">No students found in this section.</td></tr>';
+        rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:30px; color:var(--danger);">
+                            No active students found in Section: ${section}
+                          </td></tr>`;
+        showNotify("No students found in " + section, "red");
         return;
       }
 
-      // Populate table instantly
+      // 3. Populate Rows Instantly
       rows.innerHTML = students.map(s => `
-            <tr data-sid="${s.id}" data-name="${s.name}" data-fname="${s.father_name}">
-                <td>
-                    <div style="font-weight:700; color:var(--secondary);">${s.name}</div>
-                    <div style="font-size:11px; color:var(--primary);">S/O: ${s.father_name.toUpperCase()}</div>
-                </td>
-                <td style="text-align:center;">
-                    <input type="number" class="obt-input" value="0"
-                           oninput="validateMarks(this)"
-                           onfocus="this.select()">
-                </td>
-            </tr>
-        `).join('');
+    <tr data-sid="${s.id}" data-name="${s.name}" data-fname="${s.father_name || 'N/A'}">
+        <td style="width: 70%;">
+            <div style="font-weight:700; color:var(--secondary); font-size: 14px;">${s.name}</div>
+            <div style="font-size:11px; color:var(--primary); font-weight:600;">S/O: ${(s.father_name || 'N/A').toUpperCase()}</div>
+        </td>
+        <td style="text-align:right; width: 30%;">
+            <input type="number"
+                   class="obt-input"
+                   value="0"
+                   pattern="[0-9]*"
+                   inputmode="numeric"
+                   onfocus="this.select()"
+                   oninput="validateSingleRow(this)">
+        </td>
+    </tr>
+`).join('');
 
       showNotify(`${students.length} Students Loaded`, "green");
 
     } catch (e) {
-      rows.innerHTML = '<tr><td colspan="2" style="text-align:center; color:red;">Connection Error</td></tr>';
+      console.error(e);
+      rows.innerHTML = `<tr><td colspan="2" style="text-align:center; padding:20px; color:red;">
+                          Connection Failed. Please try again.
+                        </td></tr>`;
+      showNotify("Server Connection Failed", "red");
     }
   }
 
-  function validateMarks(input) {
-    const max = parseFloat(document.getElementById('inp-total').value) || 100;
-    if (parseFloat(input.value) > max) {
-      input.value = max;
-      showNotify("Cannot exceed total marks", "red");
-    }
-  }
-  // 3. Deploy results (Draft or Published) to AcademicResult table
   async function deployToCloud(isDraft) {
     const rows = document.querySelectorAll('#student-marking-rows tr');
     const results = [];
-    const total = parseFloat(document.getElementById('inp-total').value) || 100;
-    const pass = parseFloat(document.getElementById('inp-pass').value) || 33;
-    const sub = document.getElementById('inp-sub').value || "General";
-    const examTitle = document.getElementById('exam-title').value;
-
-    if(!examTitle) { showNotify("Exam Title Required", "red"); return; }
+    const total = parseInt(document.getElementById('inp-total').value);
+    const pass = parseInt(document.getElementById('inp-pass').value);
+    const sub = document.getElementById('inp-sub').value;
 
     rows.forEach(tr => {
-      const obtValue = parseFloat(tr.querySelector('.obt-input').value) || 0;
-      const percentage = (obtValue / total) * 100;
-
-      // Map data to the AcademicResult model structure
+      const obtValue = tr.querySelector('.obt-input').value;
       results.push({
         student_id: parseInt(tr.dataset.sid),
-        student_name: tr.dataset.name,
+        name: tr.dataset.name,
         father_name: tr.dataset.fname,
-        exam_title: examTitle,
-        target_class: document.getElementById('sel-sec').value,
-        marks_data: {
-          subject: sub,
+        marks: [{
+          subject: sub || "General",
           max: total,
-          obt: obtValue,
+          obt: parseFloat(obtValue) || 0,
           pass_mark: pass
-        },
-        percentage: percentage,
-        final_status: obtValue >= pass ? "PASS" : "FAIL",
-        status: isDraft ? "DRAFT" : "PUBLISHED"
+        }]
       });
     });
+
+    const payload = {
+      exam_title: document.getElementById('exam-title').value,
+      class_name: document.getElementById('sel-sec').value,
+      is_draft: isDraft,
+      results: results
+    };
 
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
-
-      // We use a bulk endpoint to save all student results at once
       const res = await fetch(`${API_URL}/document/academic/deploy-results`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ results })
+        body: JSON.stringify(payload)
       });
 
       if(!res.ok) throw new Error();
 
-      showNotify(isDraft ? "Draft Saved Successfully" : "Results Published to Parents!", "green");
+      showNotify(isDraft ? "Draft Saved" : "Results Published!", "green");
       if(!isDraft) setTimeout(() => location.reload(), 2000);
-    } catch (e) { showNotify("Sync Failed: Check Internet", "red"); }
+    } catch (e) { showNotify("Sync Failed", "red"); }
   }
 
-  // 4. Fetch and render pending drafts from the database
   async function renderPendingList() {
     const listDiv = document.getElementById('pending-list');
-    listDiv.innerHTML = '<div style="text-align:center; padding:20px; color:var(--primary);">Loading Drafts...</div>';
-
+    listDiv.innerHTML = '<div style="text-align:center; padding:20px;">Loading Drafts...</div>';
     try {
       const tRes = await AppStorage.get("auth_token");
       const token = tRes.value || tRes;
@@ -322,7 +354,7 @@
       });
       const drafts = await res.json();
 
-      if(!drafts || drafts.length === 0) {
+      if(drafts.length === 0) {
         listDiv.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">No pending marksheets.</div>';
         return;
       }
@@ -330,23 +362,27 @@
       listDiv.innerHTML = drafts.map(d => `
         <div class="pending-item">
             <div>
-                <b style="color:var(--secondary);">${d.exam_title}</b>
-                <div style="font-size:10px; color:#64748b;">${d.target_class} • ${new Date(d.created_at).toLocaleDateString()}</div>
+                <b>${d.exam_title}</b>
+                <div style="font-size:10px;">${d.target_class} • ${d.student_count} Students</div>
             </div>
-            <button class="btn-tab active" style="width:auto; padding:8px 20px;" onclick="loadDraft('${d.exam_title}', '${d.target_class}')">OPEN</button>
+            <button class="btn-tab active" style="width:auto; padding:5px 15px;">OPEN</button>
         </div>`).join('');
-    } catch (e) {
-      listDiv.innerHTML = '<div style="text-align:center; padding:20px; color:red;">Connection Error</div>';
+    } catch (e) { showNotify("Error fetching drafts", "red"); }
+  }
+
+  function validateSingleRow(el) {
+    const totalMarks = parseFloat(document.getElementById('inp-total').value) || 100;
+    const val = parseFloat(el.value);
+
+    if (val > totalMarks) {
+      el.value = totalMarks;
+      el.style.borderColor = "var(--danger)";
+      showNotify("Max marks: " + totalMarks, "red");
+    } else {
+      el.style.borderColor = "var(--primary)";
     }
   }
 
-  // Helper to resume a draft
-  function loadDraft(title, section) {
-    document.getElementById('exam-title').value = title;
-    document.getElementById('sel-sec').value = section;
-    switchTab('arch');
-    autoLoadMarkingStation();
-  }
 </script>
 </body>
 </html>
