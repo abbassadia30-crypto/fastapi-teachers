@@ -110,12 +110,11 @@ class SubjectResult(BaseModel):
     obt: float
     pass_mark: float
 
-class StudentMarkEntry(BaseModel):
-    student_id: Optional[int] = None  # None for manual entries
-    name: str
-    father_name: str
-    marks: List[SubjectResult]
-    status: str  # "PASS" or "FAIL"
+class MarkEntry(BaseModel):
+    subject: str
+    max: float
+    obt: float
+    pass_mark: float
 
 class ResultEntry(BaseModel):
     student_id: int  # Must be int
