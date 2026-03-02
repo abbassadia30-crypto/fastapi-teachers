@@ -8,6 +8,7 @@ from .admin.document import (
     AttendanceLog, IndividualAttendance
 )
 from .admin.dashboard import Staff, student, teacher
+from state import InstitutionState
 
 __all__ = [
     "Base", "User", "UserBan", "Report", "Block", "Verification",
@@ -16,5 +17,5 @@ __all__ = [
     "Transaction", "FinanceTemplate", "Voucher", 
     "AcademicResult", "PaperVault", "AttendanceLog", 
     "IndividualAttendance", "student", "Staff", "teacher",
-    "Owner", "Admin" , "Teacher" , "Student" , "Auth_id" , "SecurityLog"
+    "Owner", "Admin" , "Teacher" , "Student" , "Auth_id" , "SecurityLog" , "InstitutionState"
 ]
