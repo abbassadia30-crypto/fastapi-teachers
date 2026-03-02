@@ -4,7 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now" />
+    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change afterPath="$PROJECT_DIR$/backend/models/state.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/admin/analytics/keys.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/admin/analytics/state.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/admin/institution.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/admin/institution.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/profile.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/schemas/admin/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schemas/admin/profile.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/chat/chat.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/chat/chat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/document/documents.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/documents.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/document/voucher_template.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/voucher_template.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/profile/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/profile/profile.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -13,9 +28,10 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="HTML File" />
         <option value="Vue Composition API Component" />
         <option value="JavaScript File" />
+        <option value="HTML File" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -81,6 +97,12 @@
     ]
   }
 }</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Development\app\frontend\admin\analytics" />
+      <recent name="C:\Development\app\frontend\admin" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -119,15 +141,8 @@
       <workItem from="1772361459079" duration="845000" />
       <workItem from="1772367207871" duration="10954000" />
       <workItem from="1772382649949" duration="719000" />
-      <workItem from="1772386215199" duration="4971000" />
-    </task>
-    <task id="LOCAL-00032" summary="now">
-      <option name="closed" value="true" />
-      <created>1772295805424</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1772295805424</updated>
+      <workItem from="1772386215199" duration="8277000" />
+      <workItem from="1772449141974" duration="11880000" />
     </task>
     <task id="LOCAL-00033" summary="now">
       <option name="closed" value="true" />
@@ -513,7 +528,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772390997257</updated>
     </task>
-    <option name="localTasksCounter" value="81" />
+    <task id="LOCAL-00081" summary="now">
+      <option name="closed" value="true" />
+      <created>1772391511418</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1772391511419</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

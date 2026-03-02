@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Institutional Intelligence | Super Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #020617;
+            --sidebar-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #0ea5e9;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --gold: #f59e0b;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg); color: #f1f5f9;
+            height: 100vh; display: flex; overflow: hidden;
+        }
+
+        /* ⬅️ LEFT SIDEBAR TABS */
+        .sidebar {
+            width: 70px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            gap: 20px;
+            z-index: 1000;
+        }
+
+        .tab-link {
+            width: 45px; height: 45px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; color: #64748b;
+            text-decoration: none; font-size: 20px;
+            transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--glass);
+            border: 1px solid transparent;
+        }
+
+        .tab-link.active {
+            color: white;
+            background: var(--primary);
+            box-shadow: 0 0 15px rgba(14, 165, 233, 0.4);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .tab-link:hover { transform: translateX(5px); color: var(--primary); }
+
+        /* 🖼️ MAIN CONTENT AREA */
+        .main-wrapper {
+            flex: 1; display: flex; flex-direction: column;
+            overflow: hidden; position: relative;
+        }
+
+        .widget-grid {
+            flex: 1; display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            grid-auto-rows: min-content;
+            gap: 12px; padding: 15px;
+            overflow-y: auto; padding-bottom: 120px;
+        }
+
+        /* 🧩 WIDGET STYLES (Kept exactly as previous) */
+        .widget {
+            background: var(--glass); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 15px; animation: rise 0.8s ease forwards; opacity: 0;
+        }
+        .full { grid-column: span 2; }
+        .half { grid-column: span 1; }
+        .alert-item { display: flex; align-items: center; justify-content: space-between; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.02); margin-bottom: 8px; font-size: 11px; border-left: 4px solid var(--primary); }
+        .critical { border-left-color: var(--accent); }
+        .warning { border-left-color: var(--gold); }
+
+        @keyframes rise { to { opacity: 1; transform: translateY(0); } from { opacity: 0; transform: translateY(30px); } }
+
+        /* ➕ FAB */
+        .fab {
+            position: fixed; bottom: 30px; right: 20px;
+            width: 55px; height: 55px; background: var(--primary);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4); font-size: 24px; color: white;
+            z-index: 1100; cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="sidebar">
+    <a href="state.html" class="tab-link active" title="Intelligence State">📈</a>
+    <a href="finance.html" class="tab-link" title="Finance State">💰</a>
+    <a href="students_state.html" class="tab-link" title="Students State">👥</a>
+    <a href="personal_state.html" class="tab-link" title="Institution Personal">🏫</a>
+</nav>
+
+<div class="main-wrapper">
+    <header style="padding: 20px 15px 5px;">
+        <h2 style="margin:0; font-size: 18px; font-weight: 800; color: var(--primary);">Intelligence State</h2>
+        <div style="font-size: 10px; color: #64748b;">COMMAND CENTER ALPHA</div>
+    </header>
+
+    <div class="widget-grid">
+        <div class="widget half" style="animation-delay: 0.1s;">
+            <span style="font-size:10px; color:#94a3b8;">STAFF</span>
+            <b style="font-size:20px; display:block;">42</b>
+        </div>
+        <div class="widget half" style="animation-delay: 0.2s;">
+            <span style="font-size:10px; color:#94a3b8;">RECOVERY</span>
+            <b style="font-size:20px; display:block;" id="rec-val">0%</b>
+            <div style="height:4px; background:rgba(255,255,255,0.1); margin-top:5px; border-radius:10px;">
+                <div id="rec-bar" style="height:100%; width:0%; background:var(--primary); transition: 1.5s;"></div>
+            </div>
+        </div>
+
+        <div class="widget full" style="animation-delay: 0.3s;">
+            <span style="font-weight: 600; font-size: 13px;">Daily Latecomers</span>
+            <div class="alert-item warning" style="margin-top:10px;">
+                <div><b>Hamza Ali</b><br><small>10th-A • 15m Late</small></div>
+                <b>3 Days</b>
+            </div>
+        </div>
+
+        <div class="widget full" style="animation-delay: 0.4s;">
+            <span style="font-weight: 600; font-size: 13px; color: var(--accent);">Critical Absentees (3+ Days)</span>
+            <div class="alert-item critical" style="margin-top:10px;">
+                <div><b>M. Bilal</b><br><small>8th-C • No Contact</small></div>
+                <b>5 Days</b>
+            </div>
+        </div>
+
+        <div class="widget full" style="animation-delay: 0.5s;">
+            <span style="font-weight: 600; font-size: 13px;">Admissions Lifecycle</span>
+            <div style="height:150px; margin-top:10px;"><canvas id="lifecycleChart"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="fab">+</div>
+
+<script>
+    window.onload = () => {
+        // Init Charts
+        new Chart(document.getElementById('lifecycleChart'), {
+            type: 'line',
+            data: {
+                labels: ['2021', '2022', '2023', '2024', '2025'],
+                datasets: [{
+                    data: [400, 550, 480, 600, 750],
+                    borderColor: '#0ea5e9', tension: 0.4, fill: false
+                }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false } } }
+        });
+
+        // Animate Progress
+        setTimeout(() => {
+            document.getElementById('rec-bar').style.width = '84%';
+            document.getElementById('rec-val').innerText = '84%';
+        }, 500);
+    };
+</script>
+</body>
+</html>

@@ -2,163 +2,261 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Professional Template Architect</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+  <title>Super Console | Voucher Architect</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
   <style>
-    :root { --primary: #1b5e20; --bg: #546e7a; --border-bold: #000; }
-    body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+    :root { --primary: #1b5e20; --bg: #455a64; --border: #000; }
+    * { box-sizing: border-box; -webkit-print-color-adjust: exact; }
 
-    /* 🏛️ UI Containers */
-    .sidebar { width: 350px; background: white; border-right: 2px solid #ccc; overflow-y: auto; padding: 20px; flex-shrink: 0; }
-    .preview-area { flex: 1; overflow: auto; padding: 40px; display: flex; flex-direction: column; align-items: center; }
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
 
-    .config-card { background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #ddd; }
-    label { font-size: 10px; font-weight: 900; color: #666; text-transform: uppercase; display: block; margin-bottom: 5px; }
-    input, select, textarea { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 12px; box-sizing: border-box; }
+    /* 🏛️ Landscape 3-Copy Wrapper */
+    .page-landscape {
+      display: flex;
+      flex-direction: row;
+      width: 297mm; /* A4 Landscape Width */
+      background: white;
+      padding: 10mm;
+      gap: 5mm;
+      box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+      min-height: 210mm;
+    }
 
-    /* 📑 The Professional Triple-Copy Voucher */
-    .triple-container { display: flex; gap: 10px; background: white; padding: 10px; border: 1px solid #000; min-width: 1000px; }
-    .voucher-copy { flex: 1; border: 1px solid #000; display: flex; flex-direction: column; font-size: 10px; position: relative; }
+    .voucher-copy {
+      flex: 1;
+      border: 1.5px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+    }
 
-    /* Header Section */
-    .v-header-top { border-bottom: 1px solid #000; text-align: center; font-weight: 900; padding: 2px; font-size: 11px; }
-    .v-copy-tag { border-bottom: 1px solid #000; text-align: center; font-weight: 700; padding: 2px; background: #f0f0f0; }
+    /* 🏛️ Header Section */
+    .v-header-top {
+      background: #000; color: #fff; text-align: center;
+      font-weight: 900; text-transform: uppercase; font-size: 14px; padding: 5px;
+    }
 
-    .v-meta-grid { display: grid; grid-template-columns: 1fr 1.5fr; border-bottom: 1px solid #000; }
-    .v-meta-grid div { padding: 4px; border-right: 1px solid #000; border-bottom: 1px solid #000; }
+    .inst-branding {
+      display: flex;
+      padding: 8px;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #000;
+    }
+    .logo-placeholder {
+      width: 45px; height: 45px; border: 1px dashed #999;
+      display: flex; align-items: center; justify-content: center; font-size: 8px; color: #999;
+    }
+    .inst-name { flex: 1; font-weight: 900; font-size: 14px; text-transform: uppercase; outline: none; }
 
-    /* Table Section */
-    .v-table { width: 100%; border-collapse: collapse; flex-grow: 1; }
-    .v-table th { border: 1px solid #000; padding: 4px; text-align: left; background: #eee; }
-    .v-table td { border-left: 1px solid #000; border-right: 1px solid #000; padding: 4px; height: 20px; }
-    .v-total-row { border: 1px solid #000; font-weight: 900; background: #f9f9f9; }
+    .v-copy-tag {
+      font-size: 9px; font-weight: 800; text-align: center;
+      background: #eee; border-bottom: 1px solid #000; padding: 2px;
+    }
 
-    /* Payment Info Section */
-    .payment-info { border: 1px solid #000; padding: 5px; font-size: 9px; line-height: 1.2; }
-    .v-footer { background: #000; color: white; padding: 5px; text-align: center; font-size: 9px; font-weight: 700; }
+    /* 🏛️ Data Grids */
+    .v-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      font-size: 10px;
+      border-bottom: 1px solid #000;
+    }
+    .v-meta-grid div { padding: 4px; border-right: 1px solid #000; border-bottom: 0.5px solid #eee; }
+    .v-meta-grid div:nth-child(2n) { border-right: none; }
 
-    .btn-deploy { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 50px; font-weight: 900; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .student-name-bar {
+      padding: 6px; font-weight: 800; text-align: center;
+      background: #f9f9f9; border-bottom: 1px solid #000; font-size: 12px;
+      text-transform: uppercase; outline: none;
+    }
+
+    /* 🏛️ Table Logic */
+    .v-table { width: 100%; border-collapse: collapse; flex: 1; }
+    .v-table th { font-size: 9px; background: #eee; border-bottom: 1px solid #000; border-right: 1px solid #000; padding: 5px; text-align: left; }
+    .v-table td { font-size: 10px; border-bottom: 1px solid #ddd; border-right: 1px solid #000; padding: 5px; outline: none; }
+    .v-table td:last-child, .v-table th:last-child { border-right: none; }
+
+    .v-total-row { font-weight: 900; background: #eee; border-top: 1.5px solid #000; }
+
+    /* 🏛️ Late Fee & Footer */
+    .late-fee-section { background: #eee; font-size: 9px; font-weight: 800; border-top: 1px solid #000; padding: 4px; text-align: center; }
+    .payment-info { padding: 8px; font-size: 9px; line-height: 1.4; border-top: 1px solid #000; min-height: 50px; }
+
+    .v-footer {
+      background: #000; color: #fff; padding: 5px; font-size: 8px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    /* 🏛️ Super Console Action Bar */
+    .action-bar {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(255,255,255,0.95); padding: 10px 20px; border-radius: 50px;
+      display: flex; gap: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
+    }
+    .btn-action {
+      border: none; padding: 10px 18px; border-radius: 25px; font-weight: 800;
+      cursor: pointer; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;
+    }
+    .btn-mode { background: #2196F3; color: white; }
+    .btn-add { background: #ff9800; color: white; }
+    .btn-save { background: var(--primary); color: white; }
+
+    [contenteditable="true"]:hover { background: #fffde7; cursor: text; }
+
+    @media print {
+      .no-print { display: none; }
+      body { background: white; padding: 0; }
+      .page-landscape { box-shadow: none; margin: 0; transform: scale(1); width: 100%; }
+    }
   </style>
 </head>
-<body>
+<body onload="initArchitect()">
 
-<div class="sidebar">
-  <h3 style="margin-top:0">Architect Console</h3>
-
-  <div class="config-card">
-    <label>Institution Name</label>
-    <input type="text" id="inst-name" placeholder="National University..." oninput="sync()">
-    <label>Academic Program/Term</label>
-    <input type="text" id="term-info" placeholder="Fall Semester 2026" oninput="sync()">
-  </div>
-
-  <div class="config-card">
-    <label>Fee Heads</label>
-    <div id="heads-cont">
-      <div style="display:flex; gap:5px; margin-bottom:5px;">
-        <input type="text" class="h-name" value="Tuition Fee" oninput="sync()">
-        <input type="number" class="h-amount" value="65000" oninput="sync()" style="width:80px;">
-      </div>
-    </div>
-    <button onclick="addHead()" style="font-size:10px; font-weight:800; border:none; background:none; color:var(--primary); cursor:pointer;">+ ADD HEAD</button>
-  </div>
-
-  <div class="config-card">
-    <label>Late Fee Slabs (PKR)</label>
-    <input type="number" id="late-1" placeholder="Between 6th-20th" value="1500" oninput="sync()">
-    <input type="number" id="late-2" placeholder="21st onwards" value="3000" oninput="sync()">
-  </div>
-
-  <div class="config-card">
-    <label>Bank Account Details</label>
-    <textarea id="bank-info" oninput="sync()" style="height:60px;">Payable through Internet Banking / Mobile App. Main Collection A/C: 0042-79000877-03</textarea>
-  </div>
+<div class="action-bar no-print">
+  <button class="btn-action btn-mode" onclick="toggleDocType()">
+    🔄 SWITCH: <span id="current-mode-label">VOUCHER</span>
+  </button>
+  <button class="btn-action btn-add" onclick="addNewRow()">
+    ➕ INTERACTIVE ROW
+  </button>
+  <button class="btn-action btn-save" onclick="saveToVault()">
+    💾 SAVE TO VAULT
+  </button>
+  <button class="btn-action" style="background:#000; color:#fff;" onclick="window.print()">
+    🖨️ PRINT
+  </button>
 </div>
 
-<div class="preview-area">
-  <div class="triple-container" id="voucher-wrap">
-  </div>
+<div class="page-landscape" id="architect-wrapper">
 </div>
-
-<button class="btn-deploy" onclick="saveTemplate()">💾 SAVE INSTITUTION BLUEPRINT</button>
 
 <script>
-  function addHead() {
-    const div = document.createElement('div');
-    div.style = "display:flex; gap:5px; margin-bottom:5px;";
-    div.innerHTML = `<input type="text" class="h-name" oninput="sync()"><input type="number" class="h-amount" oninput="sync()" style="width:80px;">`;
-    document.getElementById('heads-cont').appendChild(div);
+  let docType = 'voucher';
+  let institutionName = "LOADING...";
+
+  async function initArchitect() {
+    try {
+      const data = await AppStorage.get("active_institution");
+      institutionName = data?.name || "PAK-NATIONAL INSTITUTION";
+    } catch(e) { institutionName = "PAK-NATIONAL INSTITUTION"; }
+    renderDocument();
   }
 
-  function sync() {
-    const wrap = document.getElementById('voucher-wrap');
-    const inst = document.getElementById('inst-name').value || "YOUR INSTITUTION NAME";
-    const term = document.getElementById('term-info').value || "ACADEMIC TERM";
-    const bank = document.getElementById('bank-info').value;
-    const l1 = parseFloat(document.getElementById('late-1').value) || 0;
-    const l2 = parseFloat(document.getElementById('late-2').value) || 0;
+  function toggleDocType() {
+    docType = docType === 'voucher' ? 'receipt' : 'voucher';
+    document.getElementById('current-mode-label').innerText = docType.toUpperCase();
+    renderDocument();
+  }
 
-    const copies = ["Student Copy", "Institution Copy", "Bank Copy"];
+  function renderDocument() {
+    const wrap = document.getElementById('architect-wrapper');
+    const copies = docType === 'voucher' ? ["BANK COPY", "OFFICE COPY", "STUDENT COPY"] : ["OFFICIAL RECORD"];
 
-    let headRows = "";
-    let subTotal = 0;
-    document.querySelectorAll('#heads-cont > div').forEach(div => {
-      const n = div.querySelector('.h-name').value;
-      const a = parseFloat(div.querySelector('.h-amount').value) || 0;
-      if(n) {
-        headRows += `<tr><td>${n}</td><td style="text-align:right">${a.toLocaleString()}</td></tr>`;
-        subTotal += a;
-      }
-    });
+    wrap.innerHTML = copies.map(copyTitle => generateLeaf(copyTitle)).join('');
+  }
 
-    wrap.innerHTML = copies.map(copyTitle => `
+  function generateLeaf(copyTitle) {
+    const isV = docType === 'voucher';
+    return `
             <div class="voucher-copy">
-                <div class="v-header-top">Fee Bill</div>
-                <div class="v-copy-tag">${copyTitle}</div>
-                <div class="v-meta-grid">
-                    <div><b>Invoice #</b></div><div>00000000000000065658</div>
-                    <div><b>Invoice Date</b></div><div>26-Feb-2026</div>
-                    <div><b>Due Date</b></div><div>10-Mar-2026</div>
+                <div class="v-header-top" contenteditable="true">${isV ? 'Fee Bill' : 'Salary Slip'}</div>
+                <div class="inst-branding">
+                    <div class="logo-placeholder">LOGO</div>
+                    <div class="inst-name" contenteditable="true">${institutionName}</div>
                 </div>
-                <div style="border-bottom:1px solid #000; padding:4px; font-weight:800; text-align:center; background:#eee;">MUHAMMAD KAMAL AHMAD</div>
+                <div class="v-copy-tag" contenteditable="true">${copyTitle}</div>
+
                 <div class="v-meta-grid">
-                    <div><b>Student ID</b></div><div style="font-weight:900">00000171089</div>
-                    <div><b>Program</b></div><div>MS ENGINEERING</div>
-                    <div style="border-bottom:none"><b>Term</b></div><div style="border-bottom:none">${term}</div>
+                    <div><b>${isV ? 'Invoice #' : 'Slip #'}</b></div><div contenteditable="true">---</div>
+                    <div><b>Date</b></div><div contenteditable="true">${new Date().toLocaleDateString()}</div>
+                    <div><b>Due Date</b></div><div contenteditable="true">10-Mar-2026</div>
                 </div>
+
+                <div class="student-name-bar" contenteditable="true">MANUAL NAME ENTRY</div>
+
+                <div class="v-meta-grid">
+                    <div><b>${isV ? 'Student ID' : 'Staff ID'}</b></div><div contenteditable="true" style="font-weight:900">000000</div>
+                    <div><b>${isV ? 'Program' : 'Designation'}</b></div><div contenteditable="true">---</div>
+                    <div style="border-bottom:none"><b>Term/Month</b></div><div style="border-bottom:none" contenteditable="true">March 2026</div>
+                </div>
+
                 <table class="v-table">
-                    <thead><tr><th>Description</th><th style="text-align:right">Amount (Rs.)</th></tr></thead>
-                    <tbody>
-                        ${headRows}
-                        <tr class="v-total-row"><td>Payables within Due Date</td><td style="text-align:right">${subTotal.toLocaleString()}</td></tr>
+                    <thead>
+                        <tr>
+                            <th>Description</th>
+                            <th style="text-align:right">Amount (Rs.)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="data-rows">
+                        <tr>
+                            <td contenteditable="true">${isV ? 'Tuition Fee' : 'Basic Salary'}</td>
+                            <td contenteditable="true" style="text-align:right">0</td>
+                        </tr>
                     </tbody>
+                    <tfoot>
+                        <tr class="v-total-row">
+                            <td>TOTAL PAYABLE</td>
+                            <td style="text-align:right" contenteditable="true">0</td>
+                        </tr>
+                    </tfoot>
                 </table>
-                <div style="padding:4px; border-top:1px solid #000;"><b>In Words:</b> <br> ${numberToWords(subTotal)} only.</div>
-                <div style="background:#eee; padding:2px; font-weight:800; border-top:1px solid #000;">Payables after Due Date</div>
+
+                ${isV ? `
+                <div style="padding:4px; border-top:1px solid #000; font-size:9px;"><b>In Words:</b> <br> <span contenteditable="true">Zero Rupees Only</span></div>
+                <div class="late-fee-section">PAYABLES AFTER DUE DATE</div>
                 <div class="v-meta-grid">
-                    <div>Between 11-Mar to 20-Mar</div><div style="text-align:right">${(subTotal + l1).toLocaleString()}</div>
-                    <div style="border-bottom:none">21-Mar and onwards</div><div style="border-bottom:none; text-align:right">${(subTotal + l2).toLocaleString()}</div>
+                    <div>Late S1 (11th-20th)</div><div style="text-align:right" contenteditable="true">0</div>
+                    <div style="border-bottom:none">Late S2 (21st onwards)</div><div style="border-bottom:none; text-align:right" contenteditable="true">0</div>
                 </div>
-                <div class="payment-info">
-                    <b>Payment Information:</b><br>${bank}
+                ` : `
+                <div style="padding:4px; border-top:1px solid #000; font-size:9px;"><b>Payment Status:</b> <br> <span contenteditable="true">Pending Disbursement</span></div>
+                <div style="margin-top:20px; display:flex; justify-content:space-around; padding-bottom:10px;">
+                    <div style="border-top:1px solid #000; width:80px; text-align:center; font-size:8px;">Receiver</div>
+                    <div style="border-top:1px solid #000; width:80px; text-align:center; font-size:8px;">Authorized</div>
                 </div>
-                <div class="v-footer">${inst}</div>
-            </div>
-        `).join('');
+                `}
+
+                <div class="payment-info" contenteditable="true">
+                    <b>Information:</b><br>
+                    Enter Bank Name, Account Number, or Terms & Conditions here...
+                </div>
+
+                <div class="v-footer">
+                    <span>Generated via Institution Console</span>
+                    <span>📞 0000-0000000</span>
+                </div>
+            </div>`;
   }
 
-  function numberToWords(num) {
-    // Simple logic for preview purposes
-    return "Sixty-five thousand eight hundred";
+  function addNewRow() {
+    const rows = document.querySelectorAll('.data-rows');
+    rows.forEach(tbody => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td contenteditable="true">New Item</td><td contenteditable="true" style="text-align:right">0</td>`;
+      tbody.appendChild(tr);
+    });
   }
 
-  async function saveTemplate() {
-    // Logic to send JSON to @router.post("/finance/template/save")
-    alert("Template Logic Saved Successfully");
+  function saveToVault() {
+    // Real App Logic: Serialize the content and send to FastAPI
+    console.log("Saving state to Central Vault...");
+    // Trigger your red/green sign box here
   }
 
-  window.onload = sync;
+  // Mock AppStorage
+  if (typeof AppStorage === 'undefined') {
+    window.AppStorage = { get: async () => ({name: "Pak-National High School"}) };
+  }
 </script>
 </body>
 </html>

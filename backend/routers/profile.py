@@ -11,6 +11,7 @@ from backend.database import get_db
 from backend.models.User import User , Auth_id
 from backend.models.admin.profile import UserBio, Profile
 from backend.schemas.admin.profile import ProfileOut, ProfileUpdate
+from backend.schemas.admin.profile import PFPUpdate
 
 router = APIRouter(prefix="/profile", tags=["Profile"])
 
@@ -147,3 +148,24 @@ async def create_identity(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Could not save identity. Check if ID already exists."
         )
+
+
+@router.post("/user/upload-pfp")
+async def update_pfp(
+        payload: PFPUpdate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Find the user's bio record
+    user_bio = current_user.bio
+    if not user_bio:
+        # Create it if it doesn't exist
+        from backend.models.User import UserBio
+        user_bio = UserBio(user_id=current_user.id)
+        db.add(user_bio)
+
+    # Store the Base64 string in the database
+    user_bio.profile_pic = payload.image_data
+    db.commit()
+
+    return {"status": "success", "url": payload.image_data}

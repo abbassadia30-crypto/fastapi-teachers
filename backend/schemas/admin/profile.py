@@ -14,3 +14,6 @@ class ProfileOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class PFPUpdate(BaseModel):
+    image_data: str

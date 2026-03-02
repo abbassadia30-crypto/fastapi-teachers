@@ -98,13 +98,15 @@
 
         .bottom-nav {
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 500px; background: rgba(38, 50, 56, 0.95);
-            backdrop-filter: blur(10px); height: 70px; border-radius: 25px;
-            display: flex; justify-content: space-around; align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 1000;
+            width: 92%; max-width: 500px; background: var(--secondary);
+            height: 70px; border-radius: 25px; display: flex;
+            justify-content: space-around; align-items: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4); z-index: 1000;
         }
-        .nav-item { color: #b0bec5; text-decoration: none; text-align: center; font-size: 10px; }
-        .nav-item.active { color: white; }
+        .nav-item { color: #94a3b8; text-decoration: none; display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: var(--white); }
+        .nav-item i { font-style: normal; font-size: 20px; margin-bottom: 2px; }
+
     </style>
 </head>
 <body>
@@ -171,10 +173,11 @@
 </div>
 
 <nav class="bottom-nav">
-    <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><br>Home</a>
-    <a href="../chat/chat.html" class="nav-item"><i>💬</i><br>Chat</a>
-    <a href="../document/documents.html" class="nav-item"><i>📄</i><br>Docs</a>
-    <a href="profile.html" class="nav-item active"><i>👤</i><br>Profile</a>
+    <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+    <a href="../chat/chat.html" class="nav-item active"><i>💬</i><span>Chat</span></a>
+    <a href="../analytics/stats.html" class="nav-item"><i>📈</i><span>Analytics</span></a>
+    <a href="../document/documents.html" class="nav-item"><i>📄</i><span>Docs</span></a>
+    <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
 </nav>
 
 <script src="../../capacitor.js"></script>
@@ -199,6 +202,13 @@
         const role = await AppStorage.get('user_role') || "Admin";
         const pfpUrl = await AppStorage.get('userPfp');
 
+        const savedPfp = await AppStorage.get('userPfp');
+        if (savedPfp) {
+            const pfpDiv = document.getElementById('pfp-display');
+            pfpDiv.style.backgroundImage = `url('${savedPfp.value || savedPfp}')`;
+            pfpDiv.innerText = '';
+        }
+
         document.getElementById('display-name').innerText = name;
         document.getElementById('display-email').innerText = email;
         document.getElementById('current-role-badge').innerText = role.toUpperCase();
@@ -213,44 +223,51 @@
     };
 
     // --- UPLOAD LOGIC FOR DIGITAL OCEAN SPACES ---
-    async function uploadPhoto(input) {
-        if (!input.files || !input.files[0]) return;
+    async function uploadPhoto(event) {
+        const file = event.target.files[0];
+        if (!file) return;
 
-        const file = input.files[0];
-        const token = await AppStorage.get('institutionToken');
-
-        // 1. Show immediate UI feedback
-        showNotify("Uploading to cloud...", "success");
-
-        const formData = new FormData();
-        formData.append('profile_pic', file);
-
-        try {
-            const response = await fetch(`${API_BASE}/user/upload-pfp`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                // 'data.url' will be the DigitalOcean Spaces link from your backend
-                const newUrl = data.url;
-
-                // 2. Update Local Storage and UI
-                await AppStorage.set('userPfp', newUrl);
-                const pfpDiv = document.getElementById('pfp-display');
-                pfpDiv.innerText = '';
-                pfpDiv.style.backgroundImage = `url('${newUrl}')`;
-
-                showNotify("Profile photo updated!", "success");
-            } else {
-                showNotify("Upload failed. Try again.", "red");
-            }
-        } catch (error) {
-            console.error(error);
-            showNotify("Connection error.", "red");
+        // 1. Client-side Validation (Keep it under 1MB for Render Free Tier)
+        if (file.size > 1024 * 1024) {
+            showNotify("Image too large! Max 1MB allowed.", "red");
+            return;
         }
+
+        const tRes = await AppStorage.get("auth_token");
+        const token = tRes.value || tRes;
+
+        // 2. Convert to Base64 (The string we can store in DB)
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const base64Image = reader.result;
+
+            try {
+                showNotify("Updating Profile...", "green");
+
+                // 3. Send to Backend
+                const response = await fetch(`${API_BASE}/user/upload-pfp`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ image_data: base64Image })
+                });
+
+                if (response.ok) {
+                    // Update UI immediately
+                    document.getElementById('pfp-display').style.backgroundImage = `url('${base64Image}')`;
+                    document.getElementById('pfp-display').innerText = '';
+                    await AppStorage.set('userPfp', base64Image);
+                    showNotify("Logo updated successfully!", "success");
+                } else {
+                    showNotify("Upload failed on server.", "red");
+                }
+            } catch (error) {
+                showNotify("Connection error.", "red");
+            }
+        };
     }
 
     async function handleLogout() {
