@@ -16,4 +16,4 @@ class InstitutionState(Base):
     last_indexed = Column(DateTime, default=datetime.datetime.utcnow)
 
     # Change 'institutions' to 'institution' to match your other models
-    institution = relationship("Institution", back_populates="intelligence_state")
+    institution = relationship("Institution", back_populates="states")

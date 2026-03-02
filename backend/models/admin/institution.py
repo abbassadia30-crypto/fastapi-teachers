@@ -51,7 +51,7 @@ class Institution(Base, TimestampMixin):
     papers = relationship("PaperVault", back_populates="institution")
     attendance_logs = relationship("AttendanceLog", back_populates="institution")
     individual_attendances = relationship("IndividualAttendance", back_populates="institution")
-    intelligence_state = relationship("InstitutionState", back_populates="institution", uselist=False)
+    states = relationship("InstitutionState", back_populates="institution")
 
     # ❌ REMOVED: profile relationship. Access profiles via institution.admins[x].profile
 

@@ -5,20 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change afterPath="$PROJECT_DIR$/backend/models/state.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/admin/analytics/keys.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/admin/analytics/state.html" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/backend/analysis.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/admin/analytics/sync-manager.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/models/admin/institution.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/admin/institution.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/profile.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/schemas/admin/profile.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/schemas/admin/profile.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/chat/chat.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/chat/chat.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/documents.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/documents.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/voucher_template.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/voucher_template.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/profile/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/profile/profile.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/keys.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,6 +64,7 @@
     &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
     &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
     &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.analysis.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
@@ -102,6 +96,32 @@
       <recent name="C:\Development\app\frontend\admin\analytics" />
       <recent name="C:\Development\app\frontend\admin" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="analysis" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.14 (app) (2)" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/backend" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <module name="" />
+      <option name="RUN_TOOL" value="" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/backend/analysis.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -142,15 +162,8 @@
       <workItem from="1772367207871" duration="10954000" />
       <workItem from="1772382649949" duration="719000" />
       <workItem from="1772386215199" duration="8277000" />
-      <workItem from="1772449141974" duration="11880000" />
-    </task>
-    <task id="LOCAL-00033" summary="now">
-      <option name="closed" value="true" />
-      <created>1772296260298</created>
-      <option name="number" value="00033" />
-      <option name="presentableId" value="LOCAL-00033" />
-      <option name="project" value="LOCAL" />
-      <updated>1772296260298</updated>
+      <workItem from="1772449141974" duration="16970000" />
+      <workItem from="1772474389218" duration="724000" />
     </task>
     <task id="LOCAL-00034" summary="now">
       <option name="closed" value="true" />
@@ -536,7 +549,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772391511419</updated>
     </task>
-    <option name="localTasksCounter" value="82" />
+    <task id="LOCAL-00082" summary="now">
+      <option name="closed" value="true" />
+      <created>1772467552029</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
+      <option name="project" value="LOCAL" />
+      <updated>1772467552031</updated>
+    </task>
+    <option name="localTasksCounter" value="83" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

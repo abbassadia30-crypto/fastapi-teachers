@@ -147,3 +147,22 @@ async def sync_neural_state(websocket: WebSocket, inst_id: int):
         pass
     finally:
         db.close()
+
+@router.get("/shard/{inst_id}/{section_name}")
+async def get_raw_shard(inst_id: int, section_name: str, key: str, db: Session = Depends(get_db)):
+    # 1. Verification
+    state = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
+    if not state or json.loads(state.key_registry).get(section_name) != key:
+        raise HTTPException(status_code=403, detail="Key Mismatch")
+
+    # 2. Slice the Data
+    # Instead of making a file, we just parse the long string and send the piece
+    all_data = json.loads(state.full_data_blob)
+
+    # Logic: Get section data or personal_state
+    shard = all_data.get("sections", {}).get(section_name) if section_name != "personal_state" else all_data.get("personal_state")
+
+    if not shard:
+        raise HTTPException(status_code=404, detail="Data not found")
+
+    return shard
