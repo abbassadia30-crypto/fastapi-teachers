@@ -8,7 +8,7 @@ from .admin.document import (
     AttendanceLog, IndividualAttendance
 )
 from .admin.dashboard import Staff, student, teacher
-from backend.models.admin.state import InstitutionState
+from backend.models.state import InstitutionState
 
 __all__ = [
     "Base", "User", "UserBan", "Report", "Block", "Verification",
