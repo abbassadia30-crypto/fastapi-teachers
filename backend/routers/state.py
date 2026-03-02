@@ -14,7 +14,7 @@ from backend.models.admin.dashboard import student as StudentModel, Staff, teach
 from backend.models.admin.document import AttendanceLog, AcademicResult
 from backend.models.admin.institution import Institution
 
-router = APIRouter(prefix="/intelligence", tags=["Institutional Intelligence"])
+router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
 
 # --- 1. THE PERSISTENCE TABLE (The State Cache) ---
 class InstitutionState(Base):

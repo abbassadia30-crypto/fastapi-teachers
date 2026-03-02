@@ -12,6 +12,7 @@ from backend.routers import profile
 from backend.routers import ready
 from backend.routers import central_vault
 from backend.routers import scanner
+from backend.routers import state
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
@@ -59,6 +60,7 @@ app.include_router(profile.router)
 app.include_router(document.router)
 app.include_router(central_vault.router)
 app.include_router(scanner.router)
+app.include_router(state.router)
 
 @app.get("/")
 async def health_check():
