@@ -5,8 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/state.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/analytics/stats.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -158,15 +157,7 @@
       <workItem from="1772382649949" duration="719000" />
       <workItem from="1772386215199" duration="8277000" />
       <workItem from="1772449141974" duration="16970000" />
-      <workItem from="1772474389218" duration="3862000" />
-    </task>
-    <task id="LOCAL-00039" summary="now">
-      <option name="closed" value="true" />
-      <created>1772326825401</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1772326825401</updated>
+      <workItem from="1772474389218" duration="4428000" />
     </task>
     <task id="LOCAL-00040" summary="now">
       <option name="closed" value="true" />
@@ -552,7 +543,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772477227262</updated>
     </task>
-    <option name="localTasksCounter" value="88" />
+    <task id="LOCAL-00088" summary="now">
+      <option name="closed" value="true" />
+      <created>1772478551761</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1772478551762</updated>
+    </task>
+    <option name="localTasksCounter" value="89" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -561,5 +560,15 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="now" />
     <option name="LAST_COMMIT_MESSAGE" value="now" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/backend/routers/state.py</url>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

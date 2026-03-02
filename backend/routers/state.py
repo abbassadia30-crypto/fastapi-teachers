@@ -19,6 +19,7 @@ router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
 # --- 1. THE PERSISTENCE TABLE (The State Cache) ---
 class InstitutionState(Base):
     __tablename__ = "institution_intelligence_state"
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True, index=True)
     institution_id = Column(Integer, ForeignKey("institutions.id"), unique=True)
 
