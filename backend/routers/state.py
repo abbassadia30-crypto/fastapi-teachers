@@ -6,7 +6,7 @@ import os
 import threading
 from sqlalchemy import event, Column, Integer, Text, String, DateTime, ForeignKey
 from sqlalchemy.orm import Session, relationship
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect , Depends
 
 # Import your existing database and models
 from backend.database import Base, SessionLocal
