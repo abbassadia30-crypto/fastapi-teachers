@@ -3,7 +3,6 @@ from sqlalchemy import Text, Column, Integer, String, Boolean, Float, JSON, Fore
 from sqlalchemy.orm import relationship
 from backend.models.base import Base, TimestampMixin
 
-
 class Institution(Base, TimestampMixin):
     __tablename__ = "institutions"
     id = Column(Integer, primary_key=True, index=True)
