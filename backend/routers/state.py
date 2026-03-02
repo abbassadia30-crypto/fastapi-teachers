@@ -7,12 +7,13 @@ import threading
 from sqlalchemy import event, Column, Integer, Text, String, DateTime, ForeignKey
 from sqlalchemy.orm import Session, relationship
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect , Depends
-
+from backend.database import get_db
 # Import your existing database and models
 from backend.database import Base, SessionLocal
 from backend.models.admin.dashboard import student as StudentModel, Staff, teacher
 from backend.models.admin.document import AttendanceLog, AcademicResult
 from backend.models.admin.institution import Institution
+from backend.models.state import InstitutionState
 
 router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
 
