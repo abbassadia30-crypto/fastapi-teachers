@@ -2,6 +2,12 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from google import genai
 from google.genai import types
 import json
+from sqlalchemy.orm import Session
+from .auth import get_current_user
+from backend.database import get_db
+
+
+router = APIRouter(prefix="/scanner", tags=["Profile"])
 
 # STEP 1: The "Reader" (No DB Save)
 @router.post("/papers/scan-only")
