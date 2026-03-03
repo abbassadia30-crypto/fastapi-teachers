@@ -13,7 +13,7 @@ from backend.database import get_db
 from backend.models.admin.document import ScannedQuestionBank
 from backend.schemas.admin.document import ScannedBankResponse, ScannedBankCreate
 
-router = APIRouter(prefix="/scanner", tags=["Paper Management"])
+router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 
 # Initialize client using the Env Var you set in Render
 client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
