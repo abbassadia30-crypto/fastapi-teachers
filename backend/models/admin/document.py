@@ -3,6 +3,7 @@ from datetime import datetime
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey, DateTime, Boolean, func, Float, Date
 from sqlalchemy.orm import relationship
 from backend.models.base import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Syllabus(Base):
     __tablename__ = "Syllabus"
@@ -177,7 +178,7 @@ class ScannedQuestionBank(Base):
     source_name = Column(String, nullable=True)
 
     # This will store the array of objects: [{"text": "...", "type": "MCQs", "marks": 1}, ...]
-    questions_data = Column(JSON, nullable=False)
+    questions_data = Column(JSONB, nullable=False)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

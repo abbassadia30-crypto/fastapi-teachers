@@ -7,6 +7,7 @@ from .auth import get_current_user
 from backend.database import get_db
 from typing import Any
 from backend.models.admin.document import ScannedQuestionBank
+from baceknd.schemas.admin.document import ScannedBankResponse
 
 
 router = APIRouter(prefix="/scanner", tags=["Profile"])
@@ -42,22 +43,20 @@ async def scan_only(
     return json.loads(response.text)
 
 # STEP 2: The "Vault" (Permanent DB Save)
-@router.post("/papers/save-scanned")
+@router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
-        payload: dict,
+        payload: ScannedBankCreate, # Uses your Pydantic model
         db: Session = Depends(get_db),
         current_user: Any = Depends(get_current_user)
 ):
-    questions = payload.get("questions", [])
-
-    # Save the teacher-verified selection
     new_entry = ScannedQuestionBank(
-        institution_ref=current_user.institution_id,
+        institution_id=current_user.institution_id,
         creator_email=current_user.user_email,
-        title=payload.get("source_name", "AI Scanned Paper"),
-        content={"questions": questions},
-        category="VERIFIED_SCAN"
+        source_name=payload.source_name,
+        # Mapping 'questions' from Pydantic to 'questions_data' in DB
+        questions_data=[q.dict() for q in payload.questions]
     )
     db.add(new_entry)
     db.commit()
-    return {"status": "success"}
+    db.refresh(new_entry)
+    return new_entry
