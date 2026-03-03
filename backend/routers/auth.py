@@ -67,7 +67,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def send_email_task(email: str, name: str, code: str, subject="Your Verification Code"):
     try:
         resend.Emails.send({
-        "from": "Institution Portal <onboarding@resend.dev>",
+        "from": "Institution Portal <auth@institution.site>",
         "to": [email],
         "subject": subject,
         "html": f"""
