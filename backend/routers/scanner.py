@@ -12,11 +12,15 @@ from .auth import get_current_user
 from backend.database import get_db
 from backend.models.admin.document import ScannedQuestionBank
 from backend.schemas.admin.document import ScannedBankResponse, ScannedBankCreate
+from google.genai.types import HttpOptions
 
 router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 
 # Initialize client - Gemini 3 Flash is accessed via the latest SDK
-client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
+client = genai.Client(
+    api_key=os.environ.get("GOOGLE_AI_KEY"),
+    http_options=HttpOptions(api_version="v1beta")
+)
 
 # In backend/routers/scanner.py
 
@@ -45,17 +49,14 @@ async def scan_only(
             response_mime_type="application/json"
         )
 
-        # CHANGE: Use 'gemini-3-flash' instead of 'gemini-2.0-flash'
         response = client.models.generate_content(
-            model="gemini-3-flash",
+            model="gemini-3-flash-preview",
             contents=[
                 types.Part.from_bytes(data=content, mime_type=file.content_type),
                 "Analyze this exam paper and extract all questions."
             ],
             config=generate_content_config,
         )
-
-        # Success! Return the data to your frontend
         return json.loads(response.text)
 
     except Exception as e:
@@ -63,6 +64,7 @@ async def scan_only(
         print(traceback.format_exc())
         # This will now trigger your Green/Red boxes correctly
         raise HTTPException(status_code=500, detail=f"AI Scanner Error: {str(e)}")
+
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
         payload: ScannedBankCreate,
