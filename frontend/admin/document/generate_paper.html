@@ -181,9 +181,11 @@
                 throw new Error("No questions detected in the image.");
             }
 
-        } catch (err) {
+        }
+        catch (err) {
             showSignBox(err.message, "error");
-        } finally {
+        } 
+        finally {
             btn.disabled = false;
             btn.innerText = "SELECT IMAGE";
         }

@@ -23,7 +23,6 @@ client = genai.Client(
 )
 
 # In backend/routers/scanner.py
-
 @router.post("/papers/scan-only")
 async def scan_only(
         file: UploadFile = File(...),
@@ -32,38 +31,52 @@ async def scan_only(
     try:
         content = await file.read()
 
-        # UPDATED FOR VERIFIED GEMINI 3 FLASH
-        generate_content_config = types.GenerateContentConfig(
-            # Higher thinking budget now that you are verified
-            thinking_config=types.ThinkingConfig(
-                include_thoughts=False,
-                thinking_budget=2048,
-            ),
-            system_instruction="""
-                You are a critical academic document parser for a Pakistani institution.
-                Extract every question from the image. 
-                Identify question type: 'MCQs', 'Short', or 'Long'.
-                Preserve Urdu and English scripts exactly.
-                Return ONLY a valid JSON object: {"questions": [{"text": "string", "type": "string"}]}
-            """,
-            response_mime_type="application/json"
-        )
+        # System instructions for consistent extraction
+        system_prompt = """
+            Extract every question from the image. 
+            Identify question type: 'MCQs', 'Short', or 'Long'.
+            Preserve Urdu and English scripts exactly.
+            Return ONLY a valid JSON object: {"questions": [{"text": "string", "type": "string"}]}
+        """
 
-        response = client.models.generate_content(
-            model="gemini-3-flash-preview",
-            contents=[
-                types.Part.from_bytes(data=content, mime_type=file.content_type),
-                "Analyze this exam paper and extract all questions."
-            ],
-            config=generate_content_config,
-        )
+        try:
+            # STEP 1: Attempt using the "Extraordinary" Model (Gemini 3)
+            print("Attempting scan with Gemini 3 Flash Preview...")
+            response = client.models.generate_content(
+                model="gemini-3-flash-preview",
+                contents=[
+                    types.Part.from_bytes(data=content, mime_type=file.content_type),
+                    system_prompt
+                ],
+                config=generate_content_config,
+            )
+        except Exception as e:
+            # STEP 2: Fallback if Gemini 3 is busy (503) or unavailable
+            if "503" in str(e) or "UNAVAILABLE" in str(e):
+                print("Gemini 3 Busy - Falling back to Gemini 2.5 Flash (Stable)")
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[
+                        types.Part.from_bytes(data=content, mime_type=file.content_type),
+                        system_prompt
+                    ],
+                    config=generate_content_config,
+                )
+            else:
+                # If it's a different error (like a 401 or 400), we don't want to hide it
+                raise e
+
+        # STEP 3: Parse and return the response
         return json.loads(response.text)
 
     except Exception as e:
         import traceback
         print(traceback.format_exc())
-        # This will now trigger your Green/Red boxes correctly
-        raise HTTPException(status_code=500, detail=f"AI Scanner Error: {str(e)}")
+        # This triggers your Red Box in the frontend
+        raise HTTPException(
+            status_code=500,
+            detail=f"Institution Scanner Error: {str(e)}"
+        )
 
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
