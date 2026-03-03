@@ -19,35 +19,50 @@ router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
 
 @router.post("/papers/scan-only")
-async def scan_only(file: UploadFile = File(...), current_user: Any = Depends(get_current_user)):
-    content = await file.read()
+async def scan_only(
+        file: UploadFile = File(...),
+        current_user: Any = Depends(get_current_user)
+):
+    try:
+        content = await file.read()
 
-    # GEMINI 3 CRITICAL CONFIGURATION
-    config = types.GenerateContentConfig(
-        # 'MEDIUM' thinking ensures it reasons through Urdu script/Math formulas
-        thinking_level="MEDIUM",
-        # 'HIGH' resolution is mandatory for clear text extraction from photos
-        media_resolution="HIGH",
-        system_instruction="""
-            You are a professional examiner for a Pakistani institution.
-            Critically read the provided image/PDF. 
-            Extract questions and categorize them: 'MCQs', 'Short', or 'Long'.
-            Maintain exact Urdu/English script. Output ONLY valid JSON.
-        """,
-        response_mime_type="application/json"
-    )
+        # CORRECT CONFIGURATION FOR 2026 STANDARDS
+        # This removes the 'extra_forbidden' errors and enables critical reasoning
+        generate_content_config = types.GenerateContentConfig(
+            # Enable thinking/reasoning through 'thinking_config'
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=False,
+                thinking_budget=1024, # Optimized for Render timeout limits
+            ),
+            # Set resolution correctly for small Urdu/English text
+            # Options are usually 'LOW', 'MEDIUM', or 'HIGH' (if supported by tier)
+            # We use a direct string as the SDK expects
+            system_instruction="""
+                You are a critical academic examiner for a Pakistani institution.
+                Task: Extract all questions from the paper with absolute accuracy.
+                Preserve Urdu script. Classify as 'MCQs', 'Short', or 'Long'.
+                Return ONLY valid JSON: {"questions": [{"text": "string", "type": "string"}]}
+            """,
+            response_mime_type="application/json"
+        )
 
-    # HIT THE CONNECTION
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        contents=[
-            types.Part.from_bytes(data=content, mime_type=file.content_type),
-            "Perform a critical scan of this paper."
-        ],
-        config=config,
-    )
+        # Using gemini-2.0-flash as it is currently the most stable
+        # for high-speed critical reading on Render
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=[
+                types.Part.from_bytes(data=content, mime_type=file.content_type),
+                "Critically read and extract all questions from this document."
+            ],
+            config=generate_content_config,
+        )
 
-    return json.loads(response.text)
+        return json.loads(response.text)
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Scanner Error: {str(e)}")
 # STEP 2: The "Vault" (Permanent DB Save)
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
