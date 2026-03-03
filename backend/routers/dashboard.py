@@ -7,6 +7,7 @@ from backend.models.admin.dashboard import student , Staff , teacher
 from  backend.models.admin.institution import Institution
 from backend.schemas.admin.dashboard import AdmissionPayload, Student_update, TeacherCreate, TeacherListResponse, StaffCreate,StaffResponse, StaffListResponse, EmployeeUpdate, StaffUpdate
 from backend.models.User import User , Owner
+from datetime import datetime  # <--- Add this line at the top
 
 router = APIRouter(
     prefix="/dashboard",
@@ -381,32 +382,36 @@ async def get_students_by_section(
 
 @router.post("/bulk-admit-students")
 async def bulk_admit_students(
-        students_list: list[AdmissionPayload], # Expects a list of student objects
+        students_list: list[AdmissionPayload],
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user)
 ):
     try:
+        # Check if list is empty to save processing
+        if not students_list:
+            return {"status": "info", "message": "No students provided"}
+
         new_students = []
         for data in students_list:
-            # We transform each student dict into a model instance
+            # Using data.dict() to convert the Pydantic model to a dictionary
             student_obj = student(
                 **data.dict(),
                 institution_id=current_user.institution_id,
                 admitted_by=current_user.user_email,
                 is_active=True,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow() # This now works with the import!
             )
             new_students.append(student_obj)
 
-        # Add all at once
         db.add_all(new_students)
         db.commit()
 
         return {
             "status": "success",
-            "message": f"Successfully admitted {len(new_students)} students to the institution."
+            "message": f"Extraordinary! {len(new_students)} students registered successfully."
         }
     except Exception as e:
         db.rollback()
-        print(f"Bulk Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to process bulk admission")
+        import traceback
+        print(traceback.format_exc()) # This helps you see exactly why it failed in Render logs
+        raise HTTPException(status_code=500, detail=f"Bulk Save Error: {str(e)}")

@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/dashboard.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/dashboard.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/scanner.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/scanner.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/dashboard/admission.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/dashboard/admission.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/document/generate_paper.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/generate_paper.html" afterDir="false" />
-    </list>
+    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -164,15 +158,7 @@
       <workItem from="1772474389218" duration="5916000" />
       <workItem from="1772517054720" duration="5354000" />
       <workItem from="1772541135508" duration="139000" />
-      <workItem from="1772541299972" duration="9596000" />
-    </task>
-    <task id="LOCAL-00062" summary="now">
-      <option name="closed" value="true" />
-      <created>1772368250203</created>
-      <option name="number" value="00062" />
-      <option name="presentableId" value="LOCAL-00062" />
-      <option name="project" value="LOCAL" />
-      <updated>1772368250203</updated>
+      <workItem from="1772541299972" duration="10006000" />
     </task>
     <task id="LOCAL-00063" summary="now">
       <option name="closed" value="true" />
@@ -558,7 +544,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772549630512</updated>
     </task>
-    <option name="localTasksCounter" value="111" />
+    <task id="LOCAL-00111" summary="now">
+      <option name="closed" value="true" />
+      <created>1772553069360</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1772553069360</updated>
+    </task>
+    <option name="localTasksCounter" value="112" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
