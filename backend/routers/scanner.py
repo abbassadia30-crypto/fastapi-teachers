@@ -1,54 +1,55 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException , Depends
-from google.cloud import documentai
-import os
-import re
-from backend.models.admin.document import ScannedQuestionBank # Assuming this exists
-from backend.routers.auth import get_current_user
-from backend.database import get_db
-from sqlalchemy.orm import Session
-from typing import Any
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
+from google import genai
+from google.genai import types
+import json
 
-router = APIRouter(
-    prefix="/scanner",
-    tags=["Paper Management"]
-)
-
-
-@router.post("/papers/scan-and-save")
-async def scan_and_save(
+# STEP 1: The "Reader" (No DB Save)
+@router.post("/papers/scan-only")
+async def scan_only(
         file: UploadFile = File(...),
+        current_user: Any = Depends(get_current_user)
+):
+    content = await file.read()
+
+    # Precise instruction for exam papers
+    system_instruction = """
+    Extract all academic questions from the image. 
+    Classify each as: 'MCQs', 'Short', or 'Long'.
+    Ignore headers, footers, and page numbers.
+    Return ONLY JSON: {"questions": [{"text": "string", "type": "string"}]}
+    """
+
+    response = client.models.generate_content(
+        model="gemini-3-flash",
+        contents=[
+            types.Part.from_bytes(data=content, mime_type=file.content_type),
+            "Extract questions."
+        ],
+        config=types.GenerateContentConfig(
+            system_instruction=system_instruction,
+            response_mime_type="application/json"
+        )
+    )
+
+    return json.loads(response.text)
+
+# STEP 2: The "Vault" (Permanent DB Save)
+@router.post("/papers/save-scanned")
+async def save_scanned_to_vault(
+        payload: dict,
         db: Session = Depends(get_db),
         current_user: Any = Depends(get_current_user)
 ):
-    # 1. Google Document AI Processing
-    client = documentai.DocumentProcessorServiceClient()
-    name = client.processor_path(PROJECT_ID, LOCATION, PROCESSOR_ID)
-    content = await file.read()
-    raw_document = documentai.RawDocument(content=content, mime_type=file.content_type)
+    questions = payload.get("questions", [])
 
-    result = client.process_document(request=documentai.ProcessRequest(name=name, raw_document=raw_document))
-
-    # 2. Professional Parser Logic (Regex for Q numbers, Marks, etc.)
-    full_text = result.document.text
-    # Split by common question patterns like "Q1.", "1.", "Part-I"
-    raw_sections = re.split(r'\n(?=\d+\.|Q\d+[:\s])', full_text)
-
-    parsed_qs = []
-    for s in raw_sections:
-        if len(s.strip()) < 15: continue
-        q_type = "MCQs" if "(a)" in s or "(b)" in s else "Short"
-        if len(s) > 200: q_type = "Long"
-        parsed_qs.append({"text": s.strip(), "type": q_type})
-
-    # 3. Save to DB linked to user_email
+    # Save the teacher-verified selection
     new_entry = ScannedQuestionBank(
         institution_ref=current_user.institution_id,
         creator_email=current_user.user_email,
-        title=f"Scanned_{datetime.now().strftime('%Y%m%d_%H%M')}",
-        content={"questions": parsed_qs}, # Storing as JSON
-        category="AI_SCANNED"
+        title=payload.get("source_name", "AI Scanned Paper"),
+        content={"questions": questions},
+        category="VERIFIED_SCAN"
     )
     db.add(new_entry)
     db.commit()
-
-    return {"status": "success", "questions": parsed_qs}
+    return {"status": "success"}

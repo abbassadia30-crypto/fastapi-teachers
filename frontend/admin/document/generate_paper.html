@@ -121,40 +121,38 @@
     }
 
     async function processWithAI(file) {
+        const btn = document.querySelector('.btn-scan');
+        btn.disabled = true; // Prevent double clicks
+        btn.innerText = "READING...";
+
         showSignBox("AI is reading your document...", "success");
 
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            // FIX 1: Correct Token Retrieval
             const storageData = await AppStorage.get("auth_token");
             const token = (storageData && typeof storageData === 'object') ? storageData.value : storageData;
 
-            if (!token) {
-                showSignBox("Session Expired. Please Login.", "error");
-                return;
-            }
-
-            // FIX 2: Correct URL path
-            const response = await fetch(`${API_BASE}/scanner/papers/scan-and-save`, {
+            // STEP 1: Route changed to /scan-only
+            const response = await fetch(`${API_BASE}/scanner/papers/scan-only`, {
                 method: "POST",
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.detail || "Server Error");
-            }
+            if (!response.ok) throw new Error("AI failed to read the image.");
 
             const data = await response.json();
             extractedData = data.questions;
+
             renderQuestions();
-            showSignBox("Scan Complete!", "success");
+            showSignBox("Scan Complete! Please review below.", "success");
         } catch (err) {
-            console.error("AI Scan Error:", err);
-            showSignBox(err.message || "Scan failed. Try clearer image.", "error");
+            showSignBox(err.message, "error");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "SELECT IMAGE";
         }
     }
 
@@ -204,6 +202,40 @@
         } catch (e) {
             showSignBox("Connection Error", "error");
         }
+    }
+
+    function renderQuestions() {
+        const list = document.getElementById('questions-list');
+        const container = document.getElementById('results-container');
+        const footer = document.getElementById('footer-actions');
+
+        list.innerHTML = ""; // Clear old results
+
+        extractedData.forEach((q, index) => {
+            const div = document.createElement('div');
+            div.className = 'question-item';
+            div.innerHTML = `
+            <input type="checkbox" class="q-check" checked onchange="updateCount()">
+            <div style="flex:1;">
+                <div class="q-text" contenteditable="true" style="outline:none;">${q.text}</div>
+                <select class="q-type-select">
+                    <option value="MCQs" ${q.type === 'MCQs' ? 'selected' : ''}>MCQ</option>
+                    <option value="Short" ${q.type === 'Short' ? 'selected' : ''}>Short Question</option>
+                    <option value="Long" ${q.type === 'Long' ? 'selected' : ''}>Long Question</option>
+                </select>
+            </div>
+        `;
+            list.appendChild(div);
+        });
+
+        container.style.display = 'block';
+        footer.style.display = 'block';
+        updateCount();
+    }
+
+    function updateCount() {
+        const count = document.querySelectorAll('.q-check:checked').length;
+        document.getElementById('selected-count').innerText = count;
     }
 </script>
 
