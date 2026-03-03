@@ -142,34 +142,45 @@
         reader.readAsDataURL(file);
     }
 
+    // Add this inside your <script> tag to ensure critical handling
     async function processWithAI(file) {
         const btn = document.querySelector('.btn-scan');
-        btn.disabled = true; // Prevent double clicks
-        btn.innerText = "READING...";
+        btn.disabled = true;
+        btn.innerText = "CRITICAL SCANNING...";
 
-        showSignBox("AI is reading your document...", "success");
+        showSignBox("Gemini 3 is analyzing document structure...", "success");
 
         const formData = new FormData();
         formData.append("file", file);
 
         try {
-            const storageData = await AppStorage.get("auth_token");
-            const token = (storageData && typeof storageData === 'object') ? storageData.value : storageData;
+            // Retrieve token from Capacitor Storage
+            const { value: token } = await AppStorage.get("auth_token");
 
-            // STEP 1: Route changed to /scan-only
+            if (!token) throw new Error("Session expired. Please login again.");
+
             const response = await fetch(`${API_BASE}/scanner/papers/scan-only`, {
                 method: "POST",
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
-            if (!response.ok) throw new Error("AI failed to read the image.");
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || "AI failed to read image.");
+            }
 
             const data = await response.json();
-            extractedData = data.questions;
 
-            renderQuestions();
-            showSignBox("Scan Complete! Please review below.", "success");
+            // Ensure data follows our expected schema
+            if (data && data.questions) {
+                extractedData = data.questions;
+                renderQuestions();
+                showSignBox("Scan Successful! Verify questions below.", "success");
+            } else {
+                throw new Error("No questions detected in the image.");
+            }
+
         } catch (err) {
             showSignBox(err.message, "error");
         } finally {
@@ -177,8 +188,6 @@
             btn.innerText = "SELECT IMAGE";
         }
     }
-
-    // ... renderQuestions() and updateCount() stay the same ...
 
     async function saveToVault() {
         const selected = [];
