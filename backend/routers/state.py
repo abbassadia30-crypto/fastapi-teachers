@@ -4,7 +4,7 @@ import datetime
 import asyncio
 import os
 import threading
-from sqlalchemy import event, Column, Integer, Text, String, DateTime, ForeignKey
+from sqlalchemy import event, Column, Integer, Text, String, DateTime, ForeignKey , inspect
 from sqlalchemy.orm import Session, relationship
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect , Depends
 from backend.database import get_db
@@ -16,68 +16,76 @@ from backend.models.admin.institution import Institution
 from backend.models.state import InstitutionState
 
 router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
+
+def object_as_dict(obj):
+    """
+    Automatically converts any SQLAlchemy model object to a dictionary.
+    This replaces manual mapping and prevents AttributeError when columns change.
+    """
+    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+
 def perform_targeted_extraction(db: Session, inst_id: int, target_section: str = None):
     """
-    Crawls the DB, partitions data, and ONLY rotates the key for target_section.
+    Crawls the DB, partitions data, and dynamicallly serializes all shards.
     """
-    # A. Fetch All Data for the Institution
+    # A. Fetch All Data (Using the correct 'institution_id' column we fixed in pgAdmin)
     students = db.query(StudentModel).filter(StudentModel.institution_id == inst_id).all()
     attendance = db.query(AttendanceLog).filter(AttendanceLog.institution_id == inst_id).all()
     results = db.query(AcademicResult).filter(AcademicResult.institution_id == inst_id).all()
     staffs = db.query(Staff).filter(Staff.institution_id == inst_id).all()
     teachers = db.query(teacher).filter(teacher.institution_id == inst_id).all()
 
-    # B. Load Current State (to preserve existing keys)
+    # B. Load Current State
     state_rec = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
-
     current_registry = {"last_update": "", "shards": {}}
     if state_rec:
         try:
             current_registry = json.loads(state_rec.key_registry)
         except: pass
 
-    # C. Build Massive Data Blob
+    # C. Build Data Blob with Dynamic Mapping
     mass_data = {"sections": {}, "personal_state": {"staff": [], "teachers": []}}
 
+    # Partition Students and rotate keys if necessary
     for s in students:
         sec = s.section
         if sec not in mass_data["sections"]:
             mass_data["sections"][sec] = {"students": [], "results": [], "attendance": []}
-            # If section key doesn't exist OR it's the target section, generate new 50-char key
             if sec not in current_registry["shards"] or sec == target_section:
                 current_registry["shards"][sec] = secrets.token_urlsafe(38)[:50]
 
-        mass_data["sections"][sec]["students"].append({
-            "id": s.id, "name": s.name, "father": s.father_name, "fee": s.fee, "active": s.is_active
-        })
+        # Use the dynamic dict helper instead of manual mapping
+        mass_data["sections"][sec]["students"].append(object_as_dict(s))
 
-    # D. Attach Academic Data
+    # D. Attach Academic Data (FIXED: No longer uses 'res.content')
     for res in results:
+        # res.target_class should match a student section (e.g., '10th-A')
         if res.target_class in mass_data["sections"]:
-            mass_data["sections"][res.target_class]["results"].append(res.content)
+            mass_data["sections"][res.target_class]["results"].append(object_as_dict(res))
 
+    # E. Attach Attendance Logs
     for log in attendance:
         if log.section_identifier in mass_data["sections"]:
-            mass_data["sections"][log.section_identifier]["attendance"].append(log.attendance_data)
+            mass_data["sections"][log.section_identifier]["attendance"].append(object_as_dict(log))
 
-    # E. Handle Personal State (Staff/Teachers)
+    # F. Handle Personal State (Staff/Teachers)
     if target_section == "personal_state" or "personal_state" not in current_registry["shards"]:
         current_registry["shards"]["personal_state"] = secrets.token_urlsafe(38)[:50]
 
-    for st in staffs: mass_data["personal_state"]["staff"].append({"name": st.name, "pos": st.position})
-    for tc in teachers: mass_data["personal_state"]["teachers"].append({"name": tc.name, "sub": tc.subject_expertise})
+    for st in staffs:
+        mass_data["personal_state"]["staff"].append(object_as_dict(st))
+    for tc in teachers:
+        mass_data["personal_state"]["teachers"].append(object_as_dict(tc))
 
-    # F. Save and Finalize
+    # G. Finalize and Save
     current_registry["last_update"] = datetime.datetime.now().isoformat()
-    final_blob = json.dumps(mass_data)
-    final_registry = json.dumps(current_registry)
 
     if not state_rec:
         state_rec = InstitutionState(institution_id=inst_id)
         db.add(state_rec)
 
-    state_rec.full_data_blob = final_blob
-    state_rec.key_registry = final_registry
+    state_rec.full_data_blob = json.dumps(mass_data, default=str) # default=str handles datetime objects
+    state_rec.key_registry = json.dumps(current_registry)
     state_rec.last_indexed = datetime.datetime.utcnow()
     db.commit()
 
