@@ -106,13 +106,6 @@ def trigger_global_reindex(mapper, connection, target):
         thread = threading.Thread(target=run_extraction_task, args=(inst_id, affected_section))
         thread.start()
 
-def run_extraction_task(inst_id, affected_section):
-    db = SessionLocal()
-    try:
-        perform_targeted_extraction(db, inst_id, affected_section)
-    finally:
-        db.close()
-
 # Hook the watcher into your models
 observed_models = [StudentModel, Staff, teacher, AttendanceLog, AcademicResult]
 for model in observed_models:
@@ -121,23 +114,35 @@ for model in observed_models:
     event.listen(model, 'after_delete', trigger_global_reindex)
 
 # --- 4. THE LIVE SYNC WEBSOCKET ---
+# A simple global list to keep track of active sockets
+active_connections = {}
+
 @router.websocket("/ws/institution-sync/{inst_id}")
 async def sync_neural_state(websocket: WebSocket, inst_id: int):
     await websocket.accept()
-    db = SessionLocal()
-    last_pushed_registry = None
+    # Add this connection to our broadcaster
+    if inst_id not in active_connections:
+        active_connections[inst_id] = []
+    active_connections[inst_id].append(websocket)
 
     try:
         while True:
-            # Query the DB to see if the registry string has changed
-            state = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
-            if state and state.key_registry != last_pushed_registry:
-                await websocket.send_text(state.key_registry)
-                last_pushed_registry = state.key_registry
-
-            await asyncio.sleep(2) # Poll for state changes every 2 seconds
+            await websocket.receive_text() # Keep-alive
     except WebSocketDisconnect:
-        pass
+        active_connections[inst_id].remove(websocket)
+
+# Update your Extraction Task to PUSH directly
+def run_extraction_task(inst_id, affected_section):
+    db = SessionLocal()
+    try:
+        new_registry = perform_targeted_extraction(db, inst_id, affected_section)
+        # 🔥 INSTANT PUSH: Tell all connected devices for this institution
+        if inst_id in active_connections:
+            for ws in active_connections[inst_id]:
+                asyncio.run_coroutine_threadsafe(
+                    ws.send_text(json.dumps(new_registry)),
+                    asyncio.get_event_loop()
+                )
     finally:
         db.close()
 

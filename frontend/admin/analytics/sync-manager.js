@@ -7,7 +7,7 @@ class IntelligenceManager {
     constructor(instId) {
         this.instId = instId;
         this.baseUrl = "https://fastapi-teachers.onrender.com";
-        this.wsUrl = `wss://fastapi-teachers.onrender.com/intelligence/ws/institution-sync/${this.instId}`;
+        this.wsUrl = `wss://fastapi-teachers.onrender.com/state/ws/institution-sync/${this.instId}`;
         this.socket = null;
         this.registryPath = 'intelligence/registry.json';
         this.isConnecting = false;
