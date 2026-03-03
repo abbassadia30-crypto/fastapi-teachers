@@ -22,6 +22,43 @@
             position: sticky; top: 0; z-index: 100;
         }
 
+        /* 🔄 Skeleton Loader */
+        #scan-loader {
+            display: none; padding: 30px; background: white; border-radius: 20px;
+            border: 2px dashed var(--primary); margin: 20px auto; max-width: 450px; text-align: center;
+        }
+        .skeleton-title { height: 20px; width: 60%; background: #e0e7ff; margin: 10px auto; border-radius: 10px; animation: pulse 1.5s infinite; }
+        .skeleton-line { height: 12px; width: 90%; background: #f1f5f9; margin: 8px auto; border-radius: 10px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        /* 🗂️ Tabbed Overlay Results */
+        #ai-results-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); z-index: 2000; backdrop-filter: blur(5px);
+        }
+        .results-card {
+            background: white; width: 92%; max-width: 500px; margin: 5% auto;
+            border-radius: 25px; height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .tab-header {
+            display: flex; overflow-x: auto; background: #f8fafc; padding: 10px;
+            border-bottom: 1px solid #e2e8f0; gap: 10px; scrollbar-width: none;
+        }
+        .tab-btn {
+            padding: 8px 15px; border-radius: 20px; border: 1px solid #cbd5e1;
+            background: white; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer;
+        }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .tab-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .grid-item label { font-size: 9px; color: #94a3b8; margin-bottom: 4px; display: block; }
+        .grid-item input { background: #f8fafc; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px; font-size: 13px; }
+
+        .action-footer { padding: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; }
+        .btn-save-bulk { flex: 2; background: var(--success); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 700; }
+        .btn-cancel { flex: 1; background: #f1f5f9; color: #64748b; border: none; padding: 12px; border-radius: 12px; }
+
         .back-link { border: none; background: none; font-weight: 600; cursor: pointer; color: #666; display: flex; align-items: center; gap: 8px; font-size: 15px; text-decoration: none;}
 
         .scan-btn-modern {
@@ -98,6 +135,34 @@
             <button type="button" class="flex-row-btn" onclick="addNewRow()">+ Add Extra Field</button>
             <button type="submit" class="submit-btn" id="subBtn">Confirm Admission</button>
         </form>
+    </div>
+</div>
+
+<input type="file" id="ai-scan-input" accept="image/*" style="display:none" onchange="performAIScan(this.files[0])">
+
+<div id="scan-loader">
+    <div class="skeleton-title"></div>
+    <div class="skeleton-line"></div>
+    <div class="skeleton-line"></div>
+    <p style="font-size: 12px; color: var(--primary); font-weight: 600;">Gemini is reading register data...</p>
+</div>
+
+<div id="ai-results-overlay">
+    <div class="results-card">
+        <div style="padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin:0; font-size: 18px;">Review Students</h3>
+            <span id="student-count-badge" style="background: var(--primary); color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px;">0</span>
+        </div>
+
+        <div class="tab-header" id="tabs-container"></div>
+
+        <div class="tab-content" id="active-tab-content">
+        </div>
+
+        <div class="action-footer">
+            <button class="btn-cancel" onclick="closeOverlay()">Cancel</button>
+            <button class="btn-save-bulk" id="bulk-save-btn" onclick="saveAllToDatabase()">Save All to Institution</button>
+        </div>
     </div>
 </div>
 
@@ -250,6 +315,158 @@
             subBtn.innerText = "Confirm Admission";
         }
     };
+
+    let scannedStudents = [];
+    let activeTabIndex = 0;
+
+    function triggerScan() {
+        document.getElementById('ai-scan-input').click();
+    }
+
+    async function performAIScan(file) {
+        if (!file) return;
+        const loader = document.getElementById('scan-loader');
+        loader.style.display = "block";
+        showStatus("AI is processing image...", true);
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+            const response = await fetch(`${API_URL}/scanner/admission/scan-register`, {
+                method: "POST",
+                headers: { 'Authorization': `Bearer ${authToken}` },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("Scan failed");
+
+            const data = await response.json();
+            // Assuming AI returns {"students": [...]} or a list
+            scannedStudents = Array.isArray(data) ? data : (data.students || [data]);
+
+            if (scannedStudents.length > 0) {
+                openOverlay();
+            } else {
+                showStatus("No student data found", false);
+            }
+        } catch (err) {
+            showStatus(err.message, false);
+        } finally {
+            loader.style.display = "none";
+        }
+    }
+
+    function openOverlay() {
+        document.getElementById('ai-results-overlay').style.display = "block";
+        renderTabs();
+    }
+
+    function closeOverlay() {
+        document.getElementById('ai-results-overlay').style.display = "none";
+    }
+
+    function renderTabs() {
+        const container = document.getElementById('tabs-container');
+        document.getElementById('student-count-badge').innerText = scannedStudents.length;
+        container.innerHTML = "";
+
+        scannedStudents.forEach((std, index) => {
+            const btn = document.createElement('button');
+            btn.className = `tab-btn ${index === activeTabIndex ? 'active' : ''}`;
+            btn.innerHTML = `${std.name || 'New Student'} <span onclick="deleteStudent(${index}, event)">✕</span>`;
+            btn.onclick = () => { activeTabIndex = index; renderTabs(); };
+            container.appendChild(btn);
+        });
+
+        renderActiveStudent();
+    }
+
+    function renderActiveStudent() {
+        const content = document.getElementById('active-tab-content');
+        const std = scannedStudents[activeTabIndex];
+        if (!std) { content.innerHTML = ""; return; }
+
+        content.innerHTML = `
+        <div class="data-grid">
+            <div class="grid-item"><label>Name</label><input type="text" value="${std.name || ''}" oninput="updateData('name', this.value)"></div>
+            <div class="grid-item"><label>Father Name</label><input type="text" value="${std.father_name || ''}" oninput="updateData('father_name', this.value)"></div>
+            <div class="grid-item"><label>Section</label><input type="text" value="${std.section || ''}" oninput="updateData('section', this.value)"></div>
+            <div class="grid-item"><label>Fee</label><input type="number" value="${std.fee || 0}" oninput="updateData('fee', this.value)"></div>
+        </div>
+        <h4 style="font-size: 11px; margin-top: 20px; color: #64748b;">Extra Fields Found</h4>
+        <div class="data-grid" id="extra-fields-grid">
+            ${Object.entries(std.extra_fields || {}).map(([key, val]) => `
+                <div class="grid-item"><label>${key}</label><input type="text" value="${val}" oninput="updateExtra('${key}', this.value)"></div>
+            `).join('')}
+        </div>
+    `;
+    }
+
+    function updateData(key, val) { scannedStudents[activeTabIndex][key] = val; }
+    function updateExtra(key, val) { scannedStudents[activeTabIndex].extra_fields[key] = val; }
+
+    function deleteStudent(index, e) {
+        e.stopPropagation();
+        scannedStudents.splice(index, 1);
+        activeTabIndex = 0;
+        if (scannedStudents.length === 0) closeOverlay();
+        else renderTabs();
+    }
+
+    async function saveAllToDatabase() {
+        if (scannedStudents.length === 0) return;
+
+        const btn = document.getElementById('bulk-save-btn');
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Finalizing Admissions...`;
+
+        try {
+            // Map the data to match your AdmissionPayload schema exactly
+            const payload = scannedStudents.map(std => ({
+                name: std.name?.trim() || "Unknown Student",
+                father_name: std.father_name?.trim() || "",
+                section: std.section || "Unassigned",
+                fee: Number(std.fee || 0),
+                extra_fields: std.extra_fields || {}
+            }));
+
+            const response = await fetch(`${API_URL}/dashboard/bulk-admit-students`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${authToken}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // Success: Use the GREEN BOX rule
+                showStatus(result.message, true);
+                closeOverlay();
+
+                // Clear local state
+                scannedStudents = [];
+
+                // Refresh UI components
+                if (typeof loadSections === "function") loadSections();
+
+                // Optional: Redirect to a 'Success' view or clear form
+                document.getElementById('admissionForm').reset();
+            } else {
+                throw new Error(result.detail || "Bulk Save Failed");
+            }
+
+        } catch (e) {
+            // Error: Use the RED BOX rule
+            showStatus("Critical Error: " + e.message, false);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Save All to Institution";
+        }
+    }
 </script>
 </body>
 </html>

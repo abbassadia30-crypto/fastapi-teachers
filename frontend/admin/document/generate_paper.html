@@ -27,6 +27,8 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
+
+
         /* Results Area */
         #results-container { display: none; margin-top: 20px; }
         .question-item {
@@ -184,7 +186,7 @@
         }
         catch (err) {
             showSignBox(err.message, "error");
-        } 
+        }
         finally {
             btn.disabled = false;
             btn.innerText = "SELECT IMAGE";

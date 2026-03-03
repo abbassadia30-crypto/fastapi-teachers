@@ -376,3 +376,37 @@ async def get_students_by_section(
         return []
 
     return students
+
+# Add to backend/routers/dashboard.py
+
+@router.post("/bulk-admit-students")
+async def bulk_admit_students(
+        students_list: list[AdmissionPayload], # Expects a list of student objects
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    try:
+        new_students = []
+        for data in students_list:
+            # We transform each student dict into a model instance
+            student_obj = student(
+                **data.dict(),
+                institution_id=current_user.institution_id,
+                admitted_by=current_user.user_email,
+                is_active=True,
+                created_at=datetime.utcnow()
+            )
+            new_students.append(student_obj)
+
+        # Add all at once
+        db.add_all(new_students)
+        db.commit()
+
+        return {
+            "status": "success",
+            "message": f"Successfully admitted {len(new_students)} students to the institution."
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"Bulk Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to process bulk admission")
