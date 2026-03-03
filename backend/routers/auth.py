@@ -165,7 +165,7 @@ async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Sessio
             user_password=hashed_pwd,
             phone=None,
             otp_code=otp,
-            is_verified=True,
+            is_verified=False,
             type="verified_user"
         )
         db.add(new_v_user)
