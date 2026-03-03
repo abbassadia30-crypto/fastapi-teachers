@@ -265,7 +265,7 @@ async def deploy_results(
             calc_percentage = (obt / total) * 100 if total > 0 else 0
 
             new_record = AcademicResult(
-                institution_ref=current_user.institution_id,
+                institution_id=current_user.institution_id,
                 exam_title=payload.exam_title,
                 target_class=payload.class_name,    # 🎯 Matches your Column 'target_class'
                 student_name=entry.name,            # 🎯 Matches your Column 'student_name'
@@ -292,7 +292,7 @@ async def get_pending_marksheets(
 ):
     # Single bulk fetch: Source of Truth (Institution) + State (Pending)
     marksheets = db.query(AcademicResult).filter(
-        AcademicResult.institution_ref == current_user.institution_id,
+        AcademicResult.institution_id == current_user.institution_id,
         AcademicResult.status == "pending"  # Only fetch what needs action
     ).order_by(AcademicResult.created_at.desc()).all()
 
