@@ -23,6 +23,8 @@ client = genai.Client(
 )
 
 # In backend/routers/scanner.py
+# In backend/routers/scanner.py
+
 @router.post("/papers/scan-only")
 async def scan_only(
         file: UploadFile = File(...),
@@ -31,48 +33,54 @@ async def scan_only(
     try:
         content = await file.read()
 
-        # System instructions for consistent extraction
-        system_prompt = """
-            Extract every question from the image. 
-            Identify question type: 'MCQs', 'Short', or 'Long'.
-            Preserve Urdu and English scripts exactly.
-            Return ONLY a valid JSON object: {"questions": [{"text": "string", "type": "string"}]}
-        """
+        # 1. DEFINE THE CONFIG FIRST (Fixes the NameError)
+        generate_content_config = types.GenerateContentConfig(
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=False,
+                thinking_budget=1024, # Professional limit for Render stability
+            ),
+            system_instruction="""
+                You are a critical academic examiner for a Pakistani institution.
+                Task: Extract all questions from the paper with absolute accuracy.
+                Preserve Urdu script. Classify as 'MCQs', 'Short', or 'Long'.
+                Return ONLY valid JSON: {"questions": [{"text": "string", "type": "string"}]}
+            """,
+            response_mime_type="application/json"
+        )
 
         try:
-            # STEP 1: Attempt using the "Extraordinary" Model (Gemini 3)
+            # 2. Attempt using Gemini 3
             print("Attempting scan with Gemini 3 Flash Preview...")
             response = client.models.generate_content(
                 model="gemini-3-flash-preview",
                 contents=[
                     types.Part.from_bytes(data=content, mime_type=file.content_type),
-                    system_prompt
+                    "Critically read and extract all questions from this document."
                 ],
-                config=generate_content_config,
+                config=generate_content_config, # Now defined correctly!
             )
         except Exception as e:
-            # STEP 2: Fallback if Gemini 3 is busy (503) or unavailable
+            # 3. Fallback logic for high demand (503)
             if "503" in str(e) or "UNAVAILABLE" in str(e):
-                print("Gemini 3 Busy - Falling back to Gemini 2.5 Flash (Stable)")
+                print("Gemini 3 Busy - Falling back to Gemini 2.5 Flash")
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[
                         types.Part.from_bytes(data=content, mime_type=file.content_type),
-                        system_prompt
+                        "Analyze this exam paper and extract all questions."
                     ],
                     config=generate_content_config,
                 )
             else:
-                # If it's a different error (like a 401 or 400), we don't want to hide it
                 raise e
 
-        # STEP 3: Parse and return the response
+        # 4. Parse and return the JSON
         return json.loads(response.text)
 
     except Exception as e:
         import traceback
         print(traceback.format_exc())
-        # This triggers your Red Box in the frontend
+        # Triggers the RED SIGN BOX in generate_paper.html
         raise HTTPException(
             status_code=500,
             detail=f"Institution Scanner Error: {str(e)}"
