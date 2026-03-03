@@ -155,7 +155,7 @@
 
         try {
             // Retrieve token from Capacitor Storage
-            const { value: token } = await AppStorage.get("auth_token");
+            const token = await AppStorage.get("auth_token");
 
             if (!token) throw new Error("Session expired. Please login again.");
 

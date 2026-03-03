@@ -199,18 +199,19 @@ class PendingSync(BaseModel):
 
 class ScannedQuestion(BaseModel):
     text: str
-    type: str # MCQs, Short, Long
+    type: str  # 'MCQs', 'Short', or 'Long'
     marks: Optional[int] = 1
 
 class ScannedBankCreate(BaseModel):
-    source_name: Optional[str] = "Untitled Scan"
+    source_name: str
     questions: List[ScannedQuestion]
 
 class ScannedBankResponse(BaseModel):
     id: int
+    institution_id: int
+    creator_email: str
     source_name: str
-    questions_data: List[ScannedQuestion]
-    created_at: datetime
+    questions_data: List[dict]
 
     class Config:
         from_attributes = True

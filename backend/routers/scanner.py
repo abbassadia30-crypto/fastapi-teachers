@@ -19,51 +19,35 @@ router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
 
 @router.post("/papers/scan-only")
-async def scan_only(
-        file: UploadFile = File(...),
-        current_user: Any = Depends(get_current_user)
-):
-    try:
-        content = await file.read()
+async def scan_only(file: UploadFile = File(...), current_user: Any = Depends(get_current_user)):
+    content = await file.read()
 
-        # Configuration for Gemini 3 Flash
-        generate_content_config = types.GenerateContentConfig(
-            # Higher thinking budget for "Critical Reading" of complex exam papers
-            thinking_config=types.ThinkingConfig(
-                include_thoughts=False,
-                thinking_budget=2048,
-            ),
-            system_instruction="""
-                You are a critical academic document parser for a Pakistani institution.
-                Task: Extract every question from the image with 100% accuracy.
-                Rules:
-                1. Identify question type: 'MCQs', 'Short', or 'Long'.
-                2. If the text is in Urdu or English, preserve the script exactly.
-                3. For MCQs, include the options within the text string if present.
-                4. Return ONLY a valid JSON object.
-            """,
-            response_mime_type="application/json"
-        )
+    # GEMINI 3 CRITICAL CONFIGURATION
+    config = types.GenerateContentConfig(
+        # 'MEDIUM' thinking ensures it reasons through Urdu script/Math formulas
+        thinking_level="MEDIUM",
+        # 'HIGH' resolution is mandatory for clear text extraction from photos
+        media_resolution="HIGH",
+        system_instruction="""
+            You are a professional examiner for a Pakistani institution.
+            Critically read the provided image/PDF. 
+            Extract questions and categorize them: 'MCQs', 'Short', or 'Long'.
+            Maintain exact Urdu/English script. Output ONLY valid JSON.
+        """,
+        response_mime_type="application/json"
+    )
 
-        # Using 'gemini-3-flash' model
-        response = client.models.generate_content(
-            model="gemini-3-flash",
-            contents=[
-                types.Part.from_bytes(data=content, mime_type=file.content_type),
-                "Analyze this institution exam paper and extract all questions into JSON format."
-            ],
-            config=generate_content_config,
-        )
+    # HIT THE CONNECTION
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview",
+        contents=[
+            types.Part.from_bytes(data=content, mime_type=file.content_type),
+            "Perform a critical scan of this paper."
+        ],
+        config=config,
+    )
 
-        return json.loads(response.text)
-
-    except Exception as e:
-        import traceback
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Scanner Error: {str(e)}")
-
-# ... Keep your save_scanned_to_vault function as it was ...
-
+    return json.loads(response.text)
 # STEP 2: The "Vault" (Permanent DB Save)
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
