@@ -56,6 +56,28 @@
             display: none; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             min-width: 250px; text-align: center;
         }
+
+        /* Enhanced Sign Box Styling in Head */
+        #sign-box {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: 50px; /* Capsule look */
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+            z-index: 10000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { top: -50px; opacity: 0; }
+            to { top: 20px; opacity: 1; }
+        }
     </style>
 </head>
 <body>

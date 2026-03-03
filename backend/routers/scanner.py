@@ -15,10 +15,9 @@ from backend.schemas.admin.document import ScannedBankResponse, ScannedBankCreat
 
 router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 
-# Initialize client using the Env Var you set in Render
+# Initialize client - Gemini 3 Flash is accessed via the latest SDK
 client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
 
-# STEP 1: The "Reader" (No DB Save)
 @router.post("/papers/scan-only")
 async def scan_only(
         file: UploadFile = File(...),
@@ -27,28 +26,43 @@ async def scan_only(
     try:
         content = await file.read()
 
-        system_instruction = """
-        Extract all academic questions from the image. 
-        Classify each as: 'MCQs', 'Short', or 'Long'.
-        Ignore headers, footers, and page numbers.
-        Return ONLY JSON: {"questions": [{"text": "string", "type": "string"}]}
-        """
+        # Configuration for Gemini 3 Flash
+        generate_content_config = types.GenerateContentConfig(
+            # Higher thinking budget for "Critical Reading" of complex exam papers
+            thinking_config=types.ThinkingConfig(
+                include_thoughts=False,
+                thinking_budget=2048,
+            ),
+            system_instruction="""
+                You are a critical academic document parser for a Pakistani institution.
+                Task: Extract every question from the image with 100% accuracy.
+                Rules:
+                1. Identify question type: 'MCQs', 'Short', or 'Long'.
+                2. If the text is in Urdu or English, preserve the script exactly.
+                3. For MCQs, include the options within the text string if present.
+                4. Return ONLY a valid JSON object.
+            """,
+            response_mime_type="application/json"
+        )
 
+        # Using 'gemini-3-flash' model
         response = client.models.generate_content(
             model="gemini-3-flash",
             contents=[
                 types.Part.from_bytes(data=content, mime_type=file.content_type),
-                "Extract questions."
+                "Analyze this institution exam paper and extract all questions into JSON format."
             ],
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json"
-            )
+            config=generate_content_config,
         )
 
         return json.loads(response.text)
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI Processing Failed: {str(e)}")
+        import traceback
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Scanner Error: {str(e)}")
+
+# ... Keep your save_scanned_to_vault function as it was ...
 
 # STEP 2: The "Vault" (Permanent DB Save)
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
