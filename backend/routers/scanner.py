@@ -18,6 +18,8 @@ router = APIRouter(prefix="/scanner", tags=["Scanner Management"])
 # Initialize client - Gemini 3 Flash is accessed via the latest SDK
 client = genai.Client(api_key=os.environ.get("GOOGLE_AI_KEY"))
 
+# In backend/routers/scanner.py
+
 @router.post("/papers/scan-only")
 async def scan_only(
         file: UploadFile = File(...),
@@ -26,44 +28,41 @@ async def scan_only(
     try:
         content = await file.read()
 
-        # CORRECT CONFIGURATION FOR 2026 STANDARDS
-        # This removes the 'extra_forbidden' errors and enables critical reasoning
+        # UPDATED FOR VERIFIED GEMINI 3 FLASH
         generate_content_config = types.GenerateContentConfig(
-            # Enable thinking/reasoning through 'thinking_config'
+            # Higher thinking budget now that you are verified
             thinking_config=types.ThinkingConfig(
                 include_thoughts=False,
-                thinking_budget=1024, # Optimized for Render timeout limits
+                thinking_budget=2048,
             ),
-            # Set resolution correctly for small Urdu/English text
-            # Options are usually 'LOW', 'MEDIUM', or 'HIGH' (if supported by tier)
-            # We use a direct string as the SDK expects
             system_instruction="""
-                You are a critical academic examiner for a Pakistani institution.
-                Task: Extract all questions from the paper with absolute accuracy.
-                Preserve Urdu script. Classify as 'MCQs', 'Short', or 'Long'.
-                Return ONLY valid JSON: {"questions": [{"text": "string", "type": "string"}]}
+                You are a critical academic document parser for a Pakistani institution.
+                Extract every question from the image. 
+                Identify question type: 'MCQs', 'Short', or 'Long'.
+                Preserve Urdu and English scripts exactly.
+                Return ONLY a valid JSON object: {"questions": [{"text": "string", "type": "string"}]}
             """,
             response_mime_type="application/json"
         )
 
-        # Using gemini-2.0-flash as it is currently the most stable
-        # for high-speed critical reading on Render
+        # CHANGE: Use 'gemini-3-flash' instead of 'gemini-2.0-flash'
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-3-flash",
             contents=[
                 types.Part.from_bytes(data=content, mime_type=file.content_type),
-                "Critically read and extract all questions from this document."
+                "Analyze this exam paper and extract all questions."
             ],
             config=generate_content_config,
         )
 
+        # Success! Return the data to your frontend
         return json.loads(response.text)
 
     except Exception as e:
         import traceback
         print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Scanner Error: {str(e)}")
-# STEP 2: The "Vault" (Permanent DB Save)
+        # This will now trigger your Green/Red boxes correctly
+        raise HTTPException(status_code=500, detail=f"AI Scanner Error: {str(e)}")
 @router.post("/papers/save-scanned", response_model=ScannedBankResponse)
 async def save_scanned_to_vault(
         payload: ScannedBankCreate,
