@@ -16,23 +16,6 @@ from backend.models.admin.institution import Institution
 from backend.models.state import InstitutionState
 
 router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
-
-# --- 1. THE PERSISTENCE TABLE (The State Cache) ---
-class InstitutionState(Base):
-    __tablename__ = "institution_intelligence_state"
-    __table_args__ = {'extend_existing': True}
-    id = Column(Integer, primary_key=True, index=True)
-    institution_id = Column(Integer, ForeignKey("institutions.id"), unique=True)
-
-    # Store the massive JSON of all sections
-    full_data_blob = Column(Text, nullable=False)
-    # Store the 50-character key map (The Registry)
-    key_registry = Column(Text, nullable=False)
-    last_indexed = Column(DateTime, default=datetime.datetime.utcnow)
-
-    institution = relationship("Institution")
-
-# --- 2. THE TARGETED EXTRACTION ENGINE ---
 def perform_targeted_extraction(db: Session, inst_id: int, target_section: str = None):
     """
     Crawls the DB, partitions data, and ONLY rotates the key for target_section.
