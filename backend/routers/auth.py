@@ -1,4 +1,5 @@
 import os
+import httpx
 import random
 import resend
 from datetime import datetime, timedelta, timezone
@@ -13,7 +14,6 @@ from backend.database import get_db
 from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncStateResponse
 from backend.models.admin.institution import Institution
 from backend.models.User import User , UserBan , Verification , Auth_id  , SecurityLog
-from firebase_admin import messaging
 import firebase_admin
 from firebase_admin import auth, credentials
 import json
@@ -119,44 +119,31 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 # --- Routes ---
 # backend/routers/users.py
 
-@router.patch("/update-fcm")
-async def update_fcm(payload: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    fcm_token = payload.get("fcm_token")
-    if not fcm_token:
-        raise HTTPException(status_code=400, detail="No token provided")
+@router.post("/users/update-push-token")
+async def update_token(data: dict, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == data['user_id']).first()
+    if user:
+        user.push_token = data['push_token'] # Save the OneSignal ID
+        db.commit()
+    return {"status": "success"}
 
-    # 🏛️ Explicit Database Commit [cite: 2026-01-30]
-    current_user.fcm_token = fcm_token
-    db.add(current_user)
-    db.commit() # This ensures it's in the DB for manual pushes later
-    db.refresh(current_user)
+ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
+ONESIGNAL_REST_KEY = os.getenv("ONESIGNAL_REST_KEY")
 
-    return {"status": "success", "message": "Neural Link Established"}
-
-from firebase_admin import messaging
-
-def send_urgent_alert(token, title, body):
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title=title,
-            body=body,
-        ),
-        android=messaging.AndroidConfig(
-            priority='high', # 🏛️ This is the "Force" button for killed apps
-            notification=messaging.AndroidNotification(
-                channel_id='institution_alerts', # Matches your init.js channel
-                click_action='OPEN_INSTITUTION_APP', # Key for Capacitor to resume
-            ),
-        ),
-        apns=messaging.APNSConfig(
-            payload=messaging.APNSPayload(
-                aps=messaging.Aps(content_available=True, priority=10),
-            ),
-        ),
-        token=token,
-    )
-    response = messaging.send(message)
-    return response
+async def notify_user(user_id: int, message: str, db: Session):
+    headers = {
+        "Authorization": f"Basic {ONESIGNAL_REST_KEY}",
+        "Content-Type": "application/json; charset=utf-8"
+    }
+    payload = {
+        "app_id": ONESIGNAL_APP_ID,
+        # ✅ This is the best way: target by your Database ID
+        "include_external_user_ids": [str(user_id)],
+        "contents": {"en": message},
+        "headings": {"en": "Institutional Alert"}
+    }
+    async with httpx.AsyncClient() as client:
+        await client.post("https://onesignal.com/api/v1/notifications", headers=headers, json=payload)
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
@@ -252,14 +239,14 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
             detail=f"Invalid credentials. {remaining} attempts left."
         )
 
-    # 4. Verification Check
+        # 4. Verification Check
         is_verified = db.query(Verification.is_verified).filter(Verification.id == user.id).scalar()
 
         if not is_verified:
             raise HTTPException(
-        status_code=403,
-        detail="Institutional access requires email verification."
-    )
+                status_code=403,
+                detail="Institutional access requires email verification."
+            )
 
     # 5. Ban Check
     ban_status = db.query(UserBan).filter(UserBan.user_id == user.id, UserBan.is_banned == True).first()
@@ -269,21 +256,7 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     # 🏛️ 6. SUCCESS: Reset Security & Save FCM Token
     if sec_log:
         sec_log.attempts = 0
-    sec_log.blocked_until = None
-
-# Use .get() or direct access if your LoginSchema allows it
-    fcm_token = getattr(credentials, 'fcm_token', None)
-    if fcm_token:
-       user.fcm_token = fcm_token
-       print(f"📡 Login: Linking FCM for {user.user_email}")
-
-    db.commit()
-
-    # Update FCM Token from the request (Ensure credentials schema includes fcm_token)
-    if hasattr(credentials, 'fcm_token') and credentials.fcm_token:
-        user.fcm_token = credentials.fcm_token
-
-    db.commit()
+        sec_log.blocked_until = None
 
     # 7. Identity Check
     has_identity = False
@@ -302,7 +275,8 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
         "role": user.type or "user",
         "user": user.user_name,
         "institution_id": user.last_active_institution_id,
-        "identity": has_identity
+        "identity": has_identity ,
+        "user_id" : user.id
     }
 
 # 🏛️ VERIFY LOGIC (10 Attempts Limit)
@@ -413,35 +387,13 @@ async def sync_user_state(
 
 @router.get("/manual-push/{email}")
 async def manual_push(email: str, db: Session = Depends(get_db)):
-    # 🏛️ Shift query from Institution to User model
     user = db.query(User).filter(User.user_email == email).first()
-
     if not user:
-        return {"status": "error", "message": "User not found in User Table"}
+        return {"status": "error", "message": "User not found"}
 
-    if not user.fcm_token:
-        return {"status": "error", "message": "This user has no FCM token in DB"}
-
-    try:
-        # Use the High Priority config to wake up the killed app
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title="Super Console Alert",
-                body="Formal letter received in your mailbox."
-            ),
-            android=messaging.AndroidConfig(
-                priority='high', # 🏛️ Wakes up the killed app
-                notification=messaging.AndroidNotification(
-                    channel_id='institution_alerts', # Matches init.js
-                    priority='high'
-                ),
-            ),
-            token=user.fcm_token
-        )
-        messaging.send(message)
-        return {"status": "success", "message": f"Push sent to {email}"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    # Trigger the notification using the function above
+    await notify_user(user.id, "Test Notification: Core Systems Online.", db)
+    return {"status": "success", "message": f"Push sent to {email}"}
 
 @router.get("/check-existence")
 async def check_existence(email: str, db: Session = Depends(get_db)):

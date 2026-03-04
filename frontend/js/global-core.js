@@ -11,7 +11,6 @@ class IntelligenceWS {
     }
 
     async start() {
-        // Get ID from your storage.js
         this.instId = await AppStorage.get('institution_id');
         if (!this.instId) return;
 
@@ -52,6 +51,8 @@ class IntelligenceWS {
         this.socket.onerror = () => this.socket.close();
     }
 }
+
+
 
 window.IntelligenceWS = new IntelligenceWS();
 window.IntelligenceWS.start();

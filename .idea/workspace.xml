@@ -5,7 +5,16 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/capacitor.build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backend/routers/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/owner_identity/identity_check.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/owner_identity/identity_check.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/js/global-core.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/global-core.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/js/init.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/init.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,15 +174,9 @@
       <workItem from="1772559911292" duration="11000" />
       <workItem from="1772559946581" duration="5092000" />
       <workItem from="1772587507228" duration="18000" />
-      <workItem from="1772587559384" duration="23509000" />
-    </task>
-    <task id="LOCAL-00079" summary="now">
-      <option name="closed" value="true" />
-      <created>1772390660607</created>
-      <option name="number" value="00079" />
-      <option name="presentableId" value="LOCAL-00079" />
-      <option name="project" value="LOCAL" />
-      <updated>1772390660607</updated>
+      <workItem from="1772587559384" duration="24806000" />
+      <workItem from="1772627953373" duration="1568000" />
+      <workItem from="1772631423555" duration="5581000" />
     </task>
     <task id="LOCAL-00080" summary="now">
       <option name="closed" value="true" />
@@ -559,7 +562,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772610971382</updated>
     </task>
-    <option name="localTasksCounter" value="128" />
+    <task id="LOCAL-00128" summary="now">
+      <option name="closed" value="true" />
+      <created>1772611491218</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1772611491218</updated>
+    </task>
+    <option name="localTasksCounter" value="129" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -79,97 +79,90 @@
 <script src="../../js/storage.js"></script>
 <script src="../../js/init.js"></script>
 <script>
-
     const API_BASE = "https://fastapi-teachers.onrender.com";
-    const sign = document.getElementById('final-sign');
-    const statusIcon = document.getElementById('status-icon');
-    const statusTitle = document.getElementById('status-title');
 
-    /**
-     * 🏛️ Gatekeeper: Synchronizes identity and sets up the device.
-     */
     async function gatekeeper() {
+        const sign = document.getElementById('error-sign');
         const token = await AppStorage.get('auth_token');
 
         if (!token) {
-            sign.style.background = "#e74c3c"; // Red sign box
-            sign.innerText = "Session Missing";
-            setTimeout(() => window.location.replace("../../index.html"), 2000);
+            window.location.href = "../index.html";
             return;
         }
 
         try {
-            const response = await fetch(`${API_BASE}/institution/sync-state`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+            // 🏛️ STEP 1: NEURAL LINK INITIALIZATION
+            sign.innerText = "Initializing Neural Link...";
+            sign.style.background = "var(--warning)";
+
+            // Check if we already have a token locally
+            let fcmToken = await AppStorage.get('fcm_token');
+            const isNewDevice = !fcmToken;
+
+            // Start the push initialization in the background
+            const pushPromise = window.initializePush();
+
+            // 🏛️ STEP 2: DYNAMIC SECURITY DELAY
+            // If new device: wait 15s to ensure FCM registration completes
+            // If known device: wait 3s just to refresh the connection
+            const waitTime = isNewDevice ? 15000 : 3000;
+
+            sign.innerText = isNewDevice ?
+                "First Time Setup: Syncing with Firebase (15s)..." :
+                "Refreshing Secure Connection (3s)...";
+
+            // Force the code to wait
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+
+            // Now capture the result of the push initialization
+            fcmToken = await AppStorage.get('fcm_token');
+
+            if (fcmToken) {
+                sign.innerText = "Syncing Token with Institution DB...";
+                const isSynced = await syncTokenWithBackend(fcmToken);
+                if (isSynced) {
+                    sign.style.background = "var(--primary)";
+                    console.log("✅ Neural Link Logged successfully.");
                 }
+            } else {
+                console.warn("⚠️ Neural Link skipped: No token generated in time.");
+                sign.innerText = "Link Offline: Notifications may be delayed.";
+                sign.style.background = "var(--secondary)";
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            // 🏛️ STEP 3: VERIFY WORKSPACE & IDENTITY
+            sign.innerText = "Verifying Institution Identity...";
+            const response = await fetch(`${API_BASE}/dashboard/check-ownership`, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
             });
 
-            if (response.ok) {
-                const data = await response.json();
+            const data = await response.json();
 
-                // 🏛️ Identity Logic: Hydrating Storage for the Super Console
+            if (response.ok && data.exists) {
+                sign.style.background = "var(--primary)";
+                sign.innerText = "Identity Verified. Entering Workspace...";
+
+                await AppStorage.set('institutionToken', 'verified');
                 await AppStorage.set('institution_id', data.institution_id);
-                await AppStorage.set('user_role', data.user_role);
-                // Mark identity boolean for our universal routing
-                await AppStorage.set(`${data.user_role}_identity`, true);
 
-                // UI Update - Success State
-                statusIcon.innerHTML = "&#10003;";
-                statusIcon.style.color = "#27ae60";
-                statusTitle.innerText = "Identity Verified";
-                sign.style.background = "#27ae60"; // Green sign box
-                sign.innerText = "Access Granted";
-
-                // ⚡ SILENT PERMISSION REQUEST
-                // We ask for permission for FUTURE notifications (Wallet/Alerts)
-                // but we DO NOT send a push right now (Email handles the record).
-                setupNotificationsForFuture();
+                if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
+                    Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
+                }
 
                 setTimeout(() => {
-                    // 🏛️ Routing Logic:
-                    // If institution is already linked, go to Dashboard.
-                    // If not, go to the 'no-institution' setup page.
-                    if (data.institution_id) {
-                        window.location.replace(`../dashboard/dashboard.html`);
-                    } else {
-                        window.location.replace(`../setups/no-institution.html`);
-                    }
-                }, 2500);
+                    window.location.href = "../dashboard/dashboard.html";
+                }, 1500);
 
             } else {
-                // Identity not found in Auth_id table
-                window.location.replace("create_identity.html");
+                window.location.href = "no-institution.html";
             }
         } catch (error) {
-            console.error("Sync Error:", error);
-            sign.style.background = "#e74c3c";
-            sign.innerText = "Connection Error - Retrying";
-            // Auto-retry after 5 seconds for unstable connections
+            console.error("Gatekeeper Critical Error:", error);
+            sign.style.background = "var(--danger)";
+            sign.innerText = "🌐 Neural Link Interrupted. Retrying...";
             setTimeout(() => window.location.reload(), 5000);
-        }
-    }
-
-    /**
-     * 🏛️ Future-Proofing: Requests permission for real-time alerts.
-     */
-    async function setupNotificationsForFuture() {
-        try {
-            if (window.Capacitor && window.Capacitor.isPluginAvailable('PushNotifications')) {
-                const { PushNotifications } = Capacitor.Plugins;
-
-                const perm = await PushNotifications.checkPermissions();
-
-                if (perm.receive !== 'granted') {
-                    // Trigger the native OS permission dialog (Android/iOS)
-                    // We don't 'await' this so the UI transition remains smooth
-                    PushNotifications.requestPermissions();
-                }
-            }
-        } catch (e) {
-            console.warn("Notification permission engine skipped.");
         }
     }
 
