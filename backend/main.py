@@ -17,6 +17,7 @@ import firebase_admin
 from firebase_admin import auth, credentials
 import json
 from backend.routers import auth, institution, profile # Your actual router paths
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
@@ -71,6 +72,34 @@ async def get_dashboard_data():
         "status": "Operational",
         "active_challenges": 12
     }
+
+class FCMUpdate(BaseModel):
+    fcm_token: str
+
+# 2. THE CRITICAL SYNC ENDPOINT
+@app.patch("/auth/update-fcm")
+async def update_fcm_token(data: FCMUpdate, current_user = Depends(get_current_user)):
+    # Logic to save the token to your 'starlight_u7dv' database
+    # This must succeed before the user moves to the dashboard
+    success = await db.users.update_one(
+        {"id": current_user.id},
+        {"$set": {"fcm_token": data.fcm_token}}
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Database update failed")
+    return {"status": "success"}
+
+@app.get("/dashboard/check-ownership")
+async def check_ownership(current_user = Depends(get_current_user)):
+    # Your logic to find if they have an 'institution' [cite: 2025-12-21]
+    institution = await db.institutions.find_one({"owner_id": current_user.id})
+    if institution:
+        return {
+            "has_institution": True,
+            "institution_name": institution["name"],
+            "institution_id": str(institution["_id"])
+        }
+    return {"has_institution": False}
 
 
 app.add_middleware(
