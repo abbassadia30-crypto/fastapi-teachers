@@ -239,19 +239,30 @@
             if (response.ok) {
                 // 🏛️ Success State
                 btn.style.background = "#43a047";
-                await  setupNotifications(data.user_id)
-                btn.innerText = "Redirecting to Dashboard...";
+                btn.innerText = "Syncing Security...";
 
+                // 1. Run notification setup but don't let it block indefinitely
+                try {
+                    if (typeof setupNotifications === 'function') {
+                        await setupNotifications(data.user_id);
+                    }
+                } catch (pushErr) {
+                    console.error("Push Init Failed, proceeding anyway:", pushErr);
+                }
+
+                // 2. Save Session Data
                 await AppStorage.set('user_email', emailInput);
                 await AppStorage.set('auth_token', data.access_token);
                 await AppStorage.set('user_role', data.role);
+
                 if (data.identity) await AppStorage.set(`${data.role}_identity`, true);
                 if (data.institution_id) {
                     await AppStorage.set('institution_id', data.institution_id);
                 }
+
                 Notification.show("Login Successful!", "success");
 
-                // Move to routing
+                // 3. Move to routing
                 setTimeout(() => { checkExistingSession(); }, 1000);
             } else {
                 // 🏛️ Handle Blocked/Wrong Credentials
