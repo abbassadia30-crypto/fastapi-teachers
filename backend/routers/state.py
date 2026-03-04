@@ -91,6 +91,31 @@ def perform_targeted_extraction(db: Session, inst_id: int, target_section: str =
 
     return current_registry
 
+# 🔥 FIX 1: Define the missing background task
+def run_extraction_task(inst_id, affected_section):
+    """Background task to refresh the state and notify connected apps"""
+    db = SessionLocal()
+    try:
+        # Perform the actual data extraction
+        new_registry = perform_targeted_extraction(db, inst_id, affected_section)
+
+        # 🔥 FIX 2: Check active_connections and push the new registry
+        # We use the global active_connections dict to find the right institution
+        if inst_id in active_connections:
+            # Create a loop for the thread to send the message safely
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            for ws in active_connections[inst_id]:
+                try:
+                    loop.run_until_complete(ws.send_text(json.dumps(new_registry)))
+                except Exception as e:
+                    print(f"Failed to push to a socket: {e}")
+    except Exception as e:
+        print(f"Extraction Task Error: {e}")
+    finally:
+        db.close()
+
 # --- 3. THE EVENT WATCHER (Insert, Update, Delete) ---
 def trigger_global_reindex(mapper, connection, target):
     """Detects any change and triggers targeted re-indexing"""
@@ -138,19 +163,29 @@ async def sync_neural_state(websocket: WebSocket, inst_id: int, db: Session = De
 
 @router.get("/shard/{inst_id}/{section_name}")
 async def get_raw_shard(inst_id: int, section_name: str, key: str, db: Session = Depends(get_db)):
-    # 1. Verification
     state = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
-    if not state or json.loads(state.key_registry).get(section_name) != key:
+
+    if not state:
+        raise HTTPException(status_code=404, detail="Institution State not initialized")
+
+    # Parse registry to verify the key
+    registry = json.loads(state.key_registry)
+    expected_key = registry.get("shards", {}).get(section_name)
+
+    # Security check: Does the key the app sent match the DB?
+    if expected_key != key:
+        print(f"🚨 Security Alert: Key Mismatch. Recv: {key} | Expected: {expected_key}")
         raise HTTPException(status_code=403, detail="Key Mismatch")
 
-    # 2. Slice the Data
-    # Instead of making a file, we just parse the long string and send the piece
     all_data = json.loads(state.full_data_blob)
 
-    # Logic: Get section data or personal_state
-    shard = all_data.get("sections", {}).get(section_name) if section_name != "personal_state" else all_data.get("personal_state")
+    # Slice logic
+    if section_name == "personal_state":
+        shard = all_data.get("personal_state")
+    else:
+        shard = all_data.get("sections", {}).get(section_name)
 
     if not shard:
-        raise HTTPException(status_code=404, detail="Data not found")
+        raise HTTPException(status_code=404, detail="Shard content not found")
 
     return shard
