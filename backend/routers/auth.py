@@ -125,29 +125,13 @@ async def update_fcm(payload: dict, db: Session = Depends(get_db), current_user:
     if not fcm_token:
         raise HTTPException(status_code=400, detail="No token provided")
 
-    # 🏛️ Update and Force Commit immediately
+    # 🏛️ Explicit Database Commit [cite: 2026-01-30]
     current_user.fcm_token = fcm_token
-    db.add(current_user) # Explicitly re-add to session
-    db.commit()
-    db.refresh(current_user) # Refresh to ensure DB and Code are synced
+    db.add(current_user)
+    db.commit() # This ensures it's in the DB for manual pushes later
+    db.refresh(current_user)
 
-    print(f"✅ Token Saved for {current_user.user_email}: {fcm_token[:10]}...")
-
-    # Now send the test trigger
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="Neural Link Active",
-            body="Your device is now linked to the Institution Console."
-        ),
-        token=fcm_token,
-    )
-    # ... rest of your send logic
-    try:
-        messaging.send(message)
-    except Exception as e:
-            print(f"FCM Error: {e}")
-
-    return {"status": "token_updated"}
+    return {"status": "success", "message": "Neural Link Established"}
 
 from firebase_admin import messaging
 
@@ -285,7 +269,15 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
     # 🏛️ 6. SUCCESS: Reset Security & Save FCM Token
     if sec_log:
         sec_log.attempts = 0
-        sec_log.blocked_until = None
+    sec_log.blocked_until = None
+
+# Use .get() or direct access if your LoginSchema allows it
+    fcm_token = getattr(credentials, 'fcm_token', None)
+    if fcm_token:
+       user.fcm_token = fcm_token
+       print(f"📡 Login: Linking FCM for {user.user_email}")
+
+    db.commit()
 
     # Update FCM Token from the request (Ensure credentials schema includes fcm_token)
     if hasattr(credentials, 'fcm_token') and credentials.fcm_token:

@@ -52,36 +52,34 @@ window.initializePush = function() {
         }
     });
 };
-
 function setupPushListeners(resolve) {
-    // Clear old listeners to prevent duplicate requests
-    PushNotifications.removeAllListeners();
+    // This fires when a notification arrives
+    PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('🏛️ Alert Received:', notification);
+        // Use your "No Alerts" rule: Show a Green/Red box instead of window.alert
+        if(window.showSignBox) {
+            window.showSignBox(notification.body, "green"); [cite, 2025-12-22]
+        }
+    });
+
+    // This fires when the user TAPS the notification (even if app was killed)
+    PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
+        console.log('🏛️ Action Performed:', notification.actionId);
+        // Logic to navigate to the specific Mailbox or Wallet
+        window.location.href = 'mailbox.html';
+    });
 
     PushNotifications.addListener('registration', async (token) => {
-        console.log("🛰️ Device Registered. Token:", token.value);
         await AppStorage.set('fcm_token', token.value);
-
-        // Always attempt sync if logged in
-        const jwt = await AppStorage.get('auth_token');
-        if (jwt) {
-            await syncTokenWithBackend(token.value);
-        }
+        await syncTokenWithBackend(token.value);
         resolve(token.value);
     });
-
-    PushNotifications.addListener('registrationError', (err) => {
-        console.error("FCM Registration Error:", err);
-        resolve(null);
-    });
 }
-
 async function syncTokenWithBackend(token) {
     const jwtToken = await AppStorage.get('auth_token');
     if (!jwtToken) return;
-    API_BASE = "https://fastapi-teachers.onrender.com";
 
     try {
-        console.log("📤 Syncing Token to Institution DB...");
         const response = await fetch(`${API_BASE}/auth/update-fcm`, {
             method: 'PATCH',
             headers: {
@@ -91,11 +89,13 @@ async function syncTokenWithBackend(token) {
             body: JSON.stringify({ fcm_token: token })
         });
 
-        if (response.ok) {
-            console.log("✅ Neural Link Active: Token Tied to Email");
+        if (!response.ok) {
+            console.error("❌ Neural Link Sync Failed");
+            // If the user is no longer in DB, show red box [cite: 2025-12-22]
+            if(window.showSignBox) window.showSignBox("Sync Failed: Re-login required", "error");
         }
     } catch (e) {
-        console.error("Neural Link Failure:", e);
+        console.error("Network Error during Sync:", e);
     }
 }
 

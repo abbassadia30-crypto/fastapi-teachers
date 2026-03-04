@@ -249,10 +249,12 @@
                 }
 
                 // 🏛️ DIRECT SOLUTION: Await the push registration and sync
-                if (window.initializePush) {
-                    const fcm = await AppStorage.get('fcm_token')
-                    console.log(`Starting ${fcm} Linking...`);
-                    await window.initializePush();
+                try {
+                    // We wait for the token to be generated AND synced to DB
+                    const fcmToken = await window.initializePush();
+                    console.log("✅ Token Synced:", fcmToken);
+                } catch (e) {
+                    console.error("Push Init Failed, but proceeding...", e);
                 }
 
                 Notification.show("Neural Link Established!", "success");
