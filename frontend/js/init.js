@@ -1,62 +1,87 @@
 /**
- * init.js - Super Console Notification & Initialization logic
+ * init.js - Institutional Intelligence Notification System
+ * Purpose: Digitalize paper-based alerts with 100% delivery reliability.
  */
 const { PushNotifications } = Capacitor.Plugins;
 
 window.initializePush = function() {
     return new Promise(async (resolve) => {
-        console.log("🏛️ Institutional Intelligence: Starting Push Handshake...");
+        console.log("🏛️ Neural Link: Initializing...");
 
-        // ... (Keep your channel and permission logic) ...
+        // 1. Create the Android Urgent Channel
+        if (Capacitor.getPlatform() === 'android') {
+            try {
+                await PushNotifications.createChannel({
+                    id: 'institution_alerts',
+                    name: 'Institution Alerts',
+                    importance: 5, // Urgent pop-up
+                    visibility: 1,
+                    lights: true,
+                    lightColor: '#43a047',
+                    vibration: true,
+                });
+            } catch (e) { console.error("Channel Error:", e); }
+        }
+
+        // 2. Request Permissions
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+            permStatus = await PushNotifications.requestPermissions();
+        }
 
         if (permStatus.receive === 'granted') {
-            setupPushListeners();
+            // Setup listeners before registering
+            setupPushListeners(resolve);
 
-            // 🚀 CHECK IF TOKEN EXISTS ALREADY
-            const existingFcmToken = await AppStorage.get('fcm_token');
-            const jwtToken = await AppStorage.get('auth_token');
-
-            if (existingFcmToken && jwtToken) {
-                console.log("Found existing token, syncing immediately...");
-                await syncTokenWithBackend(existingFcmToken);
-                await PushNotifications.register(); // Keep it registered
-                resolve(existingFcmToken);
-                return;
+            // 🚀 FORCE CHECK: If we already have a token, sync it now
+            // even before the 'registration' event fires.
+            const cachedToken = await AppStorage.get('fcm_token');
+            const jwt = await AppStorage.get('auth_token');
+            if (cachedToken && jwt) {
+                console.log("🔄 Re-verifying existing token with DB...");
+                await syncTokenWithBackend(cachedToken);
             }
 
-            // If no existing token, wait for the registration listener
             await PushNotifications.register();
 
-            // Fallback timeout so login doesn't hang if FCM fails
-            setTimeout(() => resolve(null), 5000);
+            // Safety timeout: resolve if FCM takes too long
+            setTimeout(() => resolve(null), 8000);
         } else {
+            console.warn("Push Access Denied");
             resolve(null);
         }
     });
 };
 
-function setupPushListeners() {
-    PushNotifications.removeAllListeners(); // Prevent duplicate listeners
+function setupPushListeners(resolve) {
+    // Clear old listeners to prevent duplicate requests
+    PushNotifications.removeAllListeners();
 
     PushNotifications.addListener('registration', async (token) => {
-        const fcmToken = token.value;
-        console.log("Device Registered. Token:", fcmToken);
-        await AppStorage.set('fcm_token', fcmToken);
+        console.log("🛰️ Device Registered. Token:", token.value);
+        await AppStorage.set('fcm_token', token.value);
 
-        const jwtToken = await AppStorage.get('auth_token');
-        if (jwtToken) {
-            await syncTokenWithBackend(fcmToken);
+        // Always attempt sync if logged in
+        const jwt = await AppStorage.get('auth_token');
+        if (jwt) {
+            await syncTokenWithBackend(token.value);
         }
-        // This resolves the promise in initializePush
-        if (window.registrationResolver) window.registrationResolver(fcmToken);
+        resolve(token.value);
+    });
+
+    PushNotifications.addListener('registrationError', (err) => {
+        console.error("FCM Registration Error:", err);
+        resolve(null);
     });
 }
 
 async function syncTokenWithBackend(token) {
     const jwtToken = await AppStorage.get('auth_token');
     if (!jwtToken) return;
+    API_BASE = "https://fastapi-teachers.onrender.com";
 
     try {
+        console.log("📤 Syncing Token to Institution DB...");
         const response = await fetch(`${API_BASE}/auth/update-fcm`, {
             method: 'PATCH',
             headers: {
@@ -67,22 +92,17 @@ async function syncTokenWithBackend(token) {
         });
 
         if (response.ok) {
-            console.log("🏛️ Institutional DB: FCM Token Synced");
+            console.log("✅ Neural Link Active: Token Tied to Email");
         }
-    } catch (e) { console.error("Sync Error:", e); }
+    } catch (e) {
+        console.error("Neural Link Failure:", e);
+    }
 }
 
-// Global foreground listener (needs to be outside the promise)
-PushNotifications.addListener('pushNotificationReceived', (notification) => {
-    if (typeof showNotify === 'function') {
-        showNotify(`${notification.title}: ${notification.body}`, "success");
-    }
-});
-
-// Auto-run on load ONLY if user is already logged in
+// Auto-run if user session exists
 document.addEventListener('DOMContentLoaded', async () => {
-    const loggedIn = await AppStorage.get('auth_token');
-    if (loggedIn) {
-        setTimeout(window.initializePush, 500);
+    const hasToken = await AppStorage.get('auth_token');
+    if (hasToken) {
+        setTimeout(window.initializePush, 1000);
     }
 });

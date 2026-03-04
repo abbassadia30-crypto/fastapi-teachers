@@ -250,9 +250,9 @@
 
                 // 🏛️ DIRECT SOLUTION: Await the push registration and sync
                 if (window.initializePush) {
-                    console.log("Starting Push Handshake...");
+                    const fcm = await AppStorage.get('fcm_token')
+                    console.log(`Starting ${fcm} Linking...`);
                     await window.initializePush();
-                    // This 'await' now waits until syncTokenWithBackend is finished
                 }
 
                 Notification.show("Neural Link Established!", "success");

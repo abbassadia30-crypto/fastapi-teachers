@@ -122,24 +122,57 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 @router.patch("/update-fcm")
 async def update_fcm(payload: dict, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     fcm_token = payload.get("fcm_token")
-    current_user.fcm_token = fcm_token
-    db.commit()
+    if not fcm_token:
+        raise HTTPException(status_code=400, detail="No token provided")
 
-    # TEST TRIGGER: Send a welcome notification immediately
-    if fcm_token:
-        message = messaging.Message(
-            notification=messaging.Notification(
-                title="System Ready",
-                body=f"Welcome to the Institution Console, {current_user.user_name}!"
-            ),
-            token=fcm_token,
-        )
-        try:
-            messaging.send(message)
-        except Exception as e:
+    # 🏛️ Update and Force Commit immediately
+    current_user.fcm_token = fcm_token
+    db.add(current_user) # Explicitly re-add to session
+    db.commit()
+    db.refresh(current_user) # Refresh to ensure DB and Code are synced
+
+    print(f"✅ Token Saved for {current_user.user_email}: {fcm_token[:10]}...")
+
+    # Now send the test trigger
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title="Neural Link Active",
+            body="Your device is now linked to the Institution Console."
+        ),
+        token=fcm_token,
+    )
+    # ... rest of your send logic
+    try:
+        messaging.send(message)
+    except Exception as e:
             print(f"FCM Error: {e}")
 
     return {"status": "token_updated"}
+
+from firebase_admin import messaging
+
+def send_urgent_alert(token, title, body):
+    message = messaging.Message(
+        notification=messaging.Notification(
+            title=title,
+            body=body,
+        ),
+        android=messaging.AndroidConfig(
+            priority='high', # 🏛️ This is the "Force" button for killed apps
+            notification=messaging.AndroidNotification(
+                channel_id='institution_alerts', # Matches your init.js channel
+                click_action='OPEN_INSTITUTION_APP', # Key for Capacitor to resume
+            ),
+        ),
+        apns=messaging.APNSConfig(
+            payload=messaging.APNSPayload(
+                aps=messaging.Aps(content_available=True, priority=10),
+            ),
+        ),
+        token=token,
+    )
+    response = messaging.send(message)
+    return response
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
@@ -400,13 +433,15 @@ async def manual_push(email: str, db: Session = Depends(get_db)):
     # 2. Construct the message
     message = messaging.Message(
         notification=messaging.Notification(
-            title="Super Console Alert",
-            body="This is a manual test from the FastAPI backend! 🚀"
+            title="Institution Alert",
+            body="This alert works even if the app is closed!"
         ),
         android=messaging.AndroidConfig(
-            priority='high',
+            priority='high', # 🏛️ Forces the phone to show the notification
             notification=messaging.AndroidNotification(
-                channel_id='institution_alerts' # Matches your init.js
+                channel_id='institution_alerts', # Matches your init.js channel
+                priority='high',
+                default_sound=True
             ),
         ),
         token=user.fcm_token,
