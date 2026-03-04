@@ -14,6 +14,9 @@ from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncSt
 from backend.models.admin.institution import Institution
 from backend.models.User import User , UserBan , Verification , Auth_id  , SecurityLog
 from firebase_admin import messaging
+import firebase_admin
+from firebase_admin import auth, credentials
+import json
 
 load_dotenv()
 
@@ -27,7 +30,24 @@ router = APIRouter(
     tags=["Authentication"]
 )
 
-# --- Security Helpers ---
+# 🏛️ Institutional Intelligence: Secure Activation
+firebase_json_str = os.getenv("FIREBASE_JSON")
+
+if not firebase_admin._apps:
+    try:
+        if firebase_json_str:
+            # Parse the Render environment variable
+            firebase_info = json.loads(firebase_json_str)
+            cred = credentials.Certificate(firebase_info)
+            firebase_admin.initialize_app(cred)
+            print("🚀 Core Online: Auth & Messaging Services Reactivated")
+        else:
+            # Fallback for local testing
+            cred = credentials.Certificate("firebase-adminsdk.json")
+            firebase_admin.initialize_app(cred)
+            print("⚠️ Core: Using local fallback key")
+    except Exception as e:
+        print(f"❌ Critical Failure: Could not activate Firebase: {e}")
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
@@ -427,3 +447,28 @@ async def check_existence(email: str, db: Session = Depends(get_db)):
             "is_verified": True
         }
     }
+
+@router.post("/auth/firebase-sync")
+async def firebase_sync(data: dict, db: Session = Depends(get_db)):
+    try:
+        # 1. Verify the token with Google/Firebase servers
+        decoded_token = auth.verify_id_token(data['token'])
+        email = decoded_token['email']
+        name = decoded_token.get('name', 'Institution User')
+
+        # 2. Check if user exists in your Postgres DB
+        user = db.query(Institution).filter(Institution.email == email).first() #
+
+        if not user:
+            # Create new institution profile if it's their first time
+            user = Institution(name=name, email=email, is_verified=True)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        # 3. Generate your own JWT for the Super Console
+        access_token = create_access_token(data={"sub": user.email})
+        return {"access_token": access_token, "institution_id": user.id}
+
+    except Exception as e:
+        raise HTTPException(status_code=401, detail="Invalid Firebase Token")

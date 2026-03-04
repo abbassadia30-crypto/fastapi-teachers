@@ -13,17 +13,15 @@ from backend.routers import ready
 from backend.routers import central_vault
 from backend.routers import scanner
 from backend.routers import state
+import firebase_admin
+from firebase_admin import auth, credentials
+import json
+from backend.routers import auth, institution, profile # Your actual router paths
+
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
-
-import os
-import json
-import firebase_admin
-from fastapi import FastAPI
-from firebase_admin import credentials
-from backend.routers import auth, institution, profile # Your actual router paths
 
 # 1. PLACE IT HERE (Global Scope)
 def init_firebase():
@@ -74,6 +72,7 @@ async def get_dashboard_data():
         "status": "Operational",
         "active_challenges": 12
     }
+
 
 app.add_middleware(
     CORSMiddleware,

@@ -2,273 +2,373 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Institutional Intelligence | Data Preview</title>
+    <title>Institutional Intelligence | Super Console</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <script src="../../capacitor.js"></script>
+    <script src="../../js/storage.js"></script>
+    <script src="../../js/intelligence-executor.js"></script>
+    <script src="../../js/intelligence-ws.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <style>
         :root {
-            --primary: #0288d1;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --accent: #10b981;
+            --bg: #020617;
+            --sidebar-bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #0ea5e9;
+            --accent: #f43f5e;
+            --success: #10b981;
+            --gold: #f59e0b;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
+            font-family: 'Poppins', sans-serif;
+            margin: 0; background: var(--bg); color: #f1f5f9;
+            height: 100vh; display: flex; overflow: hidden;
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
+        /* ⬅️ SIDEBAR */
+        .sidebar {
+            width: 70px; background: var(--sidebar-bg);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; align-items: center;
+            padding-top: 20px; gap: 20px; z-index: 1000;
         }
 
-        .status-box {
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
+        .tab-link {
+            width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; color: #64748b; text-decoration: none; font-size: 20px;
+            background: var(--glass); transition: 0.3s;
         }
 
-        .json-container {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-            border: 1px solid #334155;
+        .tab-link.active { color: white; background: var(--primary); box-shadow: 0 0 15px rgba(14, 165, 233, 0.4); }
+
+        /* 🖼️ MAIN CONTENT */
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+
+        /* 🔍 SEARCH UI */
+        .search-container { padding: 15px 15px 5px; position: sticky; top: 0; z-index: 2000; background: var(--bg); }
+        .search-box {
+            background: var(--glass); border: 1px solid var(--border);
+            border-radius: 15px; padding: 12px 15px; display: flex; align-items: center;
+            backdrop-filter: blur(10px);
+        }
+        .search-box input {
+            background: none; border: none; color: white; width: 100%;
+            margin-left: 10px; outline: none; font-family: 'Poppins';
+        }
+        .search-results-floating {
+            position: absolute; width: calc(100% - 30px); max-height: 300px;
+            background: #1e293b; border-radius: 15px; margin-top: 5px;
+            overflow-y: auto; display: none; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+        .search-item {
+            padding: 12px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; cursor: pointer; transition: 0.2s;
+        }
+        .search-item:hover { background: var(--primary); color: white; }
+
+        /* 🧩 WIDGETS */
+        .widget-grid {
+            flex: 1; display: grid; grid-template-columns: repeat(2, 1fr);
+            gap: 12px; padding: 15px; overflow-y: auto; padding-bottom: 150px;
         }
 
-        pre {
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.5;
-            color: #38bdf8; /* Soft blue for JSON keys */
+        .widget {
+            background: var(--glass); backdrop-filter: blur(25px);
+            border: 1px solid var(--border); border-radius: 20px;
+            padding: 15px; animation: rise 0.8s ease forwards;
+        }
+        .full { grid-column: span 2; }
+        .half { grid-column: span 1; }
+
+        /* 🏆 STUDENT LISTS */
+        .student-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px; border-bottom: 1px solid var(--border); font-size: 12px;
+            cursor: pointer; transition: 0.2s;
+        }
+        .student-row:hover { background: rgba(255,255,255,0.05); border-radius: 10px; }
+        .rank-badge { background: var(--gold); color: black; padding: 2px 8px; border-radius: 4px; font-weight: 800; font-size: 10px; }
+        .hidden-rows { display: none; }
+        .show-more-btn {
+            width: 100%; padding: 10px; background: none; border: none;
+            color: var(--primary); font-weight: 600; cursor: pointer; font-size: 12px;
         }
 
-        .btn-refresh {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
+        /* 🃏 OVERLAY CARD */
+        .overlay-card {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            display: none; justify-content: center; align-items: center; z-index: 4000;
+        }
+        .card-content {
+            background: #1e293b; width: 85%; max-width: 400px;
+            border-radius: 30px; padding: 25px; border: 1px solid var(--primary);
+            text-align: center; box-shadow: 0 0 30px rgba(14, 165, 233, 0.3);
+            animation: zoomIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .card-header { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 15px; }
+        .card-body { text-align: left; font-size: 13px; line-height: 2; color: #cbd5e1; }
+        .ok-btn {
+            margin-top: 25px; background: var(--primary); color: white;
+            width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: 800;
+            box-shadow: 0 5px 15px rgba(14, 165, 233, 0.4);
         }
 
-        .btn-refresh:active {
-            transform: scale(0.95);
+        /* 🏁 TICKER */
+        .ticker-wrap {
+            position: fixed; bottom: 0; left: 70px; right: 0;
+            background: #000; border-top: 1px solid var(--primary);
+            height: 35px; display: flex; align-items: center; z-index: 2000; overflow: hidden;
+        }
+        .ticker-label {
+            background: var(--primary); color: white; padding: 0 15px;
+            height: 100%; display: flex; align-items: center;
+            font-size: 10px; font-weight: 800; white-space: nowrap; z-index: 2;
+        }
+        .ticker-content {
+            display: inline-block; white-space: nowrap; padding-left: 100%;
+            animation: ticker 25s linear infinite; font-size: 12px; color: var(--primary);
         }
 
-        .no-data {
-            text-align: center;
-            padding: 50px;
-            color: #94a3b8;
+        /* 📱 BOTTOM NAV */
+        .bottom-nav {
+            position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 500px; background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(15px); height: 65px; border-radius: 20px;
+            display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; border: 1px solid var(--border);
         }
+        .nav-item { color: #64748b; text-decoration: none; text-align: center; font-size: 10px; }
+        .nav-item.active { color: var(--primary); }
+        .nav-item i { font-size: 22px; display: block; font-style: normal; margin-bottom: 2px; }
+
+        @keyframes ticker { 0% { transform: translate3d(0,0,0); } 100% { transform: translate3d(-100%,0,0); } }
+        @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes zoomIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div>
-        <h2 style="margin:0;">Intelligence Shard Explorer</h2>
-        <p style="margin:0; font-size: 12px; color: #94a3b8;">Reading from: intelligence/10th-A.json</p>
+<nav class="sidebar">
+    <a href="state.html" class="tab-link active">📈</a>
+    <a href="finance.html" class="tab-link">💰</a>
+    <a href="students_state.html" class="tab-link">👥</a>
+    <a href="personal_state.html" class="tab-link">🏫</a>
+</nav>
+
+<div class="main-wrapper">
+    <div class="search-container">
+        <div class="search-box">
+            <span>🔍</span>
+            <input type="text" id="globalSearch" placeholder="Search anything or try 'toppers', 'absentees'..." onkeyup="executeIntelligenceSearch()">
+        </div>
+        <div id="searchResults" class="search-results-floating"></div>
     </div>
-    <button class="btn-refresh" onclick="loadLocalData()">Refresh Shard</button>
+
+    <header style="padding: 10px 15px 5px;">
+        <h2 style="margin:0; font-size: 18px; font-weight: 800; color: var(--primary);">Intelligence State</h2>
+    </header>
+
+    <div class="widget-grid" id="mainGrid">
+        <div class="widget full">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight: 600; font-size: 13px;">Institutional Toppers</span>
+                <span class="rank-badge">LIVE</span>
+            </div>
+            <div id="topStudentsContainer" class="top-students-list">
+                <div style="padding:20px; text-align:center; color:#64748b;">Awaiting Data Shards...</div>
+            </div>
+            <button id="toggleBtn" class="show-more-btn" style="display:none;" onclick="toggleRows()">SHOW ALL ↓</button>
+        </div>
+
+        <div class="widget half">
+            <span style="font-size:10px; color:#94a3b8;">STRENGTH</span>
+            <b style="font-size:20px; display:block;" id="totalCount">0</b>
+        </div>
+
+        <div class="widget half">
+            <span style="font-size:10px; color:#94a3b8;">AVG MARKS</span>
+            <b style="font-size:20px; display:block; color:var(--success);" id="avgMarks">0%</b>
+        </div>
+
+        <div class="widget full">
+            <span style="font-weight: 600; font-size: 13px;">Admissions Lifecycle</span>
+            <div style="height:120px; margin-top:10px;"><canvas id="lifecycleChart"></canvas></div>
+        </div>
+    </div>
 </div>
 
-<div id="display-area" class="json-container">
-    <div class="no-data">Initializing Local Filesystem...</div>
+<div id="studentOverlay" class="overlay-card" onclick="if(event.target == this) closeCard()">
+    <div class="card-content">
+        <div class="card-header" id="cardName">Student Name</div>
+        <div class="card-body" id="cardDetails"></div>
+        <button class="ok-btn" onclick="closeCard()">OK / DISMISS</button>
+    </div>
 </div>
 
-<script src="../../js/storage.js"></script> <script>
-    // Use the word "institution" as per your custom instructions
-    async function loadLocalData() {
-        const display = document.getElementById('display-area');
+<div class="ticker-wrap">
+    <div class="ticker-label">INTELLIGENCE ALERT</div>
+    <div class="ticker-content" id="tickerText">Initializing Super Console... Synchronizing Neural Shards... Standby for live updates.</div>
+</div>
 
+<nav class="bottom-nav">
+    <a href="../dashboard/dashboard.html" class="nav-item"><i>🏠</i><span>Home</span></a>
+    <a href="../chat/chat.html" class="nav-item"><i>💬</i><span>Chat</span></a>
+    <a href="stats.html" class="nav-item active"><i>📈</i><span>Stats</span></a>
+    <a href="../profile/profile.html" class="nav-item"><i>👤</i><span>Profile</span></a>
+</nav>
+
+<script>
+    const { Filesystem } = Capacitor.Plugins;
+    let allStudents = []; // Master list for searching
+
+    async function loadIntelligence() {
         try {
-            // Accessing the Capacitor Filesystem Plugin
-            const { Filesystem } = Capacitor.Plugins;
-
-            // 1. Read the local shard directly (No Network Request!)
+            // In a real scenario, you'd iterate through registry.json to load all class shards
             const result = await Filesystem.readFile({
                 path: 'intelligence/10th-A.json',
                 directory: 'DATA',
                 encoding: 'utf8'
             });
 
-            const fullData = JSON.parse(result.data);
+            const data = JSON.parse(result.data);
+            allStudents = data.results || [];
 
-            // 2. Extract the Academic Results (Marksheets)
-            const marksheetData = fullData.results || [];
+            // Sort by marks for the topper list
+            const sorted = [...allStudents].sort((a, b) => b.obtained_marks - a.obtained_marks);
 
-            if (marksheetData.length === 0) {
-                display.innerHTML = `<div class="no-data">Shard found, but no results recorded for this institution yet.</div>`;
-                return;
-            }
+            renderToppers(sorted);
+            updateGlobalStats(allStudents);
+            updateTicker(sorted[0]);
 
-            // 3. Print the raw JSON in a beautiful form
-            display.innerHTML = `<pre>${JSON.stringify(marksheetData, null, 4)}</pre>`;
-
-            console.log("✅ Offline Data Loaded successfully.");
-
-        } catch (error) {
-            console.error("FS Read Error:", error);
-            display.innerHTML = `
-                    <div class="no-data" style="color: #ef4444;">
-                        <h3>❌ Shard Not Found</h3>
-                        <p>The file '10th-A.json' is not yet present on this device. <br>
-                        Please ensure the WebSocket sync has completed at least once.</p>
-                    </div>`;
+        } catch (e) {
+            console.error("Local shard not found.");
+            document.getElementById('topStudentsContainer').innerHTML = `<div style="color:var(--accent); font-size:11px;">Waiting for Sync...</div>`;
         }
     }
 
-    // Auto-load when the institution management page opens
-    document.addEventListener('DOMContentLoaded', loadLocalData);
-</script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Institutional Intelligence | Data Preview</title>
-    <style>
-        :root {
-            --primary: #0288d1;
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --accent: #10b981;
+    function renderToppers(list) {
+        const container = document.getElementById('topStudentsContainer');
+        container.innerHTML = "";
+
+        list.forEach((s, index) => {
+            const row = document.createElement('div');
+            row.className = `student-row ${index >= 4 ? 'hidden-rows' : ''}`;
+            row.onclick = () => showStudentCard(s);
+            row.innerHTML = `
+                <div>
+                    <b style="color:white">${s.student_name}</b><br>
+                    <small style="color:#64748b">${s.father_name} • ${s.section_name || '10th-A'}</small>
+                </div>
+                <div style="text-align:right">
+                    <b style="color:var(--gold)">${s.obtained_marks}</b><br>
+                    <small style="font-size:9px">Marks</small>
+                </div>
+            `;
+            container.appendChild(row);
+        });
+
+        document.getElementById('toggleBtn').style.display = list.length > 4 ? "block" : "none";
+    }
+
+    function toggleRows() {
+        const rows = document.querySelectorAll('.hidden-rows');
+        const btn = document.getElementById('toggleBtn');
+        const isCollapsed = btn.innerText.includes("SHOW ALL");
+
+        rows.forEach(r => r.style.display = isCollapsed ? 'flex' : 'none');
+        btn.innerText = isCollapsed ? "COLLAPSE ↑" : "SHOW ALL ↓";
+    }
+
+    // 🔍 EXTRAORDINARY SEARCH LOGIC
+    function executeIntelligenceSearch() {
+        const q = document.getElementById('globalSearch').value.toLowerCase();
+        const resultsBox = document.getElementById('searchResults');
+
+        if (q.length < 2) { resultsBox.style.display = 'none'; return; }
+
+        let matches = [];
+        if (q === "toppers") {
+            matches = allStudents.filter(s => (s.obtained_marks/1100)*100 > 80);
+        } else if (q === "failiurs") {
+            matches = allStudents.filter(s => (s.obtained_marks/1100)*100 < 33);
+        } else {
+            matches = allStudents.filter(s =>
+                s.student_name.toLowerCase().includes(q) ||
+                s.father_name.toLowerCase().includes(q) ||
+                (s.contact_number && s.contact_number.includes(q))
+            );
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-        }
+        renderSearchResults(matches);
+    }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--primary);
-            padding-bottom: 10px;
-        }
+    function renderSearchResults(results) {
+        const box = document.getElementById('searchResults');
+        box.innerHTML = "";
+        if (results.length === 0) { box.style.display = 'none'; return; }
 
-        .status-box {
-            padding: 8px 15px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: bold;
-        }
+        results.slice(0, 8).forEach(s => {
+            const div = document.createElement('div');
+            div.className = "search-item";
+            div.innerHTML = `<div><b>${s.student_name}</b><br><small>${s.father_name}</small></div>
+                             <div style="color:var(--primary)">${s.obtained_marks}</div>`;
+            div.onclick = () => showStudentCard(s);
+            box.appendChild(div);
+        });
+        box.style.display = 'block';
+    }
 
-        .json-container {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            overflow-x: auto;
-            border: 1px solid #334155;
-        }
+    // 🃏 OVERLAY CONTROLLER
+    function showStudentCard(s) {
+        document.getElementById('cardName').innerText = s.student_name;
+        document.getElementById('cardDetails').innerHTML = `
+            <p><b>Father Name:</b> ${s.father_name}</p>
+            <p><b>Institutional ID:</b> ${s.id}</p>
+            <p><b>Class Section:</b> ${s.section_name || '10th-A'}</p>
+            <p><b>Marks Obtained:</b> <span style="color:var(--gold)">${s.obtained_marks}</span> / 1100</p>
+            <p><b>Contact:</b> ${s.contact_number || 'N/A'}</p>
+            <p><b>Academic Status:</b> ${s.obtained_marks > 330 ? '<span style="color:var(--success)">PASS</span>' : '<span style="color:var(--accent)">FAIL</span>'}</p>
+        `;
+        document.getElementById('studentOverlay').style.display = 'flex';
+        document.getElementById('searchResults').style.display = 'none';
+    }
 
-        pre {
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.5;
-            color: #38bdf8; /* Soft blue for JSON keys */
-        }
+    function closeCard() { document.getElementById('studentOverlay').style.display = 'none'; }
 
-        .btn-refresh {
-            background: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-        }
+    function updateGlobalStats(list) {
+        document.getElementById('totalCount').innerText = list.length;
+        const avg = list.length ? (list.reduce((a,b) => a + b.obtained_marks, 0) / list.length / 11).toFixed(1) : 0;
+        document.getElementById('avgMarks').innerText = avg + "%";
+    }
 
-        .btn-refresh:active {
-            transform: scale(0.95);
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 50px;
-            color: #94a3b8;
-        }
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <div>
-        <h2 style="margin:0;">Intelligence Shard Explorer</h2>
-        <p style="margin:0; font-size: 12px; color: #94a3b8;">Reading from: intelligence/10th-A.json</p>
-    </div>
-    <button class="btn-refresh" onclick="loadLocalData()">Refresh Shard</button>
-</div>
-
-<div id="display-area" class="json-container">
-    <div class="no-data">Initializing Local Filesystem...</div>
-</div>
-<script src="../../capacitor.js"></script>
-<script src="../../js/storage.js"></script> <script>
-    // Use the word "institution" as per your custom instructions
-    async function loadLocalData() {
-        const display = document.getElementById('display-area');
-        const { Filesystem } = Capacitor.Plugins;
-
-        try {
-            // 1. Read the shard
-            const result = await Filesystem.readFile({
-                path: 'intelligence/10th-A.json',
-                directory: 'DATA',
-                encoding: 'utf8'
-            });
-
-            const fullData = JSON.parse(result.data);
-
-            // 2. Validate if the JSON is actually an empty object
-            if (!fullData || Object.keys(fullData).length === 0) {
-                display.innerHTML = `<div class="no-data" style="color:orange;">⚠️ File exists but is EMPTY. Check Backend extraction.</div>`;
-                return;
-            }
-
-            const marksheetData = fullData.results || [];
-
-            if (marksheetData.length === 0) {
-                display.innerHTML = `<div class="no-data">Shard found, but results array is empty.</div>`;
-                return;
-            }
-
-            // 3. Display Raw JSON
-            display.innerHTML = `<pre>${JSON.stringify(marksheetData, null, 4)}</pre>`;
-
-        } catch (error) {
-            console.error("Read Error:", error);
-            display.innerHTML = `
-            <div class="no-data" style="color: #ef4444;">
-                <h3>❌ File Not Found</h3>
-                <p>Path: DATA/intelligence/10th-A.json</p>
-                <p>Error: ${error.message}</p>
-            </div>`;
+    function updateTicker(top) {
+        if (top) {
+            document.getElementById('tickerText').innerText =
+                `🏆 TOP PERFORMER: ${top.student_name} leading with ${top.obtained_marks} Marks! | Neural Link: ACTIVE | Strength: ${allStudents.length} | Security: SYNCED`;
         }
     }
-    loadLocalData();
+
+    window.addEventListener('intelligence-updated', loadIntelligence);
+
+    window.onload = () => {
+        loadIntelligence();
+        // Admission Trend Sample
+        new Chart(document.getElementById('lifecycleChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May'],
+                datasets: [{ data: [30, 45, 35, 60, 55], borderColor: '#0ea5e9', tension: 0.4, fill: false, pointRadius: 0 }]
+            },
+            options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+        });
+    };
 </script>
 </body>
 </html>

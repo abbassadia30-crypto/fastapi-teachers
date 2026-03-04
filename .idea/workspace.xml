@@ -5,7 +5,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change afterPath="$PROJECT_DIR$/frontend/js/global-core.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/capacitor.build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/capacitor.settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/stats.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/analytics/stats.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/chat/chat.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/chat/chat.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/document/documents.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/document/documents.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/profile/profile.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/profile/profile.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/js/sync-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/sync-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/signup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/signup.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -16,9 +31,9 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Vue Composition API Component" />
-        <option value="JavaScript File" />
         <option value="HTML File" />
         <option value="Python Script" />
+        <option value="JavaScript File" />
       </list>
     </option>
   </component>
@@ -165,15 +180,7 @@
       <workItem from="1772559911292" duration="11000" />
       <workItem from="1772559946581" duration="5092000" />
       <workItem from="1772587507228" duration="18000" />
-      <workItem from="1772587559384" duration="4259000" />
-    </task>
-    <task id="LOCAL-00069" summary="now">
-      <option name="closed" value="true" />
-      <created>1772374758030</created>
-      <option name="number" value="00069" />
-      <option name="presentableId" value="LOCAL-00069" />
-      <option name="project" value="LOCAL" />
-      <updated>1772374758030</updated>
+      <workItem from="1772587559384" duration="11214000" />
     </task>
     <task id="LOCAL-00070" summary="now">
       <option name="closed" value="true" />
@@ -559,7 +566,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772591399093</updated>
     </task>
-    <option name="localTasksCounter" value="118" />
+    <task id="LOCAL-00118" summary="now">
+      <option name="closed" value="true" />
+      <created>1772592049858</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1772592049858</updated>
+    </task>
+    <option name="localTasksCounter" value="119" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
