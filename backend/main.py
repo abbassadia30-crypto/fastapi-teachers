@@ -18,7 +18,7 @@ from firebase_admin import auth, credentials
 import json
 from backend.routers import auth, institution, profile # Your actual router paths
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from backend.router.auth import get_current_user
+from backend.routers.auth import get_current_user
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
