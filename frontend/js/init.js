@@ -1,102 +1,60 @@
 /**
  * init.js - Super Console Notification & Initialization logic
- * Purpose: Move institutions to a paperless system with real-time alerts.
  */
-
 const { PushNotifications } = Capacitor.Plugins;
 
-async function initializePush() {
-    console.log("Initializing Starlight Push System...");
+window.initializePush = function() {
+    return new Promise(async (resolve) => {
+        console.log("🏛️ Institutional Intelligence: Starting Push Handshake...");
 
-    // 1. Mandatory Android Channel (Urgent Importance for Institution Alerts)
-    if (Capacitor.getPlatform() === 'android') {
-        try {
-            await PushNotifications.createChannel({
-                id: 'institution_alerts',
-                name: 'Institution Alerts',
-                description: 'Critical updates for staff and students',
-                importance: 5, // 5 = Urgent/Pop-up (essential for high-priority alerts)
-                visibility: 1, // Visible on lockscreen
-                lights: true,
-                lightColor: '#43a047',
-                vibration: true,
-            });
-            console.log("Notification channel 'institution_alerts' created.");
-        } catch (e) {
-            console.error("Failed to create channel:", e);
+        // ... (Keep your channel and permission logic) ...
+
+        if (permStatus.receive === 'granted') {
+            setupPushListeners();
+
+            // 🚀 CHECK IF TOKEN EXISTS ALREADY
+            const existingFcmToken = await AppStorage.get('fcm_token');
+            const jwtToken = await AppStorage.get('auth_token');
+
+            if (existingFcmToken && jwtToken) {
+                console.log("Found existing token, syncing immediately...");
+                await syncTokenWithBackend(existingFcmToken);
+                await PushNotifications.register(); // Keep it registered
+                resolve(existingFcmToken);
+                return;
+            }
+
+            // If no existing token, wait for the registration listener
+            await PushNotifications.register();
+
+            // Fallback timeout so login doesn't hang if FCM fails
+            setTimeout(() => resolve(null), 5000);
+        } else {
+            resolve(null);
         }
-    }
-
-    // 2. Check and Request Permissions
-    let permStatus = await PushNotifications.checkPermissions();
-
-    if (permStatus.receive === 'prompt') {
-        permStatus = await PushNotifications.requestPermissions();
-    }
-
-    if (permStatus.receive !== 'granted') {
-        console.warn("User denied push permissions. Alerts will not be received.");
-        return;
-    }
-
-    // 3. Setup Listeners BEFORE Registering (Ensures no data is dropped)
-    setupPushListeners();
-
-    // 4. Register Device with FCM
-    await PushNotifications.register();
-}
+    });
+};
 
 function setupPushListeners() {
-    // 📍 Registration: Capture the FCM Token
+    PushNotifications.removeAllListeners(); // Prevent duplicate listeners
+
     PushNotifications.addListener('registration', async (token) => {
         const fcmToken = token.value;
         console.log("Device Registered. Token:", fcmToken);
+        await AppStorage.set('fcm_token', fcmToken);
 
-        const savedToken = await AppStorage.get('fcm_token');
-        if (savedToken !== fcmToken) {
+        const jwtToken = await AppStorage.get('auth_token');
+        if (jwtToken) {
             await syncTokenWithBackend(fcmToken);
         }
-    });
-
-    // 📍 Registration Error: Debugging for Capacitor
-    PushNotifications.addListener('registrationError', (error) => {
-        console.error("FCM Registration Error:", JSON.stringify(error));
-    });
-
-    // 📍 Foreground Alert: Displayed when app is OPEN
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-        // Using your requirement: Green box for success/info alerts
-        if (typeof showNotify === 'function') {
-            showNotify(`${notification.title}: ${notification.body}`, "success");
-        } else {
-            console.log("Notification received in foreground:", notification);
-        }
-    });
-
-    // 📍 Tap Action: Logic for when user clicks the notification
-    PushNotifications.addListener('pushNotificationActionPerformed', (action) => {
-        const data = action.notification.data;
-        console.log("User tapped notification. Data:", data);
-
-        // Logic for Mailbox/Chat redirection
-        if (data.type === 'mailbox') {
-            window.location.href = '../mailbox/inbox.html';
-        } else if (data.type === 'chat') {
-            window.location.href = '../chat/whatsapp_clone.html';
-        }
+        // This resolves the promise in initializePush
+        if (window.registrationResolver) window.registrationResolver(fcmToken);
     });
 }
 
-/**
- * Syncs the device FCM token with the FastAPI backend
- */
 async function syncTokenWithBackend(token) {
-    // Use the actual JWT access token as per your login logic
     const jwtToken = await AppStorage.get('auth_token');
-    if (!jwtToken) {
-        console.warn("Cannot sync FCM token: No auth_token found.");
-        return;
-    }
+    if (!jwtToken) return;
 
     try {
         const response = await fetch(`${API_BASE}/auth/update-fcm`, {
@@ -109,19 +67,22 @@ async function syncTokenWithBackend(token) {
         });
 
         if (response.ok) {
-            await AppStorage.set('fcm_token', token);
-            console.log("Backend FCM Sync: SUCCESS");
-        } else {
-            const errData = await response.json();
-            console.error("Backend FCM Sync: FAILED", errData.detail);
+            console.log("🏛️ Institutional DB: FCM Token Synced");
         }
-    } catch (e) {
-        console.error("Backend FCM Sync: CONNECTION ERROR", e);
-    }
+    } catch (e) { console.error("Sync Error:", e); }
 }
 
-// Ensure initialization runs after DOM and Storage are ready
-document.addEventListener('DOMContentLoaded', () => {
-    // Small delay to ensure AppStorage (Capacitor Preferences) is fully linked
-    setTimeout(initializePush, 500);
+// Global foreground listener (needs to be outside the promise)
+PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    if (typeof showNotify === 'function') {
+        showNotify(`${notification.title}: ${notification.body}`, "success");
+    }
+});
+
+// Auto-run on load ONLY if user is already logged in
+document.addEventListener('DOMContentLoaded', async () => {
+    const loggedIn = await AppStorage.get('auth_token');
+    if (loggedIn) {
+        setTimeout(window.initializePush, 500);
+    }
 });

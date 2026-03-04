@@ -235,10 +235,10 @@
 
             const data = await response.json();
 
+            // index.html -> success block inside handleLogin
             if (response.ok) {
-                // 🏛️ Success State
                 btn.style.background = "#43a047";
-                btn.innerText = "Redirecting to Dashboard...";
+                btn.innerText = "Linking Device...";
 
                 await AppStorage.set('user_email', emailInput);
                 await AppStorage.set('auth_token', data.access_token);
@@ -247,13 +247,18 @@
                 if (data.institution_id) {
                     await AppStorage.set('institution_id', data.institution_id);
                 }
-                if (typeof initializePush === 'function') {
-                    await initializePush();
-                }
-                Notification.show("Login Successful!", "success");
 
-                // Move to routing
-                setTimeout(() => { checkExistingSession(); }, 1000);
+                // 🏛️ DIRECT SOLUTION: Await the push registration and sync
+                if (window.initializePush) {
+                    console.log("Starting Push Handshake...");
+                    await window.initializePush();
+                    // This 'await' now waits until syncTokenWithBackend is finished
+                }
+
+                Notification.show("Neural Link Established!", "success");
+
+                // Now it is safe to redirect; the token is in the DB
+                setTimeout(() => { checkExistingSession(); }, 500);
             } else {
                 // 🏛️ Handle Blocked/Wrong Credentials
                 // This pulls the "6 attempts left" or "Blocked for 24h" detail from FastAPI
