@@ -6,8 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/sync-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/analytics/sync-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/stats.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/analytics/stats.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/analytics/sync-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/sync-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/dashboard/dashboard.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -89,6 +91,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Development\app\frontend\js" />
       <recent name="C:\Development\app\frontend\admin\analytics" />
       <recent name="C:\Development\app\frontend\admin" />
     </key>
@@ -164,23 +167,9 @@
       <workItem from="1772541135508" duration="139000" />
       <workItem from="1772541299972" duration="10006000" />
       <workItem from="1772559911292" duration="11000" />
-      <workItem from="1772559946581" duration="3390000" />
-    </task>
-    <task id="LOCAL-00065" summary="now">
-      <option name="closed" value="true" />
-      <created>1772369798984</created>
-      <option name="number" value="00065" />
-      <option name="presentableId" value="LOCAL-00065" />
-      <option name="project" value="LOCAL" />
-      <updated>1772369798985</updated>
-    </task>
-    <task id="LOCAL-00066" summary="now">
-      <option name="closed" value="true" />
-      <created>1772372734436</created>
-      <option name="number" value="00066" />
-      <option name="presentableId" value="LOCAL-00066" />
-      <option name="project" value="LOCAL" />
-      <updated>1772372734436</updated>
+      <workItem from="1772559946581" duration="5092000" />
+      <workItem from="1772587507228" duration="18000" />
+      <workItem from="1772587559384" duration="3428000" />
     </task>
     <task id="LOCAL-00067" summary="now">
       <option name="closed" value="true" />
@@ -558,7 +547,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772562230159</updated>
     </task>
-    <option name="localTasksCounter" value="114" />
+    <task id="LOCAL-00114" summary="now">
+      <option name="closed" value="true" />
+      <created>1772563622783</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1772563622783</updated>
+    </task>
+    <task id="LOCAL-00115" summary="now">
+      <option name="closed" value="true" />
+      <created>1772563812423</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1772563812423</updated>
+    </task>
+    <option name="localTasksCounter" value="116" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

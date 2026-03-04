@@ -118,9 +118,14 @@ for model in observed_models:
 active_connections = {}
 
 @router.websocket("/ws/institution-sync/{inst_id}")
-async def sync_neural_state(websocket: WebSocket, inst_id: int):
+async def sync_neural_state(websocket: WebSocket, inst_id: int, db: Session = Depends(get_db)):
     await websocket.accept()
-    # Add this connection to our broadcaster
+
+    # 🔥 1. IMMEDIATE PUSH: Send current state as soon as they connect
+    # This covers everything that happened while they were offline
+    current_registry = perform_targeted_extraction(db, inst_id)
+    await websocket.send_text(json.dumps(current_registry))
+
     if inst_id not in active_connections:
         active_connections[inst_id] = []
     active_connections[inst_id].append(websocket)
@@ -130,21 +135,6 @@ async def sync_neural_state(websocket: WebSocket, inst_id: int):
             await websocket.receive_text() # Keep-alive
     except WebSocketDisconnect:
         active_connections[inst_id].remove(websocket)
-
-# Update your Extraction Task to PUSH directly
-def run_extraction_task(inst_id, affected_section):
-    db = SessionLocal()
-    try:
-        new_registry = perform_targeted_extraction(db, inst_id, affected_section)
-        # 🔥 INSTANT PUSH: Tell all connected devices for this institution
-        if inst_id in active_connections:
-            for ws in active_connections[inst_id]:
-                asyncio.run_coroutine_threadsafe(
-                    ws.send_text(json.dumps(new_registry)),
-                    asyncio.get_event_loop()
-                )
-    finally:
-        db.close()
 
 @router.get("/shard/{inst_id}/{section_name}")
 async def get_raw_shard(inst_id: int, section_name: str, key: str, db: Session = Depends(get_db)):
