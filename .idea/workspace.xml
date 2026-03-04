@@ -5,7 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change beforePath="$PROJECT_DIR$/backend/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/auth.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -165,15 +165,7 @@
       <workItem from="1772559911292" duration="11000" />
       <workItem from="1772559946581" duration="5092000" />
       <workItem from="1772587507228" duration="18000" />
-      <workItem from="1772587559384" duration="23088000" />
-    </task>
-    <task id="LOCAL-00078" summary="now">
-      <option name="closed" value="true" />
-      <created>1772390566623</created>
-      <option name="number" value="00078" />
-      <option name="presentableId" value="LOCAL-00078" />
-      <option name="project" value="LOCAL" />
-      <updated>1772390566623</updated>
+      <workItem from="1772587559384" duration="23509000" />
     </task>
     <task id="LOCAL-00079" summary="now">
       <option name="closed" value="true" />
@@ -559,7 +551,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772610791880</updated>
     </task>
-    <option name="localTasksCounter" value="127" />
+    <task id="LOCAL-00127" summary="now">
+      <option name="closed" value="true" />
+      <created>1772610971382</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1772610971382</updated>
+    </task>
+    <option name="localTasksCounter" value="128" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
