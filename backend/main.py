@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI
+from fastapi import FastAPI , Depends
 from fastapi.middleware.cors import CORSMiddleware
 from backend.database import engine
 from backend.models import Base # This triggers __init__.py which loads all models
@@ -18,6 +18,7 @@ from firebase_admin import auth, credentials
 import json
 from backend.routers import auth, institution, profile # Your actual router paths
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from backend.router.auth import get_current_user
 
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
