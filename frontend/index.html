@@ -247,6 +247,9 @@
                 if (data.institution_id) {
                     await AppStorage.set('institution_id', data.institution_id);
                 }
+                if (typeof initializePush === 'function') {
+                    await initializePush();
+                }
                 Notification.show("Login Successful!", "success");
 
                 // Move to routing
