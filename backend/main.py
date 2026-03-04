@@ -18,7 +18,7 @@ from firebase_admin import auth, credentials
 import json
 from backend.routers import auth, institution, profile # Your actual router paths
 
-
+Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
 logging.getLogger("passlib").setLevel(logging.ERROR)
 os.environ["PASSLIB_BUILTIN_BCRYPT"] = "enabled"
