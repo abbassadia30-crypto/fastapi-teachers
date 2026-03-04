@@ -78,6 +78,7 @@ function setupPushListeners(resolve) {
 async function syncTokenWithBackend(token) {
     const jwtToken = await AppStorage.get('auth_token');
     if (!jwtToken) return;
+    API_BASE = "https://fastapi-teachers.onrender.com";
 
     try {
         const response = await fetch(`${API_BASE}/auth/update-fcm`, {

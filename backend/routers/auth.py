@@ -174,44 +174,69 @@ async def get_me(current_user: User = Depends(get_current_user)):
 
 
 @router.post("/signup")
-async def signup(user: UserCreate, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    # 1. Base query
-    existing_user = db.query(User).filter(User.user_email == str(user.email)).first()
+async def signup(
+        user: UserCreate,
+        background_tasks: BackgroundTasks,
+        db: Session = Depends(get_db)
+):
+    # 1. Standardize input
+    email_str = str(user.email).lower().strip()
     otp = "".join([str(random.randint(0, 9)) for _ in range(6)])
-    hashed_pwd = hash_password(user.password)
+    hashed_pwd = pwd_context.hash(user.password) # Using your pwd_context from security
 
+    # 2. Check both tables (User is permanent, Verification is temporary/pending)
+    existing_user = db.query(User).filter(User.user_email == email_str).first()
+    pending_v = db.query(Verification).filter(Verification.user_email == email_str).first()
+
+    # 🏛️ CASE A: User is already fully registered in the main User table
     if existing_user:
-        # --- ALL THIS MUST BE INSIDE THE 'IF' ---
-        v_user = db.query(Verification).filter(Verification.id == existing_user.id).first()
+        raise HTTPException(
+            status_code=400,
+            detail="This institution email is already registered. Please login."
+        )
 
-        if v_user and v_user.is_verified:
-            raise HTTPException(status_code=400, detail="Email already registered and verified.")
+    # 🏛️ CASE B: User is in the Verification table (Restarting or Retrying)
+    if pending_v:
+        if pending_v.is_verified:
+            # This shouldn't happen if Case A is handled, but good for "Double Perfection"
+            raise HTTPException(status_code=400, detail="Email verified. Please login.")
 
-        if v_user:
-            v_user.otp_code = otp
-            v_user.user_password = hashed_pwd
-            v_user.verified_at = None
+        # Update existing verification record with new OTP and password
+        pending_v.otp_code = otp
+        pending_v.user_password = hashed_pwd
+        pending_v.user_name = user.name
+        pending_v.created_at = datetime.utcnow() # Reset expiry timer
 
-        target_name = existing_user.user_name
+        target_name = user.name
+        db.add(pending_v)
 
+    # 🏛️ CASE C: Brand New Signup
     else:
-        # --- ALL THIS MUST BE INSIDE THE 'ELSE' ---
         new_v_user = Verification(
             user_name=user.name,
-            user_email=str(user.email),
+            user_email=email_str,
             user_password=hashed_pwd,
-            phone=None,
             otp_code=otp,
             is_verified=False,
-            type="verified_user"
+            # Ensure your model has these fields or adjust to match your Verification schema
+            type="teacher" # Or user.type if provided
         )
         db.add(new_v_user)
         target_name = user.name
 
-        # --- THIS RUNS AFTER EITHER IF OR ELSE IS FINISHED ---
-    db.commit()
-    background_tasks.add_task(send_email_task, str(user.email), target_name, otp)
-    return {"status": "success", "message": "Verification code sent to email."}
+    try:
+        db.commit()
+        # 🏛️ Send the formal verification email as a background task
+        background_tasks.add_task(send_email_task, email_str, target_name, otp)
+
+        return {
+            "status": "success",
+            "message": "Institutional verification code sent to email."
+        }
+    except Exception as e:
+        db.rollback()
+        print(f"❌ Signup Database Error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to initialize verification.")
 
 @router.post("/login", response_model=Token)
 async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
