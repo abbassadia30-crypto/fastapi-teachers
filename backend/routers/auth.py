@@ -411,44 +411,37 @@ async def sync_user_state(
         "has_identity": has_profile
     }
 
-
 @router.get("/manual-push/{email}")
 async def manual_push(email: str, db: Session = Depends(get_db)):
-    # 1. Find the user and their token
+    # 🏛️ Shift query from Institution to User model
     user = db.query(User).filter(User.user_email == email).first()
 
     if not user:
-        return {"status": "error", "message": "User not found"}
+        return {"status": "error", "message": "User not found in User Table"}
+
     if not user.fcm_token:
         return {"status": "error", "message": "This user has no FCM token in DB"}
 
-    # 2. Construct the message
-    message = messaging.Message(
-        notification=messaging.Notification(
-            title="Institution Alert",
-            body="This alert works even if the app is closed!"
-        ),
-        android=messaging.AndroidConfig(
-            priority='high', # 🏛️ Forces the phone to show the notification
-            notification=messaging.AndroidNotification(
-                channel_id='institution_alerts', # Matches your init.js channel
-                priority='high',
-                default_sound=True
-            ),
-        ),
-        token=user.fcm_token,
-    )
-
-    # 3. Send and return response
     try:
-        response = messaging.send(message)
-        return {
-            "status": "success",
-            "message_id": response,
-            "target_token": user.fcm_token[:15] + "..." # Security check
-        }
+        # Use the High Priority config to wake up the killed app
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title="Super Console Alert",
+                body="Formal letter received in your mailbox."
+            ),
+            android=messaging.AndroidConfig(
+                priority='high', # 🏛️ Wakes up the killed app
+                notification=messaging.AndroidNotification(
+                    channel_id='institution_alerts', # Matches init.js
+                    priority='high'
+                ),
+            ),
+            token=user.fcm_token
+        )
+        messaging.send(message)
+        return {"status": "success", "message": f"Push sent to {email}"}
     except Exception as e:
-        return {"status": "failed", "error": str(e)}
+        return {"status": "error", "message": str(e)}
 
 @router.get("/check-existence")
 async def check_existence(email: str, db: Session = Depends(get_db)):
