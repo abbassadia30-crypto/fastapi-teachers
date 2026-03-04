@@ -130,6 +130,7 @@ async def update_token(data: dict, db: Session = Depends(get_db)):
 ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
 ONESIGNAL_REST_KEY = os.getenv("ONESIGNAL_REST_KEY")
 
+# auth.py
 async def notify_user(user_id: int, message: str, db: Session):
     headers = {
         "Authorization": f"Basic {ONESIGNAL_REST_KEY}",
@@ -137,13 +138,17 @@ async def notify_user(user_id: int, message: str, db: Session):
     }
     payload = {
         "app_id": ONESIGNAL_APP_ID,
-        # ✅ This is the best way: target by your Database ID
+        # 🏛️ Use 'include_external_user_ids' to target your DB ID
         "include_external_user_ids": [str(user_id)],
         "contents": {"en": message},
-        "headings": {"en": "Institutional Alert"}
+        "headings": {"en": "Institutional Alert"},
+        # 🏛️ Crucial for Android: Target the channel you created in init.js
+        "android_channel_id": "institution_alerts"
     }
     async with httpx.AsyncClient() as client:
-        await client.post("https://onesignal.com/api/v1/notifications", headers=headers, json=payload)
+        response = await client.post("https://onesignal.com/api/v1/notifications", headers=headers, json=payload)
+        # 🏛️ Add logging here to see what OneSignal actually says
+        print(f"OneSignal Response: {response.json()}")
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):

@@ -8,5 +8,10 @@
     "allowNavigation": [
       "https://fastapi-teachers.onrender.com"
     ]
+  },
+  "plugins": {
+    "OneSignal": {
+      "appId": "94695d55-27d6-4fb4-bb47-e98e167728cb"
+    }
   }
 }
