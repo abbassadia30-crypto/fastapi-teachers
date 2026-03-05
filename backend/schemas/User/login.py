@@ -56,3 +56,6 @@ class AuthIdResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+class FcmToken(BaseModel):
+    token : str

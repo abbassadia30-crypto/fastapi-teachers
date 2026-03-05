@@ -1,47 +1,55 @@
-/**
- * init.js - Super Console Notification Logic
- * Purpose: Ensure real-time alerts for the paperless institution.
- */
+// js/init.js
+const { PushNotifications } = Capacitor.Plugins;
 
-const setupNotifications = async (myInternalUserId) => {
-    return new Promise((resolve) => {
-        // Check if OneSignal is available (Capacitor Environment)
-        if (typeof window.plugins === 'undefined' || !window.plugins.OneSignal) {
-            console.warn("OneSignal plugin not found. Skipping sync.");
-            return resolve(false);
-        }
+const autoInitializePush = async () => {
+    // 🏛️ Logic: Use the correct spelling 'AppStorage'
+    const userEmail = await AppStorage.get('user_email');
 
-        const OneSignal = window.plugins.OneSignal;
+    if (!userEmail) {
+        console.log("No user session found. Skipping push registration.");
+        return;
+    }
 
-        // 1. Initialize with your App ID
-        OneSignal.setAppId("94695d55-27d6-4fb4-bb47-e98e167728cb");
+    let permStatus = await PushNotifications.checkPermissions();
+    if (permStatus.receive !== 'granted') {
+        permStatus = await PushNotifications.requestPermissions();
+    }
 
-        // 2. Link External ID for targeted mailbox/chat alerts [cite: 2026-02-19]
-        OneSignal.setExternalUserId(myInternalUserId.toString());
-
-        // 3. Get Device State & Sync to FastAPI
-        OneSignal.getDeviceState(async (state) => {
-            const onesignalId = state.userId;
-            if (onesignalId) {
-                const success = await saveTokenToBackend(myInternalUserId, onesignalId);
-                resolve(success);
-            } else {
-                resolve(false);
-            }
-        });
-    });
+    if (permStatus.receive === 'granted') {
+        await PushNotifications.register();
+    }
 };
 
-async function saveTokenToBackend(userId, token) {
-    try {
-        const response = await fetch('https://fastapi-teachers.onrender.com/auth/users/update-push-token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ user_id: userId, push_token: token })
-        });
-        return response.ok;
-    } catch (e) {
-        console.error("FCM Sync Error:", e);
-        return false;
+// THE LISTENER
+PushNotifications.addListener('registration', async (token) => {
+    // 🏛️ CRITICAL: We must fetch all 3 pieces of data from the 'Pocket'
+    const userEmail = await AppStorage.get('user_email');
+    const savedToken = await AppStorage.get('fcm_token');
+    const authToken = await AppStorage.get('auth_token'); // Don't forget this!
+
+    if (token.value !== savedToken) {
+        console.log("New Token detected! Syncing with FastAPI...");
+
+        await AppStorage.set('fcm_token', token.value);
+
+        if (userEmail && authToken) {
+            try {
+                await fetch('https://fastapi-teachers.onrender.com/auth/users/update-push-token', {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${authToken}` // Now it's defined!
+                    },
+                    body: JSON.stringify({
+                        token: token.value
+                    })
+                });
+                console.log("✅ FastAPI Address Book Updated.");
+            } catch (err) {
+                console.error("❌ Sync failed:", err);
+            }
+        }
     }
-}
+});
+
+autoInitializePush();

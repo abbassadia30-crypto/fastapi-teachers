@@ -11,11 +11,11 @@ from dotenv import load_dotenv
 from backend.scuirity import pwd_context, SECRET_KEY, ALGORITHM, oauth2_scheme
 from .. import database
 from backend.database import get_db
-from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncStateResponse
+from backend.schemas.User.login import UserCreate , LoginSchema , Token , SyncStateResponse , FcmToken
 from backend.models.admin.institution import Institution
 from backend.models.User import User , UserBan , Verification , Auth_id  , SecurityLog
 import firebase_admin
-from firebase_admin import auth, credentials
+from firebase_admin import auth, credentials , messaging
 import json
 
 load_dotenv()
@@ -119,36 +119,49 @@ def get_verified_inst(current_user: User = Depends(get_current_user), db: Sessio
 # --- Routes ---
 # backend/routers/users.py
 
-@router.post("/users/update-push-token")
-async def update_token(data: dict, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.id == data['user_id']).first()
-    if user:
-        user.push_token = data['push_token'] # Save the OneSignal ID
-        db.commit()
-    return {"status": "success"}
-
-ONESIGNAL_APP_ID = os.getenv("ONESIGNAL_APP_ID")
-ONESIGNAL_REST_KEY = os.getenv("ONESIGNAL_REST_KEY")
-
 # auth.py
-async def notify_user(user_id: int, message: str, db: Session):
-    headers = {
-        "Authorization": f"Basic {ONESIGNAL_REST_KEY}",
-        "Content-Type": "application/json; charset=utf-8"
-    }
-    payload = {
-        "app_id": ONESIGNAL_APP_ID,
-        # 🏛️ Use 'include_external_user_ids' to target your DB ID
-        "include_external_user_ids": [str(user_id)],
-        "contents": {"en": message},
-        "headings": {"en": "Institutional Alert"},
-        # 🏛️ Crucial for Android: Target the channel you created in init.js
-        "android_channel_id": "institution_alerts"
-    }
-    async with httpx.AsyncClient() as client:
-        response = await client.post("https://onesignal.com/api/v1/notifications", headers=headers, json=payload)
-        # 🏛️ Add logging here to see what OneSignal actually says
-        print(f"OneSignal Response: {response.json()}")
+@router.patch("/users/update-push-token") # Use PATCH to match your JS
+async def update_token(
+        data: FcmToken, # Uses your schema
+        current_user: User = Depends(get_current_user),
+        db: Session = Depends(get_db)
+):
+    # current_user is already fetched by the Depends(get_current_user) logic
+    if current_user:
+        current_user.fcm_token = data.token
+        db.commit()
+        return {"status": "success", "message": "Neural Link Updated"}
+
+    raise HTTPException(status_code=404, detail="User not found")
+
+firebase_key = os.getenv("FIREBASE_JSON")
+
+async def notify_user(fcm_token: str, title: str, body: str):
+    """
+    The 'Delivery Truck': Takes a token and tells Firebase to push it.
+    """
+    if not fcm_token:
+        print("⚠️ Skip: No token found for this user.")
+        return False
+
+    try:
+        # 1. Create the Message Envelope
+        message = messaging.Message(
+            notification=messaging.Notification(
+                title=title,
+                body=body,
+            ),
+            token=fcm_token, # This is the address from YOUR database
+        )
+
+        # 2. Send to Firebase Cloud
+        response = messaging.send(message)
+        print(f"✅ Successfully sent message: {response}")
+        return True
+
+    except Exception as e:
+        print(f"❌ Firebase Delivery Error: {e}")
+        return False
 
 @router.get("/me")
 async def get_me(current_user: User = Depends(get_current_user)):
@@ -281,7 +294,8 @@ async def login(credentials: LoginSchema, db: Session = Depends(get_db)):
         "user": user.user_name,
         "institution_id": user.last_active_institution_id,
         "identity": has_identity ,
-        "user_id" : user.id
+        "user_id" : user.id ,
+        "FcmToken" : user.fcm_token
     }
 
 # 🏛️ VERIFY LOGIC (10 Attempts Limit)
@@ -390,15 +404,28 @@ async def sync_user_state(
         "has_identity": has_profile
     }
 
-@router.get("/manual-push/{email}")
-async def manual_push(email: str, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.user_email == email).first()
-    if not user:
-        return {"status": "error", "message": "User not found"}
+@router.get("/send-notification/{user_email}")
+async def manual_push(user_email: str, db: Session = Depends(get_db)):
+    # 1. Search DB by email
+    user = db.query(User).filter(User.user_email == user_email).first()
 
-    # Trigger the notification using the function above
-    await notify_user(user.id, "Test Notification: Core Systems Online.", db)
-    return {"status": "success", "message": f"Push sent to {email}"}
+    if not user:
+        return {"status": "error", "message": "User not found in our filing cabinet."}
+
+    if not user.fcm_token:
+        return {"status": "error", "message": "User has no device registered."}
+
+    # 2. Trigger the notification
+    success = await notify_user(
+        user.fcm_token,
+        "Core Systems Online",
+        f"Hello {user.user_email}, system check complete."
+    )
+
+    if success:
+        return {"status": "success", "message": f"Push delivered to {user_email}"}
+    else:
+        return {"status": "error", "message": "Firebase rejected the delivery."}
 
 @router.get("/check-existence")
 async def check_existence(email: str, db: Session = Depends(get_db)):

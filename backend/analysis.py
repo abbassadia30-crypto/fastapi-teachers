@@ -1,125 +1,77 @@
-import pandas as pd
-import numpy as np
+import json
 
-import pandas as pd
-import re
+def extract_student_directory(db_json):
+    sections = db_json.get("sections", {})
+    directory = []
 
-def numeric_converter(raw_data_list):
-    # 1. Load the list into a DataFrame
-    df = pd.DataFrame(raw_data_list)
+    for section_name, content in sections.items():
+        # content contains 'students', 'results', 'attendance'
+        for s in content.get("students", []):
+            directory.append({
+                "n": s.get("name"),
+                "fn": s.get("father_name"),
+                "c": s.get("extra_fields", {}).get("Phone", "N/A"),
+                "s": section_name # Taking section name from the key
+            })
+    return directory
 
-    for col in df.columns:
-        # We only process columns that are currently strings (objects)
-        if df[col].dtype == 'object':
-            
-            # STEP A: Deep Clean strings (Remove +, -, spaces)
-            # We do this to the whole column at once
-            clean_col = df[col].astype(str).str.replace(r'[\+\-\s]', '', regex=True)
+def get_global_counts(db_json):
+    sections_data = db_json.get("sections", {})
+    total_sections = len(sections_data.keys())
+    total_students = 0
+    for section in sections_data.values():
+        total_students += len(section.get("students", []))
 
-            # STEP B: Pakistani Phone Logic (The 'Extraordinary' Part) [cite: 2026-02-19]
-            # Convert 92... or 0092... to 0...
-            clean_col = clean_col.str.replace(r'^92', '0', regex=True)
-            clean_col = clean_col.str.replace(r'^0092', '0', regex=True)
-            
-            # If 10 digits (like 340...), add the missing 0
-            mask = (clean_col.str.len() == 10) & (clean_col.str.startswith('3'))
-            clean_col.loc[mask] = '0' + clean_col.loc[mask]
-
-            # STEP C: Universal Numeric Check
-            # Check if the column is actually numeric after cleaning
-            is_numeric = clean_col.str.isnumeric()
-
-            if is_numeric.any():
-                # If it's a phone number (11 digits), we keep it as a STRING to preserve the '0'
-                # If it's a mark (like 88), we convert to INT for math
-                
-                # Logic: If max length is 11, it's likely a phone; keep leading zero
-                if clean_col.str.len().max() == 11:
-                     df[col] = clean_col # Keeps the '0'
-                else:
-                     df[col] = pd.to_numeric(clean_col, errors='coerce').fillna(0).astype(int)
-
-    return df.to_dict('records')
-
-def perform_universal_math(data_list, col_a, col_b=None):
-    """
-    One function for all: Sum, Sub, Mean, Std, etc.
-    Works on the 'traveling' JSON shards.
-    """
-    df = pd.DataFrame(data_list)
-
-    # Ensure columns exist and are numeric [cite: 2026-02-15]
-    if col_a not in df.columns:
-        return {"error": f"Column {col_a} missing"}
-
-    # Basic Statistics on primary column [cite: 2026-02-19]
-    results = {
-        "mean": float(np.mean(df[col_a])),
-        "std_dev": float(np.std(df[col_a])),
-        "sum": float(np.sum(df[col_a])),
-        "count": int(len(df))
-    }
-
-    # Comparative Math (if a second column is provided) [cite: 2026-02-15]
-    if col_b and col_b in df.columns:
-        results.update({
-            "addition": (df[col_a] + df[col_b]).tolist(),
-            "subtraction": (df[col_a] - df[col_b]).tolist(),
-            "multiplication": (df[col_a] * df[col_b]).tolist(),
-            # Prevent division by zero [cite: 2026-02-15]
-            "division": (df[col_a] / df[col_b].replace(0, np.nan)).fillna(0).tolist()
-        })
-
-    return results
-
-def prepare_graph_data(data_list, group_col, value_col, agg_type="mean"):
-    """
-    Groups two quantities (e.g., Marks by Year) for offline graphing.
-    """
-    df = pd.DataFrame(data_list)
-
-    if group_col not in df.columns or value_col not in df.columns:
-        return {}
-
-    # Grouping Logic [cite: 2026-02-19]
-    if agg_type == "mean":
-        grouped = df.groupby(group_col)[value_col].mean()
-    elif agg_type == "sum":
-        grouped = df.groupby(group_col)[value_col].sum()
-    else:
-        grouped = df.groupby(group_col)[value_col].count()
-
-    # Format for JS Charts (Labels and Values) [cite: 2026-01-26]
     return {
-        "labels": grouped.index.tolist(),
-        "datasets": grouped.values.tolist()
+        "total_sections": total_sections,
+        "total_students": total_students,
+        "section_names": list(sections_data.keys())
     }
 
-import re
+def extract_global_marks(db_json):
+    sections = db_json.get("sections", {})
+    all_marks = []
 
-def sanitize_pakistani_phone(phone_val):
-    """
-    Standardizes Pakistani phone numbers to 11-digit format (03XXXXXXXXX).
-    Handles +92, 92, 0092, and missing leading zeros.
-    """
-    if not phone_val:
-        return ""
+    for section_name, content in sections.items():
+        results = content.get("results", [])
+        for res in results:
+            m_data = res.get("marks_data", {})
 
-    # 1. Remove all non-numeric characters (spaces, +, -, brackets) [cite: 2026-02-15]
-    clean_num = re.sub(r'\D', '', str(phone_val))
+            # Handle if marks_data is a list or a single dictionary
+            marks_list = m_data if isinstance(m_data, list) else [m_data]
 
-    # 2. Handle International Prefix (92) [cite: 2026-02-19]
-    if clean_num.startswith('92'):
-        clean_num = '0' + clean_num[2:]
-    elif clean_num.startswith('0092'):
-        clean_num = '0' + clean_num[4:]
+            for entry in marks_list:
+                try:
+                    obt = float(entry.get("obt", 0))
+                    max_m = float(entry.get("max", 0))
+                except (ValueError, TypeError):
+                    obt, max_m = 0.0, 0.0
 
-    # 3. Handle missing leading zero (e.g., 340 -> 0340) [cite: 2026-02-19]
-    if len(clean_num) == 10 and clean_num.startswith('3'):
-        clean_num = '0' + clean_num
+                all_marks.append({
+                    "n": res.get("student_name"),
+                    "fn": res.get("father_name"),
+                    "s": section_name,
+                    "exam": res.get("exam_title"),
+                    "sub": entry.get("subject"),
+                    "om": obt,
+                    "tm": max_m
+                })
+    return all_marks
 
-    # 4. Final Validation: Return if 11 digits, else keep original for manual search [cite: 2026-02-15]
-    if len(clean_num) == 11 and clean_num.startswith('03'):
-        return clean_num
+def get_attendance_pulse(db_json):
+    sections = db_json.get("sections", {})
+    pulse = {}
 
-    return clean_num # Return as-is if it's a landline or weird format
+    for section_name, content in sections.items():
+        logs = content.get("attendance", [])
+        for log in logs:
+            date = log.get("log_date") # e.g., "2026-03-01"
+            if date not in pulse:
+                pulse[date] = {"p": 0, "a": 0}
+
+            pulse[date]["p"] += log.get("p_count", 0)
+            pulse[date]["a"] += log.get("a_count", 0)
+
+    # Sort latest dates first
+    sorted_pulse = dict(sorted(pulse.items(), reverse=True)[:3])
+    return sorted_pulse

@@ -1,0 +1,25 @@
+/* 🏛️ Root Variables for Easy Theming */
+:root {
+    --bg: #020617;
+    --sidebar-bg: #0f172a;
+    --glass: rgba(255, 255, 255, 0.03);
+    --primary: #0ea5e9;
+    --success: #10b981;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--bg);
+    color: #f1f5f9;
+}
+
+/* Add your complex animations here to keep HTML small */
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px var(--primary); }
+    50% { box-shadow: 0 0 20px var(--primary); }
+    100% { box-shadow: 0 0 5px var(--primary); }
+}
+
+.tab-link.active {
+    animation: pulse-glow 2s infinite;
+}
