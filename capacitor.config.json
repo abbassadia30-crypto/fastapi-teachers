@@ -10,8 +10,17 @@
     ]
   },
   "plugins": {
-    "OneSignal": {
-      "appId": "94695d55-27d6-4fb4-bb47-e98e167728cb"
+    "FirebaseAuthentication": {
+      "skipNativeAuth": false,
+      "providers": [
+        "google.com",
+        "apple.com",
+        "facebook.com",
+        "twitter.com"
+      ]
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
     }
   }
 }

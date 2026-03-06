@@ -22,8 +22,7 @@ let package = Package(
         .package(name: "CapacitorPushNotifications", path: "..\..\..\node_modules\@capacitor\push-notifications"),
         .package(name: "CapacitorShare", path: "..\..\..\node_modules\@capacitor\share"),
         .package(name: "CapacitorStatusBar", path: "..\..\..\node_modules\@capacitor\status-bar"),
-        .package(name: "CapgoCapacitorSpeechRecognition", path: "..\..\..\node_modules\@capgo\capacitor-speech-recognition"),
-        .package(name: "OnesignalCordovaPlugin", path: "../../capacitor-cordova-ios-plugins/sources/OnesignalCordovaPlugin")
+        .package(name: "CapgoCapacitorSpeechRecognition", path: "..\..\..\node_modules\@capgo\capacitor-speech-recognition")
     ],
     targets: [
         .target(
@@ -41,8 +40,7 @@ let package = Package(
                 .product(name: "CapacitorPushNotifications", package: "CapacitorPushNotifications"),
                 .product(name: "CapacitorShare", package: "CapacitorShare"),
                 .product(name: "CapacitorStatusBar", package: "CapacitorStatusBar"),
-                .product(name: "CapgoCapacitorSpeechRecognition", package: "CapgoCapacitorSpeechRecognition"),
-                .product(name: "OnesignalCordovaPlugin", package: "OnesignalCordovaPlugin")
+                .product(name: "CapgoCapacitorSpeechRecognition", package: "CapgoCapacitorSpeechRecognition")
             ]
         )
     ]

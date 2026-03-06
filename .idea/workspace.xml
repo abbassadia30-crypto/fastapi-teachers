@@ -7,20 +7,8 @@
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/capacitor.build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/capacitor.build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/capacitor.settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/capacitor.settings.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/models/User.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/User.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/auth.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/admin/setups/institution-setup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/admin/setups/institution-setup.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/js/init.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/init.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/signup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/signup.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" beforeDir="false" afterPath="$PROJECT_DIR$/ios/App/CapApp-SPM/Package.swift" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/capacitor.config.json" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.config.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -190,14 +178,7 @@
       <workItem from="1772778593240" duration="5139000" />
       <workItem from="1772795906581" duration="1360000" />
       <workItem from="1772804454777" duration="5689000" />
-    </task>
-    <task id="LOCAL-00087" summary="now">
-      <option name="closed" value="true" />
-      <created>1772477227262</created>
-      <option name="number" value="00087" />
-      <option name="presentableId" value="LOCAL-00087" />
-      <option name="project" value="LOCAL" />
-      <updated>1772477227262</updated>
+      <workItem from="1772810486725" duration="1177000" />
     </task>
     <task id="LOCAL-00088" summary="now">
       <option name="closed" value="true" />
@@ -583,7 +564,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772739950950</updated>
     </task>
-    <option name="localTasksCounter" value="136" />
+    <task id="LOCAL-00136" summary="now">
+      <option name="closed" value="true" />
+      <created>1772810560875</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1772810560875</updated>
+    </task>
+    <option name="localTasksCounter" value="137" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

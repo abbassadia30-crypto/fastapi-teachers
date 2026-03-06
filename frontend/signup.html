@@ -44,34 +44,29 @@
         .social-grid {
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 10px;
-        }
-
-        .social-grid {
-            display: flex;
-            flex-wrap: nowrap; /* Forces icons to stay in one line */
-            justify-content: space-evenly; /* Better spacing for 5 icons */
-            gap: 8px; /* Slightly smaller gap for mobile screens */
-            margin-top: 15px;
+            align-items: center;
+            gap: 12px;
+            margin: 20px auto;
             width: 100%;
         }
 
         .social-btn {
-            flex: 0 0 48px; /* Prevents icons from shrinking */
+            width: 48px;
             height: 48px;
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             border-radius: 12px;
-            border: 1px solid #eee;
-            display: flex;
+            display: flex !important;
             align-items: center;
             justify-content: center;
-            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .social-btn img {
-            width: 24px;
-            height: 24px;
-            object-fit: contain; /* Ensures logo fits perfectly */
+            width: 24px !important;
+            height: 24px !important;
+            pointer-events: none; /* Prevents accidental drag on mobile */
         }
 
         .social-btn:hover {
@@ -165,16 +160,16 @@
 
         <div class="social-grid">
             <div class="social-btn" onclick="handleFirebaseLogin('google')" title="Google">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="G">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('apple')" title="Apple">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="A">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('facebook')" title="Facebook">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/0/05/Facebook_Logo_2023.svg" alt="F">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('twitter')" title="X/Twitter">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_original.svg" alt="X">
+                <img src="https://abs.twimg.com/responsive-web/client-web/icon-ios.b1787a45.png" alt="X">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('play')" title="Play Games">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Google_Play_Games_icon_%282022%29.svg" alt="P">
