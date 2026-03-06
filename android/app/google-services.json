@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "896486425897",
+    "project_id": "institution-eaf74",
+    "storage_bucket": "institution-eaf74.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896486425897:android:7748d5e557ad41d25f6338",
+        "android_client_info": {
+          "package_name": "com.starlight.superconsol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD414KmJcqWXiunYGFhJjKUqk5r03vYPPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

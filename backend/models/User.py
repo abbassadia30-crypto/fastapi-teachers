@@ -14,6 +14,8 @@ class User(Base, TimestampMixin):
     phone = Column(String, nullable=True)
     fcm_token = Column(String, nullable=True)
 
+    firebase_uid = Column(String, unique=True, nullable=True)
+    auth_method = Column(String, default="manual")
     # Inside the User Class
     bio = relationship("UserBio", back_populates="user", uselist=False)
     last_active_institution_id = Column(Integer, ForeignKey("institutions.id"), nullable=True)

@@ -17,12 +17,14 @@ from backend.models.User import User , UserBan , Verification , Auth_id  , Secur
 import firebase_admin
 from firebase_admin import auth, credentials , messaging
 import json
+from firebase_admin import auth as firebase_auth
 
 load_dotenv()
 
 raw_expiry = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(raw_expiry)
 resend.api_key = os.getenv("RESEND_API_KEY", "your_key_here")
+firebase_json_str = os.getenv("FIREBASE_JSON")
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-secret-for-dev")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 router = APIRouter(
@@ -31,7 +33,7 @@ router = APIRouter(
 )
 
 # 🏛️ Institutional Intelligence: Secure Activation
-firebase_json_str = os.getenv("FIREBASE_JSON")
+
 
 if not firebase_admin._apps:
     try:
@@ -452,27 +454,44 @@ async def check_existence(email: str, db: Session = Depends(get_db)):
         }
     }
 
-@router.post("/auth/firebase-sync")
-async def firebase_sync(data: dict, db: Session = Depends(get_db)):
-    try:
-        # 1. Verify the token with Google/Firebase servers
-        decoded_token = auth.verify_id_token(data['token'])
-        email = decoded_token['email']
-        name = decoded_token.get('name', 'Institution User')
+@router.post("/social-sync")
+async def social_sync(payload: dict, db: Session = Depends(get_db)):
+    id_token = payload.get("token")
+    provider = payload.get("provider") # 'google', 'apple', etc.
 
-        # 2. Check if user exists in your Postgres DB
-        user = db.query(Institution).filter(Institution.email == email).first() #
+    try:
+        # 1. Verify with Firebase
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        f_uid = decoded_token.get("uid")
+        f_email = decoded_token.get("email")
+        f_name = decoded_token.get("name", "Institution Member")
+
+        # 2. Search for user by Firebase UID (The Permanent Anchor)
+        user = db.query(User).filter(User.firebase_uid == f_uid).first()
 
         if not user:
-            # Create new institution profile if it's their first time
-            user = Institution(name=name, email=email, is_verified=True)
+            # Check if email is already taken by a Manual account
+            # If you want them separate, we can append the provider to the email
+            # But usually, we just create the new social entry
+            user = User(
+                email=f_email,
+                name=f_name,
+                firebase_uid=f_uid,
+                auth_method=provider,
+                is_active=True
+            )
             db.add(user)
             db.commit()
             db.refresh(user)
 
-        # 3. Generate your own JWT for the Super Console
-        access_token = create_access_token(data={"sub": user.email})
-        return {"access_token": access_token, "institution_id": user.id}
+        # 3. Create your App's JWT for the Session
+        token = create_access_token(data={"sub": user.email})
+
+        return {
+            "access_token": token,
+            "has_institution": user.institution_id is not None,
+            "name": user.name
+        }
 
     except Exception as e:
-        raise HTTPException(status_code=401, detail="Invalid Firebase Token")
+        raise HTTPException(status_code=401, detail="Security Handshake Failed")

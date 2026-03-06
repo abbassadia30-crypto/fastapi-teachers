@@ -1,8 +1,12 @@
-// js/init.js
 const { PushNotifications } = Capacitor.Plugins;
 
 const autoInitializePush = async () => {
-    // 🏛️ Logic: Use the correct spelling 'AppStorage'
+    // Check if plugin is actually available (Capacitor safety)
+    if (!Capacitor.isPluginAvailable('PushNotifications')) {
+        console.warn("Push Notifications not supported on this platform.");
+        return;
+    }
+
     const userEmail = await AppStorage.get('user_email');
 
     if (!userEmail) {
@@ -20,16 +24,14 @@ const autoInitializePush = async () => {
     }
 };
 
-// THE LISTENER
+// THE LISTENER - Keep this global so it catches the event after .register()
 PushNotifications.addListener('registration', async (token) => {
-    // 🏛️ CRITICAL: We must fetch all 3 pieces of data from the 'Pocket'
     const userEmail = await AppStorage.get('user_email');
     const savedToken = await AppStorage.get('fcm_token');
-    const authToken = await AppStorage.get('auth_token'); // Don't forget this!
+    const authToken = await AppStorage.get('auth_token');
 
     if (token.value !== savedToken) {
         console.log("New Token detected! Syncing with FastAPI...");
-
         await AppStorage.set('fcm_token', token.value);
 
         if (userEmail && authToken) {
@@ -38,11 +40,9 @@ PushNotifications.addListener('registration', async (token) => {
                     method: 'PATCH',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${authToken}` // Now it's defined!
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: JSON.stringify({
-                        token: token.value
-                    })
+                    body: JSON.stringify({ token: token.value })
                 });
                 console.log("✅ FastAPI Address Book Updated.");
             } catch (err) {
@@ -52,4 +52,4 @@ PushNotifications.addListener('registration', async (token) => {
     }
 });
 
-autoInitializePush();
+// REMOVED: autoInitializePush(); -> We call this manually in the gatekeeper now.

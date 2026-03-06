@@ -7,7 +7,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <script src="capacitor.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/init.js"></script>
     <style>
         /* 1. Global Reset & Hidden State */
         body {
@@ -261,8 +260,8 @@
 
                 Notification.show("Login Successful!", "success");
 
-                // 3. Move to routing
-                setTimeout(() => { checkExistingSession(); }, 1000);
+
+                setTimeout(() => { window.location.replace(`admin/setups/institution-setup.html`) }, 1000);
             } else {
                 // 🏛️ Handle Blocked/Wrong Credentials
                 // This pulls the "6 attempts left" or "Blocked for 24h" detail from FastAPI

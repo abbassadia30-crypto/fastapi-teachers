@@ -48,28 +48,36 @@
             margin-top: 10px;
         }
 
+        .social-grid {
+            display: flex;
+            flex-wrap: nowrap; /* Forces icons to stay in one line */
+            justify-content: space-evenly; /* Better spacing for 5 icons */
+            gap: 8px; /* Slightly smaller gap for mobile screens */
+            margin-top: 15px;
+            width: 100%;
+        }
+
         .social-btn {
-            width: 48px;
+            flex: 0 0 48px; /* Prevents icons from shrinking */
             height: 48px;
-            border-radius: 14px;
+            border-radius: 12px;
             border: 1px solid #eee;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             background: #fff;
+        }
+
+        .social-btn img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain; /* Ensures logo fits perfectly */
         }
 
         .social-btn:hover {
             transform: translateY(-3px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             border-color: var(--primary);
-        }
-
-        .social-btn img {
-            width: 22px;
-            height: 22px;
         }
 
         .show-notify { top: 20px !important; }
@@ -315,42 +323,40 @@
 
         async function handleFirebaseLogin(providerType) {
             const { FirebaseAuthentication } = Capacitor.Plugins;
-            Notification.show(`Opening ${providerType} secure link...`, "success"); //
 
             try {
                 let result;
-                // 1. Trigger Native SDK
-                if (providerType === 'google') {
-                    result = await FirebaseAuthentication.signInWithGoogle();
-                } else if (providerType === 'apple') {
-                    result = await FirebaseAuthentication.signInWithApple();
-                } // ... add others as needed
+                if (providerType === 'google') result = await FirebaseAuthentication.signInWithGoogle();
+                else if (providerType === 'apple') result = await FirebaseAuthentication.signInWithApple();
+                // ... add others
 
-                const idToken = result.user.idToken; // This is the "Credential" from Firebase
+                const idToken = result.user.idToken;
 
-                // 2. Exchange Firebase Token for Institution JWT
-                const response = await fetch(`${API_BASE}/auth/firebase-sync`, { //
+                // Sync with your FastAPI
+                const response = await fetch(`${API_BASE}/auth/social-sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: idToken, provider: providerType })
+                    body: JSON.stringify({
+                        token: idToken,
+                        provider: providerType
+                    })
                 });
 
-                const authData = await response.json();
+                const data = await response.json();
 
                 if (response.ok) {
-                    // 3. Save the real Institution session
-                    await AppStorage.set('access_token', authData.access_token); //
-                    await AppStorage.set('institution_id', authData.institution_id); //
+                    await AppStorage.set('auth_token', data.access_token);
+                    Notification.show(`Welcome, ${data.name}`, "success");
 
-                    Notification.show("Neural Connection Verified!", "success"); //
-                    setTimeout(() => { window.location.href = "dashboard/dashboard.html"; }, 1500);
+                    // Go to Gatekeeper to check institution status
+                    setTimeout(() => { window.location.href = "gatekeeper/verify.html"; }, 1500);
                 } else {
-                    throw new Error(authData.detail || "Backend verification failed");
+                    Notification.show(data.detail, "error");
                 }
 
             } catch (error) {
-                console.error("Auth Error:", error);
-                Notification.show(`Connection Failed: ${error.message}`, "error"); //
+                console.error("Auth Crash:", error);
+                Notification.show("Social Connection Interrupted", "error");
             }
         }
     </script>
