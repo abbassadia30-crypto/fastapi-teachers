@@ -25,83 +25,61 @@ def object_as_dict(obj):
     return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
 
 def perform_targeted_extraction(db: Session, inst_id: int, target_section: str = None):
-    """
-    Crawls the DB, partitions data, and dynamicallly serializes all shards.
-    """
-    # A. Fetch All Data (Using the correct 'institution_id' column we fixed in pgAdmin)
+    # 1. Fetch all data pools
     students = db.query(StudentModel).filter(StudentModel.institution_id == inst_id).all()
     attendance = db.query(AttendanceLog).filter(AttendanceLog.institution_id == inst_id).all()
     results = db.query(AcademicResult).filter(AcademicResult.institution_id == inst_id).all()
     staffs = db.query(Staff).filter(Staff.institution_id == inst_id).all()
     teachers = db.query(teacher).filter(teacher.institution_id == inst_id).all()
 
-    # B. Load Current State
+    # 2. Setup state and registry
     state_rec = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
-    current_registry = {"last_update": "", "shards": {}}
-    if state_rec:
-        try:
-            current_registry = json.loads(state_rec.key_registry)
-        except: pass
-
-    # C. Build Data Blob with Dynamic Mapping
+    current_registry = json.loads(state_rec.key_registry) if state_rec else {"shards": {}}
     mass_data = {"sections": {}, "personal_state": {"staff": [], "teachers": []}}
 
-    # Partition Students and rotate keys if necessary
-    for s in students:
-        sec = s.section
-        if sec not in mass_data["sections"]:
-            mass_data["sections"][sec] = {"students": [], "results": [], "attendance": []}
+    # 3. Identify all "Active" sections across all data types
+    # We collect every unique section name that has at least one record
+    active_sections = set(
+        [s.section for s in students] +
+        [log.section_identifier for log in attendance] +
+        [res.target_class for res in results]
+    )
 
-            # 🔄 Update Key Logic: If data exists, ensure a valid key exists
-            if sec not in current_registry["shards"] or sec == target_section or current_registry["shards"][sec] is None:
-                current_registry["shards"][sec] = secrets.token_urlsafe(38)[:50]
+    # 4. Process Personal State (Staff/Teachers) - This is always 'update' mode
+    current_registry["shards"]["personal_state"] = {
+        "key": secrets.token_urlsafe(38)[:50] if target_section == "personal_state" else current_registry["shards"].get("personal_state", {}).get("key"),
+        "mode": "update"
+    }
+    mass_data["personal_state"]["staff"] = [object_as_dict(st) for st in staffs]
+    mass_data["personal_state"]["teachers"] = [object_as_dict(tc) for tc in teachers]
 
-        mass_data["sections"][sec]["students"].append(object_as_dict(s))
+    # 5. Build Section Shards
+    for sec_name in active_sections:
+        mass_data["sections"][sec_name] = {
+            "students": [object_as_dict(s) for s in students if s.section == sec_name],
+            "results": [object_as_dict(r) for r in results if r.target_class == sec_name],
+            "attendance": [object_as_dict(l) for l in attendance if l.section_identifier == sec_name]
+        }
 
-    # D. Attach Academic Data (FIXED: No longer uses 'res.content')
-    for res in results:
-        # res.target_class should match a student section (e.g., '10th-A')
-        if res.target_class in mass_data["sections"]:
-            mass_data["sections"][res.target_class]["results"].append(object_as_dict(res))
+        # 🔄 MODE: UPDATE
+        # If it's a new section or the target of an update, give it a new key
+        if sec_name not in current_registry["shards"] or sec_name == target_section:
+            current_registry["shards"][sec_name] = {
+                "key": secrets.token_urlsafe(38)[:50],
+                "mode": "update"
+            }
 
-    # E. Attach Attendance Logs
-    for log in attendance:
-        if log.section_identifier in mass_data["sections"]:
-            mass_data["sections"][log.section_identifier]["attendance"].append(object_as_dict(log))
-
-    # F. Handle Personal State (Staff/Teachers)
-    if target_section == "personal_state" or "personal_state" not in current_registry["shards"]:
-        current_registry["shards"]["personal_state"] = secrets.token_urlsafe(38)[:50]
-
-    for st in staffs:
-        mass_data["personal_state"]["staff"].append(object_as_dict(st))
-    for tc in teachers:
-        mass_data["personal_state"]["teachers"].append(object_as_dict(tc))
-
-    # If it's NOT in our new mass_data, it means the section is now empty/deleted.
+    # 🗑️ MODE: DELETE (The Kill Signal for ALL data types)
     for registered_sec in list(current_registry["shards"].keys()):
-        # Skip personal_state as it usually always exists
-        if registered_sec == "personal_state":
-            continue
+        if registered_sec == "personal_state": continue
 
-        if registered_sec not in mass_data["sections"]:
-            # 🎯 This sends the 'null' to the frontend as the key
-            # The Sync Manager will see 'null' and delete the local .json file
-            current_registry["shards"][registered_sec] = None
-            print(f"📡 System: Section {registered_sec} is empty. Sending Null Signal.")
+        if registered_sec not in active_sections:
+            current_registry["shards"][registered_sec] = {
+                "key": None,
+                "mode": "delete"
+            }
 
-    # G. Finalize and Save
-    current_registry["last_update"] = datetime.datetime.now().isoformat()
-
-    if not state_rec:
-        state_rec = InstitutionState(institution_id=inst_id)
-        db.add(state_rec)
-
-    state_rec.full_data_blob = json.dumps(mass_data, default=str) # default=str handles datetime objects
-    state_rec.key_registry = json.dumps(current_registry)
-    state_rec.last_indexed = datetime.datetime.utcnow()
-    db.commit()
-
+    # ... Save state_rec logic ...
     return current_registry
 
 # 🔥 FIX 1: Define the missing background task
