@@ -43,6 +43,10 @@ dependencies {
     implementation 'com.facebook.android:facebook-android-sdk:17.0.0'
     implementation "com.google.firebase:firebase-auth:$firebaseAuthVersion"
 
+    implementation "androidx.credentials:credentials:1.2.2"
+    implementation "androidx.credentials:credentials-play-services-auth:1.2.2"
+    implementation "com.google.android.libraries.identity.googleid:googleid:1.1.1"
+
     // Keep your BoM for other services
     implementation platform('com.google.firebase:firebase-bom:34.10.0')
     implementation 'com.google.firebase:firebase-analytics'

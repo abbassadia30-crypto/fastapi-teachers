@@ -17,7 +17,8 @@
         "apple.com",
         "facebook.com",
         "twitter.com"
-      ]
+      ],
+      "googleId": "997900408465-si690rcpv97cefhved872s48r0shkqb7.apps.googleusercontent.com"
     },
     "PushNotifications": {
       "presentationOptions": ["badge", "sound", "alert"]
