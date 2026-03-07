@@ -177,28 +177,24 @@ async def sync_neural_state(websocket: WebSocket, inst_id: int, db: Session = De
 @router.get("/shard/{inst_id}/{section_name}")
 async def get_raw_shard(inst_id: int, section_name: str, key: str, db: Session = Depends(get_db)):
     state = db.query(InstitutionState).filter(InstitutionState.institution_id == inst_id).first()
-
     if not state:
         raise HTTPException(status_code=404, detail="Institution State not initialized")
 
-    # Parse registry to verify the key
     registry = json.loads(state.key_registry)
     expected_key = registry.get("shards", {}).get(section_name)
 
-    # Security check: Does the key the app sent match the DB?
     if expected_key != key:
-        print(f"🚨 Security Alert: Key Mismatch. Recv: {key} | Expected: {expected_key}")
         raise HTTPException(status_code=403, detail="Key Mismatch")
 
     all_data = json.loads(state.full_data_blob)
 
-    # Slice logic
+    # 🏛️ REFINED LOGIC: Never return 404 if the key was valid
     if section_name == "personal_state":
-        shard = all_data.get("personal_state")
+        shard = all_data.get("personal_state", {"staff": [], "teachers": []})
     else:
-        shard = all_data.get("sections", {}).get(section_name)
-
-    if not shard:
-        raise HTTPException(status_code=404, detail="Shard content not found")
+        # If section is missing in blob but has a key, return an empty template
+        shard = all_data.get("sections", {}).get(section_name, {
+            "students": [], "results": [], "attendance": []
+        })
 
     return shard
