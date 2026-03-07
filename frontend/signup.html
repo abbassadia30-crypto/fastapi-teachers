@@ -8,12 +8,12 @@
     <style>
         /* All CSS in head as requested for the institution app */
         body { font-family: 'Poppins', sans-serif; margin: 0; background: #f4f7f6; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        
-        #notification-bar { 
-            position: fixed; top: -100px; left: 50%; transform: translateX(-50%); 
-            width: 90%; max-width: 350px; padding: 15px; border-radius: 15px; 
-            color: white; font-weight: 600; text-align: center; 
-            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+
+        #notification-bar {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 350px; padding: 15px; border-radius: 15px;
+            color: white; font-weight: 600; text-align: center;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
@@ -79,19 +79,19 @@
         .bg-red { background: #e53935; border: 1px solid #b71c1c; }
         .bg-green { background: #43a047; border: 1px solid #1b5e20; }
 
-        .card { 
-            background: white; padding: 30px; border-radius: 30px; 
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 90%; 
-            max-width: 420px; text-align: center; 
+        .card {
+            background: white; padding: 30px; border-radius: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 90%;
+            max-width: 420px; text-align: center;
         }
 
         .name-row { display: flex; gap: 10px; margin-bottom: 15px; }
         .input-group { margin-bottom: 15px; text-align: left; position: relative; }
         label { font-size: 11px; font-weight: 600; color: #888; margin-left: 5px; text-transform: uppercase; }
-        
-        input { 
-            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #eee; 
-            background: #f9f9f9; box-sizing: border-box; outline: none; 
+
+        input {
+            width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #eee;
+            background: #f9f9f9; box-sizing: border-box; outline: none;
             font-family: 'Poppins', sans-serif; margin-top: 5px; transition: 0.3s;
         }
         input:focus { border-color: #0288d1; background: #fff; }
@@ -100,284 +100,284 @@
         .strength-bar { height: 100%; width: 0%; transition: 0.4s ease; }
         .strength-text { font-size: 10px; font-weight: 600; display: block; margin-top: 5px; }
 
-        .btn { 
-            width: 100%; padding: 14px; background: #0288d1; color: white; 
-            border: none; border-radius: 12px; font-weight: 600; 
+        .btn {
+            width: 100%; padding: 14px; background: #0288d1; color: white;
+            border: none; border-radius: 12px; font-weight: 600;
             cursor: pointer; transition: 0.3s; margin-top: 10px;
         }
         .btn:hover { background: #0277bd; }
         .btn:disabled { background: #ccc; cursor: not-allowed; }
-        
+
         .footer-text { font-size: 12px; margin-top: 15px; color: #777; }
         .footer-text a { color: #0288d1; text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
 
-    <div id="notification-bar"></div>
+<div id="notification-bar"></div>
 
-    <div class="card">
-        <h2 style="margin-bottom: 5px;">Join Institution</h2>
-        <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Create your profile</p>
-        
-        <form id="signupForm" onsubmit="handleSignup(event)">
-            <div class="name-row">
-                <div class="input-group" style="flex: 1;">
-                    <label>First Name</label>
-                    <input type="text" id="firstName" placeholder="First Name" required>
-                </div>
-                <div class="input-group" style="flex: 1;">
-                    <label>Last Name</label>
-                    <input type="text" id="lastName" placeholder="Last Name" required>
-                </div>
+<div class="card">
+    <h2 style="margin-bottom: 5px;">Join Institution</h2>
+    <p style="color: #888; font-size: 13px; margin-bottom: 20px;">Create your profile</p>
+
+    <form id="signupForm" onsubmit="handleSignup(event)">
+        <div class="name-row">
+            <div class="input-group" style="flex: 1;">
+                <label>First Name</label>
+                <input type="text" id="firstName" placeholder="First Name" required>
             </div>
-
-            <div class="input-group">
-                <label>Email Address</label>
-                <input type="email" id="email" placeholder="admin@institution.com" required>
+            <div class="input-group" style="flex: 1;">
+                <label>Last Name</label>
+                <input type="text" id="lastName" placeholder="Last Name" required>
             </div>
-
-            <div class="input-group">
-                <label>Password</label>
-                <input type="password" id="password" placeholder="••••••••" oninput="checkStrength(this.value)" required>
-                <span id="strengthLabel" class="strength-text"></span>
-                <div class="strength-container" id="strengthContainer">
-                    <div id="strengthBar" class="strength-bar"></div>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="••••••••" required>
-            </div>
-
-            <button type="submit" class="btn" id="signupBtn">Create Account</button>
-        </form>
-
-        <div class="divider">
-            <span>OR CONNECT VIA</span>
         </div>
 
-        <div class="social-grid">
-            <div class="social-btn" onclick="handleFirebaseLogin('google')" title="Google">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
-            </div>
-            <div class="social-btn" onclick="handleFirebaseLogin('apple')" title="Apple">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="A">
-            </div>
-            <div class="social-btn" onclick="handleFirebaseLogin('facebook')" title="Facebook">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
-            </div>
-            <div class="social-btn" onclick="handleFirebaseLogin('twitter')" title="X/Twitter">
-                <img src="https://cdn.simpleicons.org/x/000000" alt="X">
-            </div>
-            <div class="social-btn" onclick="handleFirebaseLogin('play')" title="Play Games">
-                <img src="https://www.gstatic.com/images/branding/product/1x/play_games_64dp.png" alt="P">
+        <div class="input-group">
+            <label>Email Address</label>
+            <input type="email" id="email" placeholder="admin@institution.com" required>
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="••••••••" oninput="checkStrength(this.value)" required>
+            <span id="strengthLabel" class="strength-text"></span>
+            <div class="strength-container" id="strengthContainer">
+                <div id="strengthBar" class="strength-bar"></div>
             </div>
         </div>
-        
-        <p class="footer-text">Already have an account? <a href="index.html">Login</a></p>
+
+        <div class="input-group">
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPassword" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn" id="signupBtn">Create Account</button>
+    </form>
+
+    <div class="divider">
+        <span>OR CONNECT VIA</span>
     </div>
 
-    <script src="capacitor.js"></script>
-    <script src="js/storage.js"></script>
+    <div class="social-grid">
+        <div class="social-btn" onclick="handleFirebaseLogin('google')" title="Google">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">
+        </div>
+        <div class="social-btn" onclick="handleFirebaseLogin('apple')" title="Apple">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="A">
+        </div>
+        <div class="social-btn" onclick="handleFirebaseLogin('facebook')" title="Facebook">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
+        </div>
+        <div class="social-btn" onclick="handleFirebaseLogin('twitter')" title="X/Twitter">
+            <img src="https://cdn.simpleicons.org/x/000000" alt="X">
+        </div>
+        <div class="social-btn" onclick="handleFirebaseLogin('play')" title="Play Games">
+            <img src="https://www.gstatic.com/images/branding/product/1x/play_games_64dp.png" alt="P">
+        </div>
+    </div>
 
-    <script>
-        const API_BASE = "https://fastapi-teachers.onrender.com";
+    <p class="footer-text">Already have an account? <a href="index.html">Login</a></p>
+</div>
 
-        // --- 1. NOTIFICATION SYSTEM (Sign Box) ---
-        const Notification = {
-            el: document.getElementById('notification-bar'),
-            show(msg, type) {
-                if(!this.el) return;
-                this.el.innerText = msg;
-                // Matches your specific green/red requirement
-                this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
+<script src="capacitor.js"></script>
+<script src="js/storage.js"></script>
 
-                // Real App UX: Trigger physical vibration
-                if (window.AppHaptics) {
-                    window.AppHaptics.notification(type === 'success' ? 'SUCCESS' : 'ERROR');
-                }
+<script>
+    const API_BASE = "https://fastapi-teachers.onrender.com";
 
-                setTimeout(() => { this.el.className = ''; }, 4000);
+    // --- 1. NOTIFICATION SYSTEM (Sign Box) ---
+    const Notification = {
+        el: document.getElementById('notification-bar'),
+        show(msg, type) {
+            if(!this.el) return;
+            this.el.innerText = msg;
+            // Matches your specific green/red requirement
+            this.el.className = (type === 'success' ? 'bg-green' : 'bg-red') + ' show-notify';
+
+            // Real App UX: Trigger physical vibration
+            if (window.AppHaptics) {
+                window.AppHaptics.notification(type === 'success' ? 'SUCCESS' : 'ERROR');
             }
-        };
 
-        // --- 2. PASSWORD STRENGTH METER ---
-        function checkStrength(password) {
-            const container = document.getElementById('strengthContainer');
-            const bar = document.getElementById('strengthBar');
-            const label = document.getElementById('strengthLabel');
+            setTimeout(() => { this.el.className = ''; }, 4000);
+        }
+    };
 
-            if (!password) {
-                container.style.display = 'none';
-                return;
-            }
+    // --- 2. PASSWORD STRENGTH METER ---
+    function checkStrength(password) {
+        const container = document.getElementById('strengthContainer');
+        const bar = document.getElementById('strengthBar');
+        const label = document.getElementById('strengthLabel');
 
-            container.style.display = 'block';
-            let strength = 0;
-
-            // Developer Logic: Use percentages for the bar
-            if (password.length > 7) strength += 25;
-            if (/[A-Z]/.test(password)) strength += 25;
-            if (/[0-9]/.test(password)) strength += 25;
-            if (/[^A-Za-z0-9]/.test(password)) strength += 25;
-
-            bar.style.width = strength + '%';
-
-            // Color coding for visual feedback
-            if (strength <= 25) {
-                bar.style.background = '#e53935';
-                label.innerText = 'Weak';
-                label.style.color = '#e53935';
-            } else if (strength <= 75) {
-                bar.style.background = '#ffa000';
-                label.innerText = 'Moderate';
-                label.style.color = '#ffa000';
-            } else {
-                bar.style.background = '#43a047';
-                label.innerText = 'Strong';
-                label.style.color = '#43a047';
-            }
+        if (!password) {
+            container.style.display = 'none';
+            return;
         }
 
-        // --- 3. SIGNUP HANDLER ---
-        async function handleSignup(event) {
-            event.preventDefault();
+        container.style.display = 'block';
+        let strength = 0;
 
-            const btn = document.getElementById('signupBtn');
-            const fName = document.getElementById('firstName').value.trim();
-            const lName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+        // Developer Logic: Use percentages for the bar
+        if (password.length > 7) strength += 25;
+        if (/[A-Z]/.test(password)) strength += 25;
+        if (/[0-9]/.test(password)) strength += 25;
+        if (/[^A-Za-z0-9]/.test(password)) strength += 25;
 
-            // Security Check
-            if (password !== confirmPassword) {
-                Notification.show("Passwords do not match", "error");
-                return;
-            }
+        bar.style.width = strength + '%';
 
-            if (password.length < 8) {
-                Notification.show("Password must be at least 8 characters", "error");
-                return;
-            }
+        // Color coding for visual feedback
+        if (strength <= 25) {
+            bar.style.background = '#e53935';
+            label.innerText = 'Weak';
+            label.style.color = '#e53935';
+        } else if (strength <= 75) {
+            bar.style.background = '#ffa000';
+            label.innerText = 'Moderate';
+            label.style.color = '#ffa000';
+        } else {
+            bar.style.background = '#43a047';
+            label.innerText = 'Strong';
+            label.style.color = '#43a047';
+        }
+    }
 
-            // Prepare Name for the Institution database
-            const fullName = `${fName} ${lName}`.trim();
+    // --- 3. SIGNUP HANDLER ---
+    async function handleSignup(event) {
+        event.preventDefault();
 
-            btn.disabled = true;
-            const originalText = btn.innerText;
-            btn.innerText = "Creating Account...";
+        const btn = document.getElementById('signupBtn');
+        const fName = document.getElementById('firstName').value.trim();
+        const lName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim().toLowerCase();
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Security Check
+        if (password !== confirmPassword) {
+            Notification.show("Passwords do not match", "error");
+            return;
+        }
+
+        if (password.length < 8) {
+            Notification.show("Password must be at least 8 characters", "error");
+            return;
+        }
+
+        // Prepare Name for the Institution database
+        const fullName = `${fName} ${lName}`.trim();
+
+        btn.disabled = true;
+        const originalText = btn.innerText;
+        btn.innerText = "Creating Account...";
 
 
-            try {
-                const response = await fetch(`${API_BASE}/auth/signup`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        name: fullName,
-                        email: email,
-                        password: password
-                    })
-                });
+        try {
+            const response = await fetch(`${API_BASE}/auth/signup`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    name: fullName,
+                    email: email,
+                    password: password
+                })
+            });
 
-                // Capture the result ONCE
-                const result = await response.json();
+            // Capture the result ONCE
+            const result = await response.json();
 
-                if (response.ok) {
-                    Notification.show("OTP Sent! Check your email.", "success");
+            if (response.ok) {
+                Notification.show("OTP Sent! Check your email.", "success");
 
-                    // Note: Ensure AppStorage is defined for Capacitor
-                    await AppStorage.set('pendingEmail', email);
-                    await AppStorage.set('isPasswordReset', 'false');
+                // Note: Ensure AppStorage is defined for Capacitor
+                await AppStorage.set('pendingEmail', email);
+                await AppStorage.set('isPasswordReset', 'false');
 
-                    setTimeout(() => {
-                        window.location.href = "verify.html";
-                    }, 2500);
+                setTimeout(() => {
+                    window.location.href = "verify.html";
+                }, 2500);
+            } else {
+                // FIXED: Use 'result' directly, don't call response.json() again
+                if (result.status === "email_failed") {
+                    Notification.show("Account created, but OTP failed to send.", "error");
                 } else {
-                    // FIXED: Use 'result' directly, don't call response.json() again
-                    if (result.status === "email_failed") {
-                        Notification.show("Account created, but OTP failed to send.", "error");
-                    } else {
-                        // Show specific detail from Pydantic or FastAPI
-                        const errorDetail = result.detail || "Signup failed";
-                        Notification.show(Array.isArray(errorDetail) ? errorDetail[0].msg : errorDetail, "error");
-                    }
-                    btn.disabled = false;
-                    btn.innerText = originalText;
+                    // Show specific detail from Pydantic or FastAPI
+                    const errorDetail = result.detail || "Signup failed";
+                    Notification.show(Array.isArray(errorDetail) ? errorDetail[0].msg : errorDetail, "error");
                 }
-            } catch (error) {
-                // This now only triggers if the server is actually down
-                console.error("Fetch Error:", error);
-                Notification.show("Institution server is unreachable.", "error");
                 btn.disabled = false;
                 btn.innerText = originalText;
             }
+        } catch (error) {
+            // This now only triggers if the server is actually down
+            console.error("Fetch Error:", error);
+            Notification.show("Institution server is unreachable.", "error");
+            btn.disabled = false;
+            btn.innerText = originalText;
         }
+    }
 
-        async function handleFirebaseLogin(providerType) {
-            const { FirebaseAuthentication } = Capacitor.Plugins;
+    async function handleFirebaseLogin(providerType) {
+        const { FirebaseAuthentication } = Capacitor.Plugins;
 
-            try {
-                let result;
-                // Route to the correct native Capacitor method
-                switch(providerType) {
-                    case 'google':
-                        result = await FirebaseAuthentication.signInWithGoogle();
-                        break;
-                    case 'apple':
-                        result = await FirebaseAuthentication.signInWithApple();
-                        break;
-                    case 'facebook':
-                        result = await FirebaseAuthentication.signInWithFacebook();
-                        break;
-                    default:
-                        Notification.show("Provider coming soon to Starlight", "error");
-                        return;
-                }
-
-                // The token is located in result.user.idToken for Capawesome
-                const idToken = result.user.idToken;
-                const displayName = result.user.displayName || "Institution User";
-
-                if (!idToken) {
-                    Notification.show("Security Token Missing", "error");
+        try {
+            let result;
+            // Route to the correct native Capacitor method
+            switch(providerType) {
+                case 'google':
+                    result = await FirebaseAuthentication.signInWithGoogle();
+                    break;
+                case 'apple':
+                    result = await FirebaseAuthentication.signInWithApple();
+                    break;
+                case 'facebook':
+                    result = await FirebaseAuthentication.signInWithFacebook();
+                    break;
+                default:
+                    Notification.show("Provider coming soon to Starlight", "error");
                     return;
-                }
-
-                // Sync with your FastAPI Backend
-                const response = await fetch(`${API_BASE}/auth/social-sync`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        token: idToken,
-                        provider: providerType,
-                        name: displayName // Send the name explicitly just in case
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    await AppStorage.set('auth_token', data.access_token);
-                    // Use a green box for success
-                    Notification.show(`Welcome, ${data.name}`, "success");
-
-                    setTimeout(() => {
-                        // If they don't have an institution yet, take them to setup
-                        window.location.href = data.has_institution ? "dashboard.html" : "gatekeeper/verify.html";
-                    }, 1500);
-                } else {
-                    Notification.show(data.detail || "Database Sync Failed", "error");
-                }
-
-            } catch (error) {
-                if (error.message.includes('cancel')) return;
-                console.error("Auth Crash:", error);
-                Notification.show("Connection Interrupted: " + error.message, "error");
             }
+
+            // The token is located in result.user.idToken for Capawesome
+            const idToken = result.user.idToken;
+            const displayName = result.user.displayName || "Institution User";
+
+            if (!idToken) {
+                Notification.show("Security Token Missing", "error");
+                return;
+            }
+
+            // Sync with your FastAPI Backend
+            const response = await fetch(`${API_BASE}/auth/social-sync`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    token: idToken,
+                    provider: providerType,
+                    name: displayName // Send the name explicitly just in case
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                await AppStorage.set('auth_token', data.access_token);
+                // Use a green box for success
+                Notification.show(`Welcome, ${data.name}`, "success");
+
+                setTimeout(() => {
+                    // If they don't have an institution yet, take them to setup
+                    window.location.href = data.has_institution ? "dashboard.html" : "gatekeeper/verify.html";
+                }, 1500);
+            } else {
+                Notification.show(data.detail || "Database Sync Failed", "error");
+            }
+
+        } catch (error) {
+            if (error.message.includes('cancel')) return;
+            console.error("Auth Crash:", error);
+            Notification.show("Connection Interrupted: " + error.message, "error");
         }
-    </script>
+    }
+</script>
 </body>
 </html>

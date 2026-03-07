@@ -16,7 +16,33 @@
         "google.com",
         "apple.com",
         "facebook.com",
-        "twitter.com"
+        "twitter.com",{
+          "appId": "com.starlight.superconsol",
+          "appName": "Starlight",
+          "webDir": "frontend",
+          "server": {
+            "androidScheme": "http",
+            "cleartext": true,
+            "allowNavigation": [
+              "https://fastapi-teachers.onrender.com"
+            ]
+          },
+          "plugins": {
+            "FirebaseAuthentication": {
+              "skipNativeAuth": false,
+              "providers": [
+                "google.com",
+                "apple.com",
+                "facebook.com",
+                "twitter.com"
+              ],
+              "googleId": "997900408465-si690rcpv97cefhved872s48r0shkqb7.apps.googleusercontent.com"
+            },
+            "PushNotifications": {
+              "presentationOptions": ["badge", "sound", "alert"]
+            }
+          }
+        }
       ],
       "googleId": "997900408465-si690rcpv97cefhved872s48r0shkqb7.apps.googleusercontent.com"
     },

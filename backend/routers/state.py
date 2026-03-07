@@ -51,10 +51,11 @@ def perform_targeted_extraction(db: Session, inst_id: int, target_section: str =
         sec = s.section
         if sec not in mass_data["sections"]:
             mass_data["sections"][sec] = {"students": [], "results": [], "attendance": []}
-            if sec not in current_registry["shards"] or sec == target_section:
+
+            # 🔄 Update Key Logic: If data exists, ensure a valid key exists
+            if sec not in current_registry["shards"] or sec == target_section or current_registry["shards"][sec] is None:
                 current_registry["shards"][sec] = secrets.token_urlsafe(38)[:50]
 
-        # Use the dynamic dict helper instead of manual mapping
         mass_data["sections"][sec]["students"].append(object_as_dict(s))
 
     # D. Attach Academic Data (FIXED: No longer uses 'res.content')
@@ -76,6 +77,18 @@ def perform_targeted_extraction(db: Session, inst_id: int, target_section: str =
         mass_data["personal_state"]["staff"].append(object_as_dict(st))
     for tc in teachers:
         mass_data["personal_state"]["teachers"].append(object_as_dict(tc))
+
+    # If it's NOT in our new mass_data, it means the section is now empty/deleted.
+    for registered_sec in list(current_registry["shards"].keys()):
+        # Skip personal_state as it usually always exists
+        if registered_sec == "personal_state":
+            continue
+
+        if registered_sec not in mass_data["sections"]:
+            # 🎯 This sends the 'null' to the frontend as the key
+            # The Sync Manager will see 'null' and delete the local .json file
+            current_registry["shards"][registered_sec] = None
+            print(f"📡 System: Section {registered_sec} is empty. Sending Null Signal.")
 
     # G. Finalize and Save
     current_registry["last_update"] = datetime.datetime.now().isoformat()

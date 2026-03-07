@@ -6,9 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/capacitor.config.json" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/js/sync-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/sync-manager.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/signup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/signup.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,15 +181,7 @@
       <workItem from="1772804454777" duration="5689000" />
       <workItem from="1772810486725" duration="9180000" />
       <workItem from="1772860426761" duration="2501000" />
-      <workItem from="1772888508790" duration="6521000" />
-    </task>
-    <task id="LOCAL-00090" summary="now">
-      <option name="closed" value="true" />
-      <created>1772479293943</created>
-      <option name="number" value="00090" />
-      <option name="presentableId" value="LOCAL-00090" />
-      <option name="project" value="LOCAL" />
-      <updated>1772479293943</updated>
+      <workItem from="1772888508790" duration="12763000" />
     </task>
     <task id="LOCAL-00091" summary="now">
       <option name="closed" value="true" />
@@ -574,7 +567,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772890377650</updated>
     </task>
-    <option name="localTasksCounter" value="139" />
+    <task id="LOCAL-00139" summary="now">
+      <option name="closed" value="true" />
+      <created>1772895816838</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1772895816838</updated>
+    </task>
+    <option name="localTasksCounter" value="140" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
