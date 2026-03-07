@@ -1,5 +1,5 @@
+apply from: "../variables.gradle"
 apply plugin: 'com.android.application'
-apply plugin: 'com.google.gms.google-services'
 
 android {
     namespace = "com.starlight.superconsol"
@@ -37,10 +37,16 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation project(':capacitor-android')
-    
-    // Firebase BoM and Analytics
+
+    // --- FORCE VERSION FIX ---
+    // We add this specific line to override the BoM for the Authentication plugin
+    implementation 'com.facebook.android:facebook-android-sdk:17.0.0'
+    implementation "com.google.firebase:firebase-auth:$firebaseAuthVersion"
+
+    // Keep your BoM for other services
     implementation platform('com.google.firebase:firebase-bom:34.10.0')
     implementation 'com.google.firebase:firebase-analytics'
+    // -------------------------
 
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
@@ -50,11 +56,7 @@ dependencies {
 
 apply from: 'capacitor.build.gradle'
 
-try {
-    def servicesJSON = file('google-services.json')
-    if (servicesJSON.text) {
-        apply plugin: 'com.google.gms.google-services'
-    }
-} catch(Exception e) {
-    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+// Apply the Google Services plugin last to ensure all Firebase dependencies are configured
+if (file('google-services.json').exists()) {
+    apply plugin: 'com.google.gms.google-services'
 }

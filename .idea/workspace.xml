@@ -7,8 +7,14 @@
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/.idea/deploymentTargetSelector.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/capacitor.config.json" beforeDir="false" afterPath="$PROJECT_DIR$/capacitor.config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/res/values/strings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/settings.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/variables.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/variables.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/auth.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/auth.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/signup.html" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/signup.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -178,15 +184,9 @@
       <workItem from="1772778593240" duration="5139000" />
       <workItem from="1772795906581" duration="1360000" />
       <workItem from="1772804454777" duration="5689000" />
-      <workItem from="1772810486725" duration="1177000" />
-    </task>
-    <task id="LOCAL-00088" summary="now">
-      <option name="closed" value="true" />
-      <created>1772478551761</created>
-      <option name="number" value="00088" />
-      <option name="presentableId" value="LOCAL-00088" />
-      <option name="project" value="LOCAL" />
-      <updated>1772478551762</updated>
+      <workItem from="1772810486725" duration="9180000" />
+      <workItem from="1772860426761" duration="2501000" />
+      <workItem from="1772888508790" duration="1730000" />
     </task>
     <task id="LOCAL-00089" summary="now">
       <option name="closed" value="true" />
@@ -572,7 +572,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772810560875</updated>
     </task>
-    <option name="localTasksCounter" value="137" />
+    <task id="LOCAL-00137" summary="now">
+      <option name="closed" value="true" />
+      <created>1772812629301</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1772812629301</updated>
+    </task>
+    <option name="localTasksCounter" value="138" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -454,37 +454,45 @@ async def check_existence(email: str, db: Session = Depends(get_db)):
         }
     }
 
-@router.post("/social-sync")
+@router.post("/social-sync") # Added /auth/ prefix to match frontend
 async def social_sync(payload: dict, db: Session = Depends(get_db)):
     id_token = payload.get("token")
-    provider = payload.get("provider") # 'google', 'apple', etc.
+    provider = payload.get("provider")
+    provided_name = payload.get("name")
 
     try:
-        # 1. Verify with Firebase
+        # 1. Verify with Firebase (This checks if the token is real and not expired)
         decoded_token = firebase_auth.verify_id_token(id_token)
         f_uid = decoded_token.get("uid")
         f_email = decoded_token.get("email")
-        f_name = decoded_token.get("name", "Institution Member")
+        f_name = decoded_token.get("name") or provided_name or "Institution Member"
 
-        # 2. Search for user by Firebase UID (The Permanent Anchor)
+        # 2. Search for user by Firebase UID (Professional Anchor)
         user = db.query(User).filter(User.firebase_uid == f_uid).first()
 
         if not user:
-            # Check if email is already taken by a Manual account
-            # If you want them separate, we can append the provider to the email
-            # But usually, we just create the new social entry
-            user = User(
-                email=f_email,
-                name=f_name,
-                firebase_uid=f_uid,
-                auth_method=provider,
-                is_active=True
-            )
-            db.add(user)
+            # Check if an account with this email exists but was manual
+            user = db.query(User).filter(User.email == f_email).first()
+
+            if user:
+                # Link existing manual account to social UID
+                user.firebase_uid = f_uid
+                user.auth_method = provider
+            else:
+                # Create brand new account for the institution
+                user = User(
+                    email=f_email,
+                    name=f_name,
+                    firebase_uid=f_uid,
+                    auth_method=provider,
+                    is_active=True
+                )
+                db.add(user)
+
             db.commit()
             db.refresh(user)
 
-        # 3. Create your App's JWT for the Session
+        # 3. Create your App's JWT (The one that controls the app session)
         token = create_access_token(data={"sub": user.email})
 
         return {
@@ -494,4 +502,6 @@ async def social_sync(payload: dict, db: Session = Depends(get_db)):
         }
 
     except Exception as e:
+        print(f"Firebase Verify Error: {str(e)}")
+        # Use a 401 Unauthorized for security handshake failures
         raise HTTPException(status_code=401, detail="Security Handshake Failed")

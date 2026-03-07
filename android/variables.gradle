@@ -1,7 +1,18 @@
 ext {
+    // Basic SDK Config
     minSdkVersion = 24
     compileSdkVersion = 36
     targetSdkVersion = 36
+
+    // --- The Fix for setLinkDomain ---
+    firebaseAuthVersion = '23.1.0'
+    firebaseMessagingVersion = '24.1.0'
+    playServicesAuthVersion = '21.2.0'
+
+    // Feature Flag for Google Login
+    rgcfaIncludeGoogle = true
+
+    // Standard AndroidX Dependencies
     androidxActivityVersion = '1.11.0'
     androidxAppCompatVersion = '1.7.1'
     androidxCoordinatorLayoutVersion = '1.3.0'

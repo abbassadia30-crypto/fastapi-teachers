@@ -169,10 +169,10 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg" alt="F">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('twitter')" title="X/Twitter">
-                <img src="https://abs.twimg.com/responsive-web/client-web/icon-ios.b1787a45.png" alt="X">
+                <img src="https://cdn.simpleicons.org/x/000000" alt="X">
             </div>
             <div class="social-btn" onclick="handleFirebaseLogin('play')" title="Play Games">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d1/Google_Play_Games_icon_%282022%29.svg" alt="P">
+                <img src="https://www.gstatic.com/images/branding/product/1x/play_games_64dp.png" alt="P">
             </div>
         </div>
         
@@ -321,19 +321,39 @@
 
             try {
                 let result;
-                if (providerType === 'google') result = await FirebaseAuthentication.signInWithGoogle();
-                else if (providerType === 'apple') result = await FirebaseAuthentication.signInWithApple();
-                // ... add others
+                // Route to the correct native Capacitor method
+                switch(providerType) {
+                    case 'google':
+                        result = await FirebaseAuthentication.signInWithGoogle();
+                        break;
+                    case 'apple':
+                        result = await FirebaseAuthentication.signInWithApple();
+                        break;
+                    case 'facebook':
+                        result = await FirebaseAuthentication.signInWithFacebook();
+                        break;
+                    default:
+                        Notification.show("Provider coming soon to Starlight", "error");
+                        return;
+                }
 
+                // The token is located in result.user.idToken for Capawesome
                 const idToken = result.user.idToken;
+                const displayName = result.user.displayName || "Institution User";
 
-                // Sync with your FastAPI
+                if (!idToken) {
+                    Notification.show("Security Token Missing", "error");
+                    return;
+                }
+
+                // Sync with your FastAPI Backend
                 const response = await fetch(`${API_BASE}/auth/social-sync`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         token: idToken,
-                        provider: providerType
+                        provider: providerType,
+                        name: displayName // Send the name explicitly just in case
                     })
                 });
 
@@ -341,17 +361,21 @@
 
                 if (response.ok) {
                     await AppStorage.set('auth_token', data.access_token);
+                    // Use a green box for success
                     Notification.show(`Welcome, ${data.name}`, "success");
 
-                    // Go to Gatekeeper to check institution status
-                    setTimeout(() => { window.location.href = "gatekeeper/verify.html"; }, 1500);
+                    setTimeout(() => {
+                        // If they don't have an institution yet, take them to setup
+                        window.location.href = data.has_institution ? "dashboard.html" : "gatekeeper/verify.html";
+                    }, 1500);
                 } else {
-                    Notification.show(data.detail, "error");
+                    Notification.show(data.detail || "Database Sync Failed", "error");
                 }
 
             } catch (error) {
+                if (error.message.includes('cancel')) return;
                 console.error("Auth Crash:", error);
-                Notification.show("Social Connection Interrupted", "error");
+                Notification.show("Connection Interrupted: " + error.message, "error");
             }
         }
     </script>

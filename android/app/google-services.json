@@ -12,7 +12,20 @@
           "package_name": "com.starlight.superconsol"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "896486425897-ksutqo4f2tnp7v1t1iiqd7c1ff6p7vbh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.starlight.superconsol",
+            "certificate_hash": "dbd7c6fd6ad15cd2917f0d10376b59fa636a670d"
+          }
+        },
+        {
+          "client_id": "896486425897-ebturtg7lurnisl2fliubj218e3gat8l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD414KmJcqWXiunYGFhJjKUqk5r03vYPPI"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "896486425897-ebturtg7lurnisl2fliubj218e3gat8l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
