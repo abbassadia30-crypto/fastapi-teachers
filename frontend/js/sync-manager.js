@@ -71,6 +71,7 @@ class IntelligenceExecutor {
         }
     }
 
+    // Inside executeShardFetch
     async executeShardFetch(section, key) {
         try {
             const instId = await AppStorage.get('institution_id');
@@ -78,6 +79,10 @@ class IntelligenceExecutor {
             if (!res.ok) return false;
 
             const data = await res.json();
+
+            // 🏛️ FIX: Explicitly notify the UI to clear its local variables for this section
+            window.dispatchEvent(new CustomEvent(`clearing-${section}`));
+
             await Capacitor.Plugins.Filesystem.writeFile({
                 path: `intelligence/${section}.json`,
                 data: JSON.stringify(data),

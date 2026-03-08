@@ -137,8 +137,9 @@ active_connections = {}
 async def sync_neural_state(websocket: WebSocket, inst_id: int, db: Session = Depends(get_db)):
     await websocket.accept()
 
-    # 🔥 1. IMMEDIATE PUSH: Send current state as soon as they connect
-    # This covers everything that happened while they were offline
+    # 🏛️ FIX: Wait 1 second to ensure any pending 'after_delete' threads finish
+    await asyncio.sleep(1)
+
     current_registry = perform_targeted_extraction(db, inst_id)
     await websocket.send_text(json.dumps(current_registry))
 
