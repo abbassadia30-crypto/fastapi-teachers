@@ -18,8 +18,19 @@ router = APIRouter(prefix="/state", tags=["Institutional Intelligence"])
 active_connections = {}
 
 def object_as_dict(obj):
-    """Converts any SQLAlchemy model instance into a standard Python Dictionary."""
-    return {c.key: getattr(obj, c.key) for c in inspect(obj).mapper.column_attrs}
+    """
+    Enhanced Logic: Converts SQLAlchemy objects to dicts
+    and handles Date/Time serialization.
+    """
+    d = {}
+    for c in inspect(obj).mapper.column_attrs:
+        value = getattr(obj, c.key)
+        # Phenomenon: JSON Serialization Guard
+        if isinstance(value, (datetime.datetime, datetime.date)):
+            d[c.key] = value.isoformat()
+        else:
+            d[c.key] = value
+    return d
 
 def perform_targeted_extraction(db: Session, inst_id: int, target_section: str = None):
     """
@@ -72,7 +83,11 @@ def perform_targeted_extraction(db: Session, inst_id: int, target_section: str =
 
     # 7. Persistence
     state_rec.key_registry = json.dumps(current_registry)
-    state_rec.full_data_blob = json.dumps(mass_data)
+    # Change this line in your perform_targeted_extraction:
+    state_rec.full_data_blob = json.dumps(
+    mass_data,
+    default=lambda o: o.isoformat() if isinstance(o, (datetime.datetime, datetime.date)) else str(o)
+)
     state_rec.last_updated = datetime.datetime.utcnow()
     db.commit()
 
