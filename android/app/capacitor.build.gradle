@@ -13,6 +13,7 @@ dependencies {
     implementation project(':capacitor-firebase-app')
     implementation project(':capacitor-firebase-authentication')
     implementation project(':capacitor-mlkit-barcode-scanning')
+    implementation project(':capacitor-background-runner')
     implementation project(':capacitor-device')
     implementation project(':capacitor-filesystem')
     implementation project(':capacitor-haptics')
