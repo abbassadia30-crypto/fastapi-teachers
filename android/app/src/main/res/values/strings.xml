@@ -4,4 +4,9 @@
     <string name="title_activity_main">Starlight</string>
     <string name="package_name">com.starlight.superconsol</string>
     <string name="custom_url_scheme">com.starlight.superconsol</string>
+
+    <string name="default_web_client_id">896486425897-ksutqo4f2tnp7v1t1iiqd7c1ff6p7vbh.apps.googleusercontent.com</string>
+    <string name="facebook_app_id">123456789</string>
+    <string name="fb_login_protocol_scheme">fb123456789</string>
+    <string name="facebook_client_token">PLACEHOLDER_TOKEN</string>
 </resources>

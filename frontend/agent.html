@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <style>
+        /* All CSS in head as requested */
+        :root {
+            --starbrain-green: #2ecc71;
+            --starbrain-glow: rgba(46, 204, 113, 0.6);
+        }
+
+        #starbrain-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 10000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* The Brain Core */
+        .brain-core {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--starbrain-green);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        /* STATE: LISTENING (Pulsing) */
+        .listening .brain-core {
+            box-shadow: 0 0 0 0 var(--starbrain-glow);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 var(--starbrain-glow); }
+            70% { transform: scale(1); box-shadow: 0 0 0 40px rgba(46, 204, 113, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+        }
+
+        /* STATE: WORKING (Rotating/Thinking) */
+        .working .brain-core {
+            background: transparent;
+            border: 5px dashed var(--starbrain-green);
+            animation: rotate 2s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Text */
+        #starbrain-status {
+            margin-top: 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Red/Green Sign Box for completion */
+        .sign-box {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: white;
+            display: none;
+            font-weight: bold;
+            z-index: 10001;
+        }
+        .success { background-color: #27ae60; }
+        .error { background-color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+<div id="starbrain-overlay">
+    <div id="brain-container">
+        <div class="brain-core"></div>
+    </div>
+    <div id="starbrain-status">HEARING...</div>
+</div>
+
+<div id="feedback-box" class="sign-box"></div>
+
+<script>
+    const overlay = document.getElementById('starbrain-overlay');
+    const statusText = document.getElementById('starbrain-status');
+    const feedbackBox = document.getElementById('feedback-box');
+
+    function startStarbrain() {
+        // Step 1: Show Overlay and Start Listening Animation
+        overlay.style.display = 'flex';
+        overlay.className = 'listening';
+        statusText.innerText = "HEARING COMMAND...";
+
+        // In real app, trigger Capacitor Speech Recognition here
+        console.log("Listening started...");
+    }
+
+    function setStarbrainWorking(message = "PROCESSING...") {
+        // Step 2: Transition to Working Animation
+        overlay.className = 'working';
+        statusText.innerText = message;
+    }
+
+    function finishStarbrain(isSuccess, message) {
+        // Step 3: Hide overlay and show Green/Red Sign Box
+        overlay.style.display = 'none';
+
+        feedbackBox.innerText = message;
+        feedbackBox.className = `sign-box ${isSuccess ? 'success' : 'error'}`;
+        feedbackBox.style.display = 'block';
+
+        setTimeout(() => {
+            feedbackBox.style.display = 'none';
+        }, 4000);
+    }
+
+    // --- TEST TRIGGERS (Simulating the flow) ---
+    // 1. User says "Hey Starbrain"
+    // startStarbrain();
+
+    // 2. Speech finished, Gemini is thinking
+    // setTimeout(() => setStarbrainWorking("FETCHING CLASS 10th..."), 3000);
+
+    // 3. Work done
+    // setTimeout(() => finishStarbrain(true, "Marksheets sent to Class 10th!"), 6000);
+</script>
+</body>
+</html>

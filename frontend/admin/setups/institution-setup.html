@@ -105,7 +105,6 @@
             const data = await response.json();
 
             if (response.ok && data.has_institution) {
-                // ✅ USER IS VALID: Proceed to Dashboard
                 statusIcon.innerText = "✓";
                 statusIcon.style.color = "var(--primary)";
                 statusTitle.innerText = "Access Granted";
@@ -113,16 +112,22 @@
                 sign.style.background = "var(--primary)";
                 sign.innerText = `🏛️ ${data.institution_name} Ready`;
 
+                // Save Institution Data
                 await AppStorage.set('current_institution_name', data.institution_name);
-                await AppStorage.set('institutionToken' , 'verified')
-                await AppStorage.set('institution_id' , data.institution_id)
+                await AppStorage.set('institutionToken' , 'verified');
+                await AppStorage.set('institution_id' , data.institution_id);
+
                 if (window.Capacitor && window.Capacitor.isPluginAvailable('Haptics')) {
                     Capacitor.Plugins.Haptics.notification({ type: 'SUCCESS' });
                 }
 
+                // Initialize Push but don't 'await' it forever if it's slow
+                autoInitializePush().catch(e => console.error("Push Init Error:", e));
+
+                // Redirect to Dashboard after a brief moment so they see the success state
                 setTimeout(() => {
-                    window.location.href = "../dashboard/dashboard.html";
-                }, 2000);
+                    window.location.href = "../dashboard/dashboard.html"; // Replace with your actual dashboard path
+                }, 1500);
 
             } else {
                 // ❌ USER HAS NO INSTITUTION: Block and redirect to setup

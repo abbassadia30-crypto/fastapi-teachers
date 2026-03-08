@@ -12,6 +12,7 @@ class IntelligenceExecutor {
         const { Filesystem } = Capacitor.Plugins;
         let localRegistry = { shards: {} };
 
+        // 📂 Load Local Map
         try {
             const saved = await Filesystem.readFile({
                 path: this.registryPath,
@@ -19,16 +20,44 @@ class IntelligenceExecutor {
                 encoding: 'utf8'
             });
             localRegistry = JSON.parse(saved.data);
-        } catch (e) { console.log("Executor: Fresh start."); }
+        } catch (e) { console.log("Fresh Registry required."); }
 
         let modified = false;
 
-        for (const section in serverRegistry.shards) {
-            if (serverRegistry.shards[section] !== localRegistry.shards[section]) {
-                const success = await this.executeShardFetch(section, serverRegistry.shards[section]);
-                if (success) {
-                    localRegistry.shards[section] = serverRegistry.shards[section];
+        // 🔄 Loop through the Commands (Shards)
+        for (const [section, instruction] of Object.entries(serverRegistry.shards)) {
+            const localData = localRegistry.shards[section] || { key: null };
+
+            // 🛑 BRANCH 1: DELETE MODE
+            // Inside your Branch 1: DELETE MODE
+            if (instruction.mode === "delete") {
+                // Even if it's not in our local registry, try to delete the file just in case
+                console.warn(`🏛️ Cleanup Command: Deleting ${section}`);
+                try {
+                    await Filesystem.deleteFile({
+                        path: `intelligence/${section}.json`,
+                        directory: 'DATA'
+                    });
+                } catch (e) { /* File already gone, ignore */ }
+
+                if (localRegistry.shards[section]) {
+                    delete localRegistry.shards[section];
                     modified = true;
+                }
+                continue;
+            }
+
+            // 📥 BRANCH 2: UPDATE MODE
+            if (instruction.mode === "update") {
+                // Check if the server's key for this section differs from our local key
+                if (instruction.key !== localData.key) {
+                    console.log(`🏛️ Sync Command: Fetching ${section}`);
+                    const success = await this.executeShardFetch(section, instruction.key);
+                    if (success) {
+                        // Save the whole instruction object {key, mode} locally
+                        localRegistry.shards[section] = instruction;
+                        modified = true;
+                    }
                 }
             }
         }
@@ -38,14 +67,13 @@ class IntelligenceExecutor {
                 path: this.registryPath,
                 data: JSON.stringify(localRegistry),
                 directory: 'DATA',
-                encoding: 'utf8',
-                recursive: true
+                encoding: 'utf8'
             });
-            // Notify UI
             window.dispatchEvent(new CustomEvent('intelligence-updated'));
         }
     }
 
+    // Inside executeShardFetch
     async executeShardFetch(section, key) {
         try {
             const instId = await AppStorage.get('institution_id');
@@ -53,6 +81,10 @@ class IntelligenceExecutor {
             if (!res.ok) return false;
 
             const data = await res.json();
+
+            // 🏛️ FIX: Explicitly notify the UI to clear its local variables for this section
+            window.dispatchEvent(new CustomEvent(`clearing-${section}`));
+
             await Capacitor.Plugins.Filesystem.writeFile({
                 path: `intelligence/${section}.json`,
                 data: JSON.stringify(data),
