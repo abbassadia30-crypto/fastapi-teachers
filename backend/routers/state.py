@@ -103,7 +103,8 @@ def trigger_reindex(mapper, connection, target):
     def run_sync():
         db = SessionLocal()
         try:
-            new_reg = perform_targeted_extraction(db, inst_id)
+            section_name = getattr(target, 'section', None) or getattr(target, 'section_identifier', None)
+            new_reg = perform_targeted_extraction(db, inst_id, target_section=section_name)
             # Push to WebSocket if active
             if inst_id in active_connections:
                 loop = asyncio.new_event_loop()

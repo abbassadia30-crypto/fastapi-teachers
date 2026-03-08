@@ -60,6 +60,8 @@ const IntelligenceRepository = {
             const res = await fetch(`https://fastapi-teachers.onrender.com/state/shard/${instId}/${section}?key=${key}`);
             const data = await res.json();
 
+            window.dispatchEvent(new CustomEvent(`clear-ui-${section}`));
+
             await Capacitor.Plugins.Filesystem.writeFile({
                 path: `intelligence/${section}.json`,
                 data: JSON.stringify(data),
