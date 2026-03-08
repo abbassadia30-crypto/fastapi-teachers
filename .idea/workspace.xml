@@ -5,11 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change afterPath="$PROJECT_DIR$/frontend/js/IntelligenceLink.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/js/IntelligenceRepository.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/frontend/js/app.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routers/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,8 +23,8 @@
       <list>
         <option value="Vue Composition API Component" />
         <option value="Python Script" />
-        <option value="JavaScript File" />
         <option value="HTML File" />
+        <option value="JavaScript File" />
       </list>
     </option>
   </component>
@@ -191,14 +193,8 @@
       <workItem from="1772904285091" duration="2424000" />
       <workItem from="1772943311652" duration="6000" />
       <workItem from="1772962385596" duration="4449000" />
-    </task>
-    <task id="LOCAL-00100" summary="now">
-      <option name="closed" value="true" />
-      <created>1772521901255</created>
-      <option name="number" value="00100" />
-      <option name="presentableId" value="LOCAL-00100" />
-      <option name="project" value="LOCAL" />
-      <updated>1772521901255</updated>
+      <workItem from="1772967199921" duration="1498000" />
+      <workItem from="1772968740855" duration="1554000" />
     </task>
     <task id="LOCAL-00101" summary="now">
       <option name="closed" value="true" />
@@ -584,7 +580,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772965999292</updated>
     </task>
-    <option name="localTasksCounter" value="149" />
+    <task id="LOCAL-00149" summary="now">
+      <option name="closed" value="true" />
+      <created>1772967536408</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1772967536409</updated>
+    </task>
+    <option name="localTasksCounter" value="150" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
