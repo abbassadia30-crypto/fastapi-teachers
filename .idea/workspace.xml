@@ -4,15 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
-      <change afterPath="$PROJECT_DIR$/frontend/js/IntelligenceLink.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/js/IntelligenceRepository.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/js/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/AndroidManifest.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/android/app/src/main/java/com/starlight/superconsol/MainActivity.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backend/routers/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routers/state.py" afterDir="false" />
-    </list>
+    <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -194,7 +186,7 @@
       <workItem from="1772943311652" duration="6000" />
       <workItem from="1772962385596" duration="4449000" />
       <workItem from="1772967199921" duration="1498000" />
-      <workItem from="1772968740855" duration="1554000" />
+      <workItem from="1772968740855" duration="1921000" />
     </task>
     <task id="LOCAL-00101" summary="now">
       <option name="closed" value="true" />
