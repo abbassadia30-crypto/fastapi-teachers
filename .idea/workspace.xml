@@ -5,8 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="29c48fca-dc4f-463b-96fc-274915b8c51f" name="Changes" comment="now">
+      <change afterPath="$PROJECT_DIR$/frontend/agent.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/js/sync-manager.js" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/js/sync-manager.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -18,8 +18,8 @@
       <list>
         <option value="Vue Composition API Component" />
         <option value="Python Script" />
-        <option value="HTML File" />
         <option value="JavaScript File" />
+        <option value="HTML File" />
       </list>
     </option>
   </component>
@@ -181,23 +181,7 @@
       <workItem from="1772888508790" duration="13866000" />
       <workItem from="1772904285091" duration="2424000" />
       <workItem from="1772943311652" duration="6000" />
-      <workItem from="1772962385596" duration="782000" />
-    </task>
-    <task id="LOCAL-00097" summary="now">
-      <option name="closed" value="true" />
-      <created>1772521109920</created>
-      <option name="number" value="00097" />
-      <option name="presentableId" value="LOCAL-00097" />
-      <option name="project" value="LOCAL" />
-      <updated>1772521109921</updated>
-    </task>
-    <task id="LOCAL-00098" summary="now">
-      <option name="closed" value="true" />
-      <created>1772521314821</created>
-      <option name="number" value="00098" />
-      <option name="presentableId" value="LOCAL-00098" />
-      <option name="project" value="LOCAL" />
-      <updated>1772521314821</updated>
+      <workItem from="1772962385596" duration="3046000" />
     </task>
     <task id="LOCAL-00099" summary="now">
       <option name="closed" value="true" />
@@ -575,7 +559,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772905723945</updated>
     </task>
-    <option name="localTasksCounter" value="146" />
+    <task id="LOCAL-00146" summary="now">
+      <option name="closed" value="true" />
+      <created>1772963304027</created>
+      <option name="number" value="00146" />
+      <option name="presentableId" value="LOCAL-00146" />
+      <option name="project" value="LOCAL" />
+      <updated>1772963304027</updated>
+    </task>
+    <task id="LOCAL-00147" summary="now">
+      <option name="closed" value="true" />
+      <created>1772965023122</created>
+      <option name="number" value="00147" />
+      <option name="presentableId" value="LOCAL-00147" />
+      <option name="project" value="LOCAL" />
+      <updated>1772965023122</updated>
+    </task>
+    <option name="localTasksCounter" value="148" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

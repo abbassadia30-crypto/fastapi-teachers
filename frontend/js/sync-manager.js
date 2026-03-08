@@ -29,16 +29,18 @@ class IntelligenceExecutor {
             const localData = localRegistry.shards[section] || { key: null };
 
             // 🛑 BRANCH 1: DELETE MODE
+            // Inside your Branch 1: DELETE MODE
             if (instruction.mode === "delete") {
-                if (localRegistry.shards[section]) {
-                    console.warn(`🏛️ Cleanup Command: Deleting ${section}`);
-                    try {
-                        await Filesystem.deleteFile({
-                            path: `intelligence/${section}.json`,
-                            directory: 'DATA'
-                        });
-                    } catch (e) { /* Already gone */ }
+                // Even if it's not in our local registry, try to delete the file just in case
+                console.warn(`🏛️ Cleanup Command: Deleting ${section}`);
+                try {
+                    await Filesystem.deleteFile({
+                        path: `intelligence/${section}.json`,
+                        directory: 'DATA'
+                    });
+                } catch (e) { /* File already gone, ignore */ }
 
+                if (localRegistry.shards[section]) {
                     delete localRegistry.shards[section];
                     modified = true;
                 }
